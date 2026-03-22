@@ -1,5 +1,5 @@
 from functools import wraps
-from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
+from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, current_app
 from flask_login import login_user, logout_user, login_required, current_user
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField
@@ -8,6 +8,7 @@ from werkzeug.security import check_password_hash
 
 from app_admin.models import Uzytkownik, RolaUzytkownika
 from app_admin.extensions import db
+from sqlalchemy.exc import SQLAlchemyError, OperationalError
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -31,7 +32,12 @@ def logowanie():
 
     if form.validate_on_submit():
         email = form.email.data.lower().strip()
-        uzytkownik = db.session.query(Uzytkownik).filter_by(email=email).first()
+        try:
+            uzytkownik = db.session.query(Uzytkownik).filter_by(email=email).first()
+        except (OperationalError, SQLAlchemyError) as e:
+            current_app.logger.exception('Błąd połączenia z bazą podczas logowania')
+            flash('Błąd połączenia z bazą danych. Spróbuj ponownie później.', 'danger')
+            return render_template('auth/logowanie.html', form=form)
 
         if uzytkownik and uzytkownik.is_active:
             if check_password_hash(uzytkownik.password_hash, form.haslo.data):

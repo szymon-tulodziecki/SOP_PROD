@@ -20,11 +20,20 @@
 
     <div class="sidebar__uzytkownik">
       <div class="sidebar__uzytkownik-avatar" aria-hidden="true">
-        {{ current_user.first_name[0] }}{{ current_user.last_name[0] }}
+        {% if current_user.is_authenticated and current_user.first_name and current_user.last_name %}
+          {{ current_user.first_name[0] }}{{ current_user.last_name[0] }}
+        {% else %}
+          —
+        {% endif %}
       </div>
       <div class="sidebar__uzytkownik-info">
-        <span class="sidebar__uzytkownik-imie">{{ current_user.first_name }} {{ current_user.last_name }}</span>
-        <span class="sidebar__uzytkownik-rola">Nr alb. {{ current_user.album_number or '—' }}</span>
+        {% if current_user.is_authenticated %}
+          <span class="sidebar__uzytkownik-imie">{{ current_user.first_name }} {{ current_user.last_name }}</span>
+          <span class="sidebar__uzytkownik-rola">Nr alb. {{ current_user.album_number or '—' }}</span>
+        {% else %}
+          <span class="sidebar__uzytkownik-imie">Gość</span>
+          <span class="sidebar__uzytkownik-rola">—</span>
+        {% endif %}
       </div>
     </div>
 
@@ -42,10 +51,10 @@
 
     <div class="sidebar__stopka">
       <form method="POST" action="{{ url_for('auth.wylogowanie') }}">
-        {{ csrf_token_field() if csrf_token_field is defined else '' }}
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button type="submit" class="sidebar__wylogowanie">Wyloguj</button>
-      </form>
+          {{ csrf_token_field() if csrf_token_field is defined else '' }}
+          <input type="hidden" name="csrf_token" value="{{ _csrf_token }}">
+          <button type="submit" class="sidebar__wylogowanie">Wyloguj</button>
+        </form>
     </div>
   </nav>
 

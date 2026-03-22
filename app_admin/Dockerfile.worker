@@ -36,31 +36,15 @@ RUN wget -qO /tmp/install-tl.tar.gz \
 # 3. PATH dla lualatex
 ENV PATH="/usr/local/texlive/bin/x86_64-linux:$PATH"
 
-# 4. Pakiety TeX potrzebne do polskich dokumentów
-RUN tlmgr install \
-    luatex \
-    luatexbase \
-    lualatex-math \
-    babel-polish \
-    babel \
-    polyglossia \
-    fontspec \
-    geometry \
-    tabularx \
-    booktabs \
-    longtable \
-    etoolbox \
-    xcolor \
-    graphicx \
-    hyperref \
-    microtype \
-    parskip \
-    enumitem \
-    fancyhdr \
-    lastpage \
-    unicode-math \
-    lm \
-    lm-math
+# 4. Zainstaluj pakiety TeX Live z apt (bardziej niezawodne)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    texlive-luatex \
+    texlive-latex-recommended \
+    texlive-latex-extra \
+    texlive-fonts-recommended \
+    texlive-lang-polish \
+    lmodern \
+    && rm -rf /var/lib/apt/lists/*
 
 # 5. Zależności Pythona
 COPY requirements.txt .

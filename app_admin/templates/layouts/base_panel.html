@@ -33,8 +33,8 @@
         {% if current_user.is_authenticated %}
         <span class="sidebar__uzytkownik-imie">{{ current_user.imie }} {{ current_user.nazwisko }}</span>
         <span class="sidebar__uzytkownik-rola">
-          {% if current_user.rola.value == 'ADMIN' %}Administrator
-          {% elif current_user.rola.value == 'UOPZ' %}Opiekun uczelniany
+          {% if current_user.is_authenticated and current_user.rola and current_user.rola.value == 'ADMIN' %}Administrator
+          {% elif current_user.is_authenticated and current_user.rola and current_user.rola.value == 'UOPZ' %}Opiekun uczelniany
           {% endif %}
         </span>
         {% else %}
@@ -55,7 +55,7 @@
           <span class="sidebar__ikona" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="15" y2="16"/></svg></span> Wszystkie praktyki
         </a>
       </li>
-      {% if current_user.rola.value in ['ADMIN', 'UOPZ'] %}
+      {% if current_user.is_authenticated and current_user.rola and current_user.rola.value in ['ADMIN', 'UOPZ'] %}
       <li class="sidebar__menu-pozycja">
         <a href="{{ url_for('evaluation.lista_ocen') }}" class="sidebar__link {% if 'evaluation' in (request.endpoint or '') %}sidebar__link--aktywny{% endif %}" {% if 'evaluation' in (request.endpoint or '') %}aria-current="page"{% endif %}>
           <span class="sidebar__ikona" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span> Oceny i efekty
@@ -67,7 +67,7 @@
           <span class="sidebar__ikona" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><line x1="9" y1="7" x2="16" y2="7"/><line x1="9" y1="11" x2="16" y2="11"/><line x1="9" y1="15" x2="13" y2="15"/></svg></span> Dzienniki
         </a>
       </li>
-      {% if current_user.rola.value == 'ADMIN' %}
+      {% if current_user.is_authenticated and current_user.rola and current_user.rola.value == 'ADMIN' %}
       <li class="sidebar__menu-sekcja" aria-hidden="true">Zarządzanie</li>
       <li class="sidebar__menu-pozycja">
         <a href="{{ url_for('management.lista_uzytkownikow') }}" class="sidebar__link {% if 'uzytkownik' in (request.endpoint or '') %}sidebar__link--aktywny{% endif %}" {% if 'uzytkownik' in (request.endpoint or '') %}aria-current="page"{% endif %}>

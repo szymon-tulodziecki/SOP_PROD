@@ -33,31 +33,15 @@ RUN wget -qO /tmp/install-tl.tar.gz \
     /tmp/install-tl/install-tl --profile=/tmp/texlive.profile && \
     rm -rf /tmp/install-tl /tmp/install-tl.tar.gz /tmp/texlive.profile
 
-# 3. Doinstalowanie niezbędnych pakietów TeX
-RUN tlmgr install \
-    luatex \
-    luatexbase \
-    lualatex-math \
-    babel-polish \
-    babel \
-    polyglossia \
-    fontspec \
-    geometry \
-    tabularx \
-    booktabs \
-    longtable \
-    etoolbox \
-    xcolor \
-    graphicx \
-    hyperref \
-    microtype \
-    parskip \
-    enumitem \
-    fancyhdr \
-    lastpage \
-    unicode-math \
-    lm \
-    lm-math
+# 3. Zainstaluj pakiety TeX Live z apt (bardziej niezawodne w obrazie)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    texlive-luatex \
+    texlive-latex-recommended \
+    texlive-latex-extra \
+    texlive-fonts-recommended \
+    texlive-lang-polish \
+    lmodern \
+    && rm -rf /var/lib/apt/lists/*
 
 # 4. Zależności Pythona
 COPY app_admin/requirements.txt /app/requirements.txt

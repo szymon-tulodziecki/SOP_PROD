@@ -1,0 +1,9 @@
+{% extends "layouts/base_student.html" %}
+{% block tytul %}Strona nie znaleziona{% endblock %}
+{% block tresc %}
+  <div class="karta" style="text-align:center; padding:3rem 2rem;">
+    <h1 style="font-size:2rem; margin-bottom:0.5rem;">404 — Nie znaleziono</h1>
+    <p style="color:var(--kolor-tekst-drugor);">Żądany zasób nie istnieje lub został przeniesiony.</p>
+    <p style="margin-top:1rem;"><a href="{{ url_for('auth.logowanie') }}" class="przycisk przycisk--glowny">Strona główna</a></p>
+  </div>
+{% endblock %}

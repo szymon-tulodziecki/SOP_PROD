@@ -1,0 +1,8 @@
+/* Copied student styles so Flask serves them from app_admin's static/ */
+/* Minimal student panel styles (copied from app_student/static/css/student.css) */
+:root{--kolor-glowny:#1769aa;--kolor-tekst-drugor:#6b7280;--kolor-tlo:#f4f6f9;--kolor-sukces:#16a34a}
+body{font-family:Inter,system-ui,Arial, sans-serif;background:#fff;color:#111}
+.przycisk{display:inline-block;padding:.5rem .75rem;border-radius:6px;border:0;background:var(--kolor-glowny);color:#fff;text-decoration:none}
+.przycisk--drugorzedny{background:#e5e7eb;color:#111}
+.karta{background:#fff;border:1px solid #e6e9ef;padding:1rem;border-radius:8px}
+/* add more as needed */
