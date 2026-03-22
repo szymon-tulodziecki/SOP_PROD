@@ -20,7 +20,7 @@
         </p>
       </div>
       <div style="text-align: right;">
-        <span class="status status--{{ praktyka.status.value|lower|replace('_', '-') }}">{{ praktyka.status.value|replace('_', ' ') }}</span>
+        <span class="status status--{{ praktyka.status.value|lower|replace('_', '-') }}">{{ tlumacz_status(praktyka.status.value) }}</span>
       </div>
     </div>
   </div>

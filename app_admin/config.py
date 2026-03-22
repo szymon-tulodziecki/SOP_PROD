@@ -2,6 +2,8 @@ import os
 
 
 class Config:
+    # Osobne nazwy ciasteczek dla admina i studenta, żeby nie "nadpisywały się" nazzajem na localhost
+    SESSION_COOKIE_NAME = 'admin_session'
     # Podstawowe zabezpieczenie sesji i formularzy WTF (zmień na produkcji!)
     SECRET_KEY = os.environ.get('SECRET_KEY', 'super-tajny-klucz-tylko-na-dev-xd')
 

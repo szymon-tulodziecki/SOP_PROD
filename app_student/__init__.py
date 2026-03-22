@@ -19,11 +19,13 @@ def create_app():
         from app_student.routes.dashboard import dashboard_bp
         from app_student.routes.praktyki import praktyki_bp
         from app_student.routes.dziennik import dziennik_bp
+        from app_student.routes.sprawozdania import sprawozdania_bp
 
         app.register_blueprint(auth_bp)
         app.register_blueprint(dashboard_bp, url_prefix='/panel')
         app.register_blueprint(praktyki_bp,  url_prefix='/praktyki')
         app.register_blueprint(dziennik_bp,  url_prefix='/dziennik')
+        app.register_blueprint(sprawozdania_bp, url_prefix='/sprawozdanie')
 
     @app.before_request
     def sprawdz_studenta():
@@ -34,7 +36,7 @@ def create_app():
         if not current_user.is_authenticated:
             return
 
-        if current_user.role != RolaUzytkownika.STUDENT:
+        if getattr(current_user.role, 'value', current_user.role) != 'STUDENT':
             abort(403)
 
         if (getattr(current_user, 'wymagana_zmiana_hasla', False)

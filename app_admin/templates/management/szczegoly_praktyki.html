@@ -6,8 +6,11 @@
 {% block naglowek_akcje %}
 <div class="akcje-panelu">
   <a href="{{ url_for('management.lista_praktyk') }}" class="przycisk przycisk--drugorzedny">Powrót do listy</a>
-  {% if praktyka.status.value == 'OCZEKUJE_OCENY' and current_user.rola.value in ['ADMIN', 'UOPZ'] %}
-  <a href="{{ url_for('evaluation.ocen_praktyke', id=praktyka.id) }}" class="przycisk przycisk--glowny">Wystaw ocenę</a>
+  {% if current_user.rola.value in ['ADMIN', 'UOPZ'] %}
+  <a href="{{ url_for('evaluation.ocen_praktyke', id=praktyka.id) }}" class="przycisk przycisk--glowny">Oceń / Egzaminuj</a>
+  <a href="{{ url_for('evaluation.podglad_sprawozdania', id=praktyka.id) }}" class="przycisk przycisk--drugorzedny">Zobacz Sprawozdanie</a>
+  <a href="{{ url_for('journal.podglad', id=praktyka.id) }}" class="przycisk przycisk--drugorzedny">Zobacz Dziennik</a>
+  <a href="{{ url_for('documents.panel', id=praktyka.id) }}" class="przycisk przycisk--drugorzedny" style="border-color: #8e44ad; color: #8e44ad;">📄 Dokumenty (PDF)</a>
   {% endif %}
 </div>
 {% endblock %}
@@ -21,7 +24,7 @@
     <section class="karta">
       <header class="karta__naglowek">
         <h2 class="karta__tytul">Informacje o praktyce</h2>
-        <span class="status status--{{ praktyka.status.value|lower|replace('_', '-') }}">{{ praktyka.status.value|replace('_', ' ') }}</span>
+        <span class="status status--{{ praktyka.status.value|lower|replace('_', '-') }}">{{ tlumacz_status(praktyka.status.value) }}</span>
       </header>
       <div class="karta__tresc">
         <dl style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">

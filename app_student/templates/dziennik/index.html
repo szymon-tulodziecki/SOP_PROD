@@ -15,13 +15,15 @@
 {% block tresc %}
 
 {% if not zapis %}
-  <div class="karta" style="max-width: 560px; text-align: center; padding: 3rem 2rem;">
-    {% if jakikolwiek %}
-      <p style="color: var(--kolor-tekst-drugor);">Twój zapis oczekuje na aktywację przez opiekuna.</p>
-    {% else %}
-      <p style="color: var(--kolor-tekst-drugor);">Najpierw zapisz się na praktykę.</p>
-      <a href="{{ url_for('praktyki.lista') }}" class="przycisk przycisk--glowny" style="margin-top: 1rem;">Zobacz praktyki</a>
-    {% endif %}
+  <div style="display: flex; justify-content: center; align-items: center; padding-top: 4rem;">
+    <div class="karta" style="max-width: 560px; text-align: center; padding: 3rem 2rem; width: 100%;">
+      {% if jakikolwiek %}
+        <p style="color: var(--kolor-tekst-drugor);">Twój zapis oczekuje na aktywację przez opiekuna.</p>
+      {% else %}
+        <p style="color: var(--kolor-tekst-drugor);">Najpierw zapisz się na praktykę.</p>
+        <a href="{{ url_for('praktyki.lista') }}" class="przycisk przycisk--glowny" style="margin-top: 1rem;">Zobacz praktyki</a>
+      {% endif %}
+    </div>
   </div>
 
 {% else %}
@@ -41,13 +43,19 @@
         <div>
           <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--kolor-tekst-drugor); margin-bottom: 0.25rem;">Godziny</div>
           <div style="font-weight: 700; font-size: 1.2rem; color: var(--kolor-glowny);">{{ zapis.total_hours_logged }} / {{ zapis.praktyka.wymiar_godzin }} h</div>
+          <div class="pasek-postep" style="margin-top: 0.5rem; margin-bottom: 1rem;">
+            {% set proc_h = 0 %}
+            {% if zapis and zapis.praktyka and zapis.praktyka.wymiar_godzin > 0 %}
+              {% set proc_h = [(zapis.total_hours_logged / zapis.praktyka.wymiar_godzin * 100)|int, 100]|min %}
+            {% endif %}
+            <div class="pasek-postep__wypelnienie{% if proc_h >= 100 %} pasek-postep__wypelnienie--zakonczony{% endif %}" style="width: {{ proc_h }}%;"></div>
+          </div>
+          
+          <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--kolor-tekst-drugor); margin-bottom: 0.25rem;">Dni</div>
+          <div style="font-weight: 700; font-size: 1.2rem; color: var(--kolor-glowny);">{{ wpisy | length }} / 120 dni</div>
           <div class="pasek-postep" style="margin-top: 0.5rem;">
-           {% set proc = 0 %}
-{% if zapis and zapis.praktyka and zapis.praktyka.wymiar_godzin > 0 %}
-  {% set proc = [(zapis.total_hours_logged / zapis.praktyka.wymiar_godzin * 100)|int, 100]|min %}
-{% endif %}
-<div class="pasek-postep__wypelnienie{% if proc >= 100 %} pasek-postep__wypelnienie--zakonczony{% endif %}"
-     style="width: {{ proc }}%;"></div>
+            {% set proc_d = [(wpisy | length / 120 * 100)|int, 100]|min %}
+            <div class="pasek-postep__wypelnienie{% if proc_d >= 100 %} pasek-postep__wypelnienie--zakonczony{% endif %}" style="width: {{ proc_d }}%;"></div>
           </div>
         </div>
       </div>

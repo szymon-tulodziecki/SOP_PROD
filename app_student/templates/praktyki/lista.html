@@ -3,7 +3,7 @@
 {% block naglowek %}Dostępne praktyki{% endblock %}
 
 {% block tresc %}
-<div style="max-width: 700px;">
+<div style="max-width: 700px; margin: 0 auto;">
 
   {% if not dostepne %}
   <div class="karta" style="text-align: center; padding: 3rem 2rem;">
@@ -20,10 +20,10 @@
           <div style="font-weight:600; font-size:1.05rem;">{{ p.rok_uczelniany }}</div>
           <div style="font-size:0.85rem; color:var(--kolor-tekst-drugor); margin-top:0.25rem;">Semestr {{ p.semestr }} · {{ p.wymiar_godzin }} h</div>
         </div>
-        {% if str(p.id) in zapisane_ids %}
+        {% if p.id|string in zapisane_ids %}
           <span class="status status--zakonczona">Zapisany</span>
         {% else %}
-          <form method="POST" action="{{ url_for('praktyki.zapisz', id=p.id) }}" style="display:inline;">{{ csrf_form.hidden_tag() }}<button type="submit" class="przycisk przycisk--glowny" onclick="return confirm('Zapisać się na praktykę {{ p.rok_uczelniany }} ({{ p.semestr }})?')">Zapisz się</button></form>
+          <a href="{{ url_for('praktyki.zapisz_krok1', id=p.id) }}" class="przycisk przycisk--glowny" style="text-decoration:none;">Zapisz się (Kreator)</a>
         {% endif %}
       </div>
     </div>

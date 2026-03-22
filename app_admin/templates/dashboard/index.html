@@ -5,7 +5,7 @@
 
 {% block naglowek_akcje %}
   {% if current_user.role.value == 'ADMIN' %}
-  <div class="akcje-panelu" style="display: flex; gap: 0.5rem;">
+  <div class="akcje-panelu" style="display: flex; gap: 0.5rem; align-items: center;">
     <a href="{{ url_for('management.nowy_student') }}" class="przycisk przycisk--glowny">
       <span aria-hidden="true">+</span> Dodaj studenta
     </a>
@@ -60,6 +60,7 @@
               <th scope="col">Student</th>
               <th scope="col">Praktyka</th>
               <th scope="col">Status</th>
+              <th scope="col" style="text-align:right;">Akcje</th>
             </tr>
           </thead>
           <tbody>
@@ -69,8 +70,16 @@
               <td>{{ z.praktyka.rok_uczelniany }} ({{ z.praktyka.semestr }})</td>
               <td>
                 <span class="status status--{{ z.status.value|lower|replace('_', '-') }}">
-                  {{ z.status.value|replace('_', ' ') }}
+                  {{ tlumacz_status(z.status.value) }}
                 </span>
+              </td>
+              <td style="text-align:right;">
+                {% if z.status.value == 'PENDING' %}
+                <form method="POST" action="{{ url_for('management.potwierdz_zapis', id=z.id) }}" style="display:inline;">
+                  {{ csrf_form.hidden_tag() }}
+                  <button type="submit" class="przycisk przycisk--drugorzedny przycisk--maly" onclick="return confirm('Potwierdzić ten zapis?')">Zatwierdź</button>
+                </form>
+                {% endif %}
               </td>
             </tr>
             {% else %}

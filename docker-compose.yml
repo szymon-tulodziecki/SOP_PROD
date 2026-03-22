@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: sop_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ans_admin
+      POSTGRES_PASSWORD: secure_password_123
+      POSTGRES_DB: ans_praktyki
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: sop_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+  admin:
+    build:
+      context: .
+      dockerfile: app_admin/Dockerfile
+    container_name: sop_admin
+    restart: unless-stopped
+    environment:
+      - FLASK_ENV=development
+      - DATABASE_URL=postgresql+pg8000://ans_admin:secure_password_123@db:5432/ans_praktyki
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - pdf_data:/app/pdf_output
+
+  student:
+    build:
+      context: .
+      dockerfile: app_student/Dockerfile
+    container_name: sop_student
+    restart: unless-stopped
+    environment:
+      - FLASK_ENV=development
+      - DATABASE_URL=postgresql+pg8000://ans_admin:secure_password_123@db:5432/ans_praktyki
+    ports:
+      - "5001:5001"
+    depends_on:
+      - db
+
+  worker:
+    build:
+      context: .
+      dockerfile: app_admin/Dockerfile.worker
+    container_name: sop_worker
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgresql+pg8000://ans_admin:secure_password_123@db:5432/ans_praktyki
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - pdf_data:/app/pdf_output
+
+volumes:
+  pgdata:
+  pdf_data:

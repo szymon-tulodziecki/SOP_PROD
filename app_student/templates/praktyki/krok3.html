@@ -1,0 +1,46 @@
+{% extends "layouts/base_student.html" %}
+{% block tytul %}Kreator zapisu - Krok 3 (Uzasadnienie){% endblock %}
+{% block naglowek %}Uzasadnienie ścieżki zawodowej{% endblock %}
+
+{% block tresc %}
+<div style="max-width: 800px; margin: 0 auto;">
+  <div class="karta">
+    <div class="karta__naglowek" style="display: flex; justify-content: space-between; align-items: center;">
+      <h2 class="karta__tytul">Krok 3: Wniosek o realizację w ramach ścieżki zawodowej</h2>
+      <span style="font-weight: 600; color: var(--kolor-tekst-drugor);">
+        Ścieżka: {{ zapis.track_type.value }}
+      </span>
+    </div>
+    
+    <div class="karta__tresc">
+      <p style="margin-bottom: 2rem; color: var(--kolor-tekst-drugor);">
+        Jako student realizujący praktykę w ramach <strong>Pracy Etatowej</strong> lub <strong>Własnej Działalności Gospodarczej</strong> musisz uzasadnić swój wniosek (Załącznik 4) oraz dołączyć niezbędne dokumenty (np. skan umowy, karta stanowiska, wyciąg z CEIDG/KRS).
+      </p>
+
+      <form method="POST" action="{{ url_for('praktyki.zapisz_krok3', id=zapis.id) }}" novalidate>
+        {{ form.hidden_tag() }}
+
+        <div class="pole-formularza {% if form.uzasadnienie.errors %}pole-formularza--blad{% endif %}" style="margin-bottom: 2rem;">
+          {{ form.uzasadnienie.label(class="pole-formularza__etykieta") }}
+          {{ form.uzasadnienie(class="pole-formularza__input", rows="6", placeholder="Szczegółowo uzasadnij, dlaczego Twoje stanowisko lub działalność odpowiada profilowi praktyki (załącznik 4b)...") }}
+          {% for e in form.uzasadnienie.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
+        </div>
+
+        <div class="pole-formularza {% if form.zalaczniki.errors %}pole-formularza--blad{% endif %}" style="margin-bottom: 2rem;">
+          {{ form.zalaczniki.label(class="pole-formularza__etykieta") }}
+          {{ form.zalaczniki(class="pole-formularza__input", placeholder="Wymień dokumenty, które dołączysz (skan umowy, karta opisu stanowiska itp.)...") }}
+          <span style="font-size: 0.8rem; color: var(--kolor-tekst-drugor); margin-top: 0.25rem; display: block;">
+            Uwaga: Fizyczne dokumenty i ich skany dostarcz do uczelni zgodnie z zaleceniem Opiekuna.
+          </span>
+          {% for e in form.zalaczniki.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
+        </div>
+
+        <div style="display: flex; justify-content: flex-end;">
+          <button type="submit" class="przycisk przycisk--glowny">Zakończ i Prześlij Wniosek</button>
+        </div>
+      </form>
+      
+    </div>
+  </div>
+</div>
+{% endblock %}

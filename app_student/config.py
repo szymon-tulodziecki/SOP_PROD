@@ -2,6 +2,7 @@ import os
 
 
 class Config:
+    SESSION_COOKIE_NAME = 'student_session'
     SECRET_KEY = os.environ.get('SECRET_KEY', 'super-tajny-klucz-tylko-na-dev-xd')
     SQLALCHEMY_DATABASE_URI = os.environ.get(
         'DATABASE_URL',

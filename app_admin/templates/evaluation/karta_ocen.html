@@ -1,0 +1,206 @@
+{% extends "layouts/base_panel.html" %}
+
+{% block tytul %}Karta Ocen Praktyki{% endblock %}
+{% block naglowek %}Karta Ocen (Zał. 3 / Zał. 8){% endblock %}
+
+{% block naglowek_akcje %}
+<a href="{{ url_for('evaluation.lista_ocen') }}" class="przycisk przycisk--drugorzedny">Powrót do listy</a>
+{% endblock %}
+
+{% block tresc %}
+<div style="max-width: 900px; margin: 0 auto;">
+
+  <!-- Info o studencie -->
+  <div class="karta" style="margin-bottom: 2rem; border-left: 4px solid var(--kolor-akcent);">
+    <div class="karta__tresc" style="display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <h2 style="font-size: 1.1rem; margin-bottom: 0.25rem;">{{ zapis.student.imie }} {{ zapis.student.nazwisko }}</h2>
+        <p style="color: var(--kolor-tekst-drugor); font-size: 0.9rem;">
+          Firma: {{ zapis.firma_nazwa or 'Brak nazwy firmy' }} | ZOPZ: {{ zapis.zopz_imie_nazwisko or 'Brak ZOPZ' }} | Godziny: {{ zapis.lacznie_godzin }} h
+        </p>
+      </div>
+      <div style="text-align: right;">
+        <span class="status status--{{ zapis.status.value|lower|replace('_', '-') }}">{{ tlumacz_status(zapis.status.value) }}</span>
+      </div>
+    </div>
+  </div>
+
+  <form method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+    <!-- Karta Ocen (Zał. 3) -->
+    <div class="karta" style="margin-bottom: 2rem;">
+      <div class="karta__naglowek" style="background: var(--kolor-tlo);">
+        <h3 class="karta__tytul">Karta oceny praktyki (Zał. 3)</h3>
+      </div>
+      <div class="karta__tresc">
+        <p style="font-size: 0.85rem; color: var(--kolor-tekst-drugor); margin-bottom: 1rem;">
+          Wprowadź oceny parametryczne. Ocenę ZOPZ przepisz z dostarczonego formularza papierowego podpisanej Karty nr 3.
+        </p>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+          <div class="pole-formularza">
+            <label class="pole-formularza__etykieta">Ocena Sprawozdania (S)</label>
+            <input type="number" step="0.5" min="2" max="5" name="ocena_sprawozdania" class="pole-formularza__input ocen_field" value="{{ zapis.ocena_sprawozdania or '' }}" placeholder="2.0 - 5.0">
+          </div>
+          <div class="pole-formularza">
+            <label class="pole-formularza__etykieta">Ocena UOPZ (U)</label>
+            <input type="number" step="0.5" min="2" max="5" name="ocena_uopz" class="pole-formularza__input ocen_field" value="{{ zapis.ocena_uopz or '' }}" placeholder="2.0 - 5.0">
+          </div>
+          <div class="pole-formularza">
+            <label class="pole-formularza__etykieta">Ocena z papierowej Karty ZOPZ (Z)</label>
+            <input type="number" step="0.5" min="2" max="5" name="ocena_zopz" class="pole-formularza__input ocen_field" value="{{ zapis.ocena_zopz or '' }}" placeholder="2.0 - 5.0">
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+          <div class="pole-formularza">
+            <label class="pole-formularza__etykieta">Opinia opisowa Uczelnianego Opiekuna Praktyk Zawodowych (UOPZ)</label>
+            <textarea name="ocena_opisowa_uopz" class="pole-formularza__input" rows="4" placeholder="Wpisz treść opinii...">{{ zapis.ocena_opisowa_uopz or '' }}</textarea>
+          </div>
+          <div class="pole-formularza">
+            <label class="pole-formularza__etykieta">Opinia opisowa z dostarczonej karty ZOPZ (opcjonalnie)</label>
+            <textarea name="ocena_opisowa_zopz" class="pole-formularza__input" rows="4" placeholder="Przepisz jeśli obecna...">{{ zapis.ocena_opisowa_zopz or '' }}</textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Komisja Egzaminacyjna (Zał. 8) -->
+    <div class="karta" style="margin-bottom: 2rem;">
+      <div class="karta__naglowek" style="background: var(--kolor-tlo);">
+        <h3 class="karta__tytul">Protokół Egzaminacyjny (Zał. 8)</h3>
+      </div>
+      <div class="karta__tresc">
+        <p style="font-size: 0.85rem; color: var(--kolor-tekst-drugor); margin-bottom: 1.5rem;">
+          Wprowadź 3 pytania zadane studentowi oraz ocenę (od 2.0 do 5.0) za każdą odpowiedź. Ocena E jest automatyczną średnią z poniższych.
+        </p>
+
+        <div style="display: grid; grid-template-columns: 3fr 1fr; gap: 1rem; margin-bottom: 1rem; align-items: end;">
+          <div class="pole-formularza">
+            <label class="pole-formularza__etykieta">Pytanie 1</label>
+            <input type="text" name="sprawdzian_pytanie_1" class="pole-formularza__input" value="{{ zapis.sprawdzian_pytanie_1 or '' }}" placeholder="Treść pytania...">
+          </div>
+          <div class="pole-formularza">
+            <label class="pole-formularza__etykieta">Ocena z odp. 1</label>
+            <input type="number" step="0.5" min="2" max="5" name="sprawdzian_ocena_1" class="pole-formularza__input egzamin_odp" value="{{ zapis.sprawdzian_ocena_1 or '' }}" placeholder="2.0 - 5.0">
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 3fr 1fr; gap: 1rem; margin-bottom: 1rem; align-items: end;">
+          <div class="pole-formularza">
+            <label class="pole-formularza__etykieta">Pytanie 2</label>
+            <input type="text" name="sprawdzian_pytanie_2" class="pole-formularza__input" value="{{ zapis.sprawdzian_pytanie_2 or '' }}" placeholder="Treść pytania...">
+          </div>
+          <div class="pole-formularza">
+            <label class="pole-formularza__etykieta">Ocena z odp. 2</label>
+            <input type="number" step="0.5" min="2" max="5" name="sprawdzian_ocena_2" class="pole-formularza__input egzamin_odp" value="{{ zapis.sprawdzian_ocena_2 or '' }}" placeholder="2.0 - 5.0">
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 3fr 1fr; gap: 1rem; align-items: end;">
+          <div class="pole-formularza">
+            <label class="pole-formularza__etykieta">Pytanie 3</label>
+            <input type="text" name="sprawdzian_pytanie_3" class="pole-formularza__input" value="{{ zapis.sprawdzian_pytanie_3 or '' }}" placeholder="Treść pytania...">
+          </div>
+          <div class="pole-formularza">
+            <label class="pole-formularza__etykieta">Ocena z odp. 3</label>
+            <input type="number" step="0.5" min="2" max="5" name="sprawdzian_ocena_3" class="pole-formularza__input egzamin_odp" value="{{ zapis.sprawdzian_ocena_3 or '' }}" placeholder="2.0 - 5.0">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Podsumowanie Wyników -->
+    <div class="karta" style="margin-bottom: 2rem; border-top: 4px solid var(--kolor-akcent);">
+      <div class="karta__tresc" style="display: flex; justify-content: space-around; align-items: center; padding: 2rem;">
+        
+        <div style="text-align: center;">
+          <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor); text-transform: uppercase;">Średnia Egzaminu (E)</div>
+          <div id="wynik-e" style="font-size: 2.5rem; font-weight: 700; color: var(--kolor-glowny);">—</div>
+        </div>
+
+        <div style="font-size: 1.5rem; color: var(--kolor-ramka);">+</div>
+
+        <div style="text-align: center;">
+          <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor); text-transform: uppercase;">Wzór Obliczeniowy</div>
+          <div style="font-family: monospace; font-size: 1.1rem; font-weight: 500; margin-top: 0.5rem; color: #444;">K = 0.4*E + 0.1*S + 0.2*U + 0.3*Z</div>
+        </div>
+
+        <div style="font-size: 1.5rem; color: var(--kolor-ramka);">=</div>
+
+        <div style="text-align: center;">
+          <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor); text-transform: uppercase;">Ocena Końcowa (K)</div>
+          <div id="wynik-k" style="font-size: 2.5rem; font-weight: 700; color: var(--kolor-glowny);">—</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Akcje -->
+    <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 3rem;">
+      <span style="font-size: 0.85rem; color: var(--kolor-blad);" id="ostrzezenie-z">Obliczenie K i zatwierdzenie jest zablokowane do momentu wpisania oceny "Z".</span>
+      
+      <div style="display: flex; gap: 1rem;">
+        <button type="submit" name="zapisz" value="1" class="przycisk przycisk--drugorzedny" style="box-shadow: 0 2px 8px rgba(0,0,0,0.1);">Zapisz Wersję Roboczą</button>
+        <button type="submit" name="zakoncz" value="1" id="btn-zakoncz" class="przycisk przycisk--glowny" style="box-shadow: 0 4px 14px rgba(26, 58, 92, 0.3);" disabled>Zakończ i Zatwierdź Ocenę (COMPLETED)</button>
+      </div>
+    </div>
+
+  </form>
+</div>
+
+{% block scripts_extra %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const p1 = document.querySelector('[name="sprawdzian_ocena_1"]');
+    const p2 = document.querySelector('[name="sprawdzian_ocena_2"]');
+    const p3 = document.querySelector('[name="sprawdzian_ocena_3"]');
+    
+    const os = document.querySelector('[name="ocena_sprawozdania"]');
+    const ou = document.querySelector('[name="ocena_uopz"]');
+    const oz = document.querySelector('[name="ocena_zopz"]');
+
+    const we = document.getElementById('wynik-e');
+    const wk = document.getElementById('wynik-k');
+    const btnZakoncz = document.getElementById('btn-zakoncz');
+    const ostrzezenie = document.getElementById('ostrzezenie-z');
+
+    function obl() {
+        let e1 = parseFloat(p1.value) || 0;
+        let e2 = parseFloat(p2.value) || 0;
+        let e3 = parseFloat(p3.value) || 0;
+
+        let s = parseFloat(os.value) || 0;
+        let u = parseFloat(ou.value) || 0;
+        let z = parseFloat(oz.value) || 0;
+
+        let exam_avg = 0;
+        let numPyt = 0;
+        if(e1>0) numPyt++;
+        if(e2>0) numPyt++;
+        if(e3>0) numPyt++;
+        if(numPyt > 0) exam_avg = (e1+e2+e3)/numPyt;
+        
+        we.textContent = exam_avg > 0 ? exam_avg.toFixed(2) : '—';
+
+        if(exam_avg > 0 && s > 0 && u > 0 && z > 0) {
+            let k = (0.4 * exam_avg) + (0.1 * s) + (0.2 * u) + (0.3 * z);
+            wk.textContent = k.toFixed(2);
+            wk.style.color = k >= 3.0 ? 'var(--kolor-sukces)' : 'var(--kolor-blad)';
+            btnZakoncz.disabled = false;
+            ostrzezenie.style.display = 'none';
+        } else {
+            wk.textContent = '—';
+            wk.style.color = 'var(--kolor-glowny)';
+            btnZakoncz.disabled = true;
+            ostrzezenie.style.display = 'inline-block';
+        }
+    }
+
+    [p1, p2, p3, os, ou, oz].forEach(el => el.addEventListener('input', obl));
+    obl();
+});
+</script>
+{% endblock %}
+{% endblock %}

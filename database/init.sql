@@ -11,6 +11,7 @@ CREATE TYPE user_role AS ENUM ('STUDENT', 'UOPZ', 'ADMIN');
 CREATE TYPE internship_status AS ENUM ('ACTIVE', 'INACTIVE');
 CREATE TYPE enrollment_status AS ENUM ('PENDING', 'IN_PROGRESS', 'COMPLETED');
 CREATE TYPE evaluation_result AS ENUM ('ACHIEVED', 'PARTIALLY_ACHIEVED', 'NOT_ACHIEVED');
+CREATE TYPE internship_track AS ENUM ('STANDARD', 'EMPLOYMENT', 'OWN_BUSINESS');
 
 -- 2. Użytkownicy
 CREATE TABLE users (
@@ -43,10 +44,71 @@ CREATE TABLE internship_enrollments (
     student_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     uopz_id UUID REFERENCES users(id) ON DELETE SET NULL,
     status enrollment_status NOT NULL DEFAULT 'PENDING',
+    track_type internship_track NOT NULL DEFAULT 'STANDARD',
+    
+    -- Terminy i ogólne
+    termin_od DATE,
+    termin_do DATE,
+    specjalnosc VARCHAR(255),
+    ubezpieczenie_nw BOOLEAN DEFAULT FALSE,
+    
+    -- Dane o firmie (tylko do tex)
+    firma_nazwa VARCHAR(255),
+    firma_adres VARCHAR(255),
+    firma_miasto VARCHAR(255),
+    firma_nip_krs VARCHAR(50),
+    firma_upowazniony_osoba VARCHAR(255),
+    firma_upowazniony_stanowisko VARCHAR(255),
+    
+    -- Dane ZOPZ (tylko do tex)
+    zopz_imie_nazwisko VARCHAR(255),
+    zopz_stanowisko VARCHAR(255),
+    zopz_telefon VARCHAR(50),
+    zopz_email VARCHAR(255),
+    
+    -- Dodatki dla ścieżek
+    uzasadnienie_sciezki TEXT,
+    zalaczniki_sciezki TEXT,
+    
+    -- Oceny z procesu ewaluacji
+    ocena_sprawozdania NUMERIC(3,1),
+    ocena_uopz NUMERIC(3,1),
+    ocena_zopz NUMERIC(3,1),
+    ocena_opisowa_uopz TEXT,
+    ocena_opisowa_zopz TEXT,
+    
+    -- Pytania egzaminacyjne
+    sprawdzian_pytanie_1 TEXT,
+    sprawdzian_ocena_1 NUMERIC(3,1),
+    sprawdzian_pytanie_2 TEXT,
+    sprawdzian_ocena_2 NUMERIC(3,1),
+    sprawdzian_pytanie_3 TEXT,
+    sprawdzian_ocena_3 NUMERIC(3,1),
+
     total_hours_logged INTEGER DEFAULT 0,
     enrolled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(internship_id, student_id)          -- student może być zapisany tylko raz do tej samej praktyki
 );
+
+-- 4a. Harmonogram praktyki studenta
+CREATE TABLE internship_schedule (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    enrollment_id UUID NOT NULL REFERENCES internship_enrollments(id) ON DELETE CASCADE,
+    learning_outcome_id INTEGER NOT NULL REFERENCES learning_outcomes(id),
+    nazwa_dzialu VARCHAR(255) NOT NULL,
+    przykladowe_prace TEXT NOT NULL,
+    liczba_dni INTEGER NOT NULL DEFAULT 0
+);
+
+-- 4b. Sprawozdanie z praktyki (Zał. 7)
+CREATE TABLE internship_reports (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    enrollment_id UUID NOT NULL REFERENCES internship_enrollments(id) ON DELETE CASCADE UNIQUE,
+    charakterystyka_miejsca TEXT,
+    opis_i_analiza TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 
 -- 5. Słownik efektów uczenia się
 CREATE TABLE learning_outcomes (
@@ -125,6 +187,19 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER trigger_update_total_hours
 AFTER INSERT OR UPDATE OR DELETE ON journal_entries
 FOR EACH ROW EXECUTE FUNCTION update_total_hours();
+
+-- ============================================================
+-- 9. Audit Log generowania i edycji dokumentów
+-- ============================================================
+CREATE TABLE document_audit_logs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    enrollment_id UUID REFERENCES internship_enrollments(id) ON DELETE SET NULL,
+    document_type VARCHAR(50) NOT NULL,
+    action VARCHAR(50) NOT NULL,
+    details TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
 -- ============================================================
 -- Admin domyślny (hasło: admin123)

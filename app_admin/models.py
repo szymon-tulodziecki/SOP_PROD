@@ -24,6 +24,12 @@ class StatusZapisu(enum.Enum):
     COMPLETED   = 'COMPLETED'
 
 
+class SciezkaPraktyki(enum.Enum):
+    STANDARD = 'STANDARD'
+    EMPLOYMENT = 'EMPLOYMENT'
+    OWN_BUSINESS = 'OWN_BUSINESS'
+
+
 class WynikOceny(enum.Enum):
     OSIAGNIETO     = 'ACHIEVED'
     CZESCIOWO      = 'PARTIALLY_ACHIEVED'
@@ -104,19 +110,105 @@ class ZapisPraktyki(db.Model):
     student_id    = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
     uopz_id       = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
     status        = db.Column(db.Enum(StatusZapisu, name='enrollment_status', values_callable=lambda e: [x.value for x in e]), nullable=False, default=StatusZapisu.PENDING)
+    track_type    = db.Column(db.Enum(SciezkaPraktyki, name='internship_track', values_callable=lambda e: [x.value for x in e]), nullable=False, default=SciezkaPraktyki.STANDARD)
+    
+    # Terminy i ogólne
+    termin_od        = db.Column(db.Date, nullable=True)
+    termin_do        = db.Column(db.Date, nullable=True)
+    specjalnosc      = db.Column(db.String(255), nullable=True)
+    ubezpieczenie_nw = db.Column(db.Boolean, default=False)
+    
+    # Dane o firmie (tylko do tex)
+    firma_nazwa                  = db.Column(db.String(255), nullable=True)
+    firma_adres                  = db.Column(db.String(255), nullable=True)
+    firma_miasto                 = db.Column(db.String(255), nullable=True)
+    firma_nip_krs                = db.Column(db.String(50), nullable=True)
+    firma_upowazniony_osoba      = db.Column(db.String(255), nullable=True)
+    firma_upowazniony_stanowisko = db.Column(db.String(255), nullable=True)
+    
+    # Dane ZOPZ (tylko do tex)
+    zopz_imie_nazwisko = db.Column(db.String(255), nullable=True)
+    zopz_stanowisko    = db.Column(db.String(255), nullable=True)
+    zopz_telefon       = db.Column(db.String(50), nullable=True)
+    zopz_email         = db.Column(db.String(255), nullable=True)
+    
+    # Dodatki dla ścieżek
+    uzasadnienie_sciezki = db.Column(db.Text, nullable=True)
+    zalaczniki_sciezki   = db.Column(db.Text, nullable=True)
+    
+    # Oceny z procesu ewaluacji
+    ocena_sprawozdania = db.Column(db.Numeric(3,1), nullable=True)
+    ocena_uopz         = db.Column(db.Numeric(3,1), nullable=True)
+    ocena_zopz         = db.Column(db.Numeric(3,1), nullable=True)
+    ocena_opisowa_uopz = db.Column(db.Text, nullable=True)
+    ocena_opisowa_zopz = db.Column(db.Text, nullable=True)
+    
+    # Pytania egzaminacyjne
+    sprawdzian_pytanie_1 = db.Column(db.Text, nullable=True)
+    sprawdzian_ocena_1   = db.Column(db.Numeric(3,1), nullable=True)
+    sprawdzian_pytanie_2 = db.Column(db.Text, nullable=True)
+    sprawdzian_ocena_2   = db.Column(db.Numeric(3,1), nullable=True)
+    sprawdzian_pytanie_3 = db.Column(db.Text, nullable=True)
+    sprawdzian_ocena_3   = db.Column(db.Numeric(3,1), nullable=True)
+
     total_hours_logged = db.Column(db.Integer, default=0)
     enrolled_at   = db.Column(db.DateTime, server_default=db.func.now())
 
     # Relacje
     student = db.relationship('Uzytkownik', foreign_keys=[student_id], lazy='select')
     uopz    = db.relationship('Uzytkownik', foreign_keys=[uopz_id],    lazy='select')
-    wpisy_dziennika = db.relationship('WpisDziennika', backref='zapis', lazy='select',
-                                      cascade='all, delete-orphan')
-    oceny = db.relationship('OcenaPraktyki', backref='zapis', lazy='select',
-                            cascade='all, delete-orphan')
+    wpisy_dziennika = db.relationship('WpisDziennika', backref='zapis', lazy='select', cascade='all, delete-orphan')
+    oceny = db.relationship('OcenaPraktyki', backref='zapis', lazy='select', cascade='all, delete-orphan')
+    harmonogram = db.relationship('HarmonogramPraktyki', backref='zapis', lazy='select', cascade='all, delete-orphan')
+    sprawozdanie = db.relationship('Sprawozdanie', backref='zapis', uselist=False, lazy='select', cascade='all, delete-orphan')
 
     @property
     def lacznie_godzin(self): return self.total_hours_logged
+
+    @property
+    def ocena_e(self):
+        oceny = []
+        if self.sprawdzian_ocena_1 is not None: oceny.append(float(self.sprawdzian_ocena_1))
+        if self.sprawdzian_ocena_2 is not None: oceny.append(float(self.sprawdzian_ocena_2))
+        if self.sprawdzian_ocena_3 is not None: oceny.append(float(self.sprawdzian_ocena_3))
+        if not oceny: return None
+        return round(sum(oceny) / len(oceny), 2)
+
+    @property
+    def ocena_k(self):
+        e = self.ocena_e
+        s = float(self.ocena_sprawozdania) if self.ocena_sprawozdania is not None else None
+        u = float(self.ocena_uopz) if self.ocena_uopz is not None else None
+        z = float(self.ocena_zopz) if self.ocena_zopz is not None else None
+        
+        if e is None or s is None or u is None or z is None:
+            return None
+            
+        k = 0.4 * e + 0.1 * s + 0.2 * u + 0.3 * z
+        return round(k, 2)
+
+
+class HarmonogramPraktyki(db.Model):
+    __tablename__ = 'internship_schedule'
+
+    id                  = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    enrollment_id       = db.Column(UUID(as_uuid=True), db.ForeignKey('internship_enrollments.id', ondelete='CASCADE'), nullable=False)
+    learning_outcome_id = db.Column(db.Integer, db.ForeignKey('learning_outcomes.id'), nullable=False)
+    nazwa_dzialu        = db.Column(db.String(255), nullable=False)
+    przykladowe_prace   = db.Column(db.Text, nullable=False)
+    liczba_dni          = db.Column(db.Integer, nullable=False, default=0)
+    
+    efekt = db.relationship('EfektUczenia', lazy='select')
+
+
+class Sprawozdanie(db.Model):
+    __tablename__ = 'internship_reports'
+
+    id                      = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    enrollment_id           = db.Column(UUID(as_uuid=True), db.ForeignKey('internship_enrollments.id', ondelete='CASCADE'), nullable=False, unique=True)
+    charakterystyka_miejsca = db.Column(db.Text, nullable=True)
+    opis_i_analiza          = db.Column(db.Text, nullable=True)
+    updated_at              = db.Column(db.DateTime, server_default=db.func.now(), onupdate=db.func.now())
 
 
 class EfektUczenia(db.Model):
@@ -177,3 +269,18 @@ class OcenaPraktyki(db.Model):
     def uwagi_oceniajacego(self): return self.evaluator_notes
     @uwagi_oceniajacego.setter
     def uwagi_oceniajacego(self, v): self.evaluator_notes = v
+
+
+class DocumentAuditLog(db.Model):
+    __tablename__ = 'document_audit_logs'
+
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
+    enrollment_id = db.Column(UUID(as_uuid=True), db.ForeignKey('internship_enrollments.id', ondelete='SET NULL'), nullable=True)
+    document_type = db.Column(db.String(50), nullable=False) # e.g. Zalacznik_1, Zalacznik_8
+    action = db.Column(db.String(50), nullable=False) # GENERATED_AUTO, EDITED_MANUAL, COMPILED_MANUAL
+    details = db.Column(db.Text, nullable=True) # Could store diff or notes
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+
+    user = db.relationship('Uzytkownik')
+    enrollment = db.relationship('ZapisPraktyki')

@@ -5,11 +5,18 @@
 {% block tresc %}
 
 {% if not zapis %}
-  <div class="karta" style="max-width:560px; text-align:center; padding:3rem 2rem;">
-    <div style="font-size:3rem; margin-bottom:1rem;">📋</div>
-    <h2 style="font-size:1.25rem; font-weight:600; margin-bottom:0.5rem;">Nie jesteś jeszcze zapisany na praktykę</h2>
-    <p style="color:var(--kolor-tekst-drugor); margin-bottom:1.5rem;">Zapisz się do aktywnej praktyki żeby zacząć prowadzić dziennik.</p>
-    <a href="{{ url_for('praktyki.lista') }}" class="przycisk przycisk--glowny">Zobacz dostępne praktyki</a>
+  <div style="display: flex; justify-content: center; align-items: center; padding-top: 4rem;">
+    <div class="karta" style="max-width:560px; text-align:center; padding:3rem 2rem; width: 100%;">
+      <div style="color: var(--kolor-glowny); margin-bottom: 1.5rem;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16c0 1.1.9 2 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/>
+          <path d="M14 3v5h5M16 13H8M16 17H8M10 9H8"/>
+        </svg>
+      </div>
+      <h2 style="font-size:1.25rem; font-weight:600; margin-bottom:0.5rem;">Nie jesteś jeszcze zapisany na praktykę</h2>
+      <p style="color:var(--kolor-tekst-drugor); margin-bottom:1.5rem;">Zapisz się do aktywnej praktyki żeby zacząć prowadzić dziennik.</p>
+      <a href="{{ url_for('praktyki.lista') }}" class="przycisk przycisk--glowny">Zobacz dostępne praktyki</a>
+    </div>
   </div>
 {% else %}
   <section class="siatka-statystyk" aria-label="Twój postęp">
@@ -21,7 +28,10 @@
 
   <div class="karta" style="margin-bottom:2rem;"><div class="karta__tresc"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;"><span style="font-weight:600;">Postęp praktyki — {{ zapis.praktyka.rok_uczelniany }} ({{ zapis.praktyka.semestr }})</span><span style="font-size:0.85rem; color:var(--kolor-tekst-drugor);">{{ zapis.total_hours_logged }} / {{ zapis.praktyka.wymiar_godzin }} h</span></div><div class="pasek-postep" style="height:12px;"><div class="pasek-postep__wypelnienie" style="width:{{ procent }}%;"></div></div></div></div>
 
-  <div style="display:flex; gap:1rem; flex-wrap:wrap;"><a href="{{ url_for('dziennik.nowy_wpis') }}" class="przycisk przycisk--glowny">Dodaj wpis do dziennika</a><a href="{{ url_for('dziennik.index') }}" class="przycisk przycisk--drugorzedny">Przeglądaj dziennik</a></div>
+  <div style="display:flex; gap:1rem; flex-wrap:wrap; justify-content:center; align-items:center; margin-bottom: 2rem;">
+    <a href="{{ url_for('dziennik.nowy_wpis') }}" class="przycisk przycisk--glowny">Dodaj wpis do dziennika</a>
+    <a href="{{ url_for('dziennik.index') }}" class="przycisk przycisk--drugorzedny">Przeglądaj dziennik</a>
+  </div>
 
 {% endif %}
 

@@ -417,6 +417,18 @@ def zatwierdz_zaklad(id):
     return redirect(url_for('management.lista_zgloszen'))
 
 
+@management_bp.route('/zgloszenia/<uuid:id>/potwierdz', methods=['POST'])
+@wymaga_roli(RolaUzytkownika.ADMIN, RolaUzytkownika.UOPZ)
+def potwierdz_zapis(id):
+    zapis = db.session.get(ZapisPraktyki, id) or abort(404)
+    zapis.status = StatusZapisu.IN_PROGRESS
+    if current_user.role == RolaUzytkownika.UOPZ:
+        zapis.uopz_id = current_user.id
+    db.session.commit()
+    flash(f'Zapis studenta na praktykę został potwierdzony. Zostałeś/aś przypisany/a jako opiekun.', 'success')
+    return redirect(request.referrer or url_for('dashboard.index'))
+
+
 @management_bp.route('/praktyki/<uuid:id>/usun', methods=['POST'])
 @wymaga_roli(RolaUzytkownika.ADMIN)
 def usun_praktyke(id):

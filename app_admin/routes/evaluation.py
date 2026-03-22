@@ -3,7 +3,7 @@ app_admin/routes/evaluation.py
 Oceny efektów uczenia się — operuje na ZapisPraktyki (enrollment).
 """
 import uuid
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
 from flask_login import login_required, current_user
 
 from app_admin.models import (ZapisPraktyki, OcenaPraktyki, EfektUczenia,
@@ -24,6 +24,48 @@ def lista_ocen():
 
     zapisy = q.order_by(ZapisPraktyki.enrolled_at.desc()).all()
     return render_template('evaluation/lista_ocen.html', zapisy=zapisy)
+
+@evaluation_bp.route('/zapis/<uuid:id>/karta_ocen', methods=['GET', 'POST'])
+@wymaga_roli(RolaUzytkownika.ADMIN, RolaUzytkownika.UOPZ)
+def ocen_praktyke(id):
+    zapis = db.session.get(ZapisPraktyki, id) or abort(404)
+    if request.method == 'POST':
+        # Zapisujemy recenzje opisowe
+        zapis.ocena_opisowa_uopz = request.form.get('ocena_opisowa_uopz')
+        zapis.ocena_opisowa_zopz = request.form.get('ocena_opisowa_zopz')
+
+        # Zapisujemy parametryczne (z konwersją na float/numeric)
+        def parse_grade(val):
+            try: return float(val.replace(',', '.'))
+            except: return None
+
+        zapis.ocena_sprawozdania = parse_grade(request.form.get('ocena_sprawozdania', ''))
+        zapis.ocena_uopz = parse_grade(request.form.get('ocena_uopz', ''))
+        zapis.ocena_zopz = parse_grade(request.form.get('ocena_zopz', ''))
+
+        zapis.sprawdzian_pytanie_1 = request.form.get('sprawdzian_pytanie_1')
+        zapis.sprawdzian_ocena_1 = parse_grade(request.form.get('sprawdzian_ocena_1', ''))
+        
+        zapis.sprawdzian_pytanie_2 = request.form.get('sprawdzian_pytanie_2')
+        zapis.sprawdzian_ocena_2 = parse_grade(request.form.get('sprawdzian_ocena_2', ''))
+        
+        zapis.sprawdzian_pytanie_3 = request.form.get('sprawdzian_pytanie_3')
+        zapis.sprawdzian_ocena_3 = parse_grade(request.form.get('sprawdzian_ocena_3', ''))
+
+        if request.form.get('zakoncz'):
+            zapis.status = StatusZapisu.COMPLETED
+
+        db.session.commit()
+        flash('Oceny zostały zapisane.', 'success')
+        return redirect(url_for('evaluation.ocen_praktyke', id=zapis.id))
+
+    return render_template('evaluation/karta_ocen.html', practically=zapis, zapis=zapis)
+
+@evaluation_bp.route('/zapis/<uuid:id>/sprawozdanie')
+@wymaga_roli(RolaUzytkownika.ADMIN, RolaUzytkownika.UOPZ)
+def podglad_sprawozdania(id):
+    zapis = db.session.get(ZapisPraktyki, id) or abort(404)
+    return render_template('evaluation/podglad_sprawozdania.html', zapis=zapis)
 
 
 @evaluation_bp.route('/zapis/<uuid:id>', methods=['GET', 'POST'])

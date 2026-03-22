@@ -134,51 +134,39 @@ def _run_lualatex(lualatex: str, tex_file: Path, workdir: Path) -> str:
     return log_text
 
 
-def compile_pdf(template_name: str, context: dict) -> bytes:
+def render_tex(template_name: str, context: dict) -> str:
+    """Renderuje szablon Jinja2 do surowego tekstu TeX."""
+    env = get_jinja_env()
+    template = env.get_template(template_name)
+    return template.render(**context)
+
+def compile_raw_tex(tex_source: str) -> bytes:
     """
-    Publiczne API silnika.
-
-    Renderuje szablon Jinja2 z katalogu tex_engine/templates/,
-    kompiluje przez lualatex (3 przebiegi) w izolowanym tmpdir,
-    zwraca surowe bajty PDF.
-
-    Args:
-        template_name:  Nazwa pliku szablonu (np. "zal6_dziennik.tex.j2").
-        context:        Słownik z danymi do wstrzyknięcia (wartości NIE escapowane –
-                        szablony używają filtra | s, | date itd.).
-
-    Returns:
-        bytes  –  zawartość pliku PDF
-
-    Raises:
-        TexCompilationError:  gdy lualatex zgłosi błąd kompilacji.
-        jinja2.UndefinedError: gdy szablon użyje zmiennej nie podanej w context.
-        EnvironmentError:     gdy lualatex nie jest zainstalowany.
+    Kompiluje surowy kod TeX do PDF (używając lualatex).
     """
     lualatex = _find_lualatex()
-    env = get_jinja_env()
-
-    # 1. Renderowanie szablonu Jinja2 -> kod TeX
-    template = env.get_template(template_name)
-    tex_source = template.render(**context)
-
-    # 2. Kompilacja w izolowanym katalogu tymczasowym
+    
     with tempfile.TemporaryDirectory(prefix="sop_tex_") as tmpdir:
         workdir = Path(tmpdir)
         tex_file = workdir / "document.tex"
         tex_file.write_text(tex_source, encoding="utf-8")
 
-        logger.info("Kompilacja %s (context keys: %s)", template_name, list(context.keys()))
-
         for pass_num in range(1, COMPILE_PASSES + 1):
-            logger.debug("  Pass %d/%d ...", pass_num, COMPILE_PASSES)
             _run_lualatex(lualatex, tex_file, workdir)
 
-        # 3. Odczyt PDF
         pdf_file = workdir / "document.pdf"
         if not pdf_file.exists():
             raise TexCompilationError("lualatex zakończył się sukcesem, ale brak pliku PDF.")
 
         pdf_bytes = pdf_file.read_bytes()
-        logger.info("PDF wygenerowany: %d bajtów", len(pdf_bytes))
         return pdf_bytes
+
+def compile_pdf(template_name: str, context: dict) -> bytes:
+    """
+    Publiczne API silnika.
+    """
+    logger.info("Kompilacja %s (context keys: %s)", template_name, list(context.keys()))
+    tex_source = render_tex(template_name, context)
+    pdf_bytes = compile_raw_tex(tex_source)
+    logger.info("PDF wygenerowany: %d bajtów", len(pdf_bytes))
+    return pdf_bytes

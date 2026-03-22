@@ -1,0 +1,93 @@
+{% extends "layouts/base_student.html" %}
+{% block tytul %}Sprawozdanie z praktyki{% endblock %}
+{% block naglowek %}Sprawozdanie z przebiegu praktyki{% endblock %}
+
+{% block tresc %}
+<div style="max-width: 900px; margin: 0 auto; padding-bottom: 3rem;">
+
+  {% if not ma_zapis %}
+  <div class="karta" style="text-align: center; padding: 3rem 2rem;">
+    <p style="color: var(--kolor-tekst-drugor);">Najpierw zapisz się na praktykę.</p>
+    <a href="{{ url_for('praktyki.lista') }}" class="przycisk przycisk--glowny" style="margin-top: 1rem;">Dostępne praktyki</a>
+  </div>
+  {% elif not zapis %}
+  <div class="karta" style="text-align: center; padding: 3rem 2rem;">
+    <p style="color: var(--kolor-tekst-drugor);">Twój zapis oczekuje na akceptację przez UOPZ, dlatego projekt sprawozdania jest jeszcze niedostępny.</p>
+  </div>
+  {% else %}
+
+  <!-- Info -->
+  <div class="karta" style="margin-bottom: 2rem; border-left: 4px solid var(--kolor-glowny);">
+    <div class="karta__tresc" style="display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <div style="font-weight: 600; font-size: 1.1rem;">Załącznik 7 / 7a</div>
+        <div style="font-size: 0.9rem; color: var(--kolor-tekst-drugor);">{{ zapis.praktyka.rok_uczelniany }} — Semestr {{ zapis.praktyka.semestr }}</div>
+      </div>
+      <div>
+        <a href="#" onclick="alert('Generowanie sprawozdania...'); return false;" class="przycisk przycisk--drugorzedny">Pobierz do wglądu (PDF)</a>
+      </div>
+    </div>
+  </div>
+
+  <form method="POST" action="{{ url_for('sprawozdania.index') }}" novalidate>
+    {{ form.hidden_tag() }}
+
+    <div class="karta" style="margin-bottom: 2rem;">
+      <div class="karta__naglowek">
+        <h2 class="karta__tytul">Sekcja I: Charakterystyka miejsca roboczego</h2>
+      </div>
+      <div class="karta__tresc">
+        <p style="font-size: 0.85rem; color: var(--kolor-tekst-drugor); margin-bottom: 1rem;">
+          Opisz zwięźle zakład pracy (branża, wielkość, używane technologie) oraz konkretny dział/komórkę organizacyjną, w której realizowana była praktyka.
+        </p>
+        <div class="pole-formularza {% if form.charakterystyka.errors %}pole-formularza--blad{% endif %}">
+          {{ form.charakterystyka(class="pole-formularza__input", rows="8", placeholder="Tutaj wpisz sekcję I...") }}
+          {% for e in form.charakterystyka.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="karta" style="margin-bottom: 2rem;">
+      <div class="karta__naglowek">
+        <h2 class="karta__tytul">Sekcja II: Opis i analiza prac</h2>
+      </div>
+      <div class="karta__tresc">
+        <p style="font-size: 0.85rem; color: var(--kolor-tekst-drugor); margin-bottom: 1rem;">
+          Przedstaw szczegółowy opis i analizę wykonanych prac w ramach zrealizowanego harmonogramu oraz wnioski, jakie wynikają z przebiegu praktyki.
+        </p>
+        <div class="pole-formularza {% if form.opis.errors %}pole-formularza--blad{% endif %}">
+          {{ form.opis(class="pole-formularza__input", rows="12", placeholder="Tutaj wpisz sekcję II...") }}
+          {% for e in form.opis.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="karta" style="margin-bottom: 2rem;">
+      <div class="karta__naglowek">
+        <h2 class="karta__tytul">Sekcja III: Wykonane zadania (Zestawienie efektów)</h2>
+      </div>
+      <div class="karta__tresc py-3">
+        <div style="background: var(--kolor-tlo); border-radius: 8px; padding: 1.5rem; border: 1px dashed var(--kolor-ramka);">
+          <p style="font-size: 0.9rem; color: var(--kolor-tekst);">
+            <strong>Uwaga:</strong> Sekcja III zawierająca szczegółowe zestawienie godzinowych nakładów pracy dla każdego zdefiniowanego efektu uczenia się <strong style="color: var(--kolor-glowny);">jest generowana w 100% automatycznie 🤖</strong> na podstawie Twojego Dziennika Praktyk.
+          </p>
+          <ul style="margin-top: 1rem; padding-left: 1.5rem; font-size: 0.85rem; color: var(--kolor-tekst-drugor);">
+            <li>Nie musisz nic tu wpisywać. Wystarczy regularnie uzupełniać dziennik.</li>
+            <li>System sumuje godziny i przypisuje je do właściwych komórek tabeli z załącznika.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; justify-content: flex-end; gap: 1rem;">
+      <button type="submit" class="przycisk przycisk--glowny" style="padding: 1rem 3rem; font-size: 1.1rem; box-shadow: 0 4px 14px rgba(26, 58, 92, 0.3);">
+        Zapisz robocze sprawozdanie
+      </button>
+    </div>
+
+  </form>
+
+  {% endif %}
+
+</div>
+{% endblock %}

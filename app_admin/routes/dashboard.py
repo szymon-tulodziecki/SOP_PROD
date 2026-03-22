@@ -2,6 +2,7 @@ from flask import Blueprint, render_template
 from flask_login import login_required, current_user
 from app_admin.models import Praktyka, ZapisPraktyki, Uzytkownik, RolaUzytkownika, StatusPraktyki, StatusZapisu
 from app_admin.extensions import db
+from flask_wtf import FlaskForm
 
 dashboard_bp = Blueprint('dashboard', __name__)
 
@@ -11,7 +12,7 @@ def index():
     q = db.session.query(ZapisPraktyki)
 
     if current_user.role == RolaUzytkownika.UOPZ:
-        q = q.filter_by(uopz_id=current_user.id)
+        q = q.filter(db.or_(ZapisPraktyki.uopz_id == current_user.id, ZapisPraktyki.status == StatusZapisu.PENDING))
 
     statystyki = {
         'praktyki_aktywne': q.filter(ZapisPraktyki.status == StatusZapisu.IN_PROGRESS).count(),
@@ -22,10 +23,11 @@ def index():
     }
 
     ostatnie_zapisy = (q
-        .filter(ZapisPraktyki.status == StatusZapisu.IN_PROGRESS)
         .order_by(ZapisPraktyki.enrolled_at.desc())
         .limit(8).all())
 
+    csrf_form = FlaskForm()
     return render_template('dashboard/index.html',
                            statystyki=statystyki,
-                           ostatnie_zapisy=ostatnie_zapisy)
+                           ostatnie_zapisy=ostatnie_zapisy,
+                           csrf_form=csrf_form)

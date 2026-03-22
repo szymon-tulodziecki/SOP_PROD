@@ -39,12 +39,25 @@ def create_app():
         from app_admin.routes.management import management_bp
         from app_admin.routes.evaluation import evaluation_bp
         from app_admin.routes.journal    import journal_bp
+        from app_admin.routes.documents  import documents_bp
 
         app.register_blueprint(auth_bp)
         app.register_blueprint(dashboard_bp,  url_prefix='/panel')
         app.register_blueprint(management_bp, url_prefix='/zarzadzanie')
         app.register_blueprint(evaluation_bp, url_prefix='/oceny')
         app.register_blueprint(journal_bp,    url_prefix='/dzienniki')
+        app.register_blueprint(documents_bp,  url_prefix='/dokumenty')
+
+    @app.context_processor
+    def inject_tlumacz():
+        return dict(tlumacz_status=lambda val: {
+            'PENDING': 'Oczekuje',
+            'IN_PROGRESS': 'W trakcie',
+            'COMPLETED': 'Zakończona',
+            'ACTIVE': 'Aktywna',
+            'INACTIVE': 'Nieaktywna',
+            'AWAITING_APPROVAL': 'Oczekuje na akceptację'
+        }.get(val, val))
 
     @app.before_request
     def sprawdz_zmiane_hasla():

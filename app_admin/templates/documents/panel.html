@@ -1,0 +1,129 @@
+{% extends "layouts/base_panel.html" %}
+
+{% block tytul %}Dokumenty i Załączniki{% endblock %}
+{% block naglowek %}Generowanie dokumentów: {{ zapis.student.imie }} {{ zapis.student.nazwisko }}{% endblock %}
+
+{% block naglowek_akcje %}
+<a href="{{ url_for('management.szczegoly_praktyki', id=zapis.internship_id) }}" class="przycisk przycisk--drugorzedny">Powrót do szczegółów</a>
+{% endblock %}
+
+{% block tresc %}
+<div class="uklad-szczegolow" style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+
+  <div class="lewa-kolumna" style="display: flex; flex-direction: column; gap: 2rem;">
+    <!-- Lista dokumentów -->
+    <div class="karta">
+      <div class="karta__naglowek" style="background: var(--kolor-tlo); display: flex; justify-content: space-between; align-items: center;">
+        <h2 class="karta__tytul">Dostępne szablony (LaTeX)</h2>
+        <button onclick="triggerAuto('ZIP')" id="btn-auto-ZIP" class="przycisk przycisk--glowny przycisk--maly" style="background: #27ae60; border-color: #27ae60;">📦 Generuj Komplet (ZIP)</button>
+      </div>
+      <div class="karta__tresc">
+        <p style="font-size: 0.85rem; color: var(--kolor-tekst-drugor); margin-bottom: 0.5rem;">
+          Wybierz dokument, który chcesz wygenerować ze stałych szablonów. Kliknij "Tryb ręczny" aby edytować surowy szablon TeX przed kompilacją.
+        </p>
+        <div id="status-ZIP" style="text-align: right; margin-bottom: 1rem; font-size: 0.85rem; font-weight: 600;"></div>
+
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+          {% for doc_key, doc_info in docs.items() %}
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; border: 1px solid var(--kolor-ramka); border-radius: 8px;">
+            <div style="font-weight: 500;">
+              {{ doc_info[1] }}
+            </div>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+              <span id="status-{{ doc_key }}" style="font-size: 0.8rem; color: var(--kolor-tekst-drugor); font-weight: 600; margin-right: 0.5rem;"></span>
+              <button onclick="triggerAuto('{{ doc_key }}')" id="btn-auto-{{ doc_key }}" class="przycisk przycisk--drugorzedny przycisk--maly">Wyg. Automatycznie</button>
+              <a href="{{ url_for('documents.edytuj', id=zapis.id, doc_type=doc_key) }}" class="przycisk przycisk--glowny przycisk--maly" style="background: #e67e22; border-color: #e67e22;">Tryb ręczny (TeX)</a>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="prawa-kolumna" style="display: flex; flex-direction: column; gap: 2rem;">
+    <!-- Audit log -->
+    <div class="karta">
+      <div class="karta__naglowek" style="background: var(--kolor-tlo);">
+        <h2 class="karta__tytul">Ostatnie modyfikacje (Log)</h2>
+      </div>
+      <div class="karta__tresc py-3">
+        {% if logs %}
+        <ul style="list-style: none; padding: 0; margin: 0; font-size: 0.85rem;">
+          {% for log in logs %}
+          <li style="margin-bottom: 1rem; border-bottom: 1px dashed var(--kolor-ramka); padding-bottom: 0.5rem;">
+            <strong style="color: var(--kolor-tekst);">{{ log.action }}</strong> — <span style="font-family: monospace;">{{ log.document_type }}</span>
+            <br>
+            <span style="color: var(--kolor-tekst-drugor);">
+              {{ log.created_at.strftime('%Y-%m-%d %H:%M') }} | Kto: {{ log.user.imie if log.user else 'System' }}
+            </span>
+            {% if log.details %}
+            <div style="font-style: italic; margin-top: 0.25rem;">{{ log.details }}</div>
+            {% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p style="font-size: 0.85rem; color: var(--kolor-tekst-drugor);">Brak historii dokumentów.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+</div>
+
+{% block scripts_extra %}
+<script>
+async function triggerAuto(docType) {
+    const btn = document.getElementById('btn-auto-' + docType);
+    const statusBox = document.getElementById('status-' + docType);
+    
+    btn.disabled = true;
+    statusBox.innerHTML = '<span style="color: var(--kolor-glowny);">Uruchamianie...</span>';
+
+    try {
+        let url = `/dokumenty/zapis/{{ zapis.id }}/generuj_auto/${docType}`;
+        if (docType === 'ZIP') {
+            url = `/dokumenty/zapis/{{ zapis.id }}/generuj_zip`;
+        }
+
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: {'X-Requested-With': 'XMLHttpRequest'}
+        });
+        const data = await res.json();
+        if(!res.ok) throw new Error(data.error || 'Błąd serwera');
+        
+        pollGenerateStatus(data.task_id, docType, btn, statusBox);
+    } catch(err) {
+        statusBox.innerHTML = `<span style="color: var(--kolor-blad);">Błąd: ${err.message}</span>`;
+        btn.disabled = false;
+    }
+}
+
+async function pollGenerateStatus(taskId, docType, btn, statusBox) {
+    try {
+        const res = await fetch(`/dokumenty/status/${taskId}`);
+        const data = await res.json();
+        
+        if(data.status === 'SUCCESS') {
+            statusBox.innerHTML = `<span style="color: var(--kolor-sukces);">✅ Gotowe! Pobieranie...</span>`;
+            btn.disabled = false;
+            window.location.href = data.download_url;
+            setTimeout(() => { statusBox.innerHTML = ''; window.location.reload(); }, 3000);
+        } else if(data.status === 'FAILURE') {
+            statusBox.innerHTML = `<span style="color: var(--kolor-blad);">❌ Błąd generacji.</span>`;
+            btn.disabled = false;
+            alert("Błąd integracji: " + data.error);
+        } else {
+            statusBox.innerHTML = `<span style="color: var(--kolor-glowny);">⏳ Trwa kompilacja...</span>`;
+            setTimeout(() => pollGenerateStatus(taskId, docType, btn, statusBox), 2000);
+        }
+    } catch(err) {
+        statusBox.innerHTML = `<span style="color: var(--kolor-blad);">Błąd sieci: ${err.message}</span>`;
+        btn.disabled = false;
+    }
+}
+</script>
+{% endblock %}
+{% endblock %}

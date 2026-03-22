@@ -4,11 +4,13 @@
 {% block naglowek %}Zakłady pracy{% endblock %}
 
 {% block naglowek_akcje %}
-{% if current_user.rola.value in ['ADMIN', 'UOPZ'] %}
-<a href="{{ url_for('management.nowy_zaklad') }}" class="przycisk przycisk--glowny">
-  <span aria-hidden="true">+</span> Dodaj zakład
-</a>
-{% endif %}
+<div style="display: flex; gap: 0.5rem; align-items: center;">
+  {% if current_user.rola.value in ['ADMIN', 'UOPZ'] %}
+  <a href="{{ url_for('management.nowy_zaklad') }}" class="przycisk przycisk--glowny">
+    <span aria-hidden="true">+</span> Dodaj zakład
+  </a>
+  {% endif %}
+</div>
 {% endblock %}
 
 {% block tresc %}

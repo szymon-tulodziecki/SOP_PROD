@@ -3,6 +3,7 @@
 {% block naglowek %}Zarządzanie użytkownikami{% endblock %}
 
 {% block naglowek_akcje %}
+<div style="display: flex; gap: 0.5rem; align-items: center;">
   <a href="{{ url_for('management.nowy_student') }}" class="przycisk przycisk--glowny">
     + Dodaj studenta
   </a>
@@ -12,6 +13,7 @@
   <a href="{{ url_for('management.import_csv') }}" class="przycisk przycisk--drugorzedny">
     Import z CSV
   </a>
+</div>
 {% endblock %}
 
 {% block tresc %}
