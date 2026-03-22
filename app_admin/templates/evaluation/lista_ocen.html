@@ -1,0 +1,44 @@
+{% extends "layouts/base_panel.html" %}
+
+{% block tytul %}Praktyki do oceny{% endblock %}
+{% block naglowek %}Praktyki oczekujące na ocenę{% endblock %}
+
+{% block tresc %}
+<div class="karta">
+  <div class="karta__tresc">
+    <div class="tabela-wrapper">
+      <table class="tabela">
+        <thead>
+          <tr>
+            <th scope="col">Student</th>
+            <th scope="col">Zakład pracy</th>
+            <th scope="col">Termin zakończenia</th>
+            <th scope="col">Godziny</th>
+            <th scope="col">Akcje</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in praktyki %}
+          <tr>
+            <td>
+              <div style="font-weight: 600;">{{ p.student.nazwisko }} {{ p.student.imie }}</div>
+              <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor);">Album: {{ p.student.numer_albumu }}</div>
+            </td>
+            <td>{{ p.zaklad.nazwa }}</td>
+            <td>{{ p.data_zakonczenia or 'Brak daty' }}</td>
+            <td><strong>{{ p.lacznie_godzin }} h</strong></td>
+            <td>
+              <a href="{{ url_for('evaluation.ocen_praktyke', id=p.id) }}" class="przycisk przycisk--glowny przycisk--maly">Wystaw ocenę</a>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="5" class="tabela--pusta">Brak praktyk oczekujących na ocenę. ✓</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

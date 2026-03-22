@@ -1,0 +1,98 @@
+{% extends "layouts/base_panel.html" %}
+
+{% block tytul %}Dzienniki praktyk{% endblock %}
+{% block naglowek %}Monitor dzienników{% endblock %}
+
+{% block tresc %}
+<div class="karta">
+  <div class="karta__naglowek">
+    <form class="pasek-filtrow" method="GET" action="{{ url_for('journal.lista_dziennikow') }}">
+      <div class="filtr-szukaj">
+        <span class="filtr-szukaj__ikona" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+        <input type="text" name="szukaj" value="{{ request.args.get('szukaj', '') }}" class="filtr-szukaj__input" placeholder="Szukaj po nazwisku studenta..." aria-label="Wyszukaj dziennik">
+      </div>
+      <button type="submit" class="przycisk przycisk--drugorzedny">Szukaj</button>
+    </form>
+  </div>
+  <div class="karta__tresc">
+    <div class="tabela-wrapper">
+      <table class="tabela">
+        <thead>
+          <tr>
+            <th scope="col">Student</th>
+            <th scope="col">Praktyka</th>
+            <th scope="col">Godziny</th>
+            <th scope="col">Wpisy</th>
+            <th scope="col">Ostatni wpis</th>
+            <th scope="col">Status</th>
+            <th scope="col">Akcje</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in dane %}
+          <tr {% if d.alert %}style="background: rgba(192, 57, 43, 0.05);"{% endif %}>
+            <td>
+              <div style="font-weight: 600;">{{ d.zapis.student.last_name }} {{ d.zapis.student.first_name }}</div>
+              <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor);">Album: {{ d.zapis.student.album_number or '-' }}</div>
+            </td>
+            <td>
+              <div>{{ d.zapis.praktyka.rok_uczelniany }}</div>
+              <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor);">{{ d.zapis.praktyka.semestr | capitalize }}</div>
+            </td>
+            <td>
+              <div style="font-weight: 600;">{{ d.zapis.total_hours_logged }} / {{ d.zapis.praktyka.wymiar_godzin }} h</div>
+              <div class="pasek-postep" style="margin-top: 4px;">
+                <div class="pasek-postep__wypelnienie {{ 'pasek-postep__wypelnienie--zakonczony' if d.zapis.total_hours_logged >= d.zapis.praktyka.wymiar_godzin else '' }}"
+                     style="width: {{ [((d.zapis.total_hours_logged / d.zapis.praktyka.wymiar_godzin) * 100)|round|int, 100]|min }}%;"></div>
+              </div>
+            </td>
+            <td><strong>{{ d.liczba_wpisow }}</strong></td>
+            <td>
+              {% if d.ostatni_wpis %}
+                {{ d.ostatni_wpis.strftime('%d.%m.%Y') }}
+              {% else %}
+                <span style="color: var(--kolor-tekst-trzeciorzed);">Brak wpisów</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if d.alert %}
+                <span class="status" style="background: #fef2f2; color: var(--kolor-blad);">
+                  ⚠ Przerwa &gt;3 dni
+                </span>
+              {% else %}
+                <span class="status status--in-progress">OK</span>
+              {% endif %}
+            </td>
+            <td>
+              <a href="{{ url_for('journal.dziennik_zapisu', id=d.zapis.id) }}" class="przycisk przycisk--drugorzedny przycisk--maly">Podgląd</a>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="7" class="tabela--pusta">Brak aktywnych dzienników.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if zapisy.pages > 1 %}
+    <nav class="paginacja" aria-label="Nawigacja po stronach">
+      <span class="paginacja__info">Strona {{ zapisy.page }} z {{ zapisy.pages }}</span>
+      <div class="paginacja__przyciski">
+        {% for strona in zapisy.iter_pages() %}
+          {% if strona %}
+            <a href="{{ url_for('journal.lista_dziennikow', strona=strona, szukaj=request.args.get('szukaj', '')) }}"
+               class="paginacja__przycisk {{ 'paginacja__przycisk--aktywny' if strona == zapisy.page else '' }}">
+              {{ strona }}
+            </a>
+          {% else %}
+            <span class="paginacja__separator">...</span>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </nav>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

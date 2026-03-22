@@ -1,0 +1,55 @@
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+app_admin/.venv/
+
+# Environment / secrets
+.env
+.env.*
+
+# Logs
+*.log
+logs/
+app_admin/logs/
+
+# Flask instance folder
+instance/
+.webassets-cache
+
+# Test / coverage
+.pytest_cache/
+coverage/
+htmlcov/
+
+# Migrations / DB
+migrations/
+*.sqlite3
+
+# Celery
+celerybeat-schedule
+
+# PDF / build artifacts
+pdf_output/
+app_admin/pdf_output/
+
+# Packaging / build
+build/
+dist/
+*.egg-info/
+pip-wheel-metadata/
+
+# IDEs
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+
+# Misc
+__pypackages__/
+*.pyc

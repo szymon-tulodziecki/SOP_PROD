@@ -1,0 +1,79 @@
+{% extends "layouts/base_student.html" %}
+{% block tytul %}Nowy wpis{% endblock %}
+{% block naglowek %}Nowy wpis do dziennika{% endblock %}
+
+{% block naglowek_akcje %}
+<a href="{{ url_for('dziennik.index') }}" class="przycisk przycisk--drugorzedny">Anuluj</a>
+{% endblock %}
+
+{% block tresc %}
+<div style="max-width: 640px;">
+
+  <!-- Info o postępie -->
+  <div class="karta" style="margin-bottom: 1.5rem; border-left: 4px solid var(--kolor-glowny);">
+    <div class="karta__tresc" style="display: flex; justify-content: space-between; align-items: center;">
+      <span style="font-weight: 600;">{{ zapis.praktyka.rok_uczelniany }} — {{ zapis.praktyka.semestr }}</span>
+      <span style="font-size: 0.9rem; color: var(--kolor-tekst-drugor);">
+        {{ zapis.total_hours_logged }} / {{ zapis.praktyka.wymiar_godzin }} h
+      </span>
+    </div>
+  </div>
+
+  <div class="karta">
+    <div class="karta__naglowek">
+      <h2 class="karta__tytul">Dane wpisu</h2>
+    </div>
+    <div class="karta__tresc">
+      <form method="POST" action="{{ url_for('dziennik.nowy_wpis') }}" novalidate>
+        {{ form.hidden_tag() }}
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+
+          <div class="pole-formularza {% if form.data_wpisu.errors %}pole-formularza--blad{% endif %}">
+            {{ form.data_wpisu.label(class="pole-formularza__etykieta") }}
+            {{ form.data_wpisu(class="pole-formularza__input", type="date") }}
+            {% for e in form.data_wpisu.errors %}
+              <span class="pole-formularza__blad">{{ e }}</span>
+            {% endfor %}
+          </div>
+
+          <div class="pole-formularza {% if form.liczba_godzin.errors %}pole-formularza--blad{% endif %}">
+            {{ form.liczba_godzin.label(class="pole-formularza__etykieta") }}
+            {{ form.liczba_godzin(class="pole-formularza__input", type="number", min="1", max="8", placeholder="1–8") }}
+            {% for e in form.liczba_godzin.errors %}
+              <span class="pole-formularza__blad">{{ e }}</span>
+            {% endfor %}
+          </div>
+
+        </div>
+
+        <div class="pole-formularza {% if form.efekt_id.errors %}pole-formularza--blad{% endif %}" style="margin-bottom: 1rem;">
+          {{ form.efekt_id.label(class="pole-formularza__etykieta") }}
+          {{ form.efekt_id(class="filtr-select", style="width: 100%;") }}
+          {% for e in form.efekt_id.errors %}
+            <span class="pole-formularza__blad">{{ e }}</span>
+          {% endfor %}
+        </div>
+
+        <div class="pole-formularza {% if form.opis.errors %}pole-formularza--blad{% endif %}" style="margin-bottom: 1.5rem;">
+          {{ form.opis.label(class="pole-formularza__etykieta") }}
+          {{ form.opis(class="pole-formularza__input", rows="5", placeholder="Opisz szczegółowo wykonane czynności...") }}
+          <span style="font-size: 0.78rem; color: var(--kolor-tekst-drugor);">
+            Opis powinien być szczegółowy — będzie widoczny w Dzienniku Praktyki (Załącznik 6).
+          </span>
+          {% for e in form.opis.errors %}
+            <span class="pole-formularza__blad">{{ e }}</span>
+          {% endfor %}
+        </div>
+
+        <div style="display: flex; gap: 0.5rem;">
+          <button type="submit" class="przycisk przycisk--glowny">Zapisz wpis</button>
+          <a href="{{ url_for('dziennik.index') }}" class="przycisk przycisk--drugorzedny">Anuluj</a>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

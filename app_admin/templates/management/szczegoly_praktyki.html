@@ -1,0 +1,116 @@
+{% extends "layouts/base_panel.html" %}
+
+{% block tytul %}Szczegóły praktyki{% endblock %}
+{% block naglowek %}Szczegóły praktyki{% endblock %}
+
+{% block naglowek_akcje %}
+<div class="akcje-panelu">
+  <a href="{{ url_for('management.lista_praktyk') }}" class="przycisk przycisk--drugorzedny">Powrót do listy</a>
+  {% if praktyka.status.value == 'OCZEKUJE_OCENY' and current_user.rola.value in ['ADMIN', 'UOPZ'] %}
+  <a href="{{ url_for('evaluation.ocen_praktyke', id=praktyka.id) }}" class="przycisk przycisk--glowny">Wystaw ocenę</a>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block tresc %}
+<div class="uklad-szczegolow" style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+  
+  <div class="lewa-kolumna" style="display: flex; flex-direction: column; gap: 2rem;">
+    
+    <!-- Dane podstawowe -->
+    <section class="karta">
+      <header class="karta__naglowek">
+        <h2 class="karta__tytul">Informacje o praktyce</h2>
+        <span class="status status--{{ praktyka.status.value|lower|replace('_', '-') }}">{{ praktyka.status.value|replace('_', ' ') }}</span>
+      </header>
+      <div class="karta__tresc">
+        <dl style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+          <div>
+            <dt style="font-size: 0.8rem; color: var(--kolor-tekst-drugor); margin-bottom: 0.25rem;">Student</dt>
+            <dd style="font-weight: 600;">{{ praktyka.student.imie }} {{ praktyka.student.nazwisko }}</dd>
+            <dd style="font-size: 0.9rem;">Album: {{ praktyka.student.numer_albumu or '-' }}</dd>
+          </div>
+          <div>
+            <dt style="font-size: 0.8rem; color: var(--kolor-tekst-drugor); margin-bottom: 0.25rem;">Zakład pracy</dt>
+            <dd style="font-weight: 600;">{{ praktyka.zaklad.nazwa }}</dd>
+            <dd style="font-size: 0.9rem;">{{ praktyka.zaklad.miasto }}</dd>
+          </div>
+          <div>
+            <dt style="font-size: 0.8rem; color: var(--kolor-tekst-drugor); margin-bottom: 0.25rem;">Termin</dt>
+            <dd>{{ praktyka.data_rozpoczecia }} — {{ praktyka.data_zakonczenia or '...' }}</dd>
+          </div>
+          <div>
+            <dt style="font-size: 0.8rem; color: var(--kolor-tekst-drugor); margin-bottom: 0.25rem;">Ścieżka</dt>
+            <dd>{{ praktyka.typ_sciezki.value }}</dd>
+          </div>
+        </dl>
+      </div>
+    </section>
+
+    <!-- Postęp godzin -->
+    <section class="karta">
+      <header class="karta__naglowek">
+        <h2 class="karta__tytul">Realizacja godzinowa</h2>
+      </header>
+      <div class="karta__tresc" style="padding: 2rem;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; align-items: flex-end;">
+          <span style="font-size: 2rem; font-weight: 700; color: var(--kolor-glowny);">{{ praktyka.lacznie_godzin }} <small style="font-size: 1rem; color: var(--kolor-tekst-drugor);">/ 160 h</small></span>
+          <span style="font-weight: 600; color: var(--kolor-sukces);">{{ (praktyka.lacznie_godzin / 1.6)|round|int }}%</span>
+        </div>
+        <div class="pasek-postep" style="height: 12px;">
+          <div class="pasek-postep__wypelnienie {{ 'pasek-postep__wypelnienie--zakonczony' if praktyka.lacznie_godzin >= 160 else '' }}" 
+               style="width: {% if praktyka.lacznie_godzin >= 160 %}100{% else %}{{ praktyka.lacznie_godzin / 1.6 }}{% endif %}%;"></div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <div class="prawa-kolumna" style="display: flex; flex-direction: column; gap: 2rem;">
+    
+    <!-- Opiekunowie -->
+    <section class="karta">
+      <header class="karta__naglowek">
+        <h2 class="karta__tytul">Opiekunowie</h2>
+      </header>
+      <div class="karta__tresc">
+        <div style="margin-bottom: 1.5rem;">
+          <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--kolor-tekst-drugor); margin-bottom: 0.5rem;">Uczelniany (UOPZ)</div>
+          <div style="font-weight: 600;">{{ praktyka.uopz.imie }} {{ praktyka.uopz.nazwisko }}</div>
+        </div>
+        <div>
+          <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--kolor-tekst-drugor); margin-bottom: 0.5rem;">Zakładowy (ZOPZ)</div>
+          <div style="font-weight: 600;">{{ praktyka.zopz.imie }} {{ praktyka.zopz.nazwisko }}</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Oceny (jeśli są) -->
+    {% if praktyka.ocena_sprawozdania or praktyka.ocena_uopz %}
+    <section class="karta">
+      <header class="karta__naglowek">
+        <h2 class="karta__tytul">Wyniki oceny</h2>
+      </header>
+      <div class="karta__tresc">
+        <dl style="display: flex; flex-direction: column; gap: 1rem;">
+          <div style="display: flex; justify-content: space-between;">
+            <dt>Sprawozdanie (S):</dt>
+            <dd style="font-weight: 700; color: var(--kolor-glowny);">{{ praktyka.ocena_sprawozdania or '-' }}</dd>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <dt>Ocena UOPZ (U):</dt>
+            <dd style="font-weight: 700; color: var(--kolor-glowny);">{{ praktyka.ocena_uopz or '-' }}</dd>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <dt>Ocena ZOPZ (Z):</dt>
+            <dd style="font-weight: 700; color: var(--kolor-glowny);">{{ praktyka.ocena_zopz or '-' }}</dd>
+          </div>
+        </dl>
+      </div>
+    </section>
+    {% endif %}
+
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,108 @@
+{% extends "layouts/base_panel.html" %}
+
+{% block tytul %}Dashboard{% endblock %}
+{% block naglowek %}Przegląd systemu{% endblock %}
+
+{% block naglowek_akcje %}
+  {% if current_user.role.value == 'ADMIN' %}
+  <div class="akcje-panelu" style="display: flex; gap: 0.5rem;">
+    <a href="{{ url_for('management.nowy_student') }}" class="przycisk przycisk--glowny">
+      <span aria-hidden="true">+</span> Dodaj studenta
+    </a>
+    <a href="{{ url_for('management.nowy_pracownik') }}" class="przycisk przycisk--glowny">
+      <span aria-hidden="true">+</span> Dodaj pracownika
+    </a>
+  </div>
+  {% endif %}
+{% endblock %}
+
+{% block tresc %}
+<section class="siatka-statystyk" aria-label="Kluczowe wskaźniki">
+
+  <div class="karta-stat">
+    <span class="karta-stat__ikona" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+    <span class="karta-stat__liczba">{{ statystyki.praktyki_aktywne }}</span>
+    <span class="karta-stat__etykieta">W trakcie realizacji</span>
+  </div>
+
+  <div class="karta-stat">
+    <span class="karta-stat__ikona" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>
+    <span class="karta-stat__liczba">{{ statystyki.oczekujace_oceny }}</span>
+    <span class="karta-stat__etykieta">Czeka na ocenę</span>
+  </div>
+
+  <div class="karta-stat">
+    <span class="karta-stat__ikona" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 2 4 4 6 4s6-2 6-4v-5"/></svg></span>
+    <span class="karta-stat__liczba">{{ statystyki.zakonczone }}</span>
+    <span class="karta-stat__etykieta">Zakończone</span>
+  </div>
+
+  <div class="karta-stat">
+    <span class="karta-stat__ikona" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+    <span class="karta-stat__liczba">{{ statystyki.liczba_studentow }}</span>
+    <span class="karta-stat__etykieta">Aktywnych studentów</span>
+  </div>
+
+</section>
+
+<div class="uklad-dashboardu" style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+
+  <section class="karta" aria-labelledby="tytul-ostatnie">
+    <header class="karta__naglowek">
+      <h2 id="tytul-ostatnie" class="karta__tytul">Ostatnie aktywności</h2>
+      <a href="{{ url_for('management.lista_praktyk') }}" class="przycisk przycisk--drugorzedny przycisk--maly">Wszystkie</a>
+    </header>
+    <div class="karta__tresc">
+      <div class="tabela-wrapper">
+        <table class="tabela">
+          <thead>
+            <tr>
+              <th scope="col">Student</th>
+              <th scope="col">Praktyka</th>
+              <th scope="col">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for z in ostatnie_zapisy %}
+            <tr>
+              <td>{{ z.student.first_name }} {{ z.student.last_name }}</td>
+              <td>{{ z.praktyka.rok_uczelniany }} ({{ z.praktyka.semestr }})</td>
+              <td>
+                <span class="status status--{{ z.status.value|lower|replace('_', '-') }}">
+                  {{ z.status.value|replace('_', ' ') }}
+                </span>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="3" class="tabela--pusta">Brak aktywnych zapisów.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="karta" aria-labelledby="tytul-oczekujace">
+    <header class="karta__naglowek">
+      <h2 id="tytul-oczekujace" class="karta__tytul">Aktywne praktyki</h2>
+    </header>
+    <div class="karta__tresc">
+      <ul class="lista-prosta" role="list" style="list-style: none; padding: 0;">
+        {% for z in ostatnie_zapisy %}
+        <li style="padding: 1rem 0; border-bottom: 1px solid var(--kolor-ramka); display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <span style="display: block; font-weight: 600;">{{ z.student.first_name }} {{ z.student.last_name }}</span>
+            <span style="font-size: 0.85rem; color: var(--kolor-tekst-drugor);">{{ z.praktyka.rok_uczelniany }}</span>
+          </div>
+        </li>
+        {% else %}
+        <li style="padding: 2rem; text-align: center; color: var(--kolor-tekst-drugor);">Brak zapisów.</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </section>
+
+</div>
+{% endblock %}

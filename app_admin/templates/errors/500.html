@@ -1,0 +1,17 @@
+{% extends "layouts/base_panel.html" %}
+
+{% block tytul %}Błąd 500{% endblock %}
+{% block naglowek %}Błąd wewnętrzny serwera{% endblock %}
+
+{% block tresc %}
+<div class="strona-bledu">
+  <div class="strona-bledu__kod" aria-hidden="true">500</div>
+  <h2 class="strona-bledu__tytul">Coś poszło nie tak</h2>
+  <p class="strona-bledu__opis">
+    Wystąpił nieoczekiwany błąd po stronie serwera. Administrator powinien sprawdzić logi.
+  </p>
+  <div style="margin-top: 1rem;">
+    <a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--glowny">Wróć do pulpitu</a>
+  </div>
+</div>
+{% endblock %}

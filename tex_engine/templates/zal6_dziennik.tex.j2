@@ -1,0 +1,74 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage{fontspec}
+\usepackage{polyglossia}
+\setmainlanguage{polish}
+\setmainfont{Latin Modern Roman}
+\usepackage{geometry}
+\geometry{margin=1.5cm}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\renewcommand{\arraystretch}{1.8}
+
+\begin{document}
+
+\noindent
+Akademia Nauk Stosowanych w Elblągu \\
+Instytut Informatyki Stosowanej im. Krzysztofa Brzeskiego
+
+\vspace{1.5em}
+\begin{center}
+\textbf{\large DZIENNIK PRAKTYKI ZAWODOWEJ}
+\end{center}
+\vspace{1em}
+
+\noindent Student: \textbf{<< student.nazwisko | s >>, << student.imie | s >>}
+\hfill Nr albumu: \textbf{<< student.numer_albumu | s >>} \\
+Kierunek: informatyka \hfill W zakresie: \textbf{<< sciezka | s >>} \\
+Studia: inżynierskie, stacjonarne \hfill Rok ak.:
+  \textbf{<< rok_akademicki | s >>} \\
+Miejsce odbywania praktyki: \textbf{<< firma.nazwa | s >>} \\
+\hspace*{2cm}{\small (<< firma.adres | s >>, << firma.miasto | s >>)} \\[1.5em]
+Data rozpoczęcia: \textbf{<< data_rozpoczecia | date >>}
+\hfill
+Data zakończenia: \textbf{<< data_zakonczenia | date >>}
+
+\vspace{1.5em}
+\noindent Łączna liczba przepracowanych godzin:
+  \textbf{<< lacznie_godzin | num >>} / 960
+
+\vspace{1.5em}
+
+\begin{longtable}{|>{\centering\arraybackslash}p{0.7cm}|>{\centering\arraybackslash}p{2.4cm}|p{7.6cm}|>{\centering\arraybackslash}p{1.8cm}|>{\centering\arraybackslash}p{1.5cm}|}
+\hline
+\textbf{Lp.} & \textbf{Data} & \centering\textbf{Opis wykonanych prac} & \textbf{Nr. efektu} & \textbf{Godz.} \\ \hline
+1 & 2 & \centering 3 & 4 & 5 \\ \hline
+\endfirsthead
+
+\hline
+\textbf{Lp.} & \textbf{Data} & \centering\textbf{Opis wykonanych prac} & \textbf{Nr. efektu} & \textbf{Godz.} \\ \hline
+\endhead
+
+\hline \endfoot
+\hline \endlastfoot
+
+<<% for wpis in wpisy %>>
+<< loop.index >> &
+<< wpis.data_wpisu | date >> &
+<< wpis.opis | s(max_length=400) >> &
+<< wpis.efekt_uczenia.id | num >> &
+<< wpis.liczba_godzin | num >> \\ \hline
+<<% endfor %>>
+
+\end{longtable}
+
+\vspace{2em}
+\noindent\hfill
+\begin{minipage}[t]{0.4\textwidth}
+\centering
+\dotfill \\
+{\small Data, podpis opiekuna zakładowego}
+\end{minipage}
+
+\end{document}

@@ -1,0 +1,31 @@
+{% extends "layouts/base.html" %}
+{% block tytul %}Zgłoszenia studentów{% endblock %}
+{% block tresc %}
+<h1>Zgłoszenia studentów</h1>
+<div class="karta">
+  <div class="tabela-wrapper">
+    <table class="tabela">
+      <thead><tr><th>Student</th><th>Praktyka</th><th>Firma</th><th>Data zgłoszenia</th><th>Akcje</th></tr></thead>
+      <tbody>
+        {% for z in zgloszenia.items %}
+        <tr>
+          <td>{{ z.student.first_name }} {{ z.student.last_name }}<br><small>{{ z.student.email }}</small></td>
+          <td>{{ z.praktyka.rok_uczelniany }} ({{ z.praktyka.semestr }})</td>
+          <td>{{ z.zaklad.name if z.zaklad else '-' }}</td>
+          <td>{{ z.enrolled_at.strftime('%Y-%m-%d %H:%M') if z.enrolled_at else '-' }}</td>
+          <td>
+            <a href="{{ url_for('management.przypisz_uopz', id=z.id) }}" class="przycisk">Przypisz UOPZ</a>
+            <form method="post" action="{{ url_for('management.zatwierdz_zaklad', id=z.id) }}" style="display:inline">
+              {{ csrf_form.hidden_tag() if csrf_form else '' }}
+              <button class="przycisk przycisk--drugorzedny" type="submit">Zatwierdź zakład</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5">Brak zgłoszeń.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

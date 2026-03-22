@@ -1,0 +1,69 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage{fontspec}
+\usepackage{polyglossia}
+\setmainlanguage{polish}
+\setmainfont{Latin Modern Roman}
+\usepackage{geometry}
+\geometry{margin=2cm}
+
+\begin{document}
+
+\noindent
+Akademia Nauk Stosowanych w Elblągu \\
+Instytut Informatyki Stosowanej im. Krzysztofa Brzeskiego
+
+\vspace{2em}
+
+\noindent Student: \textbf{<< student.nazwisko | s >>, << student.imie | s >>} \\
+Nr albumu: \textbf{<< student.numer_albumu | s >>} \\
+Kierunek: informatyka \\
+Specjalność: \textbf{<< student.specjalnosc | s >>} \\
+Studia: inżynierskie stacjonarne \\
+Rok ak.: \textbf{<< rok_akademicki | s >>}
+
+\vspace{3em}
+
+\begin{center}
+\textbf{\large SPRAWOZDANIE STUDENTA} \\[0.5em]
+\textbf{\large Z PRAKTYKI ZAWODOWEJ} \\[1em]
+odbytej w \textbf{<< firma.nazwa | s >>} \\
+{\small (<< firma.adres | s >>, << firma.miasto | s >>)}
+\end{center}
+
+\vspace{2em}
+
+\noindent \textbf{I. CHARAKTERYSTYKA MIEJSCA ODBYWANIA PRAKTYKI} \\
+{\small (Krótki opis instytucji, w której odbywała się praktyka zawodowa)}
+
+\vspace{1em}
+\noindent << charakterystyka_miejsca | s(max_length=1200) >>
+
+\vspace{2em}
+
+\noindent \textbf{II. OPIS I ANALIZA WYKONYWANYCH PRAC} \\
+{\small (Syntetyczny opis wykonanych prac)}
+
+\vspace{1em}
+\noindent << opis_prac | s(max_length=2000) >>
+
+\vspace{2em}
+
+\noindent \textbf{III. WIEDZA I UMIEJĘTNOŚCI UZYSKANE W TRAKCIE PRAKTYKI} \\
+{\small (Samoocena w zakresie nabytych kompetencji oraz osiągniętych efektów uczenia się)}
+
+\vspace{1em}
+<<% for efekt_opis in efekty_opisy %>>
+\noindent \textbf{Efekt \textbf{<< loop.index | num >>}:} << efekt_opis | s(max_length=800) >>
+
+\medskip
+<<% endfor %>>
+
+\vspace{3em}
+\noindent\hfill
+\begin{minipage}[t]{0.45\textwidth}
+\centering
+\dotfill \\
+{\small data i podpis studenta}
+\end{minipage}
+
+\end{document}

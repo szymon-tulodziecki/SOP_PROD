@@ -1,0 +1,28 @@
+{% extends "layouts/base_student.html" %}
+{% block tytul %}Pulpit{% endblock %}
+{% block naglowek %}Witaj, {{ current_user.first_name }}{% endblock %}
+
+{% block tresc %}
+
+{% if not zapis %}
+  <div class="karta" style="max-width:560px; text-align:center; padding:3rem 2rem;">
+    <div style="font-size:3rem; margin-bottom:1rem;">📋</div>
+    <h2 style="font-size:1.25rem; font-weight:600; margin-bottom:0.5rem;">Nie jesteś jeszcze zapisany na praktykę</h2>
+    <p style="color:var(--kolor-tekst-drugor); margin-bottom:1.5rem;">Zapisz się do aktywnej praktyki żeby zacząć prowadzić dziennik.</p>
+    <a href="{{ url_for('praktyki.lista') }}" class="przycisk przycisk--glowny">Zobacz dostępne praktyki</a>
+  </div>
+{% else %}
+  <section class="siatka-statystyk" aria-label="Twój postęp">
+    <div class="karta-stat"><span class="karta-stat__liczba">{{ zapis.total_hours_logged }}</span><span class="karta-stat__etykieta">Zalogowanych godzin</span></div>
+    <div class="karta-stat"><span class="karta-stat__liczba">{{ zapis.praktyka.wymiar_godzin }}</span><span class="karta-stat__etykieta">Wymaganych godzin</span></div>
+    <div class="karta-stat"><span class="karta-stat__liczba">{{ zapis.wpisy_dziennika | length }}</span><span class="karta-stat__etykieta">Wpisów w dzienniku</span></div>
+    <div class="karta-stat">{% set procent = 0 if not zapis.praktyka.wymiar_godzin else [(zapis.total_hours_logged / zapis.praktyka.wymiar_godzin * 100)|round|int, 100]|min %}<span class="karta-stat__liczba">{{ procent }}%</span><span class="karta-stat__etykieta">Ukończono</span></div>
+  </section>
+
+  <div class="karta" style="margin-bottom:2rem;"><div class="karta__tresc"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;"><span style="font-weight:600;">Postęp praktyki — {{ zapis.praktyka.rok_uczelniany }} ({{ zapis.praktyka.semestr }})</span><span style="font-size:0.85rem; color:var(--kolor-tekst-drugor);">{{ zapis.total_hours_logged }} / {{ zapis.praktyka.wymiar_godzin }} h</span></div><div class="pasek-postep" style="height:12px;"><div class="pasek-postep__wypelnienie" style="width:{{ procent }}%;"></div></div></div></div>
+
+  <div style="display:flex; gap:1rem; flex-wrap:wrap;"><a href="{{ url_for('dziennik.nowy_wpis') }}" class="przycisk przycisk--glowny">Dodaj wpis do dziennika</a><a href="{{ url_for('dziennik.index') }}" class="przycisk przycisk--drugorzedny">Przeglądaj dziennik</a></div>
+
+{% endif %}
+
+{% endblock %}

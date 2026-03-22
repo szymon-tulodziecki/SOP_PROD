@@ -1,0 +1,87 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage{fontspec}
+\usepackage{polyglossia}
+\setmainlanguage{polish}
+\setmainfont{Latin Modern Roman}
+\usepackage{geometry}
+\geometry{margin=1.5cm}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{makecell}
+\renewcommand{\arraystretch}{1.5}
+
+\begin{document}
+
+\begin{flushright}
+Zał. nr 4
+\end{flushright}
+
+\vspace{-1em}
+\begin{center}
+\textbf{\large POTWIERDZENIE UZYSKANIA} \\[0.5em]
+\textbf{\large EFEKTÓW UCZENIA SIĘ W RAMACH} \\[0.5em]
+\textbf{\large PRAKTYKI ZAWODOWEJ}
+\end{center}
+
+\vspace{1em}
+
+\noindent Student/ka: \textbf{<< student.nazwisko | s >>, << student.imie | s >>} \\
+Nr albumu: \textbf{<< student.numer_albumu | s >>} \\
+Kierunek studiów: Informatyka \hfill Specjalność: \textbf{<< student.specjalnosc | s >>} \\
+
+\vspace{1em}
+\noindent W ramach praktyki zawodowej zrealizowanej w wymiarze
+\textbf{<< lacznie_godzin | num >>} godzin
+uzyskał/a~/ nie uzyskał/a~* zakładane efekty uczenia się:
+
+\vspace{1em}
+
+\begin{longtable}{|c|p{11cm}|c|}
+\hline
+\textbf{Lp.} & \textbf{Efekty uczenia się} & \textbf{Potwierdzenie} \\ \hline
+\endfirsthead
+\hline
+\textbf{Lp.} & \textbf{Efekty uczenia się} & \textbf{Potwierdzenie} \\ \hline
+\endhead
+\hline \endfoot
+\hline \endlastfoot
+
+<<% for ocena in oceny %>>
+\textbf{<< "%02d"|format(ocena.efekt.id) >>} &
+<< ocena.efekt.opis | s(max_length=500) >> &
+\makecell{<<% if ocena.wynik.value == 'ACHIEVED' %>>
+  \textbf{uzyskał/a} \\ nie uzyskał/a~*
+<<% elif ocena.wynik.value == 'PARTIALLY_ACHIEVED' %>>
+  uzyskał/a \\ \textbf{częściowo}~*
+<<% else %>>
+  uzyskał/a \\ \textbf{nie uzyskał/a}~*
+<<% endif %>>
+} \\ \hline
+<<% endfor %>>
+
+\end{longtable}
+
+\vspace{1em}
+\noindent {\footnotesize * niewłaściwe skreślić}
+
+\vspace{2em}
+\noindent \textbf{Uwagi UOPZ:} \\[0.5em]
+<< uwagi_uopz | s(max_length=800) >>
+
+\vspace{2em}
+\noindent\hfill
+\begin{minipage}[t]{0.45\textwidth}
+\centering
+\dotfill \\
+{\small Data, podpis i pieczęć zakładu pracy}
+\end{minipage}
+
+\vspace{1.5em}
+\noindent\hfill
+\begin{minipage}[t]{0.45\textwidth}
+\centering
+\dotfill \\
+{\small Data, podpis opiekuna uczelnianego}
+\end{minipage}
+
+\end{document}

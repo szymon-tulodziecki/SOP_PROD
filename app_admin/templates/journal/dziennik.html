@@ -1,0 +1,174 @@
+{% extends "layouts/base_panel.html" %}
+
+{% block tytul %}Dziennik praktyki{% endblock %}
+{% block naglowek %}Dziennik praktyki{% endblock %}
+
+{% block naglowek_akcje %}
+<div style="display: flex; gap: 0.5rem; align-items: center;">
+  <a href="{{ url_for('journal.lista_dziennikow') }}" class="przycisk przycisk--drugorzedny">Powrót do listy</a>
+
+  <button id="btn-pdf" onclick="zlecPDF()" class="przycisk przycisk--glowny">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -1px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    <span id="btn-pdf-label">Pobierz PDF</span>
+  </button>
+
+  <span id="pdf-status" style="font-size: 0.85rem; color: var(--kolor-tekst-drugor); display: none;"></span>
+</div>
+{% endblock %}
+
+{% block tresc %}
+<div style="max-width: 1000px; margin: 0 auto;">
+
+  <!-- Info o zapisie -->
+  <div class="karta" style="margin-bottom: 2rem; border-left: 4px solid var(--kolor-glowny);">
+    <div class="karta__tresc">
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem;">
+        <div>
+          <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--kolor-tekst-drugor); margin-bottom: 0.25rem;">Student</div>
+          <div style="font-weight: 600;">{{ zapis.student.first_name }} {{ zapis.student.last_name }}</div>
+          <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor);">Album: {{ zapis.student.album_number or '-' }}</div>
+        </div>
+        <div>
+          <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--kolor-tekst-drugor); margin-bottom: 0.25rem;">Praktyka</div>
+          <div style="font-weight: 600;">{{ zapis.praktyka.rok_uczelniany }}</div>
+          <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor);">Semestr {{ zapis.praktyka.semestr }}</div>
+        </div>
+        <div>
+          <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--kolor-tekst-drugor); margin-bottom: 0.25rem;">Postęp godzin</div>
+          <div style="font-weight: 700; font-size: 1.2rem; color: var(--kolor-glowny);">{{ suma_godzin }} / {{ zapis.praktyka.wymiar_godzin }} h</div>
+          <div class="pasek-postep" style="margin-top: 0.5rem; height: 8px;">
+            <div class="pasek-postep__wypelnienie {{ 'pasek-postep__wypelnienie--zakonczony' if suma_godzin >= zapis.praktyka.wymiar_godzin else '' }}"
+                 style="width: {{ [((suma_godzin / zapis.praktyka.wymiar_godzin) * 100)|round|int, 100]|min }}%;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alerty przerw -->
+  {% if przerwy %}
+  <div style="margin-bottom: 2rem;">
+    {% for p in przerwy %}
+    <div class="komunikat komunikat--danger" style="margin-bottom: 0.5rem;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 2px;">
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+        <line x1="12" y1="9" x2="12" y2="13"/>
+        <line x1="12" y1="17" x2="12.01" y2="17"/>
+      </svg>
+      <span>Przerwa <strong>{{ p.dni_roboczych }} dni roboczych</strong> między {{ p.od.strftime('%d.%m') }} a {{ p.do.strftime('%d.%m.%Y') }}</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Wpisy -->
+  <div class="karta">
+    <div class="karta__naglowek">
+      <h3 class="karta__tytul">Wpisy dziennika ({{ wpisy|length }})</h3>
+    </div>
+    <div class="karta__tresc" style="padding: 0;">
+      <div class="tabela-wrapper">
+        <table class="tabela">
+          <thead>
+            <tr>
+              <th scope="col" style="width: 110px;">Data</th>
+              <th scope="col" style="width: 80px;">Godziny</th>
+              <th scope="col">Opis czynności</th>
+              <th scope="col" style="width: 70px;">Efekt</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for w in wpisy %}
+            <tr>
+              <td><strong>{{ w.entry_date.strftime('%d.%m.%Y') }}</strong></td>
+              <td style="text-align: center;">{{ w.duration_hours }} h</td>
+              <td style="font-size: 0.85rem; line-height: 1.5;">{{ w.description }}</td>
+              <td style="text-align: center;">
+                <span style="font-size: 0.75rem; background: var(--kolor-tlo); padding: 0.2rem 0.4rem; border-radius: 4px; font-weight: 600;">
+                  {{ w.efekt.kod if w.efekt else '-' }}
+                </span>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="4" class="tabela--pusta">Student nie dodał jeszcze żadnych wpisów.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const ZAPIS_ID  = "{{ zapis.id }}";
+const URL_ZLEC  = `/dzienniki/zapis/${ZAPIS_ID}/pdf`;
+const URL_STATUS = (taskId) => `/dzienniki/zapis/${ZAPIS_ID}/pdf/status/${taskId}`;
+const URL_POBIERZ = (taskId) => `/dzienniki/zapis/${ZAPIS_ID}/pdf/pobierz/${taskId}`;
+
+const btn        = document.getElementById('btn-pdf');
+const btnLabel   = document.getElementById('btn-pdf-label');
+const statusEl   = document.getElementById('pdf-status');
+
+let pollInterval = null;
+
+function zlecPDF() {
+  btn.disabled  = true;
+  btnLabel.textContent = 'Generowanie...';
+  statusEl.style.display = 'inline';
+  statusEl.textContent   = 'Zlecam generowanie PDF...';
+
+  fetch(URL_ZLEC, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrf() },
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.task_id) {
+      statusEl.textContent = 'Kompilacja w toku...';
+      pollInterval = setInterval(() => sprawdzStatus(data.task_id), 2000);
+    } else {
+      blad('Błąd zlecenia: ' + (data.error || 'nieznany'));
+    }
+  })
+  .catch(() => blad('Błąd połączenia z serwerem.'));
+}
+
+function sprawdzStatus(taskId) {
+  fetch(URL_STATUS(taskId))
+  .then(r => r.json())
+  .then(data => {
+    if (data.status === 'SUCCESS') {
+      clearInterval(pollInterval);
+      statusEl.textContent = 'Gotowe!';
+      btnLabel.textContent = 'Pobierz PDF';
+      btn.disabled = false;
+      // Automatyczne pobranie
+      window.location.href = URL_POBIERZ(taskId);
+    } else if (data.status === 'FAILURE') {
+      clearInterval(pollInterval);
+      blad('Błąd kompilacji: ' + (data.error || 'sprawdź logi workera'));
+    } else {
+      const progress = data.progress || 0;
+      statusEl.textContent = `Kompilacja... ${progress}%`;
+    }
+  })
+  .catch(() => {});
+}
+
+function blad(msg) {
+  clearInterval(pollInterval);
+  btn.disabled = false;
+  btnLabel.textContent = 'Pobierz PDF';
+  statusEl.textContent = msg;
+  statusEl.style.color = 'var(--kolor-blad)';
+}
+
+function getCsrf() {
+  const meta = document.querySelector('meta[name="csrf-token"]');
+  return meta ? meta.getAttribute('content') : '';
+}
+</script>
+{% endblock %}

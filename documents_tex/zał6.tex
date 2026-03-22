@@ -1,0 +1,79 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[polish]{babel}
+\usepackage{geometry}
+\geometry{margin=1.5cm}
+\usepackage{longtable}
+\usepackage{array}
+
+\begin{document}
+
+\noindent
+Akademia Nauk Stosowanych w Elblągu \\
+Instytut Informatyki Stosowanej im. Krzysztofa Brzeskiego
+
+\vspace{1.5em}
+\begin{center}
+\textbf{\large DZIENNIK PRAKTYKI ZAWODOWEJ}
+\end{center}
+\vspace{1em}
+
+\noindent Student: \dotfill\ Nr albumu: \dotfill \\
+Kierunek: informatyka \hfill W zakresie: \dotfill \\
+Studia: inżynierskie, stacjonarne \hfill Rok ak.: 20\dots\dots / 20\dots\dots \\
+Miejsce odbywania praktyki: \dotfill \\
+\dotfill \\
+{\small (nazwa instytucji – zakładu pracy)} \\[1.5em]
+Data rozpoczęcia praktyki: \dotfill \hfill Data zakończenia praktyki: \dotfill
+
+\vspace{1.5em}
+\noindent \textbf{WYKAZ ZAŁĄCZNIKÓW:} \\
+\dotfill \\
+\dotfill 
+
+\vspace{1.5em}
+
+% Rozciągnięcie wierszy w tabeli, aby było miejsce na odręczne wpisy (jeśli drukowane)
+\renewcommand{\arraystretch}{2}
+
+\begin{longtable}{|>{\centering\arraybackslash}p{1.5cm}|>{\centering\arraybackslash}p{2.5cm}|p{7.5cm}|>{\centering\arraybackslash}p{2.5cm}|>{\centering\arraybackslash}p{3cm}|}
+\hline
+\textbf{Dzień} & \textbf{Data} & \centering\textbf{Opis wykonanych prac} & \textbf{Nr. efektów uczenia się} & \textbf{Podpis osoby nadzorującej} \\ \hline
+1 & 2 & \centering 3 & 4 & 5 \\ \hline
+\endfirsthead
+
+% To pojawi się na każdej kolejnej stronie po przełamaniu
+\hline
+\textbf{Dzień} & \textbf{Data} & \centering\textbf{Opis wykonanych prac} & \textbf{Nr. efektów uczenia się} & \textbf{Podpis osoby nadzorującej} \\ \hline
+1 & 2 & \centering 3 & 4 & 5 \\ \hline
+\endhead
+
+% Stopka na dole strony, jeśli tabela przechodzi na kolejną kartkę
+\hline
+\endfoot
+
+% Ostatnia stopka (na samym końcu tabeli)
+\hline
+\endlastfoot
+
+% Puste wiersze przygotowane do wypełnienia (dodaj ich więcej w razie potrzeby)
+ & & & & \\ \hline
+ & & & & \\ \hline
+ & & & & \\ \hline
+ & & & & \\ \hline
+ & & & & \\ \hline
+ & & & & \\ \hline
+ & & & & \\ \hline
+ & & & & \\ \hline
+ & & & & \\ \hline
+ & & & & \\ \hline
+ & & & & \\ \hline
+ & & & & \\ \hline
+ & & & & \\ \hline
+ & & & & \\ \hline
+ & & & & \\ \hline
+
+\end{longtable}
+
+\end{document}

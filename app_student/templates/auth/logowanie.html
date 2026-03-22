@@ -1,0 +1,19 @@
+{% extends "layouts/base_student.html" %}
+{% block tytul %}Logowanie{% endblock %}
+{% block tresc %}
+<div style="max-width:520px; margin: 2rem auto;">
+  <h2>Panel studenta</h2>
+  <form method="POST" novalidate>
+    {{ form.hidden_tag() }}
+    <div class="pole-formularza">
+      {{ form.email.label }}
+      {{ form.email(class="pole-formularza__input") }}
+    </div>
+    <div class="pole-formularza">
+      {{ form.haslo.label }}
+      {{ form.haslo(class="pole-formularza__input") }}
+    </div>
+    <button type="submit" class="przycisk przycisk--glowny">Zaloguj się</button>
+  </form>
+</div>
+{% endblock %}

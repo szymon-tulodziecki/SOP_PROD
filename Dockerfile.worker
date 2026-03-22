@@ -1,0 +1,70 @@
+# Dockerfile.worker
+# Celery worker z minimalną instalacją TeX Live (lualatex + polskie znaki)
+FROM python:3.12-slim
+
+# Zmienne środowiskowe
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    DEBIAN_FRONTEND=noninteractive \
+    PATH="/usr/local/texlive/bin/x86_64-linux:$PATH"
+
+WORKDIR /app
+
+# 1. Zależności systemowe potrzebne do instalacji TeX Live
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    wget \
+    perl \
+    fontconfig \
+    && rm -rf /var/lib/apt/lists/*
+
+# 2. Instalacja minimalnego TeX Live przez tlmgr
+#    Używamy scheme-minimal i doinstalowujemy tylko to co potrzebne
+RUN wget -qO /tmp/install-tl.tar.gz \
+        https://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz && \
+    mkdir /tmp/install-tl && \
+    tar -xzf /tmp/install-tl.tar.gz -C /tmp/install-tl --strip-components=1 && \
+    echo "selected_scheme scheme-minimal" > /tmp/texlive.profile && \
+    echo "TEXDIR /usr/local/texlive" >> /tmp/texlive.profile && \
+    echo "TEXMFLOCAL /usr/local/texlive/texmf-local" >> /tmp/texlive.profile && \
+    echo "TEXMFSYSVAR /usr/local/texlive/texmf-var" >> /tmp/texlive.profile && \
+    echo "TEXMFSYSCONFIG /usr/local/texlive/texmf-config" >> /tmp/texlive.profile && \
+    echo "tlpdbopt_install_docfiles 0" >> /tmp/texlive.profile && \
+    echo "tlpdbopt_install_srcfiles 0" >> /tmp/texlive.profile && \
+    /tmp/install-tl/install-tl --profile=/tmp/texlive.profile && \
+    rm -rf /tmp/install-tl /tmp/install-tl.tar.gz /tmp/texlive.profile
+
+# 3. Doinstalowanie niezbędnych pakietów TeX
+RUN tlmgr install \
+    luatex \
+    luatexbase \
+    lualatex-math \
+    babel-polish \
+    babel \
+    polyglossia \
+    fontspec \
+    geometry \
+    tabularx \
+    booktabs \
+    longtable \
+    etoolbox \
+    xcolor \
+    graphicx \
+    hyperref \
+    microtype \
+    parskip \
+    enumitem \
+    fancyhdr \
+    lastpage \
+    unicode-math \
+    lm \
+    lm-math
+
+# 4. Zależności Pythona
+COPY app_admin/requirements.txt /app/requirements.txt
+RUN pip install --no-cache-dir -r /app/requirements.txt
+
+# 5. Kod aplikacji
+COPY . .
+
+# 6. Uruchomienie workera Celery
+CMD ["celery", "-A", "celery_app.celery", "worker", "--loglevel=info", "--concurrency=2"]

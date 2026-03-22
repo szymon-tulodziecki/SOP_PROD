@@ -1,0 +1,98 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[polish]{babel}
+\usepackage{geometry}
+\geometry{margin=1.5cm}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{ragged2e} % <--- Kluczowe dla dzielenia wyrazów w wyśrodkowanych kolumnach
+
+% Zmniejszenie odstępów wewnątrz komórek tabeli
+\setlength{\tabcolsep}{4pt}
+
+% Definicja kolumny: \Centering włącza dzielenie, \hspace{0pt} pozwala dzielić pierwszy wyraz!
+\newcolumntype{C}{>{\Centering\arraybackslash\hspace{0pt}}p{1.9cm}}
+
+\begin{document}
+
+\begin{center}
+\textbf{\large Kwestionariusz ankiety oceniający przebieg praktyk zawodowych} \\[0.5em]
+\textbf{\large realizowanych w ramach programów studiów} \\[0.5em]
+\textbf{\large w Instytucie Informatyki Stosowanej im. K. Brzeskiego w Elblągu}
+\end{center}
+
+\vspace{1em}
+
+\noindent W trosce o stałe podnoszenie jakości przebiegu praktyk zawodowych zwracamy się do Pani/Pana z prośbą o wypełnienie anonimowej ankiety dotyczącej praktyk zawodowych, w której należy określić w jakim stopniu zgadza się Pan/Pani z poniższymi stwierdzeniami. 
+
+\vspace{0.5em}
+\noindent Prosimy zaznaczyć przy każdym pytaniu \textbf{X} w wybranym polu odpowiedzi.
+
+\vspace{1em}
+
+\renewcommand{\arraystretch}{1.5}
+\begin{longtable}{|c|p{6.5cm}|C|C|C|C|C|}
+\hline
+\textbf{Lp.} & & 
+\textbf{zdecydowanie tak} & 
+\textbf{raczej tak} & 
+\textbf{trudno powiedzieć} & 
+\textbf{raczej nie} & 
+\textbf{zdecydowanie nie} \\ \hline
+\endfirsthead
+
+\hline
+\textbf{Lp.} & & 
+\textbf{zdecydowanie tak} & 
+\textbf{raczej tak} & 
+\textbf{trudno powiedzieć} & 
+\textbf{raczej nie} & 
+\textbf{zdecydowanie nie} \\ \hline
+\endhead
+
+1. & Poznałam/poznałem zasady funkcjonowania instytucji, w której odbywałam/odbywałem praktyki zawodowe. & & & & & \\ \hline
+2. & Poznałam/poznałem strukturę oraz regulamin organizacyjny instytucji, w której odbywałam/odbywałem praktyki zawodowe. & & & & & \\ \hline
+3. & Praktyki zawodowe umożliwiły mi pełną realizację ramowego programu praktyk zawodowych przewidzianego w ramach mojego kierunku studiów. & & & & & \\ \hline
+4. & Podczas praktyk zawodowych zwracano uwagę na przestrzeganie zasad etyki i tajemnicy zawodowej. & & & & & \\ \hline
+5. & Podczas praktyk miałam/miałem możliwość praktycznego zastosowania wiedzy teoretycznej zdobytej na zajęciach. & & & & & \\ \hline
+6. & Praktyki zawodowe przyczyniły się do pogłębienia mojej wiedzy i umiejętności zdobytych w trakcie studiów. & & & & & \\ \hline
+7. & Mogłem liczyć na wsparcie merytoryczne Opiekuna zakładowego praktyk. & & & & & \\ \hline
+8. & Mogłem liczyć na wsparcie merytoryczne Opiekuna uczelnianego praktyk. & & & & & \\ \hline
+9. & Opiekun zakładowy odpowiedzialny za praktyki zawodowe w miejscu ich odbywania potrafił prawidłowo zorganizować ich przebieg. & & & & & \\ \hline
+10. & Podczas praktyk zawodowych miałam/miałem możliwość pozyskiwania materiałów niezbędnych do przygotowania mojej pracy dyplomowej. & & & & & \\ \hline
+11. & Praktyki zawodowe rozwinęły moje umiejętności skutecznego komunikowania się w sytuacjach zawodowych i pracy w zespole. & & & & & \\ \hline
+12. & Praktyki zawodowe nauczyły mnie samodzielności i odpowiedzialności podczas wykonywania pracy. & & & & & \\ \hline
+13. & Liczba godzin realizowana w ramach praktyk zawodowych jest wystarczająca. & & & & & \\ \hline
+14. & Czy po zakończeniu praktyki zawodowej chciałaby/chciałby Pani/Pan współpracować z instytucją, w której Pani/Pan zrealizowała/zrealizował praktykę? & & & & & \\ \hline
+\end{longtable}
+
+\vspace{1em}
+\noindent \textbf{Dodatkowe uwagi dotyczące przebiegu praktyki zawodowej} \\
+\dotfill \\
+\dotfill \\
+\dotfill
+
+\vspace{2em}
+\begin{center}
+\renewcommand{\arraystretch}{1.5}
+\begin{tabular}{|p{7cm}|p{7cm}|}
+\hline
+\multicolumn{2}{|c|}{\textbf{Metryczka}} \\ \hline
+Rok akademicki & \\ \hline
+Kierunek studiów & \\ \hline
+Forma studiów & stacjonarne / niestacjonarne* \\ \hline
+Semestr studiów & \\ \hline
+Liczba godzin zrealizowanej praktyki zawodowej & \\ \hline
+\end{tabular}
+\end{center}
+
+\vspace{0.5em}
+\noindent \footnotesize{* niewłaściwe skreślić} \normalsize
+
+\vspace{2em}
+\begin{center}
+\textbf{Dziękujemy za udział w badaniu}
+\end{center}
+
+\end{document}

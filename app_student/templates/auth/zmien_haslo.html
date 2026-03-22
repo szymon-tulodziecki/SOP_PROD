@@ -1,0 +1,13 @@
+{% extends "layouts/base_student.html" %}
+{% block tytul %}Ustaw hasło{% endblock %}
+{% block tresc %}
+<div style="max-width:520px; margin:2rem auto;">
+  <h2>Ustaw nowe hasło</h2>
+  <form method="POST" novalidate>
+    {{ form.hidden_tag() }}
+    <div class="pole-formularza">{{ form.nowe_haslo.label }}{{ form.nowe_haslo(class="pole-formularza__input") }}</div>
+    <div class="pole-formularza">{{ form.potwierdzenie.label }}{{ form.potwierdzenie(class="pole-formularza__input") }}</div>
+    <button type="submit" class="przycisk przycisk--glowny">Ustaw hasło</button>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  <meta name="description" content="Panel administracyjny — System Praktyk Zawodowych IIS ANS Elbląg">
+  <title>{% block tytul %}Panel{% endblock %} — IIS ANS Elbląg</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
+  {% block head_extra %}{% endblock %}
+</head>
+<body class="panel-body">
+
+  <a href="#main-content" class="skip-link">Przejdź do głównej treści</a>
+
+  <nav class="sidebar" aria-label="Nawigacja główna panelu">
+    <div class="sidebar__naglowek">
+      <div class="branding__logo-kontener" style="max-width: 140px; margin-bottom: 10px;">
+        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="ANS Elbląg" class="sidebar__logo" style="max-width: 100%; height: auto;">
+      </div>
+      <span class="sidebar__system-label">Panel administracyjny</span>
+    </div>
+
+    <div class="sidebar__uzytkownik" aria-label="Zalogowany użytkownik">
+      <div class="sidebar__uzytkownik-avatar" aria-hidden="true">
+        {{ current_user.imie[0] }}{{ current_user.nazwisko[0] }}
+      </div>
+      <div class="sidebar__uzytkownik-info">
+        <span class="sidebar__uzytkownik-imie">{{ current_user.imie }} {{ current_user.nazwisko }}</span>
+        <span class="sidebar__uzytkownik-rola">
+          {% if current_user.rola.value == 'ADMIN' %}Administrator
+          {% elif current_user.rola.value == 'UOPZ' %}Opiekun uczelniany
+          {% elif current_user.rola.value == 'ZOPZ' %}Opiekun zakładowy
+          {% endif %}
+        </span>
+      </div>
+    </div>
+
+    <ul class="sidebar__menu" role="list">
+      <li class="sidebar__menu-pozycja">
+        <a href="{{ url_for('dashboard.index') }}" class="sidebar__link {% if request.endpoint == 'dashboard.index' %}sidebar__link--aktywny{% endif %}" {% if request.endpoint == 'dashboard.index' %}aria-current="page"{% endif %}>
+          <span class="sidebar__ikona" aria-hidden="true">⊞</span> Przegląd
+        </a>
+      </li>
+      <li class="sidebar__menu-sekcja" aria-hidden="true">Praktyki</li>
+      <li class="sidebar__menu-pozycja">
+        <a href="{{ url_for('management.lista_praktyk') }}" class="sidebar__link {% if 'lista_praktyk' in request.endpoint %}sidebar__link--aktywny{% endif %}" {% if 'lista_praktyk' in request.endpoint %}aria-current="page"{% endif %}>
+          <span class="sidebar__ikona" aria-hidden="true">📋</span> Wszystkie praktyki
+        </a>
+      </li>
+      {% if current_user.rola.value in ['ADMIN', 'UOPZ'] %}
+      <li class="sidebar__menu-pozycja">
+        <a href="{{ url_for('evaluation.lista_ocen') }}" class="sidebar__link {% if 'evaluation' in request.endpoint %}sidebar__link--aktywny{% endif %}" {% if 'evaluation' in request.endpoint %}aria-current="page"{% endif %}>
+          <span class="sidebar__ikona" aria-hidden="true">✓</span> Oceny i efekty
+        </a>
+      </li>
+      {% endif %}
+      {% if current_user.rola.value == 'ADMIN' %}
+      <li class="sidebar__menu-sekcja" aria-hidden="true">Zarządzanie</li>
+      <li class="sidebar__menu-pozycja">
+        <a href="{{ url_for('management.lista_uzytkownikow') }}" class="sidebar__link {% if 'uzytkownik' in request.endpoint %}sidebar__link--aktywny{% endif %}" {% if 'uzytkownik' in request.endpoint %}aria-current="page"{% endif %}>
+          <span class="sidebar__ikona" aria-hidden="true">👤</span> Użytkownicy
+        </a>
+      </li>
+      <li class="sidebar__menu-pozycja">
+        <a href="{{ url_for('management.lista_zakladow') }}" class="sidebar__link {% if 'zaklad' in request.endpoint %}sidebar__link--aktywny{% endif %}" {% if 'zaklad' in request.endpoint %}aria-current="page"{% endif %}>
+          <span class="sidebar__ikona" aria-hidden="true">🏢</span> Zakłady pracy
+        </a>
+      </li>
+      {% endif %}
+    </ul>
+
+    <div class="sidebar__stopka">
+      <form method="POST" action="{{ url_for('auth.wylogowanie') }}">
+        <button type="submit" class="sidebar__wylogowanie">
+          <span aria-hidden="true">↩</span> Wyloguj się
+        </button>
+      </form>
+    </div>
+  </nav>
+
+  <div class="panel-main">
+    <header class="panel-main__naglowek">
+      <div class="panel-main__naglowek-tresc">
+        <h1 class="panel-main__tytul">{% block naglowek %}{% endblock %}</h1>
+        {% block naglowek_akcje %}{% endblock %}
+      </div>
+      {% with wiadomosci = get_flashed_messages(with_categories=True) %}
+        {% if wiadomosci %}
+          <div class="komunikaty" role="status" aria-live="polite">
+            {% for kategoria, wiadomosc in wiadomosci %}
+              <div class="komunikat komunikat--{{ kategoria }}" role="alert">
+                <span class="komunikat__ikona" aria-hidden="true">
+                  {% if kategoria == 'danger' %}✕{% elif kategoria == 'success' %}✓{% else %}ℹ{% endif %}
+                </span>
+                <span>{{ wiadomosc }}</span>
+                <button type="button" class="komunikat__zamknij" aria-label="Zamknij powiadomienie" onclick="this.parentElement.remove()">×</button>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+    </header>
+
+    <main id="main-content" class="panel-main__tresc" tabindex="-1">
+      {% block tresc %}{% endblock %}
+    </main>
+  </div>
+</body>
+</html>

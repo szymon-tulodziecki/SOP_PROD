@@ -1,0 +1,209 @@
+{% extends "layouts/base.html" %}
+
+{% block tytul %}Logowanie{% endblock %}
+{% block body_class %}strona-logowania{% endblock %}
+
+{% block body %}
+<div class="panel-logowania" role="main">
+
+  <!-- Lewa kolumna — identyfikacja uczelni -->
+  <aside class="panel-logowania__branding" aria-label="Informacje o instytucji">
+    <div class="branding__tresc">
+
+      <div class="branding__logo-kontener">
+        <img
+          src="{{ url_for('static', filename='img/logo.png') }}"
+          alt="Akademia Nauk Stosowanych w Elblągu — Instytut Informatyki Stosowanej im. Krzysztofa Brzeskiego"
+          class="branding__logo"
+        >
+      </div>
+
+      <div class="branding__separator" aria-hidden="true"></div>
+
+      <p class="branding__nazwa-systemu">System zarządzania<br>praktykami zawodowymi</p>
+      <p class="branding__podtytul">Kierunek Informatyka</p>
+
+      <!-- Ozdobny element geometryczny — aria-hidden bo dekoracyjny -->
+      <div class="branding__dekoracja" aria-hidden="true">
+        <span></span><span></span><span></span>
+      </div>
+
+    </div>
+  </aside>
+
+  <!-- Prawa kolumna — formularz logowania -->
+  <main class="panel-logowania__formularz" id="main-content">
+    <div class="formularz__kontener">
+
+      <div class="formularz__naglowek">
+        <!-- WCAG 2.4.6: nagłówki opisujące temat -->
+        <h1 class="formularz__tytul">Panel administracyjny</h1>
+        <p class="formularz__opis" id="opis-formularza">
+          Zaloguj się, aby zarządzać praktykami, użytkownikami i dokumentacją.
+        </p>
+      </div>
+
+      <!-- Komunikaty błędów — WCAG 1.3.3, 4.1.3 -->
+      {% with wiadomosci = get_flashed_messages(with_categories=True) %}
+        {% if wiadomosci %}
+          <div role="alert" aria-live="assertive" class="komunikaty">
+            {% for kategoria, wiadomosc in wiadomosci %}
+              <div class="komunikat komunikat--{{ kategoria }}">
+                <span class="komunikat__ikona" aria-hidden="true">
+                  {% if kategoria == 'danger' %}✕{% elif kategoria == 'success' %}✓{% else %}ℹ{% endif %}
+                </span>
+                <span>{{ wiadomosc }}</span>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      <form
+        method="POST"
+        action="{{ url_for('auth.logowanie') }}"
+        novalidate
+        aria-describedby="opis-formularza"
+        class="formularz__forma"
+      >
+        <!-- CSRF token — zabezpieczenie przed atakami -->
+        {{ form.hidden_tag() }}
+
+        <!-- Pole: adres e-mail -->
+        <div class="pole-formularza {% if form.email.errors %}pole-formularza--blad{% endif %}">
+          <label
+            for="email"
+            class="pole-formularza__etykieta"
+          >
+            Adres e-mail
+            <span class="pole-formularza__wymagane" aria-label="(pole wymagane)">*</span>
+          </label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            class="pole-formularza__input"
+            value="{{ form.email.data or '' }}"
+            autocomplete="email"
+            spellcheck="false"
+            required
+            aria-required="true"
+            {% if form.email.errors %}
+              aria-invalid="true"
+              aria-describedby="email-blad"
+            {% endif %}
+            placeholder="np. 1234@ans-elblag.pl"
+          >
+          {% if form.email.errors %}
+            <span
+              id="email-blad"
+              class="pole-formularza__blad"
+              role="alert"
+            >
+              {% for blad in form.email.errors %}{{ blad }}{% endfor %}
+            </span>
+          {% endif %}
+        </div>
+
+        <!-- Pole: hasło -->
+        <div class="pole-formularza {% if form.haslo.errors %}pole-formularza--blad{% endif %}">
+          <div class="pole-formularza__naglowek-haslo">
+            <label
+              for="haslo"
+              class="pole-formularza__etykieta"
+            >
+              Hasło
+              <span class="pole-formularza__wymagane" aria-label="(pole wymagane)">*</span>
+            </label>
+          </div>
+          <div class="pole-formularza__input-wrapper">
+            <input
+              type="password"
+              id="haslo"
+              name="haslo"
+              class="pole-formularza__input"
+              autocomplete="current-password"
+              required
+              aria-required="true"
+              {% if form.haslo.errors %}
+                aria-invalid="true"
+                aria-describedby="haslo-blad"
+              {% endif %}
+            >
+            <!-- Przycisk pokaż/ukryj hasło — WCAG 1.3.5 -->
+            <button
+              type="button"
+              class="pole-formularza__toggle-haslo"
+              aria-label="Pokaż hasło"
+              aria-pressed="false"
+              onclick="toggleHaslo(this)"
+            >
+              <span class="ikona-oka" aria-hidden="true">👁</span>
+            </button>
+          </div>
+          {% if form.haslo.errors %}
+            <span
+              id="haslo-blad"
+              class="pole-formularza__blad"
+              role="alert"
+            >
+              {% for blad in form.haslo.errors %}{{ blad }}{% endfor %}
+            </span>
+          {% endif %}
+        </div>
+
+        <!-- Zapamiętaj mnie -->
+        <div class="pole-formularza pole-formularza--checkbox">
+          <label class="pole-formularza__etykieta-checkbox">
+            <input
+              type="checkbox"
+              name="zapamietaj"
+              id="zapamietaj"
+              class="pole-formularza__checkbox"
+              value="1"
+            >
+            <span class="pole-formularza__checkbox-label">Zapamiętaj mnie na tym urządzeniu</span>
+          </label>
+        </div>
+
+        <!-- Przycisk submit -->
+        <button
+          type="submit"
+          class="przycisk-logowania"
+          aria-label="Zaloguj się do panelu administracyjnego"
+        >
+          Zaloguj się
+        </button>
+
+      </form>
+
+      <!-- Stopka formularza -->
+      <footer class="formularz__stopka">
+        <p class="formularz__stopka-tekst">
+          Dostęp wyłącznie dla upoważnionych pracowników Instytutu.
+        </p>
+        <p class="formularz__stopka-tekst">
+          Problemy z logowaniem?
+          <a href="mailto:admin@ans.elblag.edu.pl" class="formularz__link">
+            Skontaktuj się z administratorem
+          </a>
+        </p>
+      </footer>
+
+    </div>
+  </main>
+
+</div>
+{% endblock %}
+
+{% block scripts_extra %}
+<script>
+  function toggleHaslo(przycisk) {
+    const input = document.getElementById('haslo');
+    const ukryte = input.type === 'password';
+    input.type = ukryte ? 'text' : 'password';
+    przycisk.setAttribute('aria-pressed', ukryte ? 'true' : 'false');
+    przycisk.setAttribute('aria-label', ukryte ? 'Ukryj hasło' : 'Pokaż hasło');
+  }
+</script>
+{% endblock %}

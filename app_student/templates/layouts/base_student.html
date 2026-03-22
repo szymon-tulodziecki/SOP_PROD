@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  {% set _csrf_token = csrf_token() if csrf_token is defined else '' %}
+  <meta name="csrf-token" content="{{ _csrf_token }}">
+  <title>{% block tytul %}Panel studenta{% endblock %} — ANS Elbląg</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/student.css') }}">
+</head>
+<body class="panel-body">
+
+  <a href="#glowna-tresc" class="skip-link">Przejdź do treści</a>
+
+  <nav class="sidebar" aria-label="Nawigacja główna">
+    <div class="sidebar__naglowek">
+      <img src="{{ url_for('static', filename='img/logo.png') }}" alt="ANS Elbląg" class="sidebar__logo">
+      <span class="sidebar__system-label">Panel studenta</span>
+    </div>
+
+    <div class="sidebar__uzytkownik">
+      <div class="sidebar__uzytkownik-avatar" aria-hidden="true">
+        {{ current_user.first_name[0] }}{{ current_user.last_name[0] }}
+      </div>
+      <div class="sidebar__uzytkownik-info">
+        <span class="sidebar__uzytkownik-imie">{{ current_user.first_name }} {{ current_user.last_name }}</span>
+        <span class="sidebar__uzytkownik-rola">Nr alb. {{ current_user.album_number or '—' }}</span>
+      </div>
+    </div>
+
+    <ul class="sidebar__menu" role="list">
+      <li class="sidebar__menu-pozycja">
+        <a href="{{ url_for('dashboard.index') }}" class="sidebar__link {% if request.endpoint == 'dashboard.index' %}sidebar__link--aktywny{% endif %}">Pulpit</a>
+      </li>
+      <li class="sidebar__menu-pozycja">
+        <a href="{{ url_for('praktyki.lista') }}" class="sidebar__link {% if request.blueprint == 'praktyki' %}sidebar__link--aktywny{% endif %}">Dostępne praktyki</a>
+      </li>
+      <li class="sidebar__menu-pozycja">
+        <a href="{{ url_for('dziennik.index') }}" class="sidebar__link {% if request.blueprint == 'dziennik' %}sidebar__link--aktywny{% endif %}">Dziennik praktyki</a>
+      </li>
+    </ul>
+
+    <div class="sidebar__stopka">
+      <form method="POST" action="{{ url_for('auth.wylogowanie') }}">
+        {{ csrf_token_field() if csrf_token_field is defined else '' }}
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="sidebar__wylogowanie">Wyloguj</button>
+      </form>
+    </div>
+  </nav>
+
+  <main class="panel-main" id="glowna-tresc">
+    <header class="panel-main__naglowek">
+      <div class="panel-main__naglowek-tresc">
+        <h1 class="panel-main__tytul">{% block naglowek %}{% endblock %}</h1>
+        <div>{% block naglowek_akcje %}{% endblock %}</div>
+      </div>
+    </header>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+      <div class="komunikaty" style="padding: 0 2rem;" aria-live="polite">
+        {% for kategoria, wiadomosc in messages %}
+        <div class="komunikat komunikat--{{ kategoria }}" role="alert">{{ wiadomosc }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    {% endwith %}
+
+    <div class="panel-main__tresc">
+      {% block tresc %}{% endblock %}
+    </div>
+  </main>
+
+</body>
+</html>

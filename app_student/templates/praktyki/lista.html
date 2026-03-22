@@ -1,0 +1,36 @@
+{% extends "layouts/base_student.html" %}
+{% block tytul %}Dostępne praktyki{% endblock %}
+{% block naglowek %}Dostępne praktyki{% endblock %}
+
+{% block tresc %}
+<div style="max-width: 700px;">
+
+  {% if not dostepne %}
+  <div class="karta" style="text-align: center; padding: 3rem 2rem;">
+    <p style="color: var(--kolor-tekst-drugor);">Brak aktywnych praktyk. Skontaktuj się z opiekunem uczelni.</p>
+  </div>
+
+  {% else %}
+
+  <div style="display: flex; flex-direction: column; gap: 1rem;">
+    {% for p in dostepne %}
+    <div class="karta">
+      <div class="karta__tresc" style="display:flex; align-items:center; justify-content:space-between; gap:1rem;">
+        <div>
+          <div style="font-weight:600; font-size:1.05rem;">{{ p.rok_uczelniany }}</div>
+          <div style="font-size:0.85rem; color:var(--kolor-tekst-drugor); margin-top:0.25rem;">Semestr {{ p.semestr }} · {{ p.wymiar_godzin }} h</div>
+        </div>
+        {% if str(p.id) in zapisane_ids %}
+          <span class="status status--zakonczona">Zapisany</span>
+        {% else %}
+          <form method="POST" action="{{ url_for('praktyki.zapisz', id=p.id) }}" style="display:inline;">{{ csrf_form.hidden_tag() }}<button type="submit" class="przycisk przycisk--glowny" onclick="return confirm('Zapisać się na praktykę {{ p.rok_uczelniany }} ({{ p.semestr }})?')">Zapisz się</button></form>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% endif %}
+
+</div>
+{% endblock %}

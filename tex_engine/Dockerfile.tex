@@ -1,0 +1,61 @@
+# Dockerfile for tex_engine: minimal TeX Live + lualatex and Python deps
+FROM python:3.12-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    DEBIAN_FRONTEND=noninteractive \
+    PATH="/usr/local/texlive/bin/x86_64-linux:$PATH"
+
+WORKDIR /app
+
+# System deps for TeX Live installer and fonts
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    wget \
+    perl \
+    fontconfig \
+    lmodern \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install minimal TeX Live
+RUN wget -qO /tmp/install-tl.tar.gz https://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz \
+    && mkdir /tmp/install-tl \
+    && tar -xzf /tmp/install-tl.tar.gz -C /tmp/install-tl --strip-components=1 \
+    && printf "selected_scheme scheme-minimal\nTEXDIR /usr/local/texlive\nTEXMFLOCAL /usr/local/texlive/texmf-local\nTEXMFSYSVAR /usr/local/texlive/texmf-var\nTEXMFSYSCONFIG /usr/local/texlive/texmf-config\ntlpd\n" > /tmp/texlive.profile \
+    && /tmp/install-tl/install-tl --profile=/tmp/texlive.profile \
+    && rm -rf /tmp/install-tl /tmp/install-tl.tar.gz /tmp/texlive.profile
+
+# tlmgr: install required TeX packages (may take several minutes)
+RUN /usr/local/texlive/bin/x86_64-linux/tlmgr install \
+    luatex \
+    lualatex-math \
+    babel-polish \
+    polyglossia \
+    fontspec \
+    geometry \
+    tabularx \
+    booktabs \
+    longtable \
+    etoolbox \
+    xcolor \
+    graphicx \
+    hyperref \
+    microtype \
+    parskip \
+    enumitem \
+    fancyhdr \
+    lastpage \
+    unicode-math \
+    lm || true
+
+# Copy only tex_engine and install Python deps
+COPY tex_engine /app/tex_engine
+COPY app_admin/requirements.txt /app/requirements.txt
+RUN pip install --no-cache-dir -r /app/requirements.txt
+
+# Expose a small directory for generated PDFs (to be mounted by compose)
+VOLUME ["/app/pdf_output"]
+
+WORKDIR /app
+
+CMD ["/bin/bash"]
