@@ -20,12 +20,14 @@ def create_app():
         from app_student.routes.praktyki import praktyki_bp
         from app_student.routes.dziennik import dziennik_bp
         from app_student.routes.sprawozdania import sprawozdania_bp
+        from app_student.routes.documents import documents_bp
 
         app.register_blueprint(auth_bp)
         app.register_blueprint(dashboard_bp, url_prefix='/panel')
         app.register_blueprint(praktyki_bp,  url_prefix='/praktyki')
         app.register_blueprint(dziennik_bp,  url_prefix='/dziennik')
         app.register_blueprint(sprawozdania_bp, url_prefix='/sprawozdanie')
+        app.register_blueprint(documents_bp, url_prefix='/dokumenty')
 
     @app.before_request
     def sprawdz_studenta():

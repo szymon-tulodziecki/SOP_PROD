@@ -37,7 +37,28 @@ CREATE TABLE internships (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 4. Tabela pośrednia: zapisy studentów do praktyk
+-- 4. Słownik efektów uczenia się (PRZENIESIONE WYŻEJ)
+CREATE TABLE learning_outcomes (
+    id SERIAL PRIMARY KEY,
+    description TEXT NOT NULL
+);
+
+INSERT INTO learning_outcomes (description) VALUES
+('01: Ma wiedzę na temat sposobu realizacji zadań inżynierskich dotyczących informatyki z zachowaniem standardów i norm technicznych'),
+('02: Zna technologie, narzędzia, metody, techniki oraz sprzęt stosowane w informatyce'),
+('03: Zna ekonomiczne, prawne skutki własnych działań podejmowanych w ramach praktyki oraz ograniczenia wynikające z prawa autorskiego i kodeksu pracy'),
+('04: Zna zasady bezpieczeństwa pracy i ergonomii w zawodzie informatyka'),
+('05: Pozyskuje informacje odnośnie technologii, metod, technik, sprzętu wymaganego do realizacji powierzonego zadania, posługując się rozmaitymi źródłami...'),
+('06: W oparciu o kontakty ze środowiskiem inżynierskim zakładu, potrafi podnieść swoje kompetencje, wiedzę i umiejętności...'),
+('07: Opracowuje dokumentację dotyczącą realizacji podejmowanych zadań w ramach praktyki, a także referuje ustnie prezentowane w niej zagadnienia'),
+('08: Potrafi zidentyfikować problem informatyczny występujący w zakładzie pracy/instytucji, opisać go, przedstawić koncepcję rozwiązania i ją zrealizować.'),
+('09: Potrafi rozwiązać rzeczywiste zadanie inżynierskie z zakresu działalności informatycznej zakładu pracy/instytucji stosując normy i standardy...'),
+('10: Pracuje w zespole zajmującym się zawodowo branżą IT'),
+('11: Przestrzega zasad etyki zawodowej i zgodnie z tymi zasadami korzysta z wiedzy i pomocy doświadczonych kolegów'),
+('12: Kontaktując się z osobami spoza branży potrafi zarówno pozyskać od nich niezbędne informacje do realizacji planowanego zadania...'),
+('13: Dostrzega w praktyce tempo deaktualizacji wiedzy informatycznej oraz skutki działalności informatyków w szczególności ekonomiczne i społeczne');
+
+-- 5. Tabela pośrednia: zapisy studentów do praktyk
 CREATE TABLE internship_enrollments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     internship_id UUID NOT NULL REFERENCES internships(id) ON DELETE CASCADE,
@@ -90,7 +111,7 @@ CREATE TABLE internship_enrollments (
     UNIQUE(internship_id, student_id)          -- student może być zapisany tylko raz do tej samej praktyki
 );
 
--- 4a. Harmonogram praktyki studenta
+-- 5a. Harmonogram praktyki studenta
 CREATE TABLE internship_schedule (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     enrollment_id UUID NOT NULL REFERENCES internship_enrollments(id) ON DELETE CASCADE,
@@ -100,7 +121,7 @@ CREATE TABLE internship_schedule (
     liczba_dni INTEGER NOT NULL DEFAULT 0
 );
 
--- 4b. Sprawozdanie z praktyki (Zał. 7)
+-- 5b. Sprawozdanie z praktyki (Zał. 7)
 CREATE TABLE internship_reports (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     enrollment_id UUID NOT NULL REFERENCES internship_enrollments(id) ON DELETE CASCADE UNIQUE,
@@ -108,28 +129,6 @@ CREATE TABLE internship_reports (
     opis_i_analiza TEXT,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
-
--- 5. Słownik efektów uczenia się
-CREATE TABLE learning_outcomes (
-    id SERIAL PRIMARY KEY,
-    description TEXT NOT NULL
-);
-
-INSERT INTO learning_outcomes (description) VALUES
-('01: Ma wiedzę na temat sposobu realizacji zadań inżynierskich dotyczących informatyki z zachowaniem standardów i norm technicznych'),
-('02: Zna technologie, narzędzia, metody, techniki oraz sprzęt stosowane w informatyce'),
-('03: Zna ekonomiczne, prawne skutki własnych działań podejmowanych w ramach praktyki oraz ograniczenia wynikające z prawa autorskiego i kodeksu pracy'),
-('04: Zna zasady bezpieczeństwa pracy i ergonomii w zawodzie informatyka'),
-('05: Pozyskuje informacje odnośnie technologii, metod, technik, sprzętu wymaganego do realizacji powierzonego zadania, posługując się rozmaitymi źródłami...'),
-('06: W oparciu o kontakty ze środowiskiem inżynierskim zakładu, potrafi podnieść swoje kompetencje, wiedzę i umiejętności...'),
-('07: Opracowuje dokumentację dotyczącą realizacji podejmowanych zadań w ramach praktyki, a także referuje ustnie prezentowane w niej zagadnienia'),
-('08: Potrafi zidentyfikować problem informatyczny występujący w zakładzie pracy/instytucji, opisać go, przedstawić koncepcję rozwiązania i ją zrealizować.'),
-('09: Potrafi rozwiązać rzeczywiste zadanie inżynierskie z zakresu działalności informatycznej zakładu pracy/instytucji stosując normy i standardy...'),
-('10: Pracuje w zespole zajmującym się zawodowo branżą IT'),
-('11: Przestrzega zasad etyki zawodowej i zgodnie z tymi zasadami korzysta z wiedzy i pomocy doświadczonych kolegów'),
-('12: Kontaktując się z osobami spoza branży potrafi zarówno pozyskać od nich niezbędne informacje do realizacji planowanego zadania...'),
-('13: Dostrzega w praktyce tempo deaktualizacji wiedzy informatycznej oraz skutki działalności informatyków w szczególności ekonomiczne i społeczne');
 
 -- 6. Dziennik praktyk (powiązany z zapisem, nie z praktyka-szablonem)
 CREATE TABLE journal_entries (
@@ -207,7 +206,7 @@ CREATE TABLE document_audit_logs (
 INSERT INTO users (email, password_hash, first_name, last_name, role, is_active, wymagana_zmiana_hasla)
 VALUES (
     'admin@ans-elblag.pl',
-    'scrypt:32768:8:1$MVO0GnsglSQucOms$dd638e95af8595eb370a91641948c14144d120a432d62780435b85b5eb575f8023d04f13b85b89e4b6ba8b4ce9a1f0ab430c92dba223914ecd7c5287b885d5e2',
+    'scrypt:32768:8:1$AG9yKW4lzZpg7XXx$762ca3d9801b32fe2d05ed47de4abb5d1dbdb4312bfa1ef05312f4a8c567991ec25df6288d387fff62a85c148f0c42b20c5a0185b794cec80e7b1e909e10f4bf',
     'System',
     'Admin',
     'ADMIN',

@@ -148,6 +148,9 @@ def status_pdf(task_id):
         from celery_app import celery
         task = celery.AsyncResult(task_id)
         if task.state == 'SUCCESS':
+            res = task.result
+            if isinstance(res, dict) and res.get('status') == 'error':
+                return jsonify({'status': 'FAILURE', 'error': res.get('message')})
             return jsonify({'status': 'SUCCESS', 'download_url': url_for('documents.pobierz_pdf', task_id=task_id)})
         elif task.state == 'FAILURE':
             return jsonify({'status': 'FAILURE', 'error': str(task.info)})
@@ -166,6 +169,8 @@ def pobierz_pdf(task_id):
         if task.state != 'SUCCESS':
             abort(404)
         result = task.result
+        if isinstance(result, dict) and result.get('status') == 'error':
+            abort(500)
         pdf_path = Path(result['path'])
         if not pdf_path.exists():
             abort(404)

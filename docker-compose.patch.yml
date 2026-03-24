@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  tex-service:
+    build:
+      context: ./tex_service
+      dockerfile: Dockerfile
+    container_name: sop_tex_service
+    restart: unless-stopped
+    environment:
+      - TZ=Europe/Warsaw
+    volumes:
+      - ./tex_engine/templates:/app/templates:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    expose:
+      - "5001"

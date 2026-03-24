@@ -16,7 +16,6 @@
   </div>
   {% else %}
 
-  <!-- Info -->
   <div class="karta" style="margin-bottom: 2rem; border-left: 4px solid var(--kolor-glowny);">
     <div class="karta__tresc" style="display: flex; justify-content: space-between; align-items: center;">
       <div>
@@ -24,7 +23,13 @@
         <div style="font-size: 0.9rem; color: var(--kolor-tekst-drugor);">{{ zapis.praktyka.rok_uczelniany }} — Semestr {{ zapis.praktyka.semestr }}</div>
       </div>
       <div>
-        <a href="#" onclick="alert('Generowanie sprawozdania...'); return false;" class="przycisk przycisk--drugorzedny">Pobierz do wglądu (PDF)</a>
+        <button 
+          onclick="generujDokument(this, '{{ url_for('documents.generuj', doc_type='ZAL_7') }}', '{{ url_for('documents.status', task_id='') }}')" 
+          class="przycisk przycisk--drugorzedny"
+        >
+          <span data-pdf-label>Pobierz do wglądu (PDF)</span>
+          <span data-pdf-spinner style="display: none;">Generowanie... (0%)</span>
+        </button>
       </div>
     </div>
   </div>
@@ -69,7 +74,7 @@
       <div class="karta__tresc py-3">
         <div style="background: var(--kolor-tlo); border-radius: 8px; padding: 1.5rem; border: 1px dashed var(--kolor-ramka);">
           <p style="font-size: 0.9rem; color: var(--kolor-tekst);">
-            <strong>Uwaga:</strong> Sekcja III zawierająca szczegółowe zestawienie godzinowych nakładów pracy dla każdego zdefiniowanego efektu uczenia się <strong style="color: var(--kolor-glowny);">jest generowana w 100% automatycznie 🤖</strong> na podstawie Twojego Dziennika Praktyk.
+            <strong>Uwaga:</strong> Sekcja III zawierająca szczegółowe zestawienie godzinowych nakładów pracy dla każdego zdefiniowanego efektu uczenia się <strong style="color: var(--kolor-glowny);">jest generowana w 100% automatycznie</strong> na podstawie Twojego Dziennika Praktyk.
           </p>
           <ul style="margin-top: 1rem; padding-left: 1.5rem; font-size: 0.85rem; color: var(--kolor-tekst-drugor);">
             <li>Nie musisz nic tu wpisywać. Wystarczy regularnie uzupełniać dziennik.</li>
@@ -86,8 +91,6 @@
     </div>
 
   </form>
-
   {% endif %}
-
 </div>
 {% endblock %}

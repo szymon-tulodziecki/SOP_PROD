@@ -20,7 +20,7 @@
       </p>
 
       <form method="POST">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        {{ csrf_form.csrf_token }}
 
         <div class="tabela-wrapper" style="margin-bottom: 2rem;">
           <table class="tabela">

@@ -39,7 +39,6 @@ class FormularzZapisuKrok1(FlaskForm):
     uopz_id = SelectField('Wybierz Opiekuna Uczelnianego (UOPZ)', choices=[], validators=[DataRequired()])
 
 
-
 @praktyki_bp.route('/')
 @login_required
 def lista():
@@ -75,9 +74,8 @@ def zapisz_krok1(id):
         return redirect(url_for('dashboard.index'))
 
     form = FormularzZapisuKrok1()
-    # Pobierz listę UOPZ
-    uopz_list = db.session.query(Uzytkownik).filter_by(role=RolaUzytkownika.UOPZ, active=True).order_by(Uzytkownik.last_name).all()
-    # uwaga, pole active/is_active: w modelu nazywa sie is_active, poprawiam nizej
+    
+    # Pobierz listę UOPZ - POPRAWIONE ZAPYTANIE (is_active zamiast active)
     uopz_list = db.session.query(Uzytkownik).filter_by(role=RolaUzytkownika.UOPZ, is_active=True).order_by(Uzytkownik.last_name).all()
     form.uopz_id.choices = [('', '--- Wybierz UOPZ ---')] + [(str(u.id), f"{u.first_name} {u.last_name}") for u in uopz_list]
 
@@ -162,7 +160,12 @@ def zapisz_krok2(id):
             flash('Wniosek został w pełni zapisany. Oczekuje teraz na akceptację UOPZ.', 'success')
             return redirect(url_for('dashboard.index'))
             
-    return render_template('praktyki/krok2.html', zapis=zapis, efekty=efekty)
+    # Tego brakowało - tworzymy formularz dla tokenu CSRF
+    csrf_form = FlaskForm()
+    
+    # Przekazujemy csrf_form do widoku
+    return render_template('praktyki/krok2.html', zapis=zapis, efekty=efekty, csrf_form=csrf_form)
+
 
 class FormularzZapisuKrok3(FlaskForm):
     uzasadnienie = TextAreaField('Uzasadnienie wniosku', validators=[DataRequired()])

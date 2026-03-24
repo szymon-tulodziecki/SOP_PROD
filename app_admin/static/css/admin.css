@@ -335,6 +335,16 @@ body {
   gap: 1.25rem;
 }
 
+/* Kontener formularzy — ujednolicone centrowanie dla panelu */
+.formularz-kontener {
+  display: flex;
+  justify-content: center;
+}
+.formularz-kontener > .karta {
+  width: 100%;
+  max-width: 640px;
+}
+
 /* Pola formularza */
 .pole-formularza {
   display: flex;

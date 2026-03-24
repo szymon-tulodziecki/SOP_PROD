@@ -6,8 +6,15 @@
 <div style="display: flex; gap: 0.5rem; align-items: center;">
   {% if zapis %}
   <a href="{{ url_for('dziennik.nowy_wpis') }}" class="przycisk przycisk--glowny">Nowy wpis</a>
-  <button id="btn-pdf" onclick="zlecPDF()" class="przycisk przycisk--drugorzedny">Pobierz PDF</button>
-  <span id="pdf-status" style="font-size: 0.85rem; color: var(--kolor-tekst-drugor); display: none;"></span>
+  
+  <button 
+    onclick="generujDokument(this, '{{ url_for('documents.generuj', doc_type='ZAL_6') }}')" 
+    class="przycisk przycisk--drugorzedny"
+  >
+    <span data-pdf-label>Pobierz PDF</span>
+    <span data-pdf-spinner style="display: none;">Generowanie... (0%)</span>
+  </button>
+  
   {% endif %}
 </div>
 {% endblock %}
@@ -86,10 +93,4 @@
   </div>
 
 {% endif %}
-
-<script>
-// minimal JS placeholders; student app will call celery endpoints at /dziennik/pdf
-function zlecPDF(){alert('Generowanie PDF...');}
-</script>
-
 {% endblock %}

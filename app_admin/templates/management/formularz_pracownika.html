@@ -5,7 +5,8 @@
   <a href="{{ url_for('management.lista_uzytkownikow') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
 {% endblock %}
 {% block tresc %}
-<div class="karta" style="max-width: 640px;">
+<div class="formularz-kontener">
+  <div class="karta">
   <div class="karta__naglowek">
     <h2 class="karta__tytul">Dane konta pracownika</h2>
     <span style="font-size: 0.825rem; color: var(--kolor-tekst-drugor); background: #faeeda; padding: 0.25rem 0.75rem; border-radius: 999px; font-weight: 500;">
@@ -45,13 +46,12 @@
         Pracownik zaloguje się e-mailem i hasłem tymczasowym (adres z e-mail, wszystko przed znakiem @), a następnie zostanie poproszony o ustawienie własnego hasła.
       </div>
 
-      <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 0.5rem;">
-        <button type="submit" class="przycisk przycisk--glowny">
-          Utwórz konto pracownika
-        </button>
+      <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 0.5rem; justify-content: flex-end;">
         <a href="{{ url_for('management.lista_uzytkownikow') }}" class="przycisk przycisk--drugorzedny">Anuluj</a>
+        <button type="submit" class="przycisk przycisk--glowny">Utwórz konto pracownika</button>
       </div>
     </form>
+  </div>
   </div>
 </div>
 {% endblock %}

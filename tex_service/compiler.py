@@ -1,15 +1,8 @@
-"""
-tex_engine/compiler.py
+"""tex_service/compiler.py
 
 Silnik kompilacji PDF. Przyjmuje nazwę szablonu i kontekst danych,
-wyrenderowuje szablon Jinja2, wywołuje lualatex (trzy przebiegi),
+wyrenderowuje szablon Jinja2, wywołuje lualatex,
 zwraca bajty PDF lub rzuca TexCompilationError.
-
-Zabezpieczenia:
-    - lualatex uruchamiany z flagami -no-shell-escape i -interaction=nonstopmode
-    - Timeout 60 sekund na kompilację
-    - Każda kompilacja w izolowanym tmpdir (automicznie usuwany)
-    - stdin zamknięty (/dev/null)
 """
 
 import os
@@ -21,36 +14,23 @@ from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
-from .sanitizer import sanitize, sanitize_date, sanitize_int
+from sanitizer import sanitize, sanitize_date, sanitize_int
 
 logger = logging.getLogger(__name__)
 
-# Katalog z szablonami .j2.tex (nie surowe .tex z repozytorium)
 TEMPLATES_DIR = Path(__file__).parent / "templates"
 
-# Ile sekund max na jeden przebieg lualatex
-COMPILE_TIMEOUT = 60
-
-# Ile razy uruchamiamy lualatex (referencje krzyżowe, spis treści itp.)
-COMPILE_PASSES = 3
+COMPILE_TIMEOUT = int(os.environ.get('LATEX_TIMEOUT', '60'))
+COMPILE_PASSES = 1
 
 
 class TexCompilationError(RuntimeError):
-    """Wyrzucany gdy lualatex zakończy się błędem."""
     def __init__(self, message: str, log: str = ""):
         super().__init__(message)
         self.log = log
 
 
 def _build_jinja_env() -> Environment:
-    """
-    Buduje środowisko Jinja2 z niestandardowymi tagami, żeby nie kolidować
-    z LaTeX-owymi nawiasami klamrowymi.
-
-    Bloki:   <<% ... %>>
-    Zmienne: << ... >>
-    Komentarze: <<# ... #>>
-    """
     env = Environment(
         loader=FileSystemLoader(str(TEMPLATES_DIR)),
         block_start_string="<<%",
@@ -59,13 +39,12 @@ def _build_jinja_env() -> Environment:
         variable_end_string=">>",
         comment_start_string="<<#",
         comment_end_string="#>>",
-        undefined=StrictUndefined,   # błąd gdy zmienna brakuje w kontekście
+        undefined=StrictUndefined,
         keep_trailing_newline=True,
     )
-    # Rejestrujemy filtry sanityzujące jako globalne filtry Jinji
-    env.filters["s"]    = sanitize          # {{ wartosc | s }}
-    env.filters["date"] = sanitize_date     # {{ data | date }}
-    env.filters["num"]  = sanitize_int      # {{ godziny | num }}
+    env.filters["s"] = sanitize
+    env.filters["date"] = sanitize_date
+    env.filters["num"] = sanitize_int
     return env
 
 
@@ -73,7 +52,6 @@ _JINJA_ENV: Environment | None = None
 
 
 def get_jinja_env() -> Environment:
-    """Singleton – środowisko Jinja2 tworzymy raz."""
     global _JINJA_ENV
     if _JINJA_ENV is None:
         _JINJA_ENV = _build_jinja_env()
@@ -81,27 +59,21 @@ def get_jinja_env() -> Environment:
 
 
 def _find_lualatex() -> str:
-    """Zwraca ścieżkę do binarki lualatex lub rzuca EnvironmentError."""
     binary = shutil.which("lualatex")
     if binary is None:
         raise EnvironmentError(
             "Nie znaleziono lualatex w PATH. "
-            "Zainstaluj TeX Live (np. sudo apt install texlive-full) "
-            "lub upewnij się, że lualatex jest w PATH."
+            "Sprawdź czy texlive jest zainstalowany w kontenerze."
         )
     return binary
 
 
 def _run_lualatex(lualatex: str, tex_file: Path, workdir: Path) -> str:
-    """
-    Wywołuje jeden przebieg lualatex. Zwraca zawartość pliku .log.
-    Rzuca TexCompilationError jeśli proces zakończy się kodem != 0.
-    """
     cmd = [
         lualatex,
-        "-no-shell-escape",          # blokuje \write18 / shell escape
-        "-interaction=nonstopmode",  # nie czeka na input; kontynuuje
-        "-halt-on-error",            # zatrzymuje się przy pierwszym błędzie
+        "-no-shell-escape",
+        "-interaction=nonstopmode",
+        "-halt-on-error",
         "-output-directory", str(workdir),
         str(tex_file),
     ]
@@ -112,22 +84,19 @@ def _run_lualatex(lualatex: str, tex_file: Path, workdir: Path) -> str:
             cwd=str(workdir),
             capture_output=True,
             timeout=COMPILE_TIMEOUT,
-            stdin=subprocess.DEVNULL,   # zamknięty stdin
+            stdin=subprocess.DEVNULL,
         )
     except subprocess.TimeoutExpired:
         raise TexCompilationError(
-            f"lualatex przekroczył limit czasu ({COMPILE_TIMEOUT}s). "
-            "Sprawdź szablon pod kątem nieskończonych pętli."
+            f"lualatex przekroczył limit czasu ({COMPILE_TIMEOUT}s)."
         )
 
-    # Odczyt logu
     log_file = workdir / tex_file.with_suffix(".log").name
     log_text = log_file.read_text(encoding="utf-8", errors="replace") if log_file.exists() else ""
 
     if result.returncode != 0:
         raise TexCompilationError(
-            f"lualatex zakończył się błędem (kod {result.returncode}). "
-            "Sprawdź atrybut .log w wyjątku.",
+            f"lualatex zakończył się błędem (kod {result.returncode}).",
             log=log_text,
         )
 
@@ -135,38 +104,35 @@ def _run_lualatex(lualatex: str, tex_file: Path, workdir: Path) -> str:
 
 
 def render_tex(template_name: str, context: dict) -> str:
-    """Renderuje szablon Jinja2 do surowego tekstu TeX."""
+    """Renderuje szablon Jinja2 → surowy tekst TeX."""
     env = get_jinja_env()
     template = env.get_template(template_name)
     return template.render(**context)
 
+
 def compile_raw_tex(tex_source: str) -> bytes:
-    """
-    Kompiluje surowy kod TeX do PDF (używając lualatex).
-    """
+    """Kompiluje surowy kod TeX → bajty PDF."""
     lualatex = _find_lualatex()
-    
-    with tempfile.TemporaryDirectory(prefix="sop_tex_") as tmpdir:
+
+    with tempfile.TemporaryDirectory(prefix="tex_") as tmpdir:
         workdir = Path(tmpdir)
         tex_file = workdir / "document.tex"
         tex_file.write_text(tex_source, encoding="utf-8")
 
-        for pass_num in range(1, COMPILE_PASSES + 1):
+        for _ in range(COMPILE_PASSES):
             _run_lualatex(lualatex, tex_file, workdir)
 
         pdf_file = workdir / "document.pdf"
         if not pdf_file.exists():
             raise TexCompilationError("lualatex zakończył się sukcesem, ale brak pliku PDF.")
 
-        pdf_bytes = pdf_file.read_bytes()
-        return pdf_bytes
+        return pdf_file.read_bytes()
+
 
 def compile_pdf(template_name: str, context: dict) -> bytes:
-    """
-    Publiczne API silnika.
-    """
-    logger.info("Kompilacja %s (context keys: %s)", template_name, list(context.keys()))
+    """Publiczne API: template + context → bajty PDF."""
+    logger.info("Kompilacja %s", template_name)
     tex_source = render_tex(template_name, context)
     pdf_bytes = compile_raw_tex(tex_source)
-    logger.info("PDF wygenerowany: %d bajtów", len(pdf_bytes))
+    logger.info("Wygenerowano %d bajtów", len(pdf_bytes))
     return pdf_bytes
