@@ -19,9 +19,10 @@ class StatusPraktyki(enum.Enum):
 
 
 class StatusZapisu(enum.Enum):
-    PENDING     = 'PENDING'
-    IN_PROGRESS = 'IN_PROGRESS'
-    COMPLETED   = 'COMPLETED'
+    PENDING           = 'PENDING'
+    AWAITING_APPROVAL = 'AWAITING_APPROVAL'
+    IN_PROGRESS       = 'IN_PROGRESS'
+    COMPLETED         = 'COMPLETED'
 
 
 class SciezkaPraktyki(enum.Enum):
@@ -153,6 +154,11 @@ class ZapisPraktyki(db.Model):
 
     total_hours_logged = db.Column(db.Integer, default=0)
     enrolled_at   = db.Column(db.DateTime, server_default=db.func.now())
+
+    # Feedback system
+    admin_comments       = db.Column(db.Text)  # Komentarze administratora
+    uopz_comments        = db.Column(db.Text)  # Komentarze UOPZ
+    student_notified_at  = db.Column(db.DateTime)  # Kiedy powiadomiono studenta
 
     # Relacje
     student = db.relationship('Uzytkownik', foreign_keys=[student_id], lazy='select')

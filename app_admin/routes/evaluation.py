@@ -14,16 +14,88 @@ from app_admin.routes.auth import wymaga_roli
 evaluation_bp = Blueprint('evaluation', __name__)
 
 
+def get_pilne_oceny(uopz_id=None):
+    """Zwraca listę praktyk z pilnymi ocenami dla danego UOPZ lub wszystkich."""
+    from datetime import date, timedelta
+
+    q = db.session.query(ZapisPraktyki).filter_by(status=StatusZapisu.COMPLETED)
+
+    if uopz_id:
+        q = q.filter_by(uopz_id=uopz_id)
+
+    zapisy = q.all()
+    pilne_oceny = []
+
+    for zapis in zapisy:
+        if zapis.termin_do:
+            deadline = zapis.termin_do + timedelta(days=7)  # 7 dni na ocenę
+            dni_do_deadline = (deadline - date.today()).days
+
+            # Tylko pilne (3 dni lub mniej) lub przekroczone
+            if dni_do_deadline <= 3:
+                pilne_oceny.append({
+                    'zapis': zapis,
+                    'deadline': deadline,
+                    'dni_do_deadline': dni_do_deadline,
+                    'przekroczony': dni_do_deadline < 0
+                })
+
+    return sorted(pilne_oceny, key=lambda x: x['dni_do_deadline'])
+
+
+def _auto_complete_internships():
+    """Automatycznie przenosi praktyki do statusu COMPLETED po zakończeniu terminu."""
+    from datetime import date
+
+    # Znajdź praktyki IN_PROGRESS z przekroczonym terminem zakończenia
+    praktyki_do_zakonczenia = db.session.query(ZapisPraktyki).filter(
+        ZapisPraktyki.status == StatusZapisu.IN_PROGRESS,
+        ZapisPraktyki.termin_do < date.today()
+    ).all()
+
+    for praktyka in praktyki_do_zakonczenia:
+        praktyka.status = StatusZapisu.COMPLETED
+        # TODO: Wysłać notyfikację email do UOPZ o nowej praktyce do oceny
+
+    if praktyki_do_zakonczenia:
+        db.session.commit()
+
+
 @evaluation_bp.route('/')
 @login_required
 def lista_ocen():
+    # Automatycznie przenoś praktyki do COMPLETED jeśli minęła data zakończenia
+    _auto_complete_internships()
+
     q = db.session.query(ZapisPraktyki).filter_by(status=StatusZapisu.COMPLETED)
 
     if current_user.role == RolaUzytkownika.UOPZ:
         q = q.filter_by(uopz_id=current_user.id)
 
     zapisy = q.order_by(ZapisPraktyki.enrolled_at.desc()).all()
-    return render_template('evaluation/lista_ocen.html', zapisy=zapisy)
+
+    # Dodaj informacje o deadline'ach dla każdego zapisu
+    from datetime import date, timedelta
+
+    zapisy_z_deadlinami = []
+    for zapis in zapisy:
+        deadline = None
+        dni_do_deadline = None
+        przekroczony = False
+
+        if zapis.termin_do:
+            deadline = zapis.termin_do + timedelta(days=7)  # 7 dni na ocenę
+            dni_do_deadline = (deadline - date.today()).days
+            przekroczony = dni_do_deadline < 0
+
+        zapisy_z_deadlinami.append({
+            'zapis': zapis,
+            'deadline': deadline,
+            'dni_do_deadline': dni_do_deadline,
+            'przekroczony': przekroczony
+        })
+
+    return render_template('evaluation/lista_ocen.html', zapisy_z_deadlinami=zapisy_z_deadlinami)
 
 @evaluation_bp.route('/zapis/<uuid:id>/karta_ocen', methods=['GET', 'POST'])
 @wymaga_roli(RolaUzytkownika.ADMIN, RolaUzytkownika.UOPZ)

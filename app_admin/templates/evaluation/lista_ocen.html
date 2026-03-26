@@ -13,27 +13,52 @@
             <th scope="col">Student</th>
             <th scope="col">Zakład pracy</th>
             <th scope="col">Termin zakończenia</th>
+            <th scope="col">Deadline oceny</th>
             <th scope="col">Godziny</th>
             <th scope="col">Akcje</th>
           </tr>
         </thead>
         <tbody>
-          {% for p in praktyki %}
-          <tr>
+          {% for item in zapisy_z_deadlinami %}
+          {% set p = item.zapis %}
+          <tr {% if item.przekroczony %}style="background: rgba(192, 57, 43, 0.05);"{% endif %}>
             <td>
-              <div style="font-weight: 600;">{{ p.student.nazwisko }} {{ p.student.imie }}</div>
-              <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor);">Album: {{ p.student.numer_albumu }}</div>
+              <div style="font-weight: 600;">{{ p.student.last_name }} {{ p.student.first_name }}</div>
+              <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor);">Album: {{ p.student.album_number or '-' }}</div>
             </td>
-            <td>{{ p.zaklad.nazwa }}</td>
-            <td>{{ p.data_zakonczenia or 'Brak daty' }}</td>
-            <td><strong>{{ p.lacznie_godzin }} h</strong></td>
+            <td>{{ p.firma_nazwa or 'Brak danych' }}</td>
+            <td>{{ p.termin_do.strftime('%d.%m.%Y') if p.termin_do else 'Brak daty' }}</td>
             <td>
-              <a href="{{ url_for('evaluation.ocen_praktyke', id=p.id) }}" class="przycisk przycisk--glowny przycisk--maly">Wystaw ocenę</a>
+              {% if item.deadline %}
+                <div style="font-weight: 600; {% if item.przekroczony %}color: var(--kolor-blad);{% elif item.dni_do_deadline <= 2 %}color: var(--kolor-akcent);{% endif %}">
+                  {{ item.deadline.strftime('%d.%m.%Y') }}
+                </div>
+                <div style="font-size: 0.75rem; {% if item.przekroczony %}color: var(--kolor-blad);{% elif item.dni_do_deadline <= 2 %}color: var(--kolor-akcent);{% else %}color: var(--kolor-tekst-drugor);{% endif %}">
+                  {% if item.przekroczony %}
+                    Przekroczony o {{ -item.dni_do_deadline }} dni
+                  {% elif item.dni_do_deadline == 0 %}
+                    Dziś ostatni dzień!
+                  {% elif item.dni_do_deadline <= 2 %}
+                    Zostały {{ item.dni_do_deadline }} dni
+                  {% else %}
+                    Za {{ item.dni_do_deadline }} dni
+                  {% endif %}
+                </div>
+              {% else %}
+                <span style="color: var(--kolor-tekst-trzeciorzed);">Brak terminu</span>
+              {% endif %}
+            </td>
+            <td><strong>{{ p.total_hours_logged or 0 }} h</strong></td>
+            <td>
+              <a href="{{ url_for('evaluation.ocen_praktyke', id=p.id) }}"
+                 class="przycisk {% if item.przekroczony %}przycisk--glowny{% else %}przycisk--drugorzedny{% endif %} przycisk--maly">
+                {% if item.przekroczony %}PILNE: Wystaw ocenę{% else %}Wystaw ocenę{% endif %}
+              </a>
             </td>
           </tr>
           {% else %}
           <tr>
-            <td colspan="5" class="tabela--pusta">Brak praktyk oczekujących na ocenę. ✓</td>
+            <td colspan="6" class="tabela--pusta">Brak praktyk oczekujących na ocenę.</td>
           </tr>
           {% endfor %}
         </tbody>

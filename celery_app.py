@@ -57,8 +57,43 @@ def generate_pdf_dziennik(self, enrollment_id: str, app_type: str = 'student') -
 
             self.update_state(state='STARTED', meta={'progress': 30})
 
-            from tex_engine.pdf_service import pdf_service
-            pdf_bytes = pdf_service.get_dziennik(zapis)
+            # Używamy bezpośrednio tex_service zamiast pdf_service
+            import httpx
+
+            # Budowa kontekstu dla dziennika
+            context = {
+                'student': {
+                    'first_name': zapis.student.first_name,
+                    'last_name': zapis.student.last_name,
+                    'album_number': zapis.student.album_number,
+                },
+                'zapis': {
+                    'total_hours_logged': zapis.total_hours_logged,
+                    'praktyka': {
+                        'rok_uczelniany': zapis.praktyka.rok_uczelniany,
+                        'semestr': zapis.praktyka.semestr,
+                    },
+                },
+                'wpisy': [
+                    {
+                        'entry_date': w.entry_date.isoformat(),
+                        'duration_hours': w.duration_hours,
+                        'description': w.description,
+                        'efekt': {'kod': f"{w.learning_outcome_id:02d}"},
+                    }
+                    for w in sorted(wpisy, key=lambda x: x.entry_date)
+                ]
+            }
+
+            # Wywołanie tex_service
+            resp = httpx.post(
+                f"http://tex-service:5002/generuj",
+                json={'template': 'zal6_dziennik.tex.j2', 'context': context},
+                timeout=60.0
+            )
+            if resp.status_code != 200:
+                raise Exception(f"Tex service error: {resp.text}")
+            pdf_bytes = resp.content
 
             self.update_state(state='STARTED', meta={'progress': 80})
 

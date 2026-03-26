@@ -17,6 +17,39 @@
 {% endblock %}
 
 {% block tresc %}
+
+{% if current_user.role.value == 'UOPZ' and pilne_oceny %}
+<div style="margin-bottom: 2rem;">
+  {% for item in pilne_oceny %}
+  <div class="komunikat komunikat--{% if item.przekroczony %}danger{% else %}warning{% endif %}" style="margin-bottom: 1rem;">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 2px;">
+      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+      <line x1="12" y1="9" x2="12" y2="13"/>
+      <line x1="12" y1="17" x2="12.01" y2="17"/>
+    </svg>
+    <div>
+      <div style="font-weight: 600;">
+        {% if item.przekroczony %}
+          Przekroczony deadline oceny: {{ item.zapis.student.last_name }} {{ item.zapis.student.first_name }}
+        {% elif item.dni_do_deadline == 0 %}
+          Dziś ostatni dzień oceny: {{ item.zapis.student.last_name }} {{ item.zapis.student.first_name }}
+        {% else %}
+          Pilna ocena za {{ item.dni_do_deadline }} dni: {{ item.zapis.student.last_name }} {{ item.zapis.student.first_name }}
+        {% endif %}
+      </div>
+      <div style="font-size: 0.9rem; margin-top: 0.5rem;">
+        Deadline: {{ item.deadline.strftime('%d.%m.%Y') }}
+        <a href="{{ url_for('evaluation.ocen_praktyke', id=item.zapis.id) }}"
+           style="margin-left: 1rem; color: inherit; text-decoration: underline;">
+          Wystaw ocenę →
+        </a>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
 <section class="siatka-statystyk" aria-label="Kluczowe wskaźniki">
 
   <div class="karta-stat">

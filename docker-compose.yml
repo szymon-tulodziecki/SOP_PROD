@@ -32,6 +32,8 @@ services:
         condition: service_started
     volumes:
       - pdf_data:/app/pdf_output
+      - ./app_admin:/app/app_admin:ro
+      - ./shared:/app/shared:ro
 
   student:
     build:
@@ -52,6 +54,7 @@ services:
         condition: service_started
     volumes:
       - pdf_data:/app/pdf_output
+      - ./app_student:/app/app_student:ro
 
   tex-service:
     build:
@@ -62,7 +65,7 @@ services:
     environment:
       - TZ=Europe/Warsaw
     volumes:
-      - ./tex_engine/templates:/app/templates:ro
+      - ./tex_service/templates:/app/templates:ro
     expose:
       - "5002"
     healthcheck:

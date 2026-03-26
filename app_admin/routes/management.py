@@ -11,7 +11,7 @@ from wtforms import StringField, SelectField
 from wtforms.validators import DataRequired, Email, Length, Optional, ValidationError
 from werkzeug.security import generate_password_hash
 
-from app_admin.models import (Uzytkownik, Praktyka, ZapisPraktyki,
+from app_admin.models import (Uzytkownik, Praktyka, ZapisPraktyki, HarmonogramPraktyki, EfektUczenia,
                     RolaUzytkownika, StatusPraktyki, StatusZapisu)
 from app_admin.extensions import db
 from app_admin.routes.auth import wymaga_roli
@@ -370,8 +370,18 @@ class FormularzPrzypiszUOPZ(FlaskForm):
 @management_bp.route('/zgloszenia')
 @wymaga_roli(RolaUzytkownika.ADMIN)
 def lista_zgloszen():
-    strona = request.args.get('strona', 1, type=int)
-    q = db.session.query(ZapisPraktyki).filter_by(status=StatusZapisu.PENDING)
+    strona = request.args.get('page', 1, type=int)
+    status_filter = request.args.get('status', '').strip()
+
+    q = db.session.query(ZapisPraktyki).join(Uzytkownik, ZapisPraktyki.student_id == Uzytkownik.id)
+
+    # Filtrowanie według statusu
+    if status_filter:
+        try:
+            q = q.filter_by(status=StatusZapisu[status_filter])
+        except KeyError:
+            flash(f'Nieznany status: {status_filter}', 'warning')
+
     zgloszenia = q.order_by(ZapisPraktyki.enrolled_at.desc()).paginate(page=strona, per_page=25, error_out=False)
     csrf_form = FlaskForm()
     return render_template('management/enrollments/list.html', zgloszenia=zgloszenia, csrf_form=csrf_form)
@@ -401,6 +411,63 @@ def przypisz_uopz(id):
     return render_template('management/enrollments/przypisz_uopz.html', form=form, zapis=zapis)
 
 
+@management_bp.route('/zgloszenia/<uuid:id>/szczegoly', methods=['GET', 'POST'])
+@wymaga_roli(RolaUzytkownika.ADMIN, RolaUzytkownika.UOPZ)
+def szczegoly_zgloszenia(id):
+    zapis = db.session.get(ZapisPraktyki, id) or abort(404)
+
+    # UOPZ może widzieć tylko swoje przypisane zgłoszenia
+    if current_user.role == RolaUzytkownika.UOPZ and zapis.uopz_id != current_user.id:
+        abort(403)
+
+    # Pobierz harmonogram praktyki
+    harmonogram = db.session.query(HarmonogramPraktyki).filter_by(enrollment_id=id).all()
+    harmonogram_dict = {h.learning_outcome_id: h for h in harmonogram}
+
+    # Pobierz wszystkie efekty uczenia
+    efekty = db.session.query(EfektUczenia).order_by(EfektUczenia.id).all()
+
+    # Formularz komentarzy
+    from flask_wtf import FlaskForm
+    from wtforms import TextAreaField, SubmitField
+
+    class FormularzKomentarza(FlaskForm):
+        komentarz = TextAreaField('Komentarz do studenta')
+        zatwierdz = SubmitField('Zatwierdź zgłoszenie')
+        odrzuc = SubmitField('Wymagane poprawki')
+
+    form = FormularzKomentarza()
+
+    if form.validate_on_submit():
+        # Zapisz komentarz
+        if current_user.role == RolaUzytkownika.ADMIN:
+            zapis.admin_comments = form.komentarz.data
+        else:  # UOPZ
+            zapis.uopz_comments = form.komentarz.data
+
+        # Zmień status na podstawie akcji
+        if form.zatwierdz.data:
+            zapis.status = StatusZapisu.IN_PROGRESS
+            flash('Zgłoszenie zostało zatwierdzone!', 'success')
+        elif form.odrzuc.data:
+            zapis.status = StatusZapisu.PENDING
+            zapis.student_notified_at = db.func.now()
+            flash('Wysłano prośbę o poprawki do studenta.', 'info')
+
+        db.session.commit()
+
+        if current_user.role == RolaUzytkownika.ADMIN:
+            return redirect(url_for('management.lista_zgloszen'))
+        else:
+            return redirect(url_for('management.moje_zgloszenia'))
+
+    return render_template('management/enrollments/szczegoly.html',
+                         zapis=zapis,
+                         harmonogram_dict=harmonogram_dict,
+                         efekty=efekty,
+                         form=form)
+
+
 @management_bp.route('/zgloszenia/<uuid:id>/zatwierdz-zaklad', methods=['POST'])
 @wymaga_roli(RolaUzytkownika.UOPZ, RolaUzytkownika.ADMIN)
 def zatwierdz_zaklad(id):
@@ -427,6 +494,45 @@ def potwierdz_zapis(id):
     db.session.commit()
     flash(f'Zapis studenta na praktykę został potwierdzony. Zostałeś/aś przypisany/a jako opiekun.', 'success')
     return redirect(request.referrer or url_for('dashboard.index'))
+
+
+@management_bp.route('/moje-zgloszenia')
+@wymaga_roli(RolaUzytkownika.UOPZ)
+def moje_zgloszenia():
+    """Lista zgłoszeń przypisanych do aktualnego UOPZ"""
+    from app_admin.routes.evaluation import get_pilne_oceny
+
+    strona = request.args.get('page', 1, type=int)
+    status_filter = request.args.get('status', '').strip()
+
+    # Podstawowe zapytanie - wszystkie zgłoszenia przypisane do UOPZ
+    q = db.session.query(ZapisPraktyki).filter(ZapisPraktyki.uopz_id == current_user.id)
+
+    # Filtrowanie według statusu
+    if status_filter:
+        try:
+            q = q.filter_by(status=StatusZapisu[status_filter])
+        except KeyError:
+            flash(f'Nieznany status: {status_filter}', 'warning')
+
+    # Liczniki dla filtrów
+    base_query = db.session.query(ZapisPraktyki).filter(ZapisPraktyki.uopz_id == current_user.id)
+    liczniki = {
+        'wszystkie': base_query.count(),
+        'oczekujace': base_query.filter_by(status=StatusZapisu.AWAITING_APPROVAL).count(),
+        'zatwierdzone': base_query.filter_by(status=StatusZapisu.IN_PROGRESS).count(),
+    }
+
+    # Pilne oceny
+    pilne_oceny = get_pilne_oceny(current_user.id)
+
+    zgloszenia = q.order_by(ZapisPraktyki.enrolled_at.desc()).paginate(page=strona, per_page=25, error_out=False)
+    csrf_form = FlaskForm()
+    return render_template('management/enrollments/moje_lista.html',
+                         zgloszenia=zgloszenia,
+                         liczniki=liczniki,
+                         pilne_oceny=pilne_oceny,
+                         csrf_form=csrf_form)
 
 
 @management_bp.route('/praktyki/<uuid:id>/usun', methods=['POST'])

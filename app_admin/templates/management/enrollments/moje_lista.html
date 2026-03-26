@@ -1,0 +1,237 @@
+{% extends "layouts/base_panel.html" %}
+
+{% block tytul %}Moje zgłoszenia - UOPZ{% endblock %}
+{% block naglowek %}Zgłoszenia moich studentów{% endblock %}
+
+{% block naglowek_akcje %}
+<div style="display: flex; gap: 0.5rem;">
+  <a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← Dashboard</a>
+</div>
+{% endblock %}
+
+{% block tresc %}
+<div style="max-width: 1400px; margin: 0 auto;">
+
+  <!-- Info dla UOPZ -->
+  <div class="karta" style="margin-bottom: 2rem; border-left: 4px solid var(--kolor-info);">
+    <div class="karta__tresc">
+      <div>
+        <div style="font-weight: 600; margin-bottom: 0.5rem;">Panel opiekuna uczelnianego (UOPZ)</div>
+        <div style="color: var(--kolor-tekst-drugor);">
+          Tutaj znajdziesz wszystkie zgłoszenia studentów, których masz pod opieką.
+          Możesz przeglądać szczegółowe dane wypełnione przez studentów i podejmować decyzje o zatwierdzeniu lub odrzuceniu zgłoszenia.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtry statusu -->
+  <div class="karta" style="margin-bottom: 2rem;">
+    <div class="karta__tresc">
+      <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+        <span style="font-weight: 600;">Filtruj według statusu:</span>
+        <a href="{{ url_for('management.moje_zgloszenia') }}"
+           class="przycisk przycisk--{% if not request.args.get('status') %}glowny{% else %}drugorzedny{% endif %} przycisk--maly">
+          Wszystkie ({{ liczniki.wszystkie }})
+        </a>
+        <a href="{{ url_for('management.moje_zgloszenia', status='AWAITING_APPROVAL') }}"
+           class="przycisk przycisk--{% if request.args.get('status') == 'AWAITING_APPROVAL' %}glowny{% else %}drugorzedny{% endif %} przycisk--maly">
+          Do zatwierdzenia ({{ liczniki.oczekujace }})
+        </a>
+        <a href="{{ url_for('management.moje_zgloszenia', status='IN_PROGRESS') }}"
+           class="przycisk przycisk--{% if request.args.get('status') == 'IN_PROGRESS' %}glowny{% else %}drugorzedny{% endif %} przycisk--maly">
+          Zatwierdzone ({{ liczniki.zatwierdzone }})
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pilne sprawy -->
+  {% if pilne_oceny %}
+  <div class="karta" style="margin-bottom: 2rem; border-left: 4px solid var(--kolor-akcent);">
+    <div class="karta__naglowek">
+      <h3 class="karta__tytul" style="color: var(--kolor-akcent);">Wymagają uwagi</h3>
+    </div>
+    <div class="karta__tresc">
+      {% for item in pilne_oceny %}
+      <div style="padding: 1rem; margin-bottom: 1rem; background: rgba(200, 150, 62, 0.1); border-radius: var(--promien); {% if not loop.last %}border-bottom: 1px solid var(--kolor-ramka);{% endif %}">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <div style="font-weight: 600;">{{ item.zapis.student.first_name }} {{ item.zapis.student.last_name }}</div>
+            <div style="font-size: 0.9rem; color: var(--kolor-tekst-drugor);">
+              {% if item.przekroczony %}
+                Przekroczony deadline oceny ({{ item.deadline.strftime('%d.%m.%Y') }})
+              {% elif item.dni_do_deadline == 0 %}
+                Dziś ostatni dzień na ocenę
+              {% else %}
+                Pozostało {{ item.dni_do_deadline }} dni do deadline ({{ item.deadline.strftime('%d.%m.%Y') }})
+              {% endif %}
+            </div>
+          </div>
+          <div>
+            <a href="{{ url_for('evaluation.ocen_praktyke', id=item.zapis.id) }}"
+               class="przycisk przycisk--glowny przycisk--maly">
+              Wystaw ocenę
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Lista zgłoszeń -->
+  <div class="karta">
+    <div class="karta__naglowek">
+      <h2 class="karta__tytul">
+        Moje zgłoszenia
+        {% if zgloszenia.total > 0 %}
+        <span style="font-size: 0.9rem; font-weight: normal; color: var(--kolor-tekst-drugor);">({{ zgloszenia.total }})</span>
+        {% endif %}
+      </h2>
+    </div>
+    <div class="karta__tresc">
+      {% if zgloszenia.items %}
+      <div class="tabela-wrapper">
+        <table class="tabela">
+          <thead>
+            <tr>
+              <th style="width: 25%;">Student</th>
+              <th style="width: 20%;">Praktyka</th>
+              <th style="width: 20%;">Firma</th>
+              <th style="width: 15%;">Status</th>
+              <th style="width: 12%;">Zgłoszono</th>
+              <th style="width: 8%; text-align: center;">Akcje</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for z in zgloszenia.items %}
+            <tr>
+              <td>
+                <div style="font-weight: 600;">{{ z.student.first_name }} {{ z.student.last_name }}</div>
+                <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor);">{{ z.student.email }}</div>
+                {% if z.student.album_number %}
+                <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor);">Album: {{ z.student.album_number }}</div>
+                {% endif %}
+              </td>
+              <td>
+                <div style="font-weight: 600;">{{ z.praktyka.rok_uczelniany }}</div>
+                <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor);">Semestr {{ z.praktyka.semestr }}</div>
+                {% if z.termin_od and z.termin_do %}
+                <div style="font-size: 0.75rem; color: var(--kolor-tekst-drugor); margin-top: 0.25rem;">
+                  {{ z.termin_od.strftime('%d.%m') }} - {{ z.termin_do.strftime('%d.%m.%Y') }}
+                </div>
+                {% endif %}
+              </td>
+              <td>
+                <div style="font-weight: 600;">{{ z.firma_nazwa or 'Nie podano' }}</div>
+                {% if z.firma_miasto %}
+                <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor);">{{ z.firma_miasto }}</div>
+                {% endif %}
+                {% if z.track_type.value != 'STANDARD' %}
+                <div style="font-size: 0.75rem; color: var(--kolor-info); margin-top: 0.25rem;">
+                  {% if z.track_type.value == 'EMPLOYMENT' %}Na podstawie zatrudnienia
+                  {% elif z.track_type.value == 'OWN_BUSINESS' %}Własna działalność
+                  {% endif %}
+                </div>
+                {% endif %}
+              </td>
+              <td>
+                <span class="status status--{{ z.status.value|lower|replace('_', '-') }}">
+                  {% if z.status.value == 'AWAITING_APPROVAL' %}Do zatwierdzenia
+                  {% elif z.status.value == 'IN_PROGRESS' %}Zatwierdzona
+                  {% elif z.status.value == 'COMPLETED' %}Zakończona
+                  {% else %}{{ z.status.value }}{% endif %}
+                </span>
+                {% if z.admin_comments or z.uopz_comments %}
+                <div style="font-size: 0.7rem; color: var(--kolor-info); margin-top: 0.25rem;">
+                  Są komentarze
+                </div>
+                {% endif %}
+              </td>
+              <td style="font-size: 0.85rem;">
+                {{ z.enrolled_at.strftime('%d.%m.%Y') if z.enrolled_at else '-' }}
+                <div style="font-size: 0.7rem; color: var(--kolor-tekst-drugor);">
+                  {{ z.enrolled_at.strftime('%H:%M') if z.enrolled_at else '' }}
+                </div>
+              </td>
+              <td style="text-align: center;">
+                <div style="display: flex; flex-direction: column; gap: 0.5rem; align-items: center;">
+                  <a href="{{ url_for('management.szczegoly_zgloszenia', id=z.id) }}"
+                     class="przycisk przycisk--{% if z.status.value == 'AWAITING_APPROVAL' %}glowny{% else %}drugorzedny{% endif %} przycisk--maly"
+                     style="min-width: 80px;">
+                    {% if z.status.value == 'AWAITING_APPROVAL' %}Oceń{% else %}Szczegóły{% endif %}
+                  </a>
+
+                  {% if z.status.value == 'IN_PROGRESS' %}
+                  <a href="{{ url_for('evaluation.ocen_praktyke', id=z.id) }}"
+                     class="przycisk przycisk--maly"
+                     style="min-width: 80px;">
+                    Ocena UOPZ
+                  </a>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Paginacja -->
+      {% if zgloszenia.pages > 1 %}
+      <div style="display: flex; justify-content: center; margin-top: 2rem; gap: 0.5rem;">
+        {% if zgloszenia.has_prev %}
+        <a href="{{ url_for('management.moje_zgloszenia', page=zgloszenia.prev_num, **request.args) }}"
+           class="przycisk przycisk--drugorzedny przycisk--maly">← Poprzednia</a>
+        {% endif %}
+
+        {% for page_num in zgloszenia.iter_pages() %}
+          {% if page_num %}
+            {% if page_num != zgloszenia.page %}
+            <a href="{{ url_for('management.moje_zgloszenia', page=page_num, **request.args) }}"
+               class="przycisk przycisk--drugorzedny przycisk--maly">{{ page_num }}</a>
+            {% else %}
+            <span class="przycisk przycisk--glowny przycisk--maly">{{ page_num }}</span>
+            {% endif %}
+          {% else %}
+            <span>…</span>
+          {% endif %}
+        {% endfor %}
+
+        {% if zgloszenia.has_next %}
+        <a href="{{ url_for('management.moje_zgloszenia', page=zgloszenia.next_num, **request.args) }}"
+           class="przycisk przycisk--drugorzedny przycisk--maly">Następna →</a>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      {% else %}
+      <!-- Pusty stan -->
+      <div style="text-align: center; padding: 4rem 2rem;">
+        <div style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;">-</div>
+        <div style="font-size: 1.2rem; font-weight: 600; margin-bottom: 1rem; color: var(--kolor-tekst-drugor);">
+          Brak zgłoszeń
+        </div>
+        <div style="color: var(--kolor-tekst-drugor);">
+          {% if request.args.get('status') %}
+          Nie masz zgłoszeń o wybranym statusie.
+          {% else %}
+          Nie zostały Ci jeszcze przypisani studenci do opieki.
+          {% endif %}
+        </div>
+        {% if request.args.get('status') %}
+        <div style="margin-top: 2rem;">
+          <a href="{{ url_for('management.moje_zgloszenia') }}" class="przycisk przycisk--drugorzedny">
+            Pokaż wszystkie zgłoszenia
+          </a>
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

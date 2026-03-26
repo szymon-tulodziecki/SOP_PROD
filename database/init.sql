@@ -9,7 +9,7 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 -- 1. Typy wyliczeniowe
 CREATE TYPE user_role AS ENUM ('STUDENT', 'UOPZ', 'ADMIN');
 CREATE TYPE internship_status AS ENUM ('ACTIVE', 'INACTIVE');
-CREATE TYPE enrollment_status AS ENUM ('PENDING', 'IN_PROGRESS', 'COMPLETED');
+CREATE TYPE enrollment_status AS ENUM ('PENDING', 'AWAITING_APPROVAL', 'IN_PROGRESS', 'COMPLETED');
 CREATE TYPE evaluation_result AS ENUM ('ACHIEVED', 'PARTIALLY_ACHIEVED', 'NOT_ACHIEVED');
 CREATE TYPE internship_track AS ENUM ('STANDARD', 'EMPLOYMENT', 'OWN_BUSINESS');
 
@@ -108,6 +108,12 @@ CREATE TABLE internship_enrollments (
 
     total_hours_logged INTEGER DEFAULT 0,
     enrolled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    -- Feedback system
+    admin_comments TEXT,       -- Komentarze administratora
+    uopz_comments TEXT,        -- Komentarze UOPZ
+    student_notified_at TIMESTAMP,  -- Kiedy powiadomiono studenta
+
     UNIQUE(internship_id, student_id)          -- student może być zapisany tylko raz do tej samej praktyki
 );
 
