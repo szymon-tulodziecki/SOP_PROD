@@ -131,7 +131,9 @@ def ocen_praktyke(id):
         flash('Oceny zostały zapisane.', 'success')
         return redirect(url_for('evaluation.ocen_praktyke', id=zapis.id))
 
-    return render_template('evaluation/karta_ocen.html', practically=zapis, zapis=zapis)
+    from flask_wtf import FlaskForm
+    csrf_form = FlaskForm()
+    return render_template('evaluation/karta_ocen.html', practically=zapis, zapis=zapis, csrf_form=csrf_form)
 
 @evaluation_bp.route('/zapis/<uuid:id>/sprawozdanie')
 @wymaga_roli(RolaUzytkownika.ADMIN, RolaUzytkownika.UOPZ)

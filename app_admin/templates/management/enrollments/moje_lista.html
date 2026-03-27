@@ -139,10 +139,7 @@
               </td>
               <td>
                 <span class="status status--{{ z.status.value|lower|replace('_', '-') }}">
-                  {% if z.status.value == 'AWAITING_APPROVAL' %}Do zatwierdzenia
-                  {% elif z.status.value == 'IN_PROGRESS' %}Zatwierdzona
-                  {% elif z.status.value == 'COMPLETED' %}Zakończona
-                  {% else %}{{ z.status.value }}{% endif %}
+                  {{ tlumacz_status(z.status.value) }}
                 </span>
                 {% if z.admin_comments or z.uopz_comments %}
                 <div style="font-size: 0.7rem; color: var(--kolor-info); margin-top: 0.25rem;">

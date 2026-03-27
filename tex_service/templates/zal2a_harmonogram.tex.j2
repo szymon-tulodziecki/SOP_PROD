@@ -1,0 +1,105 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage{fontspec}
+\usepackage{polyglossia}
+\setmainlanguage{polish}
+\setmainfont{Latin Modern Roman}
+\usepackage{geometry}
+\geometry{margin=1.5cm}
+\usepackage{tabularx}
+\usepackage{longtable}
+
+\begin{document}
+
+\begin{flushright}
+Zał. nr 2a
+\end{flushright}
+
+\noindent
+Akademia Nauk Stosowanych w Elblągu \\
+Instytut Informatyki Stosowanej im. Krzysztofa Brzeskiego \\
+Kierunek studiów: Informatyka
+
+\vspace{1em}
+
+\noindent Student/ka: \textbf{<< student.first_name | s >> << student.last_name | s >>} \\
+Nr albumu: \textbf{<< student.album_number | s >>} \\
+Kierunek studiów: Informatyka \hfill Specjalność: \textbf{<< zapis.specjalnosc | s >>} \\
+Miejsce praktyki (instytucja): \textbf{<< zapis.firma_nazwa | s >>} \\
+\textbf{<< zapis.firma_adres | s >>, << zapis.firma_miasto | s >>} \\
+Termin realizacji praktyki: od
+{%- if zapis.termin_od and zapis.termin_do -%}
+\textbf{<< zapis.termin_od.strftime('%d.%m.%Y') >>}\ do \textbf{<< zapis.termin_do.strftime('%d.%m.%Y') >>}
+{%- else -%}
+\dots\dots\dots\dots\dots\ do \dots\dots\dots\dots\dots
+{%- endif -%}
+\ \hfill Liczba dni roboczych: 120
+
+\vspace{2em}
+\begin{center}
+\textbf{PROGRAM PRAKTYKI ZAWODOWEJ}
+\end{center}
+
+\renewcommand{\arraystretch}{1.5}
+\begin{longtable}{|c|p{8cm}|p{7cm}|}
+\hline
+\textbf{Lp.} & \textbf{Efekty kształcenia} & \textbf{Dział (komórka) / przykładowe prace wykonywane przez praktykanta} \\ \hline
+\endfirsthead
+\hline
+\textbf{Lp.} & \textbf{Efekty kształcenia} & \textbf{Dział (komórka) / przykładowe prace wykonywane przez praktykanta} \\ \hline
+\endhead
+{%- for efekt in efekty_uczenia -%}
+<< "{:02d}".format(efekt.id) >> & << efekt.description | s >> &
+{%- set harmonogram_efekt = harmonogram | selectattr('learning_outcome_id', 'equalto', efekt.id) | first -%}
+{%- if harmonogram_efekt -%}
+\textbf{<< harmonogram_efekt.nazwa_dzialu | s >>} \\
+<< harmonogram_efekt.przykladowe_prace | s >>
+{%- endif -%} \\ \hline
+{%- endfor -%}
+\end{longtable}
+
+\newpage
+
+\begin{center}
+\textbf{HARMONOGRAM PRAKTYKI ZAWODOWEJ}
+\end{center}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.5}
+\begin{tabular}{|c|p{8cm}|p{4cm}|}
+\hline
+\textbf{L.p.} & \textbf{Dział / komórka (miejsce odbywania praktyki)} & \textbf{Planowana liczba dni roboczych} \\ \hline
+{%- for harmonogram_item in harmonogram -%}
+<< loop.index >> & << harmonogram_item.nazwa_dzialu | s >> & << harmonogram_item.liczba_dni >> \\ \hline
+{%- endfor -%}
+{%- for i in range(harmonogram | length + 1, 14) -%}
+<< i >> & & \\ \hline
+{%- endfor -%}
+\multicolumn{2}{|r|}{\textbf{Łącznie}} & \textbf{<< harmonogram | sum(attribute='liczba_dni') >>} \\ \hline
+\multicolumn{2}{|r|}{\textbf{Wymagana}} & \textbf{120} \\ \hline
+\end{tabular}
+\end{center}
+
+\vspace{3em}
+\noindent Uzgodniono w dniu: \dotfill
+
+\vspace{4em}
+\noindent
+\begin{minipage}[t]{0.3\textwidth}
+\centering
+\dotfill\\
+\small podpis uczelnianego opiekuna praktyki
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.3\textwidth}
+\centering
+\dotfill\\
+\small podpis zakładowego opiekuna praktyki
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.3\textwidth}
+\centering
+\dotfill\\
+\small podpis studenta
+\end{minipage}
+
+\end{document}

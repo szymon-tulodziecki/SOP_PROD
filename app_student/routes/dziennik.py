@@ -37,7 +37,12 @@ class FormularzWpisu(FlaskForm):
 def _aktywny_zapis():
     return db.session.query(ZapisPraktyki).filter(
         ZapisPraktyki.student_id == current_user.id,
-        ZapisPraktyki.status == StatusZapisu.IN_PROGRESS,
+        ZapisPraktyki.status.in_([
+            StatusZapisu.IN_PROGRESS,
+            StatusZapisu.COMMISSION_REVIEW,
+            StatusZapisu.DEAN_APPROVAL,
+            StatusZapisu.COMPLETED
+        ]),
     ).first()
 
 

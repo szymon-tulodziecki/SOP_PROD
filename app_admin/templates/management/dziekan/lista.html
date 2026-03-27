@@ -1,0 +1,124 @@
+{% extends "layouts/base_panel.html" %}
+
+{% block tytul %}Decyzje dziekana{% endblock %}
+{% block naglowek %}Wnioski oczekujące na decyzję dziekana{% endblock %}
+
+{% block tresc %}
+<div style="max-width: 1400px; margin: 0 auto;">
+
+  {% if wnioski.items %}
+  <div class="karta">
+    <div class="karta__tresc" style="padding: 0;">
+      <div style="overflow-x: auto;">
+        <table class="tabela-pelna">
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Ścieżka</th>
+              <th>Firma/Działalność</th>
+              <th>Decyzja komisji</th>
+              <th>Data komisji</th>
+              <th>Akcje</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for wniosek in wnioski.items %}
+            <tr>
+              <td>
+                <div>
+                  <strong>{{ wniosek.student.last_name }}, {{ wniosek.student.first_name }}</strong><br>
+                  <small style="color: var(--kolor-tekst-drugor);">{{ wniosek.student.album_number }}</small>
+                </div>
+              </td>
+              <td>
+                <span class="status
+                  {%- if wniosek.track_type.value == 'EMPLOYMENT' %} status--w-trakcie
+                  {%- elif wniosek.track_type.value == 'OWN_BUSINESS' %} status--szkic
+                  {%- endif %}">
+                  {% if wniosek.track_type.value == 'EMPLOYMENT' %}Praca zawodowa
+                  {% elif wniosek.track_type.value == 'OWN_BUSINESS' %}Działalność gospodarcza
+                  {% endif %}
+                </span>
+              </td>
+              <td>
+                <div>
+                  {% if wniosek.firma_nazwa %}
+                  <strong>{{ wniosek.firma_nazwa }}</strong><br>
+                  <small style="color: var(--kolor-tekst-drugor);">{{ wniosek.firma_miasto or '' }}</small>
+                  {% else %}
+                  <span style="color: var(--kolor-tekst-drugor);">Brak danych</span>
+                  {% endif %}
+                </div>
+              </td>
+              <td>
+                <span class="status status--zakonczona">Zatwierdzone przez komisję</span>
+                {% if wniosek.komisja_comments %}
+                <div style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--kolor-tekst-drugor);">
+                  {{ wniosek.komisja_comments[:50] }}{% if wniosek.komisja_comments|length > 50 %}...{% endif %}
+                </div>
+                {% endif %}
+              </td>
+              <td>
+                <time>
+                  {% if wniosek.komisja_decision_at %}
+                  {{ wniosek.komisja_decision_at.strftime('%d.%m.%Y') }}
+                  {% endif %}
+                </time>
+              </td>
+              <td>
+                <div style="display: flex; gap: 0.5rem;">
+                  <a href="{{ url_for('management.dziekan_decyzja', id=wniosek.id) }}"
+                     class="przycisk przycisk--maly przycisk--glowny">
+                    Podjmij decyzję
+                  </a>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Paginacja -->
+  {% if wnioski.pages > 1 %}
+  <div class="paginacja">
+    {% if wnioski.has_prev %}
+      <a href="{{ url_for('management.dziekan_lista', page=wnioski.prev_num) }}" class="paginacja__link">← Poprzednia</a>
+    {% endif %}
+
+    {% for page_num in wnioski.iter_pages() %}
+      {% if page_num %}
+        {% if page_num != wnioski.page %}
+          <a href="{{ url_for('management.dziekan_lista', page=page_num) }}" class="paginacja__link">{{ page_num }}</a>
+        {% else %}
+          <span class="paginacja__link paginacja__link--aktywny">{{ page_num }}</span>
+        {% endif %}
+      {% else %}
+        <span class="paginacja__kropki">…</span>
+      {% endif %}
+    {% endfor %}
+
+    {% if wnioski.has_next %}
+      <a href="{{ url_for('management.dziekan_lista', page=wnioski.next_num) }}" class="paginacja__link">Następna →</a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="karta">
+    <div class="karta__tresc" style="text-align: center; padding: 3rem 2rem;">
+      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color: var(--kolor-tekst-drugor); margin-bottom: 1rem;">
+        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+      </svg>
+      <h3 style="margin-bottom: 0.5rem;">Brak wniosków oczekujących na decyzję</h3>
+      <p style="color: var(--kolor-tekst-drugor); margin-bottom: 0;">
+        Wszystkie wnioski zostały już przetworzone lub nie ma nowych zgłoszeń zatwierdzonych przez komisję.
+      </p>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

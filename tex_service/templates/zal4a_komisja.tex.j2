@@ -1,0 +1,96 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage{fontspec}
+\usepackage{polyglossia}
+\setmainlanguage{polish}
+\setmainfont{Latin Modern Roman}
+\usepackage{geometry}
+\geometry{margin=1.5cm}
+\usepackage{longtable}
+\usepackage{makecell}
+
+\begin{document}
+
+\begin{flushright}
+Załącznik nr 4a
+\end{flushright}
+
+\vspace{-1em}
+\begin{center}
+\textbf{\large POTWIERDZENIE UZYSKANIA} \\[0.5em]
+\textbf{\large EFEKTÓW UCZENIA SIĘ W RAMACH PRAKTYKI ZAWODOWEJ NA PODSTAWIE ZATRUDNIENIA/STAŻU/DZIAŁALNOŚCI GOSPODARCZEJ*}
+\end{center}
+
+\vspace{1em}
+
+\noindent Kierunek studiów: Informatyka \\
+Student/ka: \textbf{<< student.first_name | s >> << student.last_name | s >>} \\
+Nr albumu: \textbf{<< student.album_number | s >>} \\
+Kierunek studiów: Informatyka \hfill Specjalność: \textbf{<< zapis.specjalnosc | s >>} \\
+\textbf{<< zapis.firma_nazwa | s >>}
+
+\vspace{1em}
+\noindent W ramach pracy zawodowej/stażu/działalności gospodarczej* w wymiarze \textbf{<< zapis.praktyka.wymiar_godzin >>} godzin uzyskał/a / nie uzyskał/a * zakładane dla praktyki zawodowej efekty uczenia się:
+
+\vspace{1em}
+
+\renewcommand{\arraystretch}{1.5}
+\begin{longtable}{|c|p{10cm}|c|}
+\hline
+\textbf{Lp.} & \textbf{Efekty uczenia się} & \textbf{Potwierdzenie uzyskania efektów} \\ \hline
+\endfirsthead
+\hline
+\textbf{Lp.} & \textbf{Efekty uczenia się} & \textbf{Potwierdzenie uzyskania efektów} \\ \hline
+\endhead
+
+{%- for efekt in efekty_uczenia -%}
+{%- set ocena = oceny_efektow | selectattr('learning_outcome_id', 'equalto', efekt.id) | first -%}
+<< "{:02d}".format(efekt.id) >> & << efekt.description | s >> & \makecell{
+{%- if ocena -%}
+  {%- if ocena.result.value == 'ACHIEVED' %}\textbf{uzyskał/a}
+  {%- elif ocena.result.value == 'PARTIALLY_ACHIEVED' %}\textbf{uzyskał/a częściowo}
+  {%- elif ocena.result.value == 'NOT_ACHIEVED' %}\textbf{nie uzyskał/a}
+  {%- else %}uzyskał/a *\\ uzyskał/a częściowo*\\ nie uzyskał/a*{%- endif -%}
+{%- else -%}
+uzyskał/a *\\ uzyskał/a częściowo*\\ nie uzyskał/a*
+{%- endif -%}
+} \\ \hline
+{%- endfor -%}
+
+\end{longtable}
+
+\vspace{2em}
+
+\noindent \textbf{Opinia komisji powołanej do weryfikacji realizacji praktyki zawodowej na podstawie zatrudnienia/stażu/działalności gospodarczej*:}
+
+\vspace{0.5em}
+
+\noindent Student/ka spełnił/a wymagania praktyki zawodowej TAK / NIE * \\[2em]
+
+\noindent Uzasadnienie (w przypadku negatywnej opinii): \\
+{%- if zapis.uzasadnienie_sciezki -%}
+\textbf{<< zapis.uzasadnienie_sciezki | s >>}
+{%- else -%}
+\dotfill \\
+\dotfill \\
+\dotfill
+{%- endif -%}
+
+\vspace{3em}
+
+\noindent
+\begin{minipage}[t]{0.45\textwidth}
+\centering
+\dotfill\\
+\small (data i podpis przewodniczącego komisji)
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.45\textwidth}
+\centering
+\dotfill\\
+\small (data i podpis członka komisji)
+\end{minipage}
+
+\vspace{2em}
+\noindent {\footnotesize *) niewłaściwe skreślić}
+
+\end{document}

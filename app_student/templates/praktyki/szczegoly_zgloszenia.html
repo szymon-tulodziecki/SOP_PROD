@@ -1,0 +1,197 @@
+{% extends "layouts/base_student.html" %}
+{% block tytul %}Szczegóły zgłoszenia{% endblock %}
+{% block naglowek %}Szczegóły zgłoszenia praktyki{% endblock %}
+
+{% block naglowek_akcje %}
+<div style="display: flex; gap: 0.5rem;">
+  <a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← Powrót do pulpitu</a>
+</div>
+{% endblock %}
+
+{% block tresc %}
+<div style="max-width: 800px; margin: 0 auto;">
+
+  <!-- Status zgłoszenia -->
+  <div class="karta" style="margin-bottom: 2rem;">
+    <div class="karta__naglowek">
+      <h2>Status zgłoszenia</h2>
+    </div>
+    <div class="karta__tresc">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <div style="font-size: 0.9rem; color: var(--kolor-tekst-drugor); margin-bottom: 0.5rem;">
+            Praktyka: {{ zapis.praktyka.rok_uczelniany }} ({{ zapis.praktyka.semestr }})
+          </div>
+          <div style="font-size: 0.9rem; color: var(--kolor-tekst-drugor);">
+            Wysłano: {{ zapis.enrolled_at.strftime('%d.%m.%Y %H:%M') }}
+          </div>
+        </div>
+        <span class="status
+          {%- if zapis.status.value == 'PENDING' %} status--draft
+          {%- elif zapis.status.value == 'AWAITING_APPROVAL' %} status--planned
+          {%- elif zapis.status.value == 'COMMISSION_REVIEW' %} status--planned
+          {%- elif zapis.status.value == 'DEAN_APPROVAL' %} status--planned
+          {%- elif zapis.status.value == 'IN_PROGRESS' %} status--w-trakcie
+          {%- elif zapis.status.value == 'COMPLETED' %} status--zakonczona
+          {%- elif zapis.status.value == 'REJECTED' %} status--draft
+          {%- endif %}">
+          {% if zapis.status.value == 'PENDING' %}Szkic
+          {% elif zapis.status.value == 'AWAITING_APPROVAL' %}Oczekuje na zatwierdzenie
+          {% elif zapis.status.value == 'COMMISSION_REVIEW' %}Weryfikacja komisji
+          {% elif zapis.status.value == 'DEAN_APPROVAL' %}Oczekuje na dziekana
+          {% elif zapis.status.value == 'IN_PROGRESS' %}Zatwierdzone - w trakcie
+          {% elif zapis.status.value == 'COMPLETED' %}Zakończone
+          {% elif zapis.status.value == 'REJECTED' %}Odrzucony
+          {% endif %}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Komentarze i uwagi -->
+  {% if zapis.uopz_comments or zapis.admin_comments %}
+  <div class="karta" style="margin-bottom: 2rem;">
+    <div class="karta__naglowek">
+      <h2>Uwagi i komentarze</h2>
+    </div>
+    <div class="karta__tresc">
+
+      {% if zapis.uopz_comments %}
+      <div style="padding: 1rem; background: #fef3cd; border-radius: 0.5rem; border-left: 4px solid #f59e0b; margin-bottom: 1rem;">
+        <div style="font-weight: 500; color: #92400e; margin-bottom: 0.5rem;">
+          Uwagi Opiekuna Uczelnianego (UOPZ)
+        </div>
+        <div style="color: #92400e; white-space: pre-wrap; line-height: 1.5;">{{ zapis.uopz_comments }}</div>
+      </div>
+      {% endif %}
+
+      {% if zapis.admin_comments %}
+      <div style="padding: 1rem; background: #e0f2fe; border-radius: 0.5rem; border-left: 4px solid #0288d1;">
+        <div style="font-weight: 500; color: #01579b; margin-bottom: 0.5rem;">
+          Komentarz Administratora
+        </div>
+        <div style="color: #01579b; white-space: pre-wrap; line-height: 1.5;">{{ zapis.admin_comments }}</div>
+      </div>
+      {% endif %}
+
+      {% if (zapis.status.value == 'AWAITING_APPROVAL' and zapis.uopz_comments) or (zapis.status.value == 'PENDING' and zapis.admin_comments) %}
+      <div style="margin-top: 1.5rem; padding: 1rem; background: #f3f4f6; border-radius: 0.5rem; text-align: center;">
+        <p style="margin-bottom: 1rem; color: var(--kolor-tekst-drugor);">
+          {% if zapis.uopz_comments %}
+            Twoje zgłoszenie wymaga uwagi. Skontaktuj się z Opiekunem Uczelnianum lub popraw zgłoszenie zgodnie z uwagami.
+          {% elif zapis.admin_comments %}
+            Twoje zgłoszenie zostało zwrócone przez administratora. Popraw dane zgodnie z uwagami i wyślij ponownie.
+          {% endif %}
+        </p>
+        <div style="display: flex; gap: 1rem; justify-content: center;">
+          {% if zapis.uopz_comments %}
+          <a href="mailto:{{ zapis.uopz.email if zapis.uopz else '' }}" class="przycisk przycisk--drugorzedny">
+            Skontaktuj się z UOPZ
+          </a>
+          {% elif zapis.admin_comments %}
+          <a href="{{ url_for('praktyki.zapisz_krok1', id=zapis.praktyka.id) }}" class="przycisk przycisk--glowny">
+            Popraw i wyślij ponownie
+          </a>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Dane zgłoszenia -->
+  <div class="karta" style="margin-bottom: 2rem;">
+    <div class="karta__naglowek">
+      <h2>Dane zgłoszenia</h2>
+    </div>
+    <div class="karta__tresc">
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+        <div>
+          <label style="font-weight: 500; margin-bottom: 0.5rem; display: block;">Ścieżka praktyki</label>
+          <div style="color: var(--kolor-tekst-drugor);">
+            {% if zapis.track_type.value == 'STANDARD' %}Standardowa
+            {% elif zapis.track_type.value == 'EMPLOYMENT' %}Praca etatowa
+            {% elif zapis.track_type.value == 'OWN_BUSINESS' %}Własna działalność gospodarcza
+            {% endif %}
+          </div>
+        </div>
+        <div>
+          <label style="font-weight: 500; margin-bottom: 0.5rem; display: block;">Okres praktyki</label>
+          <div style="color: var(--kolor-tekst-drugor);">
+            {% if zapis.termin_od and zapis.termin_do %}
+            {{ zapis.termin_od.strftime('%d.%m.%Y') }} - {{ zapis.termin_do.strftime('%d.%m.%Y') }}
+            {% else %}
+            Nie określono
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      {% if zapis.firma_nazwa %}
+      <div style="border-top: 1px solid #e5e7eb; padding-top: 1.5rem; margin-top: 1.5rem;">
+        <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem;">Zakład pracy</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div>
+            <label style="font-weight: 500; margin-bottom: 0.25rem; display: block; font-size: 0.85rem;">Nazwa</label>
+            <div style="color: var(--kolor-tekst-drugor); margin-bottom: 0.75rem;">{{ zapis.firma_nazwa }}</div>
+          </div>
+          <div>
+            <label style="font-weight: 500; margin-bottom: 0.25rem; display: block; font-size: 0.85rem;">NIP/KRS</label>
+            <div style="color: var(--kolor-tekst-drugor); margin-bottom: 0.75rem;">{{ zapis.firma_nip_krs or 'Nie podano' }}</div>
+          </div>
+          <div>
+            <label style="font-weight: 500; margin-bottom: 0.25rem; display: block; font-size: 0.85rem;">Adres</label>
+            <div style="color: var(--kolor-tekst-drugor); margin-bottom: 0.75rem;">{{ zapis.firma_adres }}</div>
+          </div>
+          <div>
+            <label style="font-weight: 500; margin-bottom: 0.25rem; display: block; font-size: 0.85rem;">Miasto</label>
+            <div style="color: var(--kolor-tekst-drugor); margin-bottom: 0.75rem;">{{ zapis.firma_miasto }}</div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      {% if zapis.zopz_imie_nazwisko %}
+      <div style="border-top: 1px solid #e5e7eb; padding-top: 1.5rem; margin-top: 1.5rem;">
+        <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem;">Opiekun Zakładowy (ZOPZ)</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div>
+            <label style="font-weight: 500; margin-bottom: 0.25rem; display: block; font-size: 0.85rem;">Imię i nazwisko</label>
+            <div style="color: var(--kolor-tekst-drugor); margin-bottom: 0.75rem;">{{ zapis.zopz_imie_nazwisko }}</div>
+          </div>
+          <div>
+            <label style="font-weight: 500; margin-bottom: 0.25rem; display: block; font-size: 0.85rem;">Stanowisko</label>
+            <div style="color: var(--kolor-tekst-drugor); margin-bottom: 0.75rem;">{{ zapis.zopz_stanowisko }}</div>
+          </div>
+          <div>
+            <label style="font-weight: 500; margin-bottom: 0.25rem; display: block; font-size: 0.85rem;">Telefon</label>
+            <div style="color: var(--kolor-tekst-drugor); margin-bottom: 0.75rem;">{{ zapis.zopz_telefon }}</div>
+          </div>
+          <div>
+            <label style="font-weight: 500; margin-bottom: 0.25rem; display: block; font-size: 0.85rem;">E-mail</label>
+            <div style="color: var(--kolor-tekst-drugor); margin-bottom: 0.75rem;">{{ zapis.zopz_email }}</div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      {% if zapis.uopz %}
+      <div style="border-top: 1px solid #e5e7eb; padding-top: 1.5rem; margin-top: 1.5rem;">
+        <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem;">Opiekun Uczelniany (UOPZ)</h3>
+        <div style="color: var(--kolor-tekst-drugor);">
+          {{ zapis.uopz.first_name }} {{ zapis.uopz.last_name }}
+          {% if zapis.uopz.email %}
+          <br><a href="mailto:{{ zapis.uopz.email }}" style="color: var(--kolor-glowny);">{{ zapis.uopz.email }}</a>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,123 @@
+{% extends "layouts/base_panel.html" %}
+
+{% block tytul %}Komisja weryfikująca{% endblock %}
+{% block naglowek %}Wnioski do weryfikacji przez komisję{% endblock %}
+
+{% block tresc %}
+<div style="max-width: 1400px; margin: 0 auto;">
+
+  {% if wnioski.items %}
+  <div class="karta">
+    <div class="karta__tresc">
+      <div class="tabela-wrapper">
+        <table class="tabela">
+          <thead>
+            <tr>
+              <th style="width: 25%;">Student</th>
+              <th style="width: 15%;">Ścieżka</th>
+              <th style="width: 25%;">Firma/Działalność</th>
+              <th style="width: 12%;">Data zgłoszenia</th>
+              <th style="width: 10%;">Dokumenty</th>
+              <th style="width: 13%; text-align: center;">Akcje</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for wniosek in wnioski.items %}
+            <tr>
+              <td>
+                <div style="font-weight: 600;">{{ wniosek.student.first_name }} {{ wniosek.student.last_name }}</div>
+                <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor);">{{ wniosek.student.email or 'Brak email' }}</div>
+                {% if wniosek.student.album_number %}
+                <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor);">Album: {{ wniosek.student.album_number }}</div>
+                {% endif %}
+              </td>
+              <td>
+                <span class="status
+                  {%- if wniosek.track_type.value == 'EMPLOYMENT' %} status--w-trakcie
+                  {%- elif wniosek.track_type.value == 'OWN_BUSINESS' %} status--szkic
+                  {%- endif %}">
+                  {% if wniosek.track_type.value == 'EMPLOYMENT' %}Praca zawodowa
+                  {% elif wniosek.track_type.value == 'OWN_BUSINESS' %}Działalność gospodarcza
+                  {% endif %}
+                </span>
+              </td>
+              <td>
+                <div style="font-weight: 600;">{{ wniosek.firma_nazwa or 'Nie podano' }}</div>
+                {% if wniosek.firma_miasto %}
+                <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor);">{{ wniosek.firma_miasto }}</div>
+                {% endif %}
+                {% if wniosek.track_type.value != 'STANDARD' %}
+                <div style="font-size: 0.75rem; color: var(--kolor-info); margin-top: 0.25rem;">
+                  {% if wniosek.track_type.value == 'EMPLOYMENT' %}Na podstawie zatrudnienia
+                  {% elif wniosek.track_type.value == 'OWN_BUSINESS' %}Własna działalność
+                  {% endif %}
+                </div>
+                {% endif %}
+              </td>
+              <td style="font-size: 0.85rem;">
+                {{ wniosek.enrolled_at.strftime('%d.%m.%Y') if wniosek.enrolled_at else '-' }}
+                <div style="font-size: 0.7rem; color: var(--kolor-tekst-drugor);">
+                  {{ wniosek.enrolled_at.strftime('%H:%M') if wniosek.enrolled_at else '' }}
+                </div>
+              </td>
+              <td style="text-align: center;">
+                <span class="badge badge--neutral" style="font-size: 0.8rem;">
+                  {{ wniosek.uploaded_documents | length }} plików
+                </span>
+              </td>
+              <td style="text-align: center;">
+                <a href="{{ url_for('management.komisja_weryfikuj', id=wniosek.id) }}"
+                   class="przycisk przycisk--maly przycisk--glowny">
+                  Weryfikuj
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Paginacja -->
+  {% if wnioski.pages > 1 %}
+  <div class="paginacja">
+    {% if wnioski.has_prev %}
+      <a href="{{ url_for('management.komisja_lista', page=wnioski.prev_num) }}" class="paginacja__link">← Poprzednia</a>
+    {% endif %}
+
+    {% for page_num in wnioski.iter_pages() %}
+      {% if page_num %}
+        {% if page_num != wnioski.page %}
+          <a href="{{ url_for('management.komisja_lista', page=page_num) }}" class="paginacja__link">{{ page_num }}</a>
+        {% else %}
+          <span class="paginacja__link paginacja__link--aktywny">{{ page_num }}</span>
+        {% endif %}
+      {% else %}
+        <span class="paginacja__kropki">…</span>
+      {% endif %}
+    {% endfor %}
+
+    {% if wnioski.has_next %}
+      <a href="{{ url_for('management.komisja_lista', page=wnioski.next_num) }}" class="paginacja__link">Następna →</a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="karta">
+    <div class="karta__tresc" style="text-align: center; padding: 3rem 2rem;">
+      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color: var(--kolor-tekst-drugor); margin-bottom: 1rem;">
+        <path d="M9 12l2 2 4-4"/>
+        <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9c.83 0 1.63.11 2.38.32"/>
+      </svg>
+      <h3 style="margin-bottom: 0.5rem;">Brak wniosków do weryfikacji</h3>
+      <p style="color: var(--kolor-tekst-drugor); margin-bottom: 0;">
+        Wszystkie wnioski zostały już przetworzone lub nie ma nowych zgłoszeń.
+      </p>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

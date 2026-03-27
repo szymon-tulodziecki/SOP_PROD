@@ -12,7 +12,7 @@ from wtforms.validators import DataRequired, Email, Length, Optional, Validation
 from werkzeug.security import generate_password_hash
 
 from app_admin.models import (Uzytkownik, Praktyka, ZapisPraktyki, HarmonogramPraktyki, EfektUczenia,
-                    RolaUzytkownika, StatusPraktyki, StatusZapisu)
+                    RolaUzytkownika, StatusPraktyki, StatusZapisu, UploadedDocument, Firma)
 from app_admin.extensions import db
 from app_admin.routes.auth import wymaga_roli
 
@@ -75,6 +75,13 @@ class FormularzImportuCSV(FlaskForm):
         DataRequired(),
         FileAllowed(['csv'], 'Tylko pliki CSV.')
     ])
+
+
+class FormularzFirmy(FlaskForm):
+    nazwa = StringField('Nazwa firmy', validators=[DataRequired(), Length(max=255)])
+    adres = StringField('Adres', validators=[Optional(), Length(max=255)])
+    miasto = StringField('Miasto', validators=[Optional(), Length(max=100)])
+    nip_krs = StringField('NIP/KRS', validators=[Optional(), Length(max=50)])
 
 
 class FormularzPraktyki(FlaskForm):
@@ -378,7 +385,7 @@ def lista_zgloszen():
     # Filtrowanie według statusu
     if status_filter:
         try:
-            q = q.filter_by(status=StatusZapisu[status_filter])
+            q = q.filter(ZapisPraktyki.status == StatusZapisu[status_filter])
         except KeyError:
             flash(f'Nieznany status: {status_filter}', 'warning')
 
@@ -511,7 +518,7 @@ def moje_zgloszenia():
     # Filtrowanie według statusu
     if status_filter:
         try:
-            q = q.filter_by(status=StatusZapisu[status_filter])
+            q = q.filter(ZapisPraktyki.status == StatusZapisu[status_filter])
         except KeyError:
             flash(f'Nieznany status: {status_filter}', 'warning')
 
@@ -519,8 +526,8 @@ def moje_zgloszenia():
     base_query = db.session.query(ZapisPraktyki).filter(ZapisPraktyki.uopz_id == current_user.id)
     liczniki = {
         'wszystkie': base_query.count(),
-        'oczekujace': base_query.filter_by(status=StatusZapisu.AWAITING_APPROVAL).count(),
-        'zatwierdzone': base_query.filter_by(status=StatusZapisu.IN_PROGRESS).count(),
+        'oczekujace': base_query.filter(ZapisPraktyki.status == StatusZapisu.AWAITING_APPROVAL).count(),
+        'zatwierdzone': base_query.filter(ZapisPraktyki.status == StatusZapisu.IN_PROGRESS).count(),
     }
 
     # Pilne oceny
@@ -578,3 +585,251 @@ def nowy_zaklad():
 def edytuj_zaklad(id):
     flash('Edycja zakładu jeszcze niezaimplementowana.', 'warning')
     return redirect(url_for('management.lista_zakladow'))
+
+
+# ── Komisja weryfikująca ścieżki B/C ──────────────────────────────────────────
+
+@management_bp.route('/komisja')
+@wymaga_roli(RolaUzytkownika.ADMIN, RolaUzytkownika.UOPZ)
+def komisja_lista():
+    """Lista wniosków do weryfikacji przez komisję"""
+    strona = request.args.get('page', 1, type=int)
+
+    # Wnioski wymagające weryfikacji komisji
+    q = db.session.query(ZapisPraktyki)\
+          .join(Uzytkownik, ZapisPraktyki.student_id == Uzytkownik.id)\
+          .filter(ZapisPraktyki.status == StatusZapisu.COMMISSION_REVIEW)\
+          .filter(ZapisPraktyki.track_type.in_(['EMPLOYMENT', 'OWN_BUSINESS']))
+
+    wnioski = q.order_by(ZapisPraktyki.enrolled_at.desc())\
+               .paginate(page=strona, per_page=25, error_out=False)
+
+    csrf_form = FlaskForm()
+    return render_template('management/komisja/lista.html', wnioski=wnioski, csrf_form=csrf_form)
+
+
+@management_bp.route('/komisja/<uuid:id>/weryfikuj', methods=['GET', 'POST'])
+@wymaga_roli(RolaUzytkownika.ADMIN, RolaUzytkownika.UOPZ)
+def komisja_weryfikuj(id):
+    """Weryfikacja wniosku przez komisję"""
+    from flask_wtf import FlaskForm
+    from wtforms import TextAreaField, SelectField, SubmitField
+    from wtforms.validators import DataRequired, Optional
+
+    zapis = db.session.get(ZapisPraktyki, id) or abort(404)
+
+    if zapis.status != StatusZapisu.COMMISSION_REVIEW:
+        flash('Wniosek nie wymaga weryfikacji komisji.', 'warning')
+        return redirect(url_for('management.komisja_lista'))
+
+    class FormularzKomisji(FlaskForm):
+        decyzja = SelectField('Decyzja komisji', choices=[
+            ('APPROVED', 'Zatwierdzam - kieruję do dziekana'),
+            ('PARTIALLY_APPROVED', 'Zatwierdzam częściowo - wymaga uzupełnień'),
+            ('REJECTED', 'Odrzucam wniosek')
+        ], validators=[DataRequired()])
+        komentarz = TextAreaField('Komentarz komisji', validators=[Optional()])
+        submit = SubmitField('Zapisz decyzję')
+
+    form = FormularzKomisji()
+
+    if form.validate_on_submit():
+        zapis.komisja_decision = form.decyzja.data
+        zapis.komisja_comments = form.komentarz.data
+        zapis.komisja_decision_at = db.func.current_timestamp()
+
+        # Zmień status w zależności od decyzji
+        if form.decyzja.data == 'APPROVED':
+            zapis.status = StatusZapisu.DEAN_APPROVAL
+            flash('Wniosek zatwierdzony i przekazany do dziekana.', 'success')
+        elif form.decyzja.data == 'PARTIALLY_APPROVED':
+            zapis.status = StatusZapisu.AWAITING_APPROVAL  # Wraca do studenta
+            zapis.uopz_comments = f"Komisja: {form.komentarz.data}"  # Dodaj komentarz dla studenta
+            flash('Wniosek wymaga uzupełnień - student zostanie powiadomiony.', 'info')
+        else:  # REJECTED
+            zapis.status = StatusZapisu.REJECTED
+            zapis.uopz_comments = f"Wniosek odrzucony przez komisję: {form.komentarz.data}"
+            flash('Wniosek został odrzucony.', 'warning')
+
+        db.session.commit()
+        return redirect(url_for('management.komisja_lista'))
+
+    # Załaduj uploadowane dokumenty
+    dokumenty = db.session.query(UploadedDocument)\
+                  .filter_by(enrollment_id=id)\
+                  .order_by(UploadedDocument.uploaded_at.desc())\
+                  .all()
+
+    return render_template('management/komisja/weryfikuj.html',
+                         form=form, zapis=zapis, dokumenty=dokumenty)
+
+
+@management_bp.route('/dziekan')
+@wymaga_roli(RolaUzytkownika.ADMIN)
+def dziekan_lista():
+    """Lista wniosków czekających na decyzję dziekana"""
+    strona = request.args.get('page', 1, type=int)
+
+    # Wnioski zatwierdzone przez komisję, oczekujące na dziekana
+    q = db.session.query(ZapisPraktyki)\
+          .join(Uzytkownik, ZapisPraktyki.student_id == Uzytkownik.id)\
+          .filter(ZapisPraktyki.status == StatusZapisu.DEAN_APPROVAL)\
+          .filter(ZapisPraktyki.track_type.in_(['EMPLOYMENT', 'OWN_BUSINESS']))
+
+    wnioski = q.order_by(ZapisPraktyki.enrolled_at.desc())\
+               .paginate(page=strona, per_page=25, error_out=False)
+
+    csrf_form = FlaskForm()
+    return render_template('management/dziekan/lista.html', wnioski=wnioski, csrf_form=csrf_form)
+
+
+@management_bp.route('/dziekan/<uuid:id>/decyzja', methods=['GET', 'POST'])
+@wymaga_roli(RolaUzytkownika.ADMIN)
+def dziekan_decyzja(id):
+    """Decyzja dziekana w sprawie wniosku"""
+    from flask_wtf import FlaskForm
+    from wtforms import TextAreaField, SelectField, SubmitField
+    from wtforms.validators import DataRequired, Optional
+
+    zapis = db.session.get(ZapisPraktyki, id) or abort(404)
+
+    if zapis.status != StatusZapisu.DEAN_APPROVAL:
+        flash('Wniosek nie wymaga decyzji dziekana.', 'warning')
+        return redirect(url_for('management.dziekan_lista'))
+
+    class FormularzDziekana(FlaskForm):
+        decyzja = SelectField('Decyzja dziekana', choices=[
+            ('APPROVED', 'Wyrażam zgodę na zaliczenie praktyki'),
+            ('REJECTED', 'Nie wyrażam zgody na zaliczenie')
+        ], validators=[DataRequired()])
+        komentarz = TextAreaField('Komentarz dziekana', validators=[Optional()])
+        submit = SubmitField('Zapisz decyzję')
+
+    form = FormularzDziekana()
+
+    if form.validate_on_submit():
+        zapis.dean_decision = form.decyzja.data
+        zapis.dean_comments = form.komentarz.data
+        zapis.dean_decision_at = db.func.current_timestamp()
+
+        # Zmień status w zależności od decyzji
+        if form.decyzja.data == 'APPROVED':
+            zapis.status = StatusZapisu.IN_PROGRESS
+            flash('Wniosek zatwierdzony przez dziekana. Student może kontynuować praktykę.', 'success')
+        else:  # REJECTED
+            zapis.status = StatusZapisu.REJECTED
+            zapis.uopz_comments = f"Dziekan nie wyraził zgody: {form.komentarz.data}"
+            flash('Wniosek odrzucony przez dziekana.', 'warning')
+
+        db.session.commit()
+        return redirect(url_for('management.dziekan_lista'))
+
+    return render_template('management/dziekan/decyzja.html', form=form, zapis=zapis)
+
+
+# ── ZARZĄDZANIE FIRMAMI ──────────────────────────────────────────────────────
+
+@management_bp.route('/firmy')
+@wymaga_roli(RolaUzytkownika.ADMIN)
+def lista_firm():
+    """Lista firm w systemie"""
+    strona = request.args.get('page', 1, type=int)
+
+    q = db.session.query(Firma).filter_by(is_active=True)
+
+    firmy = q.order_by(Firma.nazwa).paginate(page=strona, per_page=25, error_out=False)
+
+    csrf_form = FlaskForm()
+    return render_template('management/firmy/lista.html', firmy=firmy, csrf_form=csrf_form)
+
+
+@management_bp.route('/firmy/dodaj', methods=['GET', 'POST'])
+@wymaga_roli(RolaUzytkownika.ADMIN)
+def dodaj_firme():
+    """Dodawanie nowej firmy"""
+    form = FormularzFirmy()
+
+    if form.validate_on_submit():
+        # Sprawdź czy firma o tej nazwie już istnieje
+        istniejaca = db.session.query(Firma).filter_by(nazwa=form.nazwa.data.strip()).first()
+        if istniejaca:
+            flash('Firma o tej nazwie już istnieje w systemie.', 'error')
+            return render_template('management/firmy/formularz.html', form=form, tryb='dodaj')
+
+        firma = Firma(
+            id=uuid.uuid4(),
+            nazwa=form.nazwa.data.strip(),
+            adres=form.adres.data.strip() if form.adres.data else None,
+            miasto=form.miasto.data.strip() if form.miasto.data else None,
+            nip_krs=form.nip_krs.data.strip() if form.nip_krs.data else None
+        )
+
+        db.session.add(firma)
+        db.session.commit()
+
+        flash('Firma została dodana do systemu.', 'success')
+        return redirect(url_for('management.lista_firm'))
+
+    return render_template('management/firmy/formularz.html', form=form, tryb='dodaj')
+
+
+@management_bp.route('/firmy/<uuid:id>/edytuj', methods=['GET', 'POST'])
+@wymaga_roli(RolaUzytkownika.ADMIN)
+def edytuj_firme(id):
+    """Edycja danych firmy"""
+    firma = db.session.get(Firma, id) or abort(404)
+
+    form = FormularzFirmy(obj=firma)
+
+
+    if form.validate_on_submit():
+        # Sprawdź czy inna firma o tej nazwie już istnieje
+        istniejaca = db.session.query(Firma)\
+            .filter(Firma.nazwa == form.nazwa.data.strip())\
+            .filter(Firma.id != firma.id)\
+            .first()
+
+        if istniejaca:
+            flash('Firma o tej nazwie już istnieje w systemie.', 'error')
+            return render_template('management/firmy/formularz.html',
+                                 form=form, tryb='edytuj', firma=firma)
+
+        firma.nazwa = form.nazwa.data.strip()
+        firma.adres = form.adres.data.strip() if form.adres.data else None
+        firma.miasto = form.miasto.data.strip() if form.miasto.data else None
+        firma.nip_krs = form.nip_krs.data.strip() if form.nip_krs.data else None
+
+        db.session.commit()
+
+        flash('Dane firmy zostały zaktualizowane.', 'success')
+        return redirect(url_for('management.lista_firm'))
+
+    return render_template('management/firmy/formularz.html',
+                         form=form, tryb='edytuj', firma=firma)
+
+
+@management_bp.route('/firmy/<uuid:id>/usun', methods=['POST'])
+@wymaga_roli(RolaUzytkownika.ADMIN)
+def usun_firme(id):
+    """Dezaktywacja firmy (soft delete)"""
+    firma = db.session.get(Firma, id) or abort(404)
+
+    # Sprawdź czy firma ma aktywne praktyki
+    aktywne_praktyki = db.session.query(ZapisPraktyki)\
+        .filter_by(firma_id=firma.id)\
+        .filter(ZapisPraktyki.status.in_([
+            StatusZapisu.AWAITING_APPROVAL,
+            StatusZapisu.IN_PROGRESS,
+            StatusZapisu.COMMISSION_REVIEW,
+            StatusZapisu.DEAN_APPROVAL
+        ])).count()
+
+    if aktywne_praktyki > 0:
+        flash(f'Nie można usunąć firmy - ma {aktywne_praktyki} aktywnych praktyk.', 'error')
+        return redirect(url_for('management.lista_firm'))
+
+    firma.is_active = False
+    db.session.commit()
+
+    flash('Firma została usunięta z systemu.', 'success')
+    return redirect(url_for('management.lista_firm'))

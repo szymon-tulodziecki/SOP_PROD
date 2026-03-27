@@ -1,0 +1,124 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage{fontspec}
+\usepackage{polyglossia}
+\setmainlanguage{polish}
+\setmainfont{Latin Modern Roman}
+\usepackage{geometry}
+\geometry{margin=1.5cm}
+\usepackage{amssymb} % potrzebne do \square (pusty kwadracik)
+
+\begin{document}
+
+\begin{flushright}
+Załącznik nr 4b \\[2em]
+Elbląg dnia << data_wniosku | default('\\dots\\dots\\dots\\dots\\dots') >>
+\end{flushright}
+
+\vspace{1em}
+
+\noindent
+\begin{minipage}[t]{0.4\textwidth}
+Kierunek studiów: Informatyka \\
+Student/ka: \textbf{<< student.first_name | s >> << student.last_name | s >>} \\
+Nr albumu: \textbf{<< student.album_number | s >>} \\
+Kierunek studiów: Informatyka \\
+Specjalność: \textbf{<< zapis.specjalnosc | s >>}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.55\textwidth}
+\begin{flushright}
+Dyrektor Instytutu Informatyki Stosowanej \\
+im. Krzysztofa Brzeskiego \\[0.5em]
+Za pośrednictwem Komisji do spraw praktyki zawodowej \\
+dla kierunku studiów informatyka
+\end{flushright}
+\end{minipage}
+
+\vspace{3em}
+
+\begin{center}
+\textbf{\large WNIOSEK O UBIEGANIE SIĘ ZALICZENIA EFEKTÓW UCZENIA SIĘ PRZEWIDZIANYCH DLA PRAKTYKI ZAWODOWEJ NA PODSTAWIE PRACY ZAWODOWEJ/STAŻU/ DZIAŁALNOŚCI GOSPODARCZEJ*}
+\end{center}
+
+\vspace{1em}
+
+\noindent \textbf{Wniosek} \\[0.5em]
+Na podstawie \S 4, ustęp 1 i 2 Regulaminu praktyk zawodowych w Instytucie Informatyki Stosowanej im. Krzysztofa Brzeskiego ANS w Elblągu proszę o uznanie efektów uczenia się przewidzianych dla praktyki zawodowej na podstawie pracy zawodowej/stażu/działalności gospodarczej*.
+
+\vspace{1em}
+
+\noindent \textbf{Uzasadnienie} \\
+{%- if zapis.uzasadnienie_sciezki -%}
+<< zapis.uzasadnienie_sciezki | s >>
+{%- else -%}
+\dotfill \\
+\dotfill \\
+\dotfill \\
+\dotfill
+{%- endif -%}
+
+\vspace{1em}
+
+\noindent Dla potwierdzenia uzyskania zakładanych dla praktyki zawodowej efektów uczenia się załączam n/w dokumenty potwierdzające zakres realizowanych czynności zawodowych oraz czas ich realizacji w tym w szczególności :
+\begin{itemize}
+    \item[$\square$] Umowę o pracę, zaświadczenie o odbyciu stażu lub wolontariatu
+    \item[$\square$] Opis zajmowanego stanowiska pracy/kartę stanowiskową
+    \item[$\square$] Zakres obowiązków realizowany w ramach stażu/wolontariatu
+    \item[$\square$] Zaświadczenie z CEIDG lub KRS
+    \item[$\square$] Inne dokumenty potwierdzające uzyskanie efektów uczenia się przewidzianych dla praktyki zawodowej
+\end{itemize}
+
+{%- if zapis.zalaczniki_sciezki -%}
+
+\noindent \textbf{Załączone dokumenty:} \\
+<< zapis.zalaczniki_sciezki | s >>
+{%- endif -%}
+
+\vspace{2em}
+\noindent\hfill
+\begin{minipage}[t]{0.45\textwidth}
+\centering
+\dotfill \\
+\small Data i podpis studenta/ki
+\end{minipage}
+\newpage
+\vspace{2em}
+\noindent \textbf{Opinia Komisji ds. praktyk zawodowych} \\
+\dotfill \\
+\dotfill \\
+\dotfill
+
+\vspace{2em}
+\noindent\hfill
+\begin{minipage}[t]{0.45\textwidth}
+\centering
+\dotfill \\
+\small data i podpis Przewodniczącego Komisji ds. praktyk zawodowych
+\end{minipage}
+
+\vspace{2em}
+\noindent \textbf{Decyzja Dyrektora Instytutu Informatyki Stosowanej im. Krzysztofa Brzeskiego:}
+\begin{itemize}
+    \item[$\square$] Wyrażam zgodę na uznanie efektów uczenia się przewidzianych dla praktyki zawodowej*
+    \item[$\square$] Wyrażam zgodę na częściowe zaliczenie efektów uczenia się przewidzianych dla praktyki zawodowej i wskazuję na konieczność dodatkowego zaliczenia n/w efektów uczenia się*
+\end{itemize}
+\vspace{-0.5em}
+\dotfill \\
+\dotfill \\
+\dotfill
+\begin{itemize}
+    \item[$\square$] Nie wyrażam zgody na zaliczenie efektów uczenia się przewidzianych dla praktyki zawodowej.
+\end{itemize}
+
+\vspace{2em}
+\noindent\hfill
+\begin{minipage}[t]{0.45\textwidth}
+\centering
+\dotfill \\
+\small data i podpis Dyrektora IIS im. K. Brzeskiego
+\end{minipage}
+
+\vspace{1em}
+\noindent \footnotesize{* niepotrzebne skreślić}
+
+\end{document}

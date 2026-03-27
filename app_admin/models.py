@@ -21,8 +21,11 @@ class StatusPraktyki(enum.Enum):
 class StatusZapisu(enum.Enum):
     PENDING           = 'PENDING'
     AWAITING_APPROVAL = 'AWAITING_APPROVAL'
+    COMMISSION_REVIEW = 'COMMISSION_REVIEW'  # Weryfikacja przez komisję (ścieżki B/C)
+    DEAN_APPROVAL     = 'DEAN_APPROVAL'      # Oczekuje na zatwierdzenie dziekana (ścieżki B/C)
     IN_PROGRESS       = 'IN_PROGRESS'
     COMPLETED         = 'COMPLETED'
+    REJECTED          = 'REJECTED'           # Odrzucone przez komisję/dziekana
 
 
 class SciezkaPraktyki(enum.Enum):
@@ -35,6 +38,13 @@ class WynikOceny(enum.Enum):
     OSIAGNIETO     = 'ACHIEVED'
     CZESCIOWO      = 'PARTIALLY_ACHIEVED'
     NIE_OSIAGNIETO = 'NOT_ACHIEVED'
+
+
+class StatusDokumentu(enum.Enum):
+    DRAFT = 'DRAFT'
+    AWAITING_APPROVAL = 'AWAITING_APPROVAL'
+    APPROVED = 'APPROVED'
+    REJECTED = 'REJECTED'
 
 
 # ── Modele ────────────────────────────────────────────────────────────────────
@@ -103,6 +113,19 @@ class Praktyka(db.Model):
                              cascade='all, delete-orphan')
 
 
+class Firma(db.Model):
+    __tablename__ = 'companies'
+
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    nazwa = db.Column(db.String(255), nullable=False)
+    adres = db.Column(db.String(255), nullable=True)
+    miasto = db.Column(db.String(100), nullable=True)
+    nip_krs = db.Column(db.String(50), nullable=True)
+    has_standing_agreement = db.Column(db.Boolean, default=True)  # Wszystkie firmy w bazie mają stałą umowę
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+    is_active = db.Column(db.Boolean, default=True)
+
+
 class ZapisPraktyki(db.Model):
     __tablename__ = 'internship_enrollments'
 
@@ -110,6 +133,7 @@ class ZapisPraktyki(db.Model):
     internship_id = db.Column(UUID(as_uuid=True), db.ForeignKey('internships.id', ondelete='CASCADE'), nullable=False)
     student_id    = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
     uopz_id       = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
+    firma_id      = db.Column(UUID(as_uuid=True), db.ForeignKey('companies.id', ondelete='SET NULL'), nullable=True)  # Link do firmy z bazy
     status        = db.Column(db.Enum(StatusZapisu, name='enrollment_status', values_callable=lambda e: [x.value for x in e]), nullable=False, default=StatusZapisu.PENDING)
     track_type    = db.Column(db.Enum(SciezkaPraktyki, name='internship_track', values_callable=lambda e: [x.value for x in e]), nullable=False, default=SciezkaPraktyki.STANDARD)
     
@@ -160,9 +184,18 @@ class ZapisPraktyki(db.Model):
     uopz_comments        = db.Column(db.Text)  # Komentarze UOPZ
     student_notified_at  = db.Column(db.DateTime)  # Kiedy powiadomiono studenta
 
+    # Commission and Dean workflow (for non-standard tracks)
+    komisja_comments     = db.Column(db.Text)     # Komentarz komisji weryfikującej
+    komisja_decision     = db.Column(db.String(20))  # 'APPROVED', 'PARTIALLY_APPROVED', 'REJECTED'
+    komisja_decision_at  = db.Column(db.DateTime)    # Kiedy komisja podjęła decyzję
+    dean_comments        = db.Column(db.Text)        # Komentarz dziekana
+    dean_decision        = db.Column(db.String(20))  # 'APPROVED', 'REJECTED'
+    dean_decision_at     = db.Column(db.DateTime)    # Kiedy dziekan podjął decyzję
+
     # Relacje
     student = db.relationship('Uzytkownik', foreign_keys=[student_id], lazy='select')
     uopz    = db.relationship('Uzytkownik', foreign_keys=[uopz_id],    lazy='select')
+    firma   = db.relationship('Firma', foreign_keys=[firma_id], lazy='select')
     wpisy_dziennika = db.relationship('WpisDziennika', backref='zapis', lazy='select', cascade='all, delete-orphan')
     oceny = db.relationship('OcenaPraktyki', backref='zapis', lazy='select', cascade='all, delete-orphan')
     harmonogram = db.relationship('HarmonogramPraktyki', backref='zapis', lazy='select', cascade='all, delete-orphan')
@@ -205,6 +238,34 @@ class HarmonogramPraktyki(db.Model):
     liczba_dni          = db.Column(db.Integer, nullable=False, default=0)
     
     efekt = db.relationship('EfektUczenia', lazy='select')
+
+
+class IndywidualnyProgram(db.Model):
+    __tablename__ = 'individual_programs'
+
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    enrollment_id = db.Column(UUID(as_uuid=True), db.ForeignKey('internship_enrollments.id', ondelete='CASCADE'), nullable=False, unique=True)
+    status = db.Column(db.Enum(StatusDokumentu, name='program_status', values_callable=lambda e: [x.value for x in e]), nullable=False, default=StatusDokumentu.DRAFT)
+    approved_by_uopz = db.Column(db.Boolean, default=False)
+    approved_at = db.Column(db.DateTime, nullable=True)
+    uopz_comments = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+
+    # Relacje
+    enrollment = db.relationship('ZapisPraktyki', backref='indywidualny_program')
+
+
+class NumerPisma(db.Model):
+    __tablename__ = 'document_numbers'
+
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    enrollment_id = db.Column(UUID(as_uuid=True), db.ForeignKey('internship_enrollments.id', ondelete='CASCADE'), nullable=False)
+    document_type = db.Column(db.String(50), nullable=False)  # 'ZALACZNIK_2'
+    numer = db.Column(db.String(100), nullable=False)  # np. "ANS/PZ/2024/001"
+    generated_at = db.Column(db.DateTime, server_default=db.func.now())
+
+    # Relacje
+    enrollment = db.relationship('ZapisPraktyki')
 
 
 class Sprawozdanie(db.Model):
@@ -289,4 +350,23 @@ class DocumentAuditLog(db.Model):
     created_at = db.Column(db.DateTime, server_default=db.func.now())
 
     user = db.relationship('Uzytkownik')
-    enrollment = db.relationship('ZapisPraktyki')
+    enrollment = db.relationship('ZapisPraktyki')
+
+
+class UploadedDocument(db.Model):
+    __tablename__ = 'uploaded_documents'
+
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    enrollment_id = db.Column(UUID(as_uuid=True), db.ForeignKey('internship_enrollments.id', ondelete='CASCADE'), nullable=False)
+    document_type = db.Column(db.String(50), nullable=False)  # 'umowa_pracy', 'zaswiadczenie_zatrudnienie', 'ceidg', 'krs' etc.
+    original_filename = db.Column(db.String(255), nullable=False)
+    stored_filename = db.Column(db.String(255), nullable=False)  # UUID-based name on disk
+    file_path = db.Column(db.String(500), nullable=False)
+    file_size = db.Column(db.Integer, nullable=False)  # bytes
+    mime_type = db.Column(db.String(100), nullable=False)
+    uploaded_at = db.Column(db.DateTime, server_default=db.func.now())
+    uploaded_by_id = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
+
+    # Relacje
+    enrollment = db.relationship('ZapisPraktyki', backref='uploaded_documents')
+    uploaded_by = db.relationship('Uzytkownik')

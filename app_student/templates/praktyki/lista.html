@@ -20,8 +20,14 @@
           <div style="font-weight:600; font-size:1.05rem;">{{ p.rok_uczelniany }}</div>
           <div style="font-size:0.85rem; color:var(--kolor-tekst-drugor); margin-top:0.25rem;">Semestr {{ p.semestr }} · {{ p.wymiar_godzin }} h</div>
         </div>
-        {% if p.id|string in zapisane_ids %}
-          <span class="status status--zakonczona">Zapisany</span>
+        {% if p.id|string in zapisy_data %}
+          {% set zapis_info = zapisy_data[p.id|string] %}
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <span class="status status--{% if zapis_info.status == 'PENDING' %}draft{% elif zapis_info.status == 'AWAITING_APPROVAL' %}planned{% elif zapis_info.status == 'COMMISSION_REVIEW' %}planned{% elif zapis_info.status == 'DEAN_APPROVAL' %}planned{% elif zapis_info.status == 'IN_PROGRESS' %}w-trakcie{% elif zapis_info.status == 'COMPLETED' %}zakonczona{% elif zapis_info.status == 'REJECTED' %}draft{% endif %}">
+              {{ tlumacz_status(zapis_info.status) }}
+            </span>
+            <a href="{{ url_for('praktyki.szczegoly_zgloszenia', id=zapis_info.id) }}" class="przycisk przycisk--maly przycisk--drugorzedny">Szczegóły</a>
+          </div>
         {% else %}
           <a href="{{ url_for('praktyki.zapisz_krok1', id=p.id) }}" class="przycisk przycisk--glowny" style="text-decoration:none;">Zapisz się (Kreator)</a>
         {% endif %}

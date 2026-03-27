@@ -18,9 +18,10 @@ DOCUMENTS = {
     'ZAL_3': ('zal3_skierowanie.tex.j2', 'Załącznik 3 (Skierowanie i ocena ZOPZ)'),
     'ZAL_4': ('zal4_efekty.tex.j2', 'Załącznik 4 (Efekty Uczenia Się)'),
     'ZAL_4a': ('zal4a_komisja.tex.j2', 'Załącznik 4a (Opinia Komisji do weryfikacji)'),
-    'ZAL_4b': ('zal4b_wniosek.tex.j2', 'Załącznik 4b (Wniosek o ścieżkę zawodową)'),
+    'ZAL_4b': ('zal4b_wniosek.tex.j2', 'Załącznik 4b (Wniosek o działalność gospodarczą)'),
     'ZAL_6': ('zal6_dziennik.tex.j2', 'Załącznik 6 (Dziennik Praktyki)'),
     'ZAL_7': ('zal7_sprawozdanie.tex.j2', 'Załącznik 7 (Sprawozdanie Instytucji)'),
+    'ZAL_7a': ('zal7a_wniosek.tex.j2', 'Załącznik 7a (Wniosek o pracę zawodową)'),
     'ZAL_8': ('zal8_protokol.tex.j2', 'Załącznik 8 (Protokół Egzaminacyjny)'),
     'ZAL_9': ('zal9_zobowiazanie.tex.j2', 'Załącznik 9 (Zobowiązanie poufności)'),
 }

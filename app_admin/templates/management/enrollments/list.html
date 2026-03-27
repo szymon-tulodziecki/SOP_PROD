@@ -5,7 +5,7 @@
 
 {% block naglowek_akcje %}
 <div style="display: flex; gap: 0.5rem;">
-  <a href="{{ url_for('management.index') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
+  <a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
 </div>
 {% endblock %}
 
@@ -24,10 +24,6 @@
         <a href="{{ url_for('management.lista_zgloszen', status='PENDING') }}"
            class="przycisk przycisk--{% if request.args.get('status') == 'PENDING' %}glowny{% else %}drugorzedny{% endif %} przycisk--maly">
           Oczekujące
-        </a>
-        <a href="{{ url_for('management.lista_zgloszen', status='AWAITING_APPROVAL') }}"
-           class="przycisk przycisk--{% if request.args.get('status') == 'AWAITING_APPROVAL' %}glowny{% else %}drugorzedny{% endif %} przycisk--maly">
-          Czekają na UOPZ
         </a>
         <a href="{{ url_for('management.lista_zgloszen', status='IN_PROGRESS') }}"
            class="przycisk przycisk--{% if request.args.get('status') == 'IN_PROGRESS' %}glowny{% else %}drugorzedny{% endif %} przycisk--maly">
@@ -77,10 +73,7 @@
               </td>
               <td>
                 <span class="status status--{{ z.status.value|lower|replace('_', '-') }}">
-                  {% if z.status.value == 'PENDING' %}Oczekuje na admin
-                  {% elif z.status.value == 'AWAITING_APPROVAL' %}Oczekuje na UOPZ
-                  {% elif z.status.value == 'IN_PROGRESS' %}Zatwierdzona
-                  {% else %}{{ z.status.value }}{% endif %}
+                  {{ tlumacz_status(z.status.value) }}
                 </span>
                 {% if z.uopz %}
                 <div style="font-size: 0.7rem; color: var(--kolor-tekst-drugor); margin-top: 0.25rem;">

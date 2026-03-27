@@ -1,0 +1,99 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage{fontspec}
+\usepackage{polyglossia}
+\setmainlanguage{polish}
+\setmainfont{Latin Modern Roman}
+\usepackage{geometry}
+% Zmniejszone marginesy z 2.5cm na 1.5cm
+\geometry{margin=1.5cm}
+\usepackage{enumitem}
+\usepackage{tabularx}
+
+\begin{document}
+
+\begin{flushright}
+Załącznik nr 1
+\end{flushright}
+
+\vspace{-1em}
+\begin{center}
+\textbf{Porozumienie Nr << zapis.id | replace('-', '/') >>} \\[0.5em]
+\textbf{w sprawie praktyk studenckich}
+\end{center}
+\vspace{0.5em}
+
+\noindent
+zawarte w dniu << data_porozumienia | default('\\dots\\dots\\dots\\dots\\dots') >>\ pomiędzy Akademią Nauk Stosowanych w Elblągu, ul. Wojska Polskiego 1, 82-300 Elbląg zwaną dalej „Uczelnią" reprezentowaną przez << przedstawiciel_uczelni | default('\\dots\\dots\\dots\\dots\\dots\\dots\\dots\\dots\\dots\\dots\\dots\\dots') >> z jednej strony, a << zapis.firma_nazwa | s >>, zwanym dalej „Zakładem pracy", reprezentowanym przez << zapis.firma_upowazniony_osoba | s >> -- << zapis.firma_upowazniony_stanowisko | s >>\ \textendash\ z drugiej strony.
+
+\vspace{0.5em}
+
+% Zagęszczona główna lista
+\begin{enumerate}[label=\arabic*., leftmargin=*, itemsep=2pt, parsep=0pt]
+    \item Uczelnia kieruje studentów Uczelni na praktyki zawodowe na wskazany okres:
+
+    \vspace{0.5em}
+    \begin{center}
+    \renewcommand{\arraystretch}{1.3} % Nieco niższe wiersze w tabeli
+    \begin{tabular}{|c|p{4cm}|p{5cm}|p{3cm}|}
+    \hline
+    Lp. & Imię i nazwisko & Termin odbywania praktyki zawodowej & Wymiar praktyki zawodowej \\ \hline
+    1. & << student.first_name | s >> << student.last_name | s >> &
+    {%- if zapis.termin_od and zapis.termin_do -%}
+    << zapis.termin_od.strftime('%d.%m.%Y') >> -- << zapis.termin_do.strftime('%d.%m.%Y') >>
+    {%- else -%}
+    \dots\dots\dots\dots\dots
+    {%- endif -%}
+     & << zapis.praktyka.wymiar_godzin >> h \\ \hline
+    \end{tabular}
+    \end{center}
+    \vspace{0.5em}
+
+    \item \textbf{Obowiązki Zakładu pracy:} \\
+    Zakład pracy zobowiązuje się do sprawowania nadzoru nad studentami odbywającymi praktykę oraz zapewnienia warunków niezbędnych do jej przeprowadzenia zgodnie z porozumieniem zawartym z Uczelnią, a w szczególności do:
+    % Zagęszczona podlista
+    \begin{enumerate}[label=\arabic*), itemsep=0pt, parsep=0pt]
+        \item zapewnienia odpowiednich stanowisk pracy, urządzeń, pomieszczeń, zgodnie z programem praktyki,
+        \item zapoznania studentów z zakładowym regulaminem pracy, z przepisami o bezpieczeństwie i higienie pracy oraz o ochronie tajemnicy państwowej i służbowej,
+        \item sprawowania nadzoru nad właściwym wykonaniem przez studentów programu praktyki,
+        \item umożliwienia studentom korzystania z zaplecza socjalnego jakie posiada zakład pracy.
+    \end{enumerate}
+
+    \item \textbf{Obowiązki Uczelni:} \\
+    Uczelnia zobowiązana jest do:
+    \begin{enumerate}[label=\arabic*), itemsep=0pt, parsep=0pt]
+        \item opracowania w porozumieniu z Zakładem pracy i ze studentami szczegółowych programów praktyk,
+        \item sprawowania nadzoru dydaktyczno – wychowawczego oraz organizacyjnego nad przebiegiem praktyk.
+    \end{enumerate}
+
+    \item \textbf{Obowiązki studenta:}
+    \begin{enumerate}[label=\arabic*), itemsep=0pt, parsep=0pt]
+        \item stosowanie się do ustaleń Zakładu pracy w zakresie porządku i dyscypliny pracy,
+        \item przestrzeganie zasad BHP i ochrony przeciwpożarowej,
+        \item przestrzeganie zasad odbywania praktyk określonych przez Uczelnię,
+        \item student odbywający praktykę zawodową jest zobowiązany ubezpieczyć się indywidualnie od następstw nieszczęśliwych wypadków na czas trwania praktyki.
+    \end{enumerate}
+
+    \item Upoważnionym do rozstrzygania, wspólnie z kierownikiem Zakładu pracy, spraw związanych z przebiegiem praktyki jest opiekun ds. praktyk powołany przez Rektora Akademii Nauk Stosowanych w Elblągu.
+
+    \item Porozumienie zostaje zawarte na czas trwania praktyki.
+
+    \item Wszelkie zmiany porozumienia wymagają formy pisemnej pod rygorem nieważności.
+
+    \item Porozumienie niniejsze sporządzone zostało w dwóch jednobrzmiących egzemplarzach po jednym dla każdej ze stron.
+\end{enumerate}
+
+\vspace{2em}
+\noindent
+\begin{minipage}[t]{0.45\textwidth}
+\centering
+\dotfill\\
+\small (podpis Dyrektora Instytutu)
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.45\textwidth}
+\centering
+\dotfill\\
+\small (podpis osoby uprawnionej do reprezentacji\\ w imieniu Zakładu pracy)
+\end{minipage}
+
+\end{document}

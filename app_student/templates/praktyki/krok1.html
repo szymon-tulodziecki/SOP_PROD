@@ -28,11 +28,13 @@
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
           <div class="pole-formularza {% if form.termin_od.errors %}pole-formularza--blad{% endif %}">
             {{ form.termin_od.label(class="pole-formularza__etykieta") }}
+            <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor); margin-bottom: 0.25rem;">Data rozpoczęcia praktyki</div>
             {{ form.termin_od(class="pole-formularza__input", type="date") }}
             {% for e in form.termin_od.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
           </div>
           <div class="pole-formularza {% if form.termin_do.errors %}pole-formularza--blad{% endif %}">
             {{ form.termin_do.label(class="pole-formularza__etykieta") }}
+            <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor); margin-bottom: 0.25rem;">Data zakończenia praktyki (może być datą zakończenia semestru)</div>
             {{ form.termin_do(class="pole-formularza__input", type="date") }}
             {% for e in form.termin_do.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
           </div>

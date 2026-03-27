@@ -9,7 +9,7 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 -- 1. Typy wyliczeniowe
 CREATE TYPE user_role AS ENUM ('STUDENT', 'UOPZ', 'ADMIN');
 CREATE TYPE internship_status AS ENUM ('ACTIVE', 'INACTIVE');
-CREATE TYPE enrollment_status AS ENUM ('PENDING', 'AWAITING_APPROVAL', 'IN_PROGRESS', 'COMPLETED');
+CREATE TYPE enrollment_status AS ENUM ('PENDING', 'AWAITING_APPROVAL', 'COMMISSION_REVIEW', 'DEAN_APPROVAL', 'IN_PROGRESS', 'COMPLETED', 'REJECTED');
 CREATE TYPE evaluation_result AS ENUM ('ACHIEVED', 'PARTIALLY_ACHIEVED', 'NOT_ACHIEVED');
 CREATE TYPE internship_track AS ENUM ('STANDARD', 'EMPLOYMENT', 'OWN_BUSINESS');
 
@@ -114,6 +114,14 @@ CREATE TABLE internship_enrollments (
     uopz_comments TEXT,        -- Komentarze UOPZ
     student_notified_at TIMESTAMP,  -- Kiedy powiadomiono studenta
 
+    -- Commission and Dean workflow (for non-standard tracks)
+    komisja_comments TEXT,     -- Komentarz komisji weryfikującej
+    komisja_decision VARCHAR(20),  -- 'APPROVED', 'PARTIALLY_APPROVED', 'REJECTED'
+    komisja_decision_at TIMESTAMP,    -- Kiedy komisja podjęła decyzję
+    dean_comments TEXT,        -- Komentarz dziekana
+    dean_decision VARCHAR(20), -- 'APPROVED', 'REJECTED'
+    dean_decision_at TIMESTAMP,    -- Kiedy dziekan podjął decyzję
+
     UNIQUE(internship_id, student_id)          -- student może być zapisany tylko raz do tej samej praktyki
 );
 
@@ -204,6 +212,22 @@ CREATE TABLE document_audit_logs (
     action VARCHAR(50) NOT NULL,
     details TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ============================================================
+-- 10. Uploaded documents (for non-standard tracks)
+-- ============================================================
+CREATE TABLE uploaded_documents (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    enrollment_id UUID NOT NULL REFERENCES internship_enrollments(id) ON DELETE CASCADE,
+    document_type VARCHAR(50) NOT NULL,  -- 'umowa_pracy', 'zaswiadczenie_zatrudnienie', 'ceidg', 'krs' etc.
+    original_filename VARCHAR(255) NOT NULL,
+    stored_filename VARCHAR(255) NOT NULL,  -- UUID-based name on disk
+    file_path VARCHAR(500) NOT NULL,
+    file_size INTEGER NOT NULL,  -- bytes
+    mime_type VARCHAR(100) NOT NULL,
+    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    uploaded_by_id UUID REFERENCES users(id) ON DELETE SET NULL
 );
 
 -- ============================================================

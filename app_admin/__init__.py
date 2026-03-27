@@ -40,6 +40,7 @@ def create_app():
         from app_admin.routes.evaluation import evaluation_bp
         from app_admin.routes.journal    import journal_bp
         from app_admin.routes.documents  import documents_bp
+        from app_admin.routes.uploads    import uploads_bp
 
         app.register_blueprint(auth_bp)
         app.register_blueprint(dashboard_bp,  url_prefix='/panel')
@@ -47,6 +48,7 @@ def create_app():
         app.register_blueprint(evaluation_bp, url_prefix='/oceny')
         app.register_blueprint(journal_bp,    url_prefix='/dzienniki')
         app.register_blueprint(documents_bp,  url_prefix='/dokumenty')
+        app.register_blueprint(uploads_bp,    url_prefix='/uploads')
 
     @app.context_processor
     def inject_tlumacz():
@@ -56,7 +58,10 @@ def create_app():
             'COMPLETED': 'Zakończona',
             'ACTIVE': 'Aktywna',
             'INACTIVE': 'Nieaktywna',
-            'AWAITING_APPROVAL': 'Oczekuje na akceptację'
+            'AWAITING_APPROVAL': 'Oczekuje na akceptację',
+            'COMMISSION_REVIEW': 'Weryfikacja komisji',
+            'DEAN_APPROVAL': 'Oczekuje na dziekana',
+            'REJECTED': 'Odrzucony'
         }.get(val, val))
 
     @app.before_request

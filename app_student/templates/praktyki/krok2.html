@@ -39,13 +39,13 @@
                 <td style="font-weight: 600; text-align: center;">{{ e.kod }}</td>
                 <td style="font-size: 0.85rem; line-height: 1.4;">{{ e.opis }}</td>
                 <td>
-                  <input type="text" name="dzial_{{ e.id }}" class="pole-formularza__input" placeholder="Wpisz nazwę działu" style="height: 32px; padding: 0.25rem 0.5rem; font-size: 0.85rem;">
+                  <input type="text" name="dzial_{{ e.id }}" class="pole-formularza__input" placeholder="Wpisz nazwę działu" value="{{ istniejace_harmonogramy.get(e.id|string, {}).get('dzial', '') }}" style="height: 32px; padding: 0.25rem 0.5rem; font-size: 0.85rem;">
                 </td>
                 <td>
-                  <input type="text" name="prace_{{ e.id }}" class="pole-formularza__input" placeholder="Wpisz przykładowe prace" style="height: 32px; padding: 0.25rem 0.5rem; font-size: 0.85rem;">
+                  <input type="text" name="prace_{{ e.id }}" class="pole-formularza__input" placeholder="Wpisz przykładowe prace" value="{{ istniejace_harmonogramy.get(e.id|string, {}).get('prace', '') }}" style="height: 32px; padding: 0.25rem 0.5rem; font-size: 0.85rem;">
                 </td>
                 <td>
-                  <input type="number" name="dni_{{ e.id }}" class="pole-formularza__input dni-input" min="0" max="120" value="0" style="height: 32px; padding: 0.25rem 0.5rem; text-align: center;">
+                  <input type="number" name="dni_{{ e.id }}" class="pole-formularza__input dni-input" min="0" max="120" value="{{ istniejace_harmonogramy.get(e.id|string, {}).get('dni', 0) }}" style="height: 32px; padding: 0.25rem 0.5rem; text-align: center;">
                 </td>
               </tr>
               {% endfor %}
@@ -63,9 +63,14 @@
           <span style="font-size: 0.85rem; color: var(--kolor-tekst-drugor);">
             Zatwierdzenie wstępne. Twój wniosek po zapisaniu trafi do akceptacji UOPZ.
           </span>
-          <button type="submit" class="przycisk przycisk--glowny" id="btn-zapisz-harmonogram">
-            Zapisz Harmonogram
-          </button>
+          <div style="display: flex; gap: 1rem;">
+            <a href="{{ url_for('praktyki.szczegoly_zgloszenia', id=zapis.id) }}" class="przycisk przycisk--drugorzedny">
+              Powrót do szczegółów
+            </a>
+            <button type="submit" class="przycisk przycisk--glowny" id="btn-zapisz-harmonogram">
+              Zapisz Harmonogram
+            </button>
+          </div>
         </div>
 
       </form>

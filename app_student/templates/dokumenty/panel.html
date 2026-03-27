@@ -1,0 +1,263 @@
+{% extends "layouts/base_student.html" %}
+{% block tytul %}Panel Dokumentów{% endblock %}
+{% block naglowek %}Panel Dokumentów do Wydrukowania{% endblock %}
+
+{% block naglowek_akcje %}
+<div style="display: flex; gap: 0.5rem;">
+  <a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← Powrót do pulpitu</a>
+</div>
+{% endblock %}
+
+{% block tresc %}
+<div style="max-width: 1200px; margin: 0 auto;">
+
+  <!-- Informacja o systemie -->
+  <div class="karta" style="margin-bottom: 2rem; border-left: 4px solid var(--kolor-info);">
+    <div class="karta__tresc">
+      <div>
+        <div style="font-weight: 600; margin-bottom: 0.5rem;">System Generowania Dokumentów</div>
+        <div style="color: var(--kolor-tekst-drugor); font-size: 0.9rem;">
+          Dokumenty generują się automatycznie na podstawie danych z Twojego zgłoszenia praktyki.
+          <strong>Wydrukuj, podpisz i dostarcz do firmy/uczelni przed rozpoczęciem praktyki.</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% if not dokumenty_data %}
+  <!-- Pusty stan -->
+  <div class="karta" style="text-align: center; padding: 3rem 2rem;">
+    <div style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;">📄</div>
+    <h3 style="margin-bottom: 0.5rem;">Brak praktyk do dokumentacji</h3>
+    <p style="color: var(--kolor-tekst-drugor); margin-bottom: 2rem;">
+      Najpierw zapisz się na praktykę i uzupełnij harmonogram.
+    </p>
+    <a href="{{ url_for('praktyki.lista') }}" class="przycisk przycisk--glowny">
+      Zobacz dostępne praktyki
+    </a>
+  </div>
+
+  {% else %}
+  <!-- Lista praktyk z dokumentami -->
+  {% for item in dokumenty_data %}
+  <div class="karta" style="margin-bottom: 2rem;">
+    <div class="karta__naglowek" style="background: var(--kolor-tlo);">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h3 class="karta__tytul">
+          {{ item.zapis.praktyka.rok_uczelniany }} ({{ item.zapis.praktyka.semestr }})
+        </h3>
+        <span class="status status--{% if item.zapis.status.value == 'AWAITING_APPROVAL' %}planned{% elif item.zapis.status.value == 'IN_PROGRESS' %}w-trakcie{% elif item.zapis.status.value == 'COMPLETED' %}zakonczona{% else %}draft{% endif %}">
+          {{ tlumacz_status(item.zapis.status.value) }}
+        </span>
+      </div>
+    </div>
+
+    <div class="karta__tresc">
+      <div style="margin-bottom: 1.5rem;">
+        <div style="font-size: 0.9rem; color: var(--kolor-tekst-drugor);">
+          <strong>Firma:</strong> {{ item.zapis.firma_nazwa or 'Nie podano' }} |
+          <strong>Okres:</strong>
+          {% if item.zapis.termin_od and item.zapis.termin_do %}
+          {{ item.zapis.termin_od.strftime('%d.%m.%Y') }} - {{ item.zapis.termin_do.strftime('%d.%m.%Y') }}
+          {% else %}
+          Nie określono
+          {% endif %}
+        </div>
+      </div>
+
+      {% if not item.harmonogram_gotowy %}
+      <!-- Harmonogram nie gotowy -->
+      <div style="padding: 1rem; background: #fef3cd; border-radius: 0.5rem; border-left: 4px solid #f59e0b; margin-bottom: 1.5rem;">
+        <div style="font-weight: 500; color: #92400e; margin-bottom: 0.5rem;">
+          Harmonogram nie został uzupełniony
+        </div>
+        <div style="color: #92400e; font-size: 0.9rem; margin-bottom: 1rem;">
+          Przed generowaniem dokumentów musisz uzupełnić harmonogram praktyki (krok 2).
+        </div>
+        <a href="{{ url_for('praktyki.zapisz_krok2', id=item.zapis.id) }}" class="przycisk przycisk--maly przycisk--glowny">
+          Uzupełnij harmonogram
+        </a>
+      </div>
+
+      {% elif not item.mozna_generowac %}
+      <!-- Status nie pozwala na generowanie -->
+      <div style="padding: 1rem; background: #f3f4f6; border-radius: 0.5rem; margin-bottom: 1.5rem;">
+        <div style="color: var(--kolor-tekst-drugor); font-size: 0.9rem;">
+          Dokumenty będą dostępne po zatwierdzeniu zgłoszenia przez UOPZ.
+        </div>
+      </div>
+
+      {% else %}
+      <!-- Dokumenty dostępne do generacji -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem;">
+
+        <!-- Załącznik 1 - Podanie -->
+        <div class="dokument-karta">
+          <div class="dokument-karta__naglowek">
+            <h4>Załącznik 1</h4>
+            <span class="dokument-status dokument-status--dostepny">Dostępny</span>
+          </div>
+          <div class="dokument-karta__tresc">
+            <div class="dokument-tytul">Podanie o realizację praktyki studenckiej</div>
+            <div class="dokument-opis">Dane studenta, firmy, planowane terminy</div>
+            <a href="{{ url_for('dokumenty.generuj_dokument', enrollment_id=item.zapis.id, doc_type='ZALACZNIK_1') }}"
+               class="przycisk przycisk--maly przycisk--glowny">
+              Pobierz PDF
+            </a>
+          </div>
+        </div>
+
+        <!-- Załącznik 2 - Skierowanie -->
+        <div class="dokument-karta">
+          <div class="dokument-karta__naglowek">
+            <h4>Załącznik 2</h4>
+            <span class="dokument-status dokument-status--dostepny">Dostępny</span>
+          </div>
+          <div class="dokument-karta__tresc">
+            <div class="dokument-tytul">Skierowanie na praktykę studencką</div>
+            <div class="dokument-opis">Z automatycznym numerem pisma wychodzącego</div>
+            <a href="{{ url_for('dokumenty.generuj_dokument', enrollment_id=item.zapis.id, doc_type='ZALACZNIK_2') }}"
+               class="przycisk przycisk--maly przycisk--glowny">
+              Pobierz PDF
+            </a>
+          </div>
+        </div>
+
+        <!-- Załącznik 3 - Porozumienie (warunkowo) -->
+        {% if not item.firma_ma_umowe %}
+        <div class="dokument-karta">
+          <div class="dokument-karta__naglowek">
+            <h4>Załącznik 3</h4>
+            <span class="dokument-status dokument-status--dostepny">Dostępny</span>
+          </div>
+          <div class="dokument-karta__tresc">
+            <div class="dokument-tytul">Porozumienie o organizację praktyki</div>
+            <div class="dokument-opis">Umowa z firmą (2 egzemplarze)</div>
+            <a href="{{ url_for('dokumenty.generuj_dokument', enrollment_id=item.zapis.id, doc_type='ZALACZNIK_3') }}"
+               class="przycisk przycisk--maly przycisk--glowny">
+              Pobierz PDF
+            </a>
+          </div>
+        </div>
+        {% else %}
+        <div class="dokument-karta dokument-karta--nieaktywny">
+          <div class="dokument-karta__naglowek">
+            <h4>Załącznik 3</h4>
+            <span class="dokument-status dokument-status--niewymagany">Niewymagany</span>
+          </div>
+          <div class="dokument-karta__tresc">
+            <div class="dokument-tytul">Porozumienie o organizację praktyki</div>
+            <div class="dokument-opis">Firma ma stałą umowę z uczelnią</div>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Załącznik 4 - Indywidualny Program -->
+        <div class="dokument-karta {% if not item.program_approved %}dokument-karta--oczekuje{% endif %}">
+          <div class="dokument-karta__naglowek">
+            <h4>Załącznik 4</h4>
+            <span class="dokument-status dokument-status--{% if item.program_approved %}dostepny{% else %}oczekuje{% endif %}">
+              {% if item.program_approved %}Zatwierdzony{% else %}Wymaga zatwierdzenia{% endif %}
+            </span>
+          </div>
+          <div class="dokument-karta__tresc">
+            <div class="dokument-tytul">Indywidualny Program Praktyk</div>
+            <div class="dokument-opis">Na podstawie Twojego harmonogramu</div>
+
+            {% if item.program_approved %}
+            <a href="{{ url_for('dokumenty.generuj_dokument', enrollment_id=item.zapis.id, doc_type='ZALACZNIK_4') }}"
+               class="przycisk przycisk--maly przycisk--glowny">
+              Pobierz PDF
+            </a>
+            {% else %}
+            <form method="POST" action="{{ url_for('dokumenty.zatwierdz_program', enrollment_id=item.zapis.id) }}" style="margin-top: 0.5rem;">
+              {{ csrf_form.hidden_tag() }}
+              <button type="submit" class="przycisk przycisk--maly przycisk--drugorzedny">
+                Poproś o zatwierdzenie
+              </button>
+            </form>
+            {% endif %}
+          </div>
+        </div>
+
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+  {% endif %}
+
+</div>
+
+<style>
+.dokument-karta {
+  border: 1px solid var(--kolor-ramka);
+  border-radius: var(--promien);
+  overflow: hidden;
+  background: white;
+}
+
+.dokument-karta--nieaktywny {
+  opacity: 0.6;
+  background: #f9f9f9;
+}
+
+.dokument-karta--oczekuje {
+  border-color: var(--kolor-ostrzezenie);
+}
+
+.dokument-karta__naglowek {
+  padding: 0.75rem 1rem;
+  background: var(--kolor-tlo);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--kolor-ramka);
+}
+
+.dokument-karta__naglowek h4 {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--kolor-glowny);
+}
+
+.dokument-karta__tresc {
+  padding: 1rem;
+}
+
+.dokument-tytul {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.dokument-opis {
+  font-size: 0.8rem;
+  color: var(--kolor-tekst-drugor);
+  margin-bottom: 1rem;
+}
+
+.dokument-status {
+  padding: 0.25rem 0.5rem;
+  border-radius: 3px;
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+
+.dokument-status--dostepny {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.dokument-status--oczekuje {
+  background: #fef3cd;
+  color: #92400e;
+}
+
+.dokument-status--niewymagany {
+  background: #e5e7eb;
+  color: #6b7280;
+}
+</style>
+
+{% endblock %}

@@ -26,7 +26,7 @@
   </div>
 
   <form method="POST">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+    {{ csrf_form.hidden_tag() }}
 
     <!-- Karta Ocen (Zał. 3) -->
     <div class="karta" style="margin-bottom: 2rem;">

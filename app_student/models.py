@@ -22,8 +22,30 @@ class StatusPraktyki(enum.Enum):
 class StatusZapisu(enum.Enum):
     PENDING           = 'PENDING'
     AWAITING_APPROVAL = 'AWAITING_APPROVAL'
+    COMMISSION_REVIEW = 'COMMISSION_REVIEW'  # Weryfikacja przez komisję (ścieżki B/C)
+    DEAN_APPROVAL     = 'DEAN_APPROVAL'      # Oczekuje na zatwierdzenie dziekana (ścieżki B/C)
     IN_PROGRESS       = 'IN_PROGRESS'
     COMPLETED         = 'COMPLETED'
+    REJECTED          = 'REJECTED'           # Odrzucone przez komisję/dziekana
+
+
+class StatusDokumentu(enum.Enum):
+    DRAFT = 'DRAFT'
+    AWAITING_APPROVAL = 'AWAITING_APPROVAL'
+    APPROVED = 'APPROVED'
+    REJECTED = 'REJECTED'
+
+
+class SciezkaPraktyki(enum.Enum):
+    STANDARD = 'STANDARD'
+    EMPLOYMENT = 'EMPLOYMENT'
+    OWN_BUSINESS = 'OWN_BUSINESS'
+
+
+class WynikOceny(enum.Enum):
+    OSIAGNIETO     = 'ACHIEVED'
+    CZESCIOWO      = 'PARTIALLY_ACHIEVED'
+    NIE_OSIAGNIETO = 'NOT_ACHIEVED'
 
 
 class SciezkaPraktyki(enum.Enum):
@@ -39,6 +61,22 @@ class WynikOceny(enum.Enum):
 
 
 # ── Modele ────────────────────────────────────────────────────────────────────
+
+class Firma(db.Model):
+    __tablename__ = 'companies'
+
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    nazwa = db.Column(db.String(255), nullable=False)
+    adres = db.Column(db.String(255), nullable=True)
+    miasto = db.Column(db.String(100), nullable=True)
+    nip_krs = db.Column(db.String(50), nullable=True)
+    has_standing_agreement = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    is_active = db.Column(db.Boolean, default=True)
+
+    def __repr__(self):
+        return f'<Firma {self.nazwa}>'
+
 
 class Uzytkownik(UserMixin, db.Model):
     __tablename__ = 'users'
@@ -63,6 +101,14 @@ class EfektUczenia(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     description = db.Column(db.Text, nullable=False)
+
+    @property
+    def opis(self):
+        return self.description
+
+    @property
+    def kod(self):
+        return str(self.id).zfill(2)
 
     def __repr__(self):
         return f'<EfektUczenia {self.id}: {self.description[:50]}...>'
@@ -89,6 +135,7 @@ class ZapisPraktyki(db.Model):
     internship_id             = db.Column(UUID(as_uuid=True), db.ForeignKey('internships.id', ondelete='CASCADE'), nullable=False)
     student_id                = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
     uopz_id                   = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
+    firma_id                  = db.Column(UUID(as_uuid=True), db.ForeignKey('companies.id', ondelete='SET NULL'), nullable=True)
     status                    = db.Column(db.Enum(StatusZapisu, name='enrollment_status', values_callable=lambda e: [x.value for x in e]), nullable=False, default=StatusZapisu.PENDING)
     track_type                = db.Column(db.Enum(SciezkaPraktyki, name='internship_track', values_callable=lambda e: [x.value for x in e]), nullable=False, default=SciezkaPraktyki.STANDARD)
 
@@ -134,12 +181,26 @@ class ZapisPraktyki(db.Model):
     total_hours_logged        = db.Column(db.Integer, default=0)
     enrolled_at               = db.Column(db.DateTime, default=db.func.current_timestamp())
 
+    # Feedback system
+    admin_comments            = db.Column(db.Text)        # Komentarze administratora
+    uopz_comments             = db.Column(db.Text)        # Komentarze UOPZ
+    student_notified_at       = db.Column(db.DateTime)    # Kiedy powiadomiono studenta
+
+    # Commission and Dean workflow (for non-standard tracks)
+    komisja_comments          = db.Column(db.Text)        # Komentarz komisji weryfikującej
+    komisja_decision          = db.Column(db.String(20))  # 'APPROVED', 'PARTIALLY_APPROVED', 'REJECTED'
+    komisja_decision_at       = db.Column(db.DateTime)    # Kiedy komisja podjęła decyzję
+    dean_comments             = db.Column(db.Text)        # Komentarz dziekana
+    dean_decision             = db.Column(db.String(20))  # 'APPROVED', 'REJECTED'
+    dean_decision_at          = db.Column(db.DateTime)    # Kiedy dziekan podjął decyzję
+
     # Relacje
     praktyka = db.relationship('Praktyka', backref='zapisy')
     student = db.relationship('Uzytkownik', foreign_keys=[student_id], backref='zapisy_studenta')
     uopz = db.relationship('Uzytkownik', foreign_keys=[uopz_id], backref='zapisy_uopz')
+    firma = db.relationship('Firma', foreign_keys=[firma_id], backref='zapisy_firmy')
 
-    __table_args__ = (db.UniqueConstraint('internship_id', 'student_id', name='_internship_student_uc'),)
+    # Usunięte ograniczenie unikalności - student może mieć wiele praktyk na różne semestry
 
     def __repr__(self):
         return f'<ZapisPraktyki {self.student.last_name if self.student else "?"} -> {self.praktyka.rok_uczelniany if self.praktyka else "?"}>'
@@ -158,6 +219,10 @@ class HarmonogramPraktyki(db.Model):
     # Relacje
     zapis = db.relationship('ZapisPraktyki', backref='harmonogram')
     efekt_uczenia = db.relationship('EfektUczenia')
+
+    @property
+    def efekt(self):
+        return self.efekt_uczenia
 
 
 class SprawozdaniePraktyki(db.Model):
@@ -205,3 +270,37 @@ class OcenaEfektu(db.Model):
     # Relacje
     zapis = db.relationship('ZapisPraktyki', backref='oceny_efektow')
     efekt_uczenia = db.relationship('EfektUczenia')
+
+
+class IndywidualnyProgram(db.Model):
+    __tablename__ = 'individual_programs'
+
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    enrollment_id = db.Column(UUID(as_uuid=True), db.ForeignKey('internship_enrollments.id', ondelete='CASCADE'), nullable=False, unique=True)
+    status = db.Column(db.Enum(StatusDokumentu, name='program_status', values_callable=lambda e: [x.value for x in e]), nullable=False, default=StatusDokumentu.DRAFT)
+    approved_by_uopz = db.Column(db.Boolean, default=False)
+    approved_at = db.Column(db.DateTime, nullable=True)
+    uopz_comments = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+
+    # Relacje
+    enrollment = db.relationship('ZapisPraktyki', backref=db.backref('indywidualny_program', uselist=False))
+
+    def __repr__(self):
+        return f'<IndywidualnyProgram {self.enrollment_id} - {self.status.value}>'
+
+
+class NumerPisma(db.Model):
+    __tablename__ = 'document_numbers'
+
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    enrollment_id = db.Column(UUID(as_uuid=True), db.ForeignKey('internship_enrollments.id', ondelete='CASCADE'), nullable=False)
+    document_type = db.Column(db.String(50), nullable=False)  # 'ZALACZNIK_2'
+    numer = db.Column(db.String(100), nullable=False)  # np. "ANS/PZ/2024/001"
+    generated_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+
+    # Relacje
+    enrollment = db.relationship('ZapisPraktyki', backref='numery_pism')
+
+    def __repr__(self):
+        return f'<NumerPisma {self.numer}>'

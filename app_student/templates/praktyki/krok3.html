@@ -35,7 +35,10 @@
           {% for e in form.zalaczniki.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
         </div>
 
-        <div style="display: flex; justify-content: flex-end;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <a href="{{ url_for('praktyki.szczegoly_zgloszenia', id=zapis.id) }}" class="przycisk przycisk--drugorzedny">
+            Powrót do szczegółów
+          </a>
           <button type="submit" class="przycisk przycisk--glowny">Zakończ i Prześlij Wniosek</button>
         </div>
       </form>

@@ -1,0 +1,307 @@
+{% extends "layouts/base_panel.html" %}
+
+{% block tytul %}Decyzja dziekana{% endblock %}
+{% block naglowek %}Decyzja dziekana w sprawie wniosku{% endblock %}
+
+{% block naglowek_akcje %}
+<div style="display: flex; gap: 0.5rem;">
+  <a href="{{ url_for('management.dziekan_lista') }}" class="przycisk przycisk--drugorzedny">← Powrót do listy</a>
+</div>
+{% endblock %}
+
+{% block tresc %}
+<div style="max-width: 1000px; margin: 0 auto;">
+
+  <div class="grid-2">
+    <!-- Lewa kolumna: Dane wniosku -->
+    <div>
+      <div class="karta" style="margin-bottom: 2rem;">
+        <div class="karta__naglowek">
+          <h2>Informacje o wniosku</h2>
+        </div>
+        <div class="karta__tresc">
+          <div class="info-grid">
+            <div class="info-item">
+              <label>Student</label>
+              <div><strong>{{ zapis.student.first_name }} {{ zapis.student.last_name }}</strong></div>
+            </div>
+            <div class="info-item">
+              <label>Nr albumu</label>
+              <div>{{ zapis.student.album_number }}</div>
+            </div>
+            <div class="info-item">
+              <label>Ścieżka</label>
+              <div>
+                {% if zapis.track_type.value == 'EMPLOYMENT' %}
+                <span class="badge badge--info">Praca zawodowa</span>
+                {% elif zapis.track_type.value == 'OWN_BUSINESS' %}
+                <span class="badge badge--warning">Działalność gospodarcza</span>
+                {% endif %}
+              </div>
+            </div>
+            <div class="info-item">
+              <label>Data zgłoszenia</label>
+              <div>{{ zapis.enrolled_at.strftime('%d.%m.%Y %H:%M') }}</div>
+            </div>
+          </div>
+
+          {% if zapis.firma_nazwa %}
+          <div style="border-top: 1px solid #e5e7eb; margin-top: 1.5rem; padding-top: 1.5rem;">
+            <h3 style="font-size: 1rem; margin-bottom: 1rem;">Miejsce pracy/działalności</h3>
+            <div class="info-grid">
+              <div class="info-item">
+                <label>Nazwa</label>
+                <div><strong>{{ zapis.firma_nazwa }}</strong></div>
+              </div>
+              <div class="info-item">
+                <label>Miasto</label>
+                <div>{{ zapis.firma_miasto or 'Nie podano' }}</div>
+              </div>
+              {% if zapis.firma_nip_krs %}
+              <div class="info-item">
+                <label>NIP/KRS</label>
+                <div>{{ zapis.firma_nip_krs }}</div>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+          {% endif %}
+
+          {% if zapis.uzasadnienie_sciezki %}
+          <div style="border-top: 1px solid #e5e7eb; margin-top: 1.5rem; padding-top: 1.5rem;">
+            <h3 style="font-size: 1rem; margin-bottom: 1rem;">Uzasadnienie studenta</h3>
+            <div class="uzasadnienie-box">
+              {{ zapis.uzasadnienie_sciezki }}
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- Decyzja komisji -->
+          {% if zapis.komisja_decision %}
+          <div style="border-top: 1px solid #e5e7eb; margin-top: 1.5rem; padding-top: 1.5rem;">
+            <h3 style="font-size: 1rem; margin-bottom: 1rem;">Decyzja komisji weryfikującej</h3>
+            <div class="komisja-decyzja">
+              <div class="decyzja-header">
+                <span class="status status--zakonczona">Zatwierdzone</span>
+                <span class="decyzja-data">
+                  {{ zapis.komisja_decision_at.strftime('%d.%m.%Y %H:%M') if zapis.komisja_decision_at }}
+                </span>
+              </div>
+              {% if zapis.komisja_comments %}
+              <div class="decyzja-komentarz">
+                <strong>Komentarz komisji:</strong><br>
+                {{ zapis.komisja_comments }}
+              </div>
+              {% endif %}
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Prawa kolumna: Formularz decyzji dziekana -->
+    <div>
+      <div class="karta">
+        <div class="karta__naglowek">
+          <h2>Decyzja dziekana</h2>
+          <span class="karta__opis">
+            Podejmij ostateczną decyzję w sprawie wniosku o zaliczenie praktyki na podstawie pracy zawodowej/działalności gospodarczej
+          </span>
+        </div>
+        <div class="karta__tresc">
+          <form method="POST">
+            {{ form.hidden_tag() }}
+
+            <div class="pole-formularza">
+              {{ form.decyzja.label(class="pole-formularza__etykieta") }}
+              {{ form.decyzja(class="pole-formularza__select") }}
+              {% for error in form.decyzja.errors %}
+                <span class="pole-formularza__blad">{{ error }}</span>
+              {% endfor %}
+            </div>
+
+            <div class="pole-formularza">
+              {{ form.komentarz.label(class="pole-formularza__etykieta") }}
+              {{ form.komentarz(class="pole-formularza__textarea", rows="8", placeholder="Uzasadnienie decyzji dziekana (opcjonalne)...") }}
+              {% for error in form.komentarz.errors %}
+                <span class="pole-formularza__blad">{{ error }}</span>
+              {% endfor %}
+              <div class="pole-formularza__pomoc">
+                Komentarz będzie widoczny dla studenta i w dokumentacji
+              </div>
+            </div>
+
+            <div class="akcje-formularza">
+              {{ form.submit(class="przycisk przycisk--glowny") }}
+              <a href="{{ url_for('management.dziekan_lista') }}" class="przycisk przycisk--drugorzedny">Anuluj</a>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Generowanie dokumentów -->
+      <div class="karta" style="margin-top: 2rem;">
+        <div class="karta__naglowek">
+          <h2>Dokumenty praktyki</h2>
+          <span class="karta__opis">Generuj dokumenty związane z wnioskiem studenta</span>
+        </div>
+        <div class="karta__tresc">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            {% if zapis.track_type.value == 'EMPLOYMENT' %}
+            <!-- Ścieżka B - Praca zawodowa -->
+            <div class="document-card">
+              <div class="document-title">ZAL_7 - Wniosek o zaliczenie</div>
+              <div class="document-desc">Wniosek o zaliczenie praktyki na podstawie pracy zawodowej</div>
+              <a href="{{ url_for('documents.generuj_auto', id=zapis.id, doc_type='ZAL_7') }}"
+                 class="przycisk przycisk--maly przycisk--glowny" target="_blank">
+                Generuj PDF
+              </a>
+            </div>
+            <div class="document-card">
+              <div class="document-title">ZAL_4a - Efekty uczenia</div>
+              <div class="document-desc">Zestawienie efektów uczenia się dla pracy zawodowej</div>
+              <a href="{{ url_for('documents.generuj_auto', id=zapis.id, doc_type='ZAL_4a') }}"
+                 class="przycisk przycisk--maly przycisk--drugorzedny" target="_blank">
+                Generuj PDF
+              </a>
+            </div>
+            {% elif zapis.track_type.value == 'OWN_BUSINESS' %}
+            <!-- Ścieżka C - Działalność gospodarcza -->
+            <div class="document-card">
+              <div class="document-title">ZAL_4b - Wniosek działalność</div>
+              <div class="document-desc">Wniosek o zaliczenie na podstawie działalności gospodarczej</div>
+              <a href="{{ url_for('documents.generuj_auto', id=zapis.id, doc_type='ZAL_4b') }}"
+                 class="przycisk przycisk--maly przycisk--glowny" target="_blank">
+                Generuj PDF
+              </a>
+            </div>
+            <div class="document-card">
+              <div class="document-title">ZAL_8 - Protokół egzaminacyjny</div>
+              <div class="document-desc">Protokół z egzaminu praktycznego</div>
+              <a href="{{ url_for('documents.generuj_auto', id=zapis.id, doc_type='ZAL_8') }}"
+                 class="przycisk przycisk--maly przycisk--drugorzedny" target="_blank">
+                Generuj PDF
+              </a>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Informacje dodatkowe -->
+      <div class="karta" style="margin-top: 2rem;">
+        <div class="karta__naglowek">
+          <h2>Dokumenty załączone przez studenta</h2>
+        </div>
+        <div class="karta__tresc">
+          <div style="text-align: center; color: var(--kolor-tekst-drugor);">
+            <p>Liczba załączonych dokumentów: <strong>{{ zapis.uploaded_documents | length }}</strong></p>
+            <p style="font-size: 0.9rem;">
+              Szczegóły dokumentów dostępne w panelu komisji weryfikującej
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<style>
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.info-item label {
+  font-weight: 500;
+  font-size: 0.85rem;
+  color: var(--kolor-tekst-drugor);
+}
+
+.uzasadnienie-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid var(--kolor-glowny);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  line-height: 1.6;
+}
+
+.komisja-decyzja {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+.decyzja-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.decyzja-data {
+  font-size: 0.85rem;
+  color: var(--kolor-tekst-drugor);
+}
+
+.decyzja-komentarz {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: white;
+  border-radius: 0.375rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.document-card {
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  background: #f9fafb;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.document-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--kolor-glowny);
+}
+
+.document-desc {
+  font-size: 0.8rem;
+  color: var(--kolor-tekst-drugor);
+  flex-grow: 1;
+}
+
+@media (max-width: 768px) {
+  .grid-2 {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+
+{% endblock %}

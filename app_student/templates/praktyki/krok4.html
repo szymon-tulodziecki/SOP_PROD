@@ -1,0 +1,450 @@
+{% extends "layouts/base_student.html" %}
+{% block tytul %}Upload dokumentów{% endblock %}
+{% block naglowek %}Krok 4: Upload wymaganych dokumentów{% endblock %}
+
+{% block naglowek_akcje %}
+<div style="display: flex; gap: 0.5rem;">
+  <a href="{{ url_for('praktyki.zapisz_krok3', id=zapis.id) }}" class="przycisk przycisk--drugorzedny">← Wróć do kroku 3</a>
+</div>
+{% endblock %}
+
+{% block tresc %}
+<div style="max-width: 800px; margin: 0 auto;">
+
+  <div class="karta" style="margin-bottom: 2rem;">
+    <div class="karta__naglowek">
+      <h2>Wymagane dokumenty</h2>
+      <span class="karta__opis">
+        {% if zapis.track_type.value == 'EMPLOYMENT' %}
+        Dla ścieżki zawodowej (praca etatowa) wymagane są następujące dokumenty:
+        {% elif zapis.track_type.value == 'OWN_BUSINESS' %}
+        Dla własnej działalności gospodarczej wymagane są następujące dokumenty:
+        {% endif %}
+      </span>
+    </div>
+    <div class="karta__tresc">
+      <div class="upload-section" data-enrollment-id="{{ zapis.id }}">
+        {% for doc_type, doc_title in required_docs %}
+        <div class="document-upload-item" data-doc-type="{{ doc_type }}">
+          <div class="document-header">
+            <h4>{{ doc_title }}</h4>
+            <span class="document-status" id="status-{{ doc_type }}">
+              <span class="status-indicator pending"></span>
+              <span class="status-text">Wymagany</span>
+            </span>
+          </div>
+
+          <div class="upload-zone" id="upload-{{ doc_type }}">
+            <input type="file"
+                   class="upload-input"
+                   id="file-{{ doc_type }}"
+                   data-doc-type="{{ doc_type }}"
+                   accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.zip,.rar">
+            <div class="upload-placeholder">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7,10 12,15 17,10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              <p>Przeciągnij plik tutaj lub <span class="upload-link">wybierz z dysku</span></p>
+              <p class="upload-hint">Dozwolone: PDF, DOC, DOCX, JPG, PNG, ZIP (maks. 10MB)</p>
+            </div>
+            <div class="upload-progress" id="progress-{{ doc_type }}" style="display: none;">
+              <div class="progress-bar">
+                <div class="progress-fill"></div>
+              </div>
+              <span class="progress-text">Uploadowanie...</span>
+            </div>
+          </div>
+
+          <div class="uploaded-files" id="files-{{ doc_type }}"></div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="karta">
+    <div class="karta__tresc" style="text-align: center;">
+      <form method="POST">
+        <input type="hidden" name="action" value="finalize">
+        <button type="submit" class="przycisk przycisk--glowny" id="submit-btn" disabled>
+          Prześlij wniosek do weryfikacji
+        </button>
+      </form>
+      <p style="margin-top: 1rem; color: var(--kolor-tekst-drugor); font-size: 0.9rem;">
+        Wszystkie wymagane dokumenty muszą zostać uploadowane przed przesłaniem wniosku.
+      </p>
+    </div>
+  </div>
+
+</div>
+
+<style>
+.document-upload-item {
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.document-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.document-header h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.document-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.status-indicator.pending {
+  background-color: #fbbf24;
+}
+
+.status-indicator.uploaded {
+  background-color: #10b981;
+}
+
+.upload-zone {
+  border: 2px dashed #d1d5db;
+  border-radius: 0.5rem;
+  padding: 2rem;
+  text-align: center;
+  transition: border-color 0.2s;
+  cursor: pointer;
+}
+
+.upload-zone:hover {
+  border-color: #9ca3af;
+}
+
+.upload-zone.dragover {
+  border-color: var(--kolor-glowny);
+  background-color: #f8fafc;
+}
+
+.upload-input {
+  display: none;
+}
+
+.upload-placeholder svg {
+  color: #9ca3af;
+  margin-bottom: 1rem;
+}
+
+.upload-placeholder p {
+  margin: 0.5rem 0;
+  color: #6b7280;
+}
+
+.upload-link {
+  color: var(--kolor-glowny);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.upload-hint {
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+.upload-progress {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 8px;
+  background-color: #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: var(--kolor-glowny);
+  width: 0%;
+  transition: width 0.3s;
+}
+
+.uploaded-files {
+  margin-top: 1rem;
+}
+
+.uploaded-file {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.375rem;
+  margin-bottom: 0.5rem;
+}
+
+.file-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.file-icon {
+  width: 24px;
+  height: 24px;
+  color: var(--kolor-glowny);
+}
+
+.file-details h5 {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.file-details p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.file-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.file-actions button {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.25rem;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.file-actions button:hover {
+  background: #f3f4f6;
+}
+
+.file-actions .btn-download {
+  color: var(--kolor-glowny);
+}
+
+.file-actions .btn-delete {
+  color: #dc2626;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const enrollmentId = document.querySelector('.upload-section').dataset.enrollmentId;
+  const requiredDocs = {{ required_docs | tojson }};
+  const requiredDocTypes = requiredDocs.map(([docType, _]) => docType);
+  let uploadedDocTypes = new Set();
+
+  // Załaduj istniejące dokumenty
+  loadExistingDocuments();
+
+  // Obsługa uploadów
+  document.querySelectorAll('.upload-input').forEach(input => {
+    input.addEventListener('change', handleFileSelect);
+  });
+
+  // Drag & drop
+  document.querySelectorAll('.upload-zone').forEach(zone => {
+    zone.addEventListener('click', () => {
+      const docType = zone.id.replace('upload-', '');
+      document.getElementById(`file-${docType}`).click();
+    });
+
+    zone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      zone.classList.add('dragover');
+    });
+
+    zone.addEventListener('dragleave', () => {
+      zone.classList.remove('dragover');
+    });
+
+    zone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      zone.classList.remove('dragover');
+      const docType = zone.id.replace('upload-', '');
+      const input = document.getElementById(`file-${docType}`);
+      input.files = e.dataTransfer.files;
+      handleFileSelect.call(input);
+    });
+  });
+
+  function loadExistingDocuments() {
+    fetch(`/uploads/enrollment/${enrollmentId}/documents`)
+      .then(response => response.json())
+      .then(documents => {
+        documents.forEach(doc => {
+          addUploadedFile(doc.document_type, doc);
+          uploadedDocTypes.add(doc.document_type);
+          updateDocumentStatus(doc.document_type, 'uploaded');
+        });
+        checkSubmitButton();
+      });
+  }
+
+  function handleFileSelect() {
+    const file = this.files[0];
+    if (!file) return;
+
+    const docType = this.dataset.docType;
+    uploadFile(docType, file);
+  }
+
+  function uploadFile(docType, file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('document_type', docType);
+
+    const progressEl = document.getElementById(`progress-${docType}`);
+    const progressFill = progressEl.querySelector('.progress-fill');
+
+    progressEl.style.display = 'flex';
+    document.getElementById(`upload-${docType}`).style.display = 'none';
+
+    fetch(`/uploads/enrollment/${enrollmentId}/upload`, {
+      method: 'POST',
+      body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // Dodaj plik do listy
+        const fileData = {
+          id: data.document_id,
+          original_filename: data.filename,
+          file_size: data.size,
+          download_url: `/uploads/document/${data.document_id}/download`,
+          delete_url: `/uploads/document/${data.document_id}/delete`
+        };
+
+        addUploadedFile(docType, fileData);
+        uploadedDocTypes.add(docType);
+        updateDocumentStatus(docType, 'uploaded');
+        checkSubmitButton();
+      } else {
+        alert('Błąd: ' + data.error);
+        showUploadZone(docType);
+      }
+    })
+    .catch(error => {
+      alert('Błąd podczas uploadowania: ' + error.message);
+      showUploadZone(docType);
+    });
+  }
+
+  function addUploadedFile(docType, fileData) {
+    const filesContainer = document.getElementById(`files-${docType}`);
+
+    const fileEl = document.createElement('div');
+    fileEl.className = 'uploaded-file';
+    fileEl.innerHTML = `
+      <div class="file-info">
+        <svg class="file-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14,2 14,8 20,8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+          <polyline points="10,9 9,9 8,9"/>
+        </svg>
+        <div class="file-details">
+          <h5>${fileData.original_filename}</h5>
+          <p>${formatFileSize(fileData.file_size)}</p>
+        </div>
+      </div>
+      <div class="file-actions">
+        <button type="button" class="btn-download" onclick="downloadFile('${fileData.download_url}')">
+          Pobierz
+        </button>
+        <button type="button" class="btn-delete" onclick="deleteFile('${fileData.delete_url}', '${docType}')">
+          Usuń
+        </button>
+      </div>
+    `;
+
+    filesContainer.appendChild(fileEl);
+    showUploadZone(docType, false);
+  }
+
+  function updateDocumentStatus(docType, status) {
+    const statusEl = document.getElementById(`status-${docType}`);
+    const indicator = statusEl.querySelector('.status-indicator');
+    const text = statusEl.querySelector('.status-text');
+
+    if (status === 'uploaded') {
+      indicator.className = 'status-indicator uploaded';
+      text.textContent = 'Uploaded';
+    } else {
+      indicator.className = 'status-indicator pending';
+      text.textContent = 'Wymagany';
+    }
+  }
+
+  function showUploadZone(docType, show = true) {
+    const uploadZone = document.getElementById(`upload-${docType}`);
+    const progressZone = document.getElementById(`progress-${docType}`);
+
+    if (show) {
+      uploadZone.style.display = 'block';
+      progressZone.style.display = 'none';
+    } else {
+      uploadZone.style.display = 'none';
+      progressZone.style.display = 'none';
+    }
+  }
+
+  function checkSubmitButton() {
+    const submitBtn = document.getElementById('submit-btn');
+    const allUploaded = requiredDocTypes.every(docType => uploadedDocTypes.has(docType));
+    submitBtn.disabled = !allUploaded;
+  }
+
+  function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  }
+
+  // Globalne funkcje dla buttonów
+  window.downloadFile = function(url) {
+    window.location.href = url;
+  };
+
+  window.deleteFile = function(url, docType) {
+    if (confirm('Czy na pewno chcesz usunąć ten plik?')) {
+      fetch(url, { method: 'POST' })
+        .then(() => {
+          location.reload();
+        });
+    }
+  };
+});
+</script>
+
+{% endblock %}
