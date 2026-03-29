@@ -1,69 +1,80 @@
 {% extends "layouts/base_panel.html" %}
 
-{% block tytul %}Praktyki do oceny{% endblock %}
-{% block naglowek %}Praktyki oczekujące na ocenę{% endblock %}
+{% block tytul %}Oceny i efekty{% endblock %}
+{% block naglowek %}Studenci — oceny i efekty{% endblock %}
 
 {% block tresc %}
-<div class="karta">
+<div style="max-width: 1200px; margin: 0 auto;">
+
+{% macro tabela_studentow(items, tytul, kolor) %}
+<div class="karta" style="margin-bottom: 1.5rem;">
+  <div class="karta__naglowek" style="border-left: 4px solid {{ kolor }};">
+    <h2 class="karta__tytul">{{ tytul }} <span style="font-size:0.85rem; font-weight:400; color:var(--kolor-tekst-drugor);">({{ items|length }})</span></h2>
+  </div>
   <div class="karta__tresc">
+    {% if items %}
     <div class="tabela-wrapper">
       <table class="tabela">
         <thead>
           <tr>
-            <th scope="col">Student</th>
-            <th scope="col">Zakład pracy</th>
-            <th scope="col">Termin zakończenia</th>
-            <th scope="col">Deadline oceny</th>
-            <th scope="col">Godziny</th>
-            <th scope="col">Akcje</th>
+            <th>Student</th>
+            <th>Kierunek / Specjalność</th>
+            <th>Zakład pracy</th>
+            <th>Termin</th>
+            <th>Godziny</th>
+            <th>Akcje</th>
           </tr>
         </thead>
         <tbody>
-          {% for item in zapisy_z_deadlinami %}
+          {% for item in items %}
           {% set p = item.zapis %}
-          <tr {% if item.przekroczony %}style="background: rgba(192, 57, 43, 0.05);"{% endif %}>
+          <tr {% if item.przekroczony %}style="background: rgba(220,38,38,0.04);"{% endif %}>
             <td>
-              <div style="font-weight: 600;">{{ p.student.last_name }} {{ p.student.first_name }}</div>
-              <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor);">Album: {{ p.student.album_number or '-' }}</div>
+              <div style="font-weight:600;">{{ p.student.last_name }} {{ p.student.first_name }}</div>
+              <div style="font-size:0.8rem; color:var(--kolor-tekst-drugor);">
+                Nr alb.: {{ p.student.album_number or '-' }}
+                {% if p.student.plec %} · {{ 'K' if p.student.plec == 'K' else 'M' }}{% endif %}
+              </div>
             </td>
-            <td>{{ p.firma_nazwa or 'Brak danych' }}</td>
-            <td>{{ p.termin_do.strftime('%d.%m.%Y') if p.termin_do else 'Brak daty' }}</td>
-            <td>
+            <td style="font-size:0.85rem;">
+              {{ p.student.kierunek or 'Informatyka' }}<br>
+              <span style="color:var(--kolor-tekst-drugor);">{{ p.student.specjalnosc or p.specjalnosc or '-' }}</span>
+            </td>
+            <td style="font-size:0.85rem;">
+              {{ (p.firma.nazwa if p.firma else p.firma_nazwa) or '-' }}
+            </td>
+            <td style="font-size:0.85rem;">
+              {{ p.termin_od.strftime('%d.%m.%Y') if p.termin_od else '—' }} –
+              {{ p.termin_do.strftime('%d.%m.%Y') if p.termin_do else '—' }}
               {% if item.deadline %}
-                <div style="font-weight: 600; {% if item.przekroczony %}color: var(--kolor-blad);{% elif item.dni_do_deadline <= 2 %}color: var(--kolor-akcent);{% endif %}">
-                  {{ item.deadline.strftime('%d.%m.%Y') }}
-                </div>
-                <div style="font-size: 0.75rem; {% if item.przekroczony %}color: var(--kolor-blad);{% elif item.dni_do_deadline <= 2 %}color: var(--kolor-akcent);{% else %}color: var(--kolor-tekst-drugor);{% endif %}">
-                  {% if item.przekroczony %}
-                    Przekroczony o {{ -item.dni_do_deadline }} dni
-                  {% elif item.dni_do_deadline == 0 %}
-                    Dziś ostatni dzień!
-                  {% elif item.dni_do_deadline <= 2 %}
-                    Zostały {{ item.dni_do_deadline }} dni
-                  {% else %}
-                    Za {{ item.dni_do_deadline }} dni
-                  {% endif %}
-                </div>
-              {% else %}
-                <span style="color: var(--kolor-tekst-trzeciorzed);">Brak terminu</span>
+              <div style="font-size:0.75rem; {% if item.przekroczony %}color:var(--kolor-blad); font-weight:600;{% elif item.dni_do_deadline <= 2 %}color:#d97706;{% else %}color:var(--kolor-tekst-drugor);{% endif %}">
+                {% if item.przekroczony %}Deadline przekroczony o {{ -item.dni_do_deadline }} dni
+                {% elif item.dni_do_deadline == 0 %}Dziś ostatni dzień!
+                {% else %}Deadline za {{ item.dni_do_deadline }} dni{% endif %}
+              </div>
               {% endif %}
             </td>
             <td><strong>{{ p.total_hours_logged or 0 }} h</strong></td>
             <td>
               <a href="{{ url_for('evaluation.ocen_praktyke', id=p.id) }}"
-                 class="przycisk {% if item.przekroczony %}przycisk--glowny{% else %}przycisk--drugorzedny{% endif %} przycisk--maly">
-                {% if item.przekroczony %}PILNE: Wystaw ocenę{% else %}Wystaw ocenę{% endif %}
+                 class="przycisk przycisk--maly {% if item.przekroczony %}przycisk--niebezpieczny{% elif item.zakonczona %}przycisk--glowny{% else %}przycisk--drugorzedny{% endif %}">
+                {% if item.przekroczony %}PILNE: Ocen{% elif item.zakonczona %}Wystaw ocenę{% else %}Podgląd{% endif %}
               </a>
             </td>
-          </tr>
-          {% else %}
-          <tr>
-            <td colspan="6" class="tabela--pusta">Brak praktyk oczekujących na ocenę.</td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
+    {% else %}
+    <div style="text-align:center; padding:2rem; color:var(--kolor-tekst-drugor);">Brak studentów.</div>
+    {% endif %}
   </div>
+</div>
+{% endmacro %}
+
+{{ tabela_studentow(zakonczone, 'Gotowi do oceny (zakończone praktyki)', '#dc2626') }}
+{{ tabela_studentow(w_trakcie, 'W trakcie praktyki', '#3b82f6') }}
+
 </div>
 {% endblock %}

@@ -22,7 +22,6 @@ def create_app():
         from app_student.routes.sprawozdania import sprawozdania_bp
         from app_student.routes.documents import documents_bp
         from app_student.routes.uploads import uploads_bp
-        from app_student.routes.dokumenty import dokumenty_bp
 
         app.register_blueprint(auth_bp)
         app.register_blueprint(dashboard_bp, url_prefix='/panel')
@@ -30,8 +29,33 @@ def create_app():
         app.register_blueprint(dziennik_bp,  url_prefix='/dziennik')
         app.register_blueprint(sprawozdania_bp, url_prefix='/sprawozdanie')
         app.register_blueprint(documents_bp, url_prefix='/dokumenty')
-        app.register_blueprint(dokumenty_bp, url_prefix='/dokumenty-praktyk')
         app.register_blueprint(uploads_bp,    url_prefix='/uploads')
+
+    # Kontekst globalny: informacje o aktywnym zapisie studenta
+    @app.context_processor
+    def inject_aktywny_zapis():
+        from flask_login import current_user
+        from app_student.models import ZapisPraktyki, StatusZapisu
+        info = {'ma_aktywny': False, 'sciezka': None, 'status': None}
+        try:
+            if current_user.is_authenticated:
+                z = db.session.query(ZapisPraktyki).filter(
+                    ZapisPraktyki.student_id == current_user.id,
+                    ZapisPraktyki.status.in_([
+                        StatusZapisu.IN_PROGRESS, StatusZapisu.COMPLETED,
+                        StatusZapisu.COMMISSION_REVIEW, StatusZapisu.DEAN_APPROVAL,
+                        StatusZapisu.AWAITING_APPROVAL,
+                    ])
+                ).first()
+                if z:
+                    info = {
+                        'ma_aktywny': True,
+                        'sciezka': z.track_type.value if z.track_type else 'STANDARD',
+                        'status': z.status.value,
+                    }
+        except Exception:
+            pass
+        return {'aktywny_zapis_info': info}
 
     # Dodaj funkcje pomocnicze do szablonów
     @app.template_global()

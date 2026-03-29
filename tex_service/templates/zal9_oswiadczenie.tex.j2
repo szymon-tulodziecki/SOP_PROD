@@ -1,0 +1,67 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage{fontspec}
+\usepackage{polyglossia}
+\setmainlanguage{polish}
+\setmainfont{Latin Modern Roman}
+\usepackage{geometry}
+\geometry{margin=2cm}
+\usepackage{tabularx}
+
+\begin{document}
+
+\begin{flushright}
+    \textbf{<< firma.miasto|s >>}, dnia \dots\dots\dots\dots\dots\dots \\
+    {\small (miejscowość)}
+\end{flushright}
+
+\vspace{2em}
+
+\begin{flushleft}
+    \textbf{<< firma.nazwa|s >>} \\
+    \textbf{<< firma.adres|s >>, << firma.miasto|s >>} \\
+    {\small Pieczęć firmy}
+\end{flushleft}
+
+\vspace{3em}
+
+\begin{center}
+    \textbf{\large OŚWIADCZENIE INSTYTUCJI} \\[0.5em]
+    \textbf{w sprawie przyjęcia studenta na praktykę zawodową}
+\end{center}
+
+\vspace{3em}
+
+\noindent W imieniu \textbf{<< firma.nazwa|s >>} \\
+oświadczam, że w terminie od \textbf{<< terminy.od|s >>} do \textbf{<< terminy.do|s >>} przyjmiemy na praktykę zawodową studenta Instytutu Informatyki Stosowanej im. Krzysztofa Brzeskiego \\[1em]
+\textbf{<< student.imie|s >> << student.nazwisko|s >>} \\
+{\small (imię i nazwisko studenta)} \\
+Akademii Nauk Stosowanych w Elblągu, \\
+kierunek: \textbf{informatyka}, \hspace{1cm} rok studiów: \textbf{IV}, \hspace{1cm} nr albumu \textbf{<< student.nr_albumu|s >>}
+
+\vspace{2em}
+
+\noindent Zakładowym opiekunem praktyki będzie: \\[1em]
+\textbf{<< zopz.imie_nazwisko|s >>} \\
+{\small (imię i nazwisko, stanowisko: << zopz.stanowisko|s >>)}
+
+\vspace{1.5em}
+
+\noindent Telefon \textbf{<< zopz.telefon|s >>}, e-mail \textbf{<< zopz.email|s >>}
+
+\vspace{2em}
+
+\noindent Osobą upoważnioną do podpisania porozumienia dotyczącego prowadzenia praktyki zawodowej jest ze strony naszej instytucji: \\[1em]
+\textbf{<< firma_upowazniony|s >>} \\
+{\small (imię i nazwisko, stanowisko)}
+
+\vspace{5em}
+
+\begin{flushright}
+    \begin{minipage}{6cm}
+        \centering
+        \dotfill \\
+        {\small Pieczęć imienna i podpis}
+    \end{minipage}
+\end{flushright}
+
+\end{document}

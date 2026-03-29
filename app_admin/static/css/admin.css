@@ -921,6 +921,17 @@ body {
   background: var(--kolor-ramka);
 }
 
+.przycisk--ostrzezenie {
+  background: #f59e0b;
+  color: white;
+  border: 1px solid #f59e0b;
+}
+
+.przycisk--ostrzezenie:hover {
+  background: #d97706;
+  border-color: #d97706;
+}
+
 .przycisk--niebezpieczny {
   background: var(--kolor-blad);
   color: var(--kolor-biale);
@@ -1192,8 +1203,13 @@ body {
 
 /* ── Strona błędu ──────────────────────────────────────────── */
 .strona-bledu {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   text-align: center;
   padding: 4rem 2rem;
+  min-height: 60vh;
 }
 
 .strona-bledu__kod {

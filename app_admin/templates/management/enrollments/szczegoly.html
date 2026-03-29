@@ -73,9 +73,10 @@
               <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--kolor-tekst-drugor); margin-bottom: 0.5rem;">Specjalność</div>
               <div>{{ zapis.specjalnosc or 'Nie podano' }}</div>
             </div>
+            {% if zapis.track_type.value == 'STANDARD' %}
             <div>
               <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--kolor-tekst-drugor); margin-bottom: 0.5rem;">Termin praktyki</div>
-              <div>{{ zapis.termin_od.strftime('%d.%m.%Y') if zapis.termin_od else 'Brak' }} - {{ zapis.termin_do.strftime('%d.%m.%Y') if zapis.termin_do else 'Brak' }}</div>
+              <div>{{ zapis.termin_od.strftime('%d.%m.%Y') if zapis.termin_od else 'Brak' }} — {{ zapis.termin_do.strftime('%d.%m.%Y') if zapis.termin_do else 'Brak' }}</div>
             </div>
             <div>
               <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--kolor-tekst-drugor); margin-bottom: 0.5rem;">Ubezpieczenie NW</div>
@@ -87,11 +88,13 @@
                 {% endif %}
               </div>
             </div>
+            {% endif %}
           </div>
         </div>
       </div>
 
-      <!-- Dane firmy -->
+      {% if zapis.track_type.value == 'STANDARD' %}
+      <!-- Dane firmy — tylko ścieżka A -->
       <div class="karta" style="margin-bottom: 2rem;">
         <div class="karta__naglowek">
           <h3 class="karta__tytul">Zakład pracy</h3>
@@ -125,7 +128,7 @@
         </div>
       </div>
 
-      <!-- Dane ZOPZ -->
+      <!-- Dane ZOPZ — tylko ścieżka A -->
       <div class="karta" style="margin-bottom: 2rem;">
         <div class="karta__naglowek">
           <h3 class="karta__tytul">Opiekun zakładowy (ZOPZ)</h3>
@@ -152,7 +155,7 @@
         </div>
       </div>
 
-      <!-- Harmonogram -->
+      <!-- Harmonogram — tylko ścieżka A -->
       <div class="karta" style="margin-bottom: 2rem;">
         <div class="karta__naglowek">
           <h3 class="karta__tytul">Harmonogram praktyki</h3>
@@ -218,6 +221,94 @@
           {% endif %}
         </div>
       </div>
+
+      {% else %}
+      <!-- Ścieżka B/C: Praca zawodowa / Działalność gospodarcza -->
+      <div class="karta" style="margin-bottom: 2rem;">
+        <div class="karta__naglowek">
+          <h3 class="karta__tytul">Dane pracodawcy / działalności</h3>
+        </div>
+        <div class="karta__tresc">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+            <div>
+              <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--kolor-tekst-drugor); margin-bottom: 0.5rem;">Nazwa firmy / działalności</div>
+              <div style="font-weight: 600;">{{ zapis.firma_nazwa or 'Nie podano' }}</div>
+            </div>
+            <div>
+              <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--kolor-tekst-drugor); margin-bottom: 0.5rem;">Stanowisko / zakres</div>
+              <div>{{ zapis.zopz_stanowisko or 'Nie podano' }}</div>
+            </div>
+            <div>
+              <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--kolor-tekst-drugor); margin-bottom: 0.5rem;">Adres</div>
+              <div>{{ zapis.firma_adres or 'Nie podano' }}{% if zapis.firma_miasto %}, {{ zapis.firma_miasto }}{% endif %}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {% if zapis.uzasadnienie_sciezki %}
+      <div class="karta" style="margin-bottom: 2rem;">
+        <div class="karta__naglowek">
+          <h3 class="karta__tytul">Uzasadnienie wniosku</h3>
+        </div>
+        <div class="karta__tresc">
+          <p style="white-space: pre-line; font-size: 0.9rem; line-height: 1.6;">{{ zapis.uzasadnienie_sciezki }}</p>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Decyzja komisji i dziekana -->
+      {% if zapis.komisja_decision or zapis.dean_decision %}
+      <div class="karta" style="margin-bottom: 2rem;">
+        <div class="karta__naglowek">
+          <h3 class="karta__tytul">Decyzje</h3>
+        </div>
+        <div class="karta__tresc">
+          {% if zapis.komisja_decision %}
+          <div style="margin-bottom: 1rem;">
+            <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--kolor-tekst-drugor); margin-bottom: 0.5rem;">Komisja ds. praktyk</div>
+            <span class="status {% if zapis.komisja_decision == 'APPROVED' %}status--zakonczona{% elif zapis.komisja_decision == 'REJECTED' %}status--draft{% else %}status--planned{% endif %}">
+              {{ 'Zatwierdzona' if zapis.komisja_decision == 'APPROVED' else 'Częściowo' if zapis.komisja_decision == 'PARTIALLY_APPROVED' else 'Odrzucona' }}
+            </span>
+            {% if zapis.komisja_comments %}<p style="margin-top:0.5rem; font-size:0.85rem;">{{ zapis.komisja_comments }}</p>{% endif %}
+          </div>
+          {% endif %}
+          {% if zapis.dean_decision %}
+          <div>
+            <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--kolor-tekst-drugor); margin-bottom: 0.5rem;">Dyrektor IIS</div>
+            <span class="status {% if zapis.dean_decision == 'APPROVED' %}status--zakonczona{% else %}status--draft{% endif %}">
+              {{ 'Zatwierdzona' if zapis.dean_decision == 'APPROVED' else 'Odrzucona' }}
+            </span>
+            {% if zapis.dean_comments %}<p style="margin-top:0.5rem; font-size:0.85rem;">{{ zapis.dean_comments }}</p>{% endif %}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+      {% endif %}
+
+      <!-- Załączniki uploadowane przez studenta -->
+      {% if uploaded_docs %}
+      <div class="karta" style="margin-bottom: 2rem;">
+        <div class="karta__naglowek">
+          <h3 class="karta__tytul">Załączniki studenta ({{ uploaded_docs|length }})</h3>
+        </div>
+        <div class="karta__tresc">
+          <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+            {% for dok in uploaded_docs %}
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:0.625rem 0.875rem; background:#f8fafc; border:1px solid #e2e8f0; border-radius:0.375rem;">
+              <div>
+                <div style="font-weight:500; font-size:0.875rem;">{{ dok.original_filename }}</div>
+                <div style="font-size:0.75rem; color:var(--kolor-tekst-drugor);">{{ dok.document_type }} · {{ dok.uploaded_at.strftime('%d.%m.%Y %H:%M') }}</div>
+              </div>
+              <a href="{{ url_for('uploads.download_document', document_id=dok.id) }}"
+                 class="przycisk przycisk--maly przycisk--drugorzedny">Pobierz</a>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      {% endif %}
 
     </div>
 

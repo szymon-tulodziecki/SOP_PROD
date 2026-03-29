@@ -21,6 +21,10 @@ CREATE TABLE users (
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
     album_number VARCHAR(20),
+    plec VARCHAR(1),
+    kierunek VARCHAR(100),
+    specjalnosc VARCHAR(100),
+    tryb_studiow VARCHAR(20),  -- 'stacjonarne' / 'niestacjonarne'
     role user_role NOT NULL,
     is_active BOOLEAN DEFAULT TRUE,
     wymagana_zmiana_hasla BOOLEAN DEFAULT TRUE,
@@ -58,12 +62,25 @@ INSERT INTO learning_outcomes (description) VALUES
 ('12: Kontaktując się z osobami spoza branży potrafi zarówno pozyskać od nich niezbędne informacje do realizacji planowanego zadania...'),
 ('13: Dostrzega w praktyce tempo deaktualizacji wiedzy informatycznej oraz skutki działalności informatyków w szczególności ekonomiczne i społeczne');
 
--- 5. Tabela pośrednia: zapisy studentów do praktyk
+-- 5. Tabela firm (companies)
+CREATE TABLE companies (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    nazwa VARCHAR(255) NOT NULL,
+    adres VARCHAR(255),
+    miasto VARCHAR(100),
+    nip_krs VARCHAR(50),
+    has_standing_agreement BOOLEAN DEFAULT TRUE,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 5a. Tabela pośrednia: zapisy studentów do praktyk
 CREATE TABLE internship_enrollments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     internship_id UUID NOT NULL REFERENCES internships(id) ON DELETE CASCADE,
     student_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     uopz_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    firma_id UUID REFERENCES companies(id) ON DELETE SET NULL,
     status enrollment_status NOT NULL DEFAULT 'PENDING',
     track_type internship_track NOT NULL DEFAULT 'STANDARD',
     
@@ -228,6 +245,30 @@ CREATE TABLE uploaded_documents (
     mime_type VARCHAR(100) NOT NULL,
     uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     uploaded_by_id UUID REFERENCES users(id) ON DELETE SET NULL
+);
+
+-- ============================================================
+-- 11. Individual programs (indywidualne programy praktyk)
+-- ============================================================
+CREATE TABLE individual_programs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    enrollment_id UUID NOT NULL REFERENCES internship_enrollments(id) ON DELETE CASCADE UNIQUE,
+    status VARCHAR(20) NOT NULL DEFAULT 'DRAFT',
+    approved_by_uopz BOOLEAN DEFAULT FALSE,
+    approved_at TIMESTAMP,
+    uopz_comments TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ============================================================
+-- 12. Document numbers (numery pism)
+-- ============================================================
+CREATE TABLE document_numbers (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    enrollment_id UUID NOT NULL REFERENCES internship_enrollments(id) ON DELETE CASCADE,
+    document_type VARCHAR(50) NOT NULL,
+    numer VARCHAR(100) NOT NULL,
+    generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- ============================================================

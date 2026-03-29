@@ -53,69 +53,130 @@
         </div>
 
         <h3 style="margin-bottom: 1rem; color: var(--kolor-glowny); border-bottom: 1px solid var(--kolor-ramka); padding-bottom: 0.5rem;">Dane Zakładu Pracy (do załączników)</h3>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
-          <div class="pole-formularza">
-            {{ form.firma_nazwa.label(class="pole-formularza__etykieta") }}
-            {{ form.firma_nazwa(class="pole-formularza__input") }}
-            {% for e in form.firma_nazwa.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
-          </div>
-          <div class="pole-formularza">
-            {{ form.firma_nip_krs.label(class="pole-formularza__etykieta") }}
-            {{ form.firma_nip_krs(class="pole-formularza__input") }}
-            {% for e in form.firma_nip_krs.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
-          </div>
-          <div class="pole-formularza">
-            {{ form.firma_adres.label(class="pole-formularza__etykieta") }}
-            {{ form.firma_adres(class="pole-formularza__input") }}
-            {% for e in form.firma_adres.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
-          </div>
-          <div class="pole-formularza">
-            {{ form.firma_miasto.label(class="pole-formularza__etykieta") }}
-            {{ form.firma_miasto(class="pole-formularza__input") }}
-            {% for e in form.firma_miasto.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
+
+        <!-- Wybór typu firmy -->
+        <div class="pole-formularza {% if form.firma_typ.errors %}pole-formularza--blad{% endif %}" style="margin-bottom: 1.5rem;">
+          {{ form.firma_typ.label(class="pole-formularza__etykieta") }}
+          {{ form.firma_typ(class="filtr-select", style="width: 100%;", id="firma_typ") }}
+          {% for e in form.firma_typ.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
+        </div>
+
+        <!-- Firma z bazy danych -->
+        <div id="firma-database" style="display: none; margin-bottom: 2rem;">
+          <div class="pole-formularza {% if form.firma_id.errors %}pole-formularza--blad{% endif %}">
+            {{ form.firma_id.label(class="pole-formularza__etykieta") }}
+            {{ form.firma_id(class="filtr-select", style="width: 100%;") }}
+            {% for e in form.firma_id.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
+            <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor); margin-top: 0.25rem;">
+              Firma ma stałą umowę z uczelnią - nie wymagany Załącznik 3
+            </div>
           </div>
         </div>
 
-        <h3 style="margin-bottom: 1rem; color: var(--kolor-glowny); border-bottom: 1px solid var(--kolor-ramka); padding-bottom: 0.5rem;">Przedstawiciel / Opiekun z ramienia Firmy (ZOPZ)</h3>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
-          <div class="pole-formularza">
-            {{ form.firma_upowazniony_osoba.label(class="pole-formularza__etykieta") }}
-            {{ form.firma_upowazniony_osoba(class="pole-formularza__input") }}
-            {% for e in form.firma_upowazniony_osoba.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
+        <!-- Własna firma -->
+        <div id="firma-custom" style="display: none;">
+          <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; padding: 1rem; margin-bottom: 1rem;">
+            <div style="color: #856404; font-size: 0.9rem;">
+              <strong>Uwaga:</strong> Dla własnej firmy będziesz musiał wygenerować Załącznik 3 (Skierowanie na praktykę) po zatwierdzeniu wniosku.
+            </div>
           </div>
-          <div class="pole-formularza">
-            {{ form.firma_upowazniony_stanowisko.label(class="pole-formularza__etykieta") }}
-            {{ form.firma_upowazniony_stanowisko(class="pole-formularza__input") }}
-            {% for e in form.firma_upowazniony_stanowisko.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+            <div class="pole-formularza">
+              {{ form.firma_nazwa.label(class="pole-formularza__etykieta") }}
+              {{ form.firma_nazwa(class="pole-formularza__input") }}
+              {% for e in form.firma_nazwa.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
+            </div>
+            <div class="pole-formularza">
+              {{ form.firma_nip_krs.label(class="pole-formularza__etykieta") }}
+              {{ form.firma_nip_krs(class="pole-formularza__input") }}
+              {% for e in form.firma_nip_krs.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
+            </div>
+            <div class="pole-formularza">
+              {{ form.firma_adres.label(class="pole-formularza__etykieta") }}
+              {{ form.firma_adres(class="pole-formularza__input") }}
+              {% for e in form.firma_adres.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
+            </div>
+            <div class="pole-formularza">
+              {{ form.firma_miasto.label(class="pole-formularza__etykieta") }}
+              {{ form.firma_miasto(class="pole-formularza__input") }}
+              {% for e in form.firma_miasto.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
+            </div>
           </div>
-          <div class="pole-formularza">
-            {{ form.zopz_imie_nazwisko.label(class="pole-formularza__etykieta") }}
-            {{ form.zopz_imie_nazwisko(class="pole-formularza__input") }}
-            {% for e in form.zopz_imie_nazwisko.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
-          </div>
-          <div class="pole-formularza">
-            {{ form.zopz_stanowisko.label(class="pole-formularza__etykieta") }}
-            {{ form.zopz_stanowisko(class="pole-formularza__input") }}
-            {% for e in form.zopz_stanowisko.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
-          </div>
-          <div class="pole-formularza">
-            {{ form.zopz_telefon.label(class="pole-formularza__etykieta") }}
-            {{ form.zopz_telefon(class="pole-formularza__input") }}
-            {% for e in form.zopz_telefon.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
-          </div>
-          <div class="pole-formularza">
-            {{ form.zopz_email.label(class="pole-formularza__etykieta") }}
-            {{ form.zopz_email(class="pole-formularza__input") }}
-            {% for e in form.zopz_email.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
+        </div>
+
+        <div id="zopz-section">
+          <h3 style="margin-bottom: 1rem; color: var(--kolor-glowny); border-bottom: 1px solid var(--kolor-ramka); padding-bottom: 0.5rem;">Przedstawiciel / Opiekun z ramienia Firmy (ZOPZ)</h3>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+            <div class="pole-formularza">
+              {{ form.firma_upowazniony_osoba.label(class="pole-formularza__etykieta") }}
+              {{ form.firma_upowazniony_osoba(class="pole-formularza__input") }}
+              {% for e in form.firma_upowazniony_osoba.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
+            </div>
+            <div class="pole-formularza">
+              {{ form.firma_upowazniony_stanowisko.label(class="pole-formularza__etykieta") }}
+              {{ form.firma_upowazniony_stanowisko(class="pole-formularza__input") }}
+              {% for e in form.firma_upowazniony_stanowisko.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
+            </div>
+            <div class="pole-formularza">
+              {{ form.zopz_imie_nazwisko.label(class="pole-formularza__etykieta") }}
+              {{ form.zopz_imie_nazwisko(class="pole-formularza__input") }}
+              {% for e in form.zopz_imie_nazwisko.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
+            </div>
+            <div class="pole-formularza">
+              {{ form.zopz_stanowisko.label(class="pole-formularza__etykieta") }}
+              {{ form.zopz_stanowisko(class="pole-formularza__input") }}
+              {% for e in form.zopz_stanowisko.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
+            </div>
+            <div class="pole-formularza">
+              {{ form.zopz_telefon.label(class="pole-formularza__etykieta") }}
+              {{ form.zopz_telefon(class="pole-formularza__input") }}
+              {% for e in form.zopz_telefon.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
+            </div>
+            <div class="pole-formularza">
+              {{ form.zopz_email.label(class="pole-formularza__etykieta") }}
+              {{ form.zopz_email(class="pole-formularza__input") }}
+              {% for e in form.zopz_email.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
+            </div>
           </div>
         </div>
 
         <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
           <a href="{{ url_for('praktyki.lista') }}" class="przycisk przycisk--drugorzedny">Anuluj</a>
-          <button type="submit" class="przycisk przycisk--glowny">Zapisz i przejdź do Harmonogramu</button>
+          <button type="submit" class="przycisk przycisk--glowny">Przejdź dalej</button>
         </div>
       </form>
     </div>
   </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const firmaTyp = document.getElementById('firma_typ');
+    const firmaDatabase = document.getElementById('firma-database');
+    const firmaCustom = document.getElementById('firma-custom');
+
+    function toggleFirmaFields() {
+        const value = firmaTyp.value;
+        const zopzSection = document.getElementById('zopz-section');
+
+        if (value === 'database') {
+            firmaDatabase.style.display = 'block';
+            firmaCustom.style.display = 'none';
+            zopzSection.style.display = 'none'; // ZOPZ data comes from database company
+        } else if (value === 'custom') {
+            firmaDatabase.style.display = 'none';
+            firmaCustom.style.display = 'block';
+            zopzSection.style.display = 'block'; // Need ZOPZ data for custom company
+        } else {
+            firmaDatabase.style.display = 'none';
+            firmaCustom.style.display = 'none';
+            zopzSection.style.display = 'none';
+        }
+    }
+
+    firmaTyp.addEventListener('change', toggleFirmaFields);
+    toggleFirmaFields(); // Initial call
+});
+</script>
 {% endblock %}

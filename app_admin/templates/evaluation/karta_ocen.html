@@ -141,10 +141,17 @@
     <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 3rem;">
       <span style="font-size: 0.85rem; color: var(--kolor-blad);" id="ostrzezenie-z">Obliczenie K i zatwierdzenie jest zablokowane do momentu wpisania oceny "Z".</span>
       
-      <div style="display: flex; gap: 1rem;">
+      <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
         <button type="submit" name="zapisz" value="1" class="przycisk przycisk--drugorzedny" style="box-shadow: 0 2px 8px rgba(0,0,0,0.1);">Zapisz Wersję Roboczą</button>
-        <button type="submit" name="zakoncz" value="1" id="btn-zakoncz" class="przycisk przycisk--glowny" style="box-shadow: 0 4px 14px rgba(26, 58, 92, 0.3);" disabled>Zakończ i Zatwierdź Ocenę (COMPLETED)</button>
+        <button type="submit" name="zakoncz" value="1" id="btn-zakoncz" class="przycisk przycisk--glowny" style="box-shadow: 0 4px 14px rgba(26, 58, 92, 0.3);" disabled>Zakończ i Zatwierdź Ocenę</button>
+        {% if zapis.ocena_uopz is not none %}
+        <a href="{{ url_for('evaluation.generuj_protokol', id=zapis.id) }}"
+           class="przycisk przycisk--drugorzedny" style="box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+          Pobierz Protokół (Zał. 8)
+        </a>
+        {% endif %}
       </div>
+    </div>
     </div>
 
   </form>

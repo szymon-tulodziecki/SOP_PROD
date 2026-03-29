@@ -5,7 +5,12 @@
       "Bash(grep -r \"generujDokument\\\\|documents\\\\.generuj\\\\|documents\\\\.status\" /c/Users/Szymon/Desktop/Repozytoria/SOP/app_admin --include=*.html --include=*.js)",
       "Bash(docker exec:*)",
       "Bash(docker-compose restart:*)",
-      "Bash(docker-compose logs:*)"
+      "Bash(docker-compose logs:*)",
+      "Bash(docker-compose ps:*)",
+      "Bash(for f:*)",
+      "Bash(do echo:*)",
+      "Read(//c/Users/Szymon/Desktop/Repozytoria/SOP/**)",
+      "Bash(done)"
     ]
   }
 }

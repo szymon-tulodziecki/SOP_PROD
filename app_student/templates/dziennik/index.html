@@ -6,15 +6,7 @@
 <div style="display: flex; gap: 0.5rem; align-items: center;">
   {% if zapis %}
   <a href="{{ url_for('dziennik.nowy_wpis') }}" class="przycisk przycisk--glowny">Nowy wpis</a>
-  
-  <button 
-    onclick="generujDokument(this, '{{ url_for('documents.generuj', doc_type='ZAL_6') }}')" 
-    class="przycisk przycisk--drugorzedny"
-  >
-    <span data-pdf-label>Pobierz PDF</span>
-    <span data-pdf-spinner style="display: none;">Generowanie... (0%)</span>
-  </button>
-  
+  <a href="{{ url_for('documents.moje_dokumenty') }}" class="przycisk przycisk--drugorzedny">Pobierz PDF (Moje Dokumenty)</a>
   {% endif %}
 </div>
 {% endblock %}
@@ -74,7 +66,7 @@
     <div class="tabela-wrapper">
       <table class="tabela">
         <thead>
-          <tr><th>Data</th><th>Godziny</th><th>Opis czynności</th><th>Efekt</th></tr>
+          <tr><th>Data</th><th>Godziny</th><th>Opis czynności</th><th>Efekt</th><th></th></tr>
         </thead>
         <tbody>
           {% for w in wpisy %}
@@ -83,9 +75,17 @@
             <td style="text-align: center;">{{ w.duration_hours }} h</td>
             <td style="font-size: 0.85rem; line-height: 1.5;">{{ w.description }}</td>
             <td style="text-align: center;"><span style="font-size:0.75rem; background:var(--kolor-tlo); padding:0.2rem 0.4rem; border-radius:4px; font-weight:600;">{{ w.efekt.kod if w.efekt else '-' }}</span></td>
+            <td style="text-align: center; white-space: nowrap;">
+              <a href="{{ url_for('dziennik.edytuj_wpis', wpis_id=w.id) }}" class="przycisk przycisk--maly przycisk--drugorzedny">Edytuj</a>
+              <form method="POST" action="{{ url_for('dziennik.usun_wpis', wpis_id=w.id) }}" style="display:inline;">
+                {{ csrf_form.hidden_tag() }}
+                <button type="submit" class="przycisk przycisk--maly przycisk--niebezpieczny"
+                        onclick="return confirm('Usunąć ten wpis?')">Usuń</button>
+              </form>
+            </td>
           </tr>
           {% else %}
-          <tr><td colspan="4" class="tabela--pusta">Brak wpisów. Dodaj pierwszy wpis.</td></tr>
+          <tr><td colspan="5" class="tabela--pusta">Brak wpisów. Dodaj pierwszy wpis.</td></tr>
           {% endfor %}
         </tbody>
       </table>

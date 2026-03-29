@@ -26,6 +26,10 @@ class FormularzStudenta(FlaskForm):
     nazwisko     = StringField('Nazwisko',  validators=[DataRequired(), Length(max=100)])
     email        = StringField('E-mail',    validators=[DataRequired(), Email(), Length(max=255)])
     numer_albumu = StringField('Nr albumu', validators=[DataRequired(), Length(max=20)])
+    plec         = SelectField('Płeć', choices=[('', '--- Wybierz ---'), ('M', 'Mężczyzna'), ('K', 'Kobieta')], validators=[Optional()])
+    kierunek     = StringField('Kierunek studiów', validators=[Optional(), Length(max=100)])
+    specjalnosc  = StringField('Specjalność', validators=[Optional(), Length(max=100)])
+    tryb_studiow = SelectField('Tryb studiów', choices=[('', '--- Wybierz ---'), ('stacjonarne', 'Stacjonarne'), ('niestacjonarne', 'Niestacjonarne')], validators=[Optional()])
     uopz_id      = SelectField('Opiekun uczelniany (UOPZ)', choices=[], validators=[Optional()])
 
     def validate_email(self, pole):
@@ -95,13 +99,17 @@ class FormularzPraktyki(FlaskForm):
 
 # ── Pomocniki ─────────────────────────────────────────────────────────────────
 
-def _utworz_studenta(imie, nazwisko, email, numer_albumu):
+def _utworz_studenta(imie, nazwisko, email, numer_albumu, plec=None, kierunek=None, specjalnosc=None, tryb_studiow=None):
     u = Uzytkownik(
         id                    = uuid.uuid4(),
         first_name            = imie.strip(),
         last_name             = nazwisko.strip(),
         email                 = email.lower().strip(),
         album_number          = numer_albumu.strip(),
+        plec                  = plec or None,
+        kierunek              = kierunek or None,
+        specjalnosc           = specjalnosc or None,
+        tryb_studiow          = tryb_studiow or None,
         role                  = RolaUzytkownika.STUDENT,
         password_hash         = generate_password_hash(numer_albumu.strip()),
         wymagana_zmiana_hasla = True,
@@ -153,6 +161,10 @@ def nowy_student():
         u = _utworz_studenta(
             form.imie.data, form.nazwisko.data,
             form.email.data, form.numer_albumu.data,
+            plec=form.plec.data or None,
+            kierunek=form.kierunek.data or None,
+            specjalnosc=form.specjalnosc.data or None,
+            tryb_studiow=form.tryb_studiow.data or None,
         )
         db.session.commit()
         flash(
@@ -184,6 +196,10 @@ def edytuj_studenta(id):
         u.last_name    = form.nazwisko.data.strip()
         u.email        = form.email.data.lower().strip()
         u.album_number = form.numer_albumu.data.strip()
+        u.plec         = form.plec.data or None
+        u.kierunek     = form.kierunek.data or None
+        u.specjalnosc  = form.specjalnosc.data or None
+        u.tryb_studiow = form.tryb_studiow.data or None
         db.session.commit()
         flash('Dane studenta zostały zaktualizowane.', 'success')
         return redirect(url_for('management.lista_uzytkownikow'))
@@ -254,13 +270,17 @@ def import_csv():
 
         for nr_wiersza, wiersz in enumerate(czytnik, start=2):
             try:
-                imie      = (wiersz.get('imie') or wiersz.get('Imię') or '').strip()
-                nazwisko  = (wiersz.get('nazwisko') or wiersz.get('Nazwisko') or '').strip()
-                email     = (wiersz.get('email') or wiersz.get('Email') or '').strip().lower()
-                nr_albumu = (wiersz.get('numer_albumu') or wiersz.get('Nr albumu') or '').strip()
+                imie         = (wiersz.get('imie') or wiersz.get('Imię') or '').strip()
+                nazwisko     = (wiersz.get('nazwisko') or wiersz.get('Nazwisko') or '').strip()
+                email        = (wiersz.get('email') or wiersz.get('Email') or '').strip().lower()
+                nr_albumu    = (wiersz.get('numer_albumu') or wiersz.get('Nr albumu') or '').strip()
+                plec         = (wiersz.get('plec') or wiersz.get('Płeć') or '').strip().upper() or None
+                kierunek     = (wiersz.get('kierunek') or wiersz.get('Kierunek') or '').strip() or None
+                specjalnosc  = (wiersz.get('specjalnosc') or wiersz.get('Specjalność') or '').strip() or None
+                tryb_studiow = (wiersz.get('tryb_studiow') or wiersz.get('Tryb') or '').strip().lower() or None
 
                 if not all([imie, nazwisko, email, nr_albumu]):
-                    bledy.append(f'Wiersz {nr_wiersza}: brakujące dane')
+                    bledy.append(f'Wiersz {nr_wiersza}: brakujące dane (imie, nazwisko, email, numer_albumu)')
                     pominieto += 1
                     continue
 
@@ -272,7 +292,9 @@ def import_csv():
                     pominieto += 1
                     continue
 
-                _utworz_studenta(imie, nazwisko, email, nr_albumu)
+                _utworz_studenta(imie, nazwisko, email, nr_albumu,
+                                 plec=plec, kierunek=kierunek,
+                                 specjalnosc=specjalnosc, tryb_studiow=tryb_studiow)
                 utworzono += 1
 
             except Exception as e:
@@ -468,11 +490,18 @@ def szczegoly_zgloszenia(id):
         else:
             return redirect(url_for('management.moje_zgloszenia'))
 
+    # Uploadowane dokumenty studenta
+    uploaded_docs = db.session.query(UploadedDocument)\
+        .filter_by(enrollment_id=id)\
+        .order_by(UploadedDocument.uploaded_at.desc())\
+        .all()
+
     return render_template('management/enrollments/szczegoly.html',
                          zapis=zapis,
                          harmonogram_dict=harmonogram_dict,
                          efekty=efekty,
-                         form=form)
+                         form=form,
+                         uploaded_docs=uploaded_docs)
 
 
 @management_bp.route('/zgloszenia/<uuid:id>/zatwierdz-zaklad', methods=['POST'])
@@ -734,8 +763,28 @@ def dziekan_decyzja(id):
 def lista_firm():
     """Lista firm w systemie"""
     strona = request.args.get('page', 1, type=int)
+    szukaj = request.args.get('szukaj', '').strip()
+    status = request.args.get('status', 'wszystkie')
 
-    q = db.session.query(Firma).filter_by(is_active=True)
+    q = db.session.query(Firma)
+
+    # Filtr statusu
+    if status == 'aktywne':
+        q = q.filter_by(is_active=True)
+    elif status == 'nieaktywne':
+        q = q.filter_by(is_active=False)
+    # 'wszystkie' - bez filtra
+
+    # Wyszukiwanie
+    if szukaj:
+        q = q.filter(
+            db.or_(
+                Firma.nazwa.ilike(f'%{szukaj}%'),
+                Firma.adres.ilike(f'%{szukaj}%'),
+                Firma.miasto.ilike(f'%{szukaj}%'),
+                Firma.nip_krs.ilike(f'%{szukaj}%')
+            )
+        )
 
     firmy = q.order_by(Firma.nazwa).paginate(page=strona, per_page=25, error_out=False)
 
@@ -750,11 +799,18 @@ def dodaj_firme():
     form = FormularzFirmy()
 
     if form.validate_on_submit():
-        # Sprawdź czy firma o tej nazwie już istnieje
-        istniejaca = db.session.query(Firma).filter_by(nazwa=form.nazwa.data.strip()).first()
+        # Sprawdź czy aktywna firma o tej nazwie już istnieje
+        istniejaca = db.session.query(Firma).filter_by(nazwa=form.nazwa.data.strip(), is_active=True).first()
         if istniejaca:
             flash('Firma o tej nazwie już istnieje w systemie.', 'error')
             return render_template('management/firmy/formularz.html', form=form, tryb='dodaj')
+
+        # Sprawdź czy firma o tym NIP/KRS już istnieje (jeśli podano)
+        if form.nip_krs.data and form.nip_krs.data.strip():
+            istniejaca_nip = db.session.query(Firma).filter_by(nip_krs=form.nip_krs.data.strip(), is_active=True).first()
+            if istniejaca_nip:
+                flash(f'Firma z numerem NIP/KRS "{form.nip_krs.data.strip()}" już istnieje w systemie ({istniejaca_nip.nazwa}).', 'error')
+                return render_template('management/firmy/formularz.html', form=form, tryb='dodaj')
 
         firma = Firma(
             id=uuid.uuid4(),
@@ -783,16 +839,29 @@ def edytuj_firme(id):
 
 
     if form.validate_on_submit():
-        # Sprawdź czy inna firma o tej nazwie już istnieje
+        # Sprawdź czy inna aktywna firma o tej nazwie już istnieje
         istniejaca = db.session.query(Firma)\
             .filter(Firma.nazwa == form.nazwa.data.strip())\
             .filter(Firma.id != firma.id)\
+            .filter(Firma.is_active == True)\
             .first()
 
         if istniejaca:
             flash('Firma o tej nazwie już istnieje w systemie.', 'error')
             return render_template('management/firmy/formularz.html',
                                  form=form, tryb='edytuj', firma=firma)
+
+        # Sprawdź czy inna firma o tym NIP/KRS już istnieje (jeśli podano)
+        if form.nip_krs.data and form.nip_krs.data.strip():
+            istniejaca_nip = db.session.query(Firma)\
+                .filter(Firma.nip_krs == form.nip_krs.data.strip())\
+                .filter(Firma.id != firma.id)\
+                .filter(Firma.is_active == True)\
+                .first()
+            if istniejaca_nip:
+                flash(f'Firma z numerem NIP/KRS "{form.nip_krs.data.strip()}" już istnieje w systemie ({istniejaca_nip.nazwa}).', 'error')
+                return render_template('management/firmy/formularz.html',
+                                     form=form, tryb='edytuj', firma=firma)
 
         firma.nazwa = form.nazwa.data.strip()
         firma.adres = form.adres.data.strip() if form.adres.data else None
@@ -811,25 +880,51 @@ def edytuj_firme(id):
 @management_bp.route('/firmy/<uuid:id>/usun', methods=['POST'])
 @wymaga_roli(RolaUzytkownika.ADMIN)
 def usun_firme(id):
-    """Dezaktywacja firmy (soft delete)"""
+    """Trwałe usunięcie firmy"""
     firma = db.session.get(Firma, id) or abort(404)
 
-    # Sprawdź czy firma ma aktywne praktyki
-    aktywne_praktyki = db.session.query(ZapisPraktyki)\
+    # Sprawdź czy firma ma jakiekolwiek praktyki
+    wszystkie_praktyki = db.session.query(ZapisPraktyki)\
         .filter_by(firma_id=firma.id)\
-        .filter(ZapisPraktyki.status.in_([
-            StatusZapisu.AWAITING_APPROVAL,
-            StatusZapisu.IN_PROGRESS,
-            StatusZapisu.COMMISSION_REVIEW,
-            StatusZapisu.DEAN_APPROVAL
-        ])).count()
+        .count()
 
-    if aktywne_praktyki > 0:
-        flash(f'Nie można usunąć firmy - ma {aktywne_praktyki} aktywnych praktyk.', 'error')
+    if wszystkie_praktyki > 0:
+        flash(f'Nie można usunąć firmy - ma {wszystkie_praktyki} praktyk w historii.', 'error')
         return redirect(url_for('management.lista_firm'))
 
-    firma.is_active = False
+    nazwa_firmy = firma.nazwa
+    db.session.delete(firma)
     db.session.commit()
+    flash(f'Firma "{nazwa_firmy}" została trwale usunięta z systemu.', 'success')
+    return redirect(url_for('management.lista_firm'))
 
-    flash('Firma została usunięta z systemu.', 'success')
+
+@management_bp.route('/firmy/<uuid:id>/przelacz-aktywnosc', methods=['POST'])
+@wymaga_roli(RolaUzytkownika.ADMIN)
+def przelacz_aktywnosc_firmy(id):
+    """Przełącz status aktywności firmy"""
+    firma = db.session.get(Firma, id) or abort(404)
+
+    if firma.is_active:
+        # Sprawdź czy firma ma aktywne praktyki przed dezaktywacją
+        aktywne_praktyki = db.session.query(ZapisPraktyki)\
+            .filter_by(firma_id=firma.id)\
+            .filter(ZapisPraktyki.status.in_([
+                StatusZapisu.AWAITING_APPROVAL,
+                StatusZapisu.IN_PROGRESS,
+                StatusZapisu.COMMISSION_REVIEW,
+                StatusZapisu.DEAN_APPROVAL
+            ])).count()
+
+        if aktywne_praktyki > 0:
+            flash(f'Nie można dezaktywować firmy - ma {aktywne_praktyki} aktywnych praktyk.', 'error')
+            return redirect(url_for('management.lista_firm'))
+
+        firma.is_active = False
+        flash('Firma została dezaktywowana - nie będzie widoczna dla studentów.', 'success')
+    else:
+        firma.is_active = True
+        flash('Firma została aktywowana - będzie widoczna dla studentów.', 'success')
+
+    db.session.commit()
     return redirect(url_for('management.lista_firm'))

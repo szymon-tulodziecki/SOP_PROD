@@ -1,0 +1,138 @@
+{% extends "layouts/base_student.html" %}
+{% block tytul %}Kreator praktyki — Krok 1{% endblock %}
+{% block naglowek %}Rejestracja praktyki zawodowej{% endblock %}
+{% block naglowek_akcje %}
+  <a href="{{ url_for('praktyki.lista') }}" class="przycisk przycisk--drugorzedny">← Wróć</a>
+{% endblock %}
+
+{% block tresc %}
+<div style="max-width: 800px; margin: 0 auto;">
+
+  <!-- Pasek -->
+  <div style="display:flex; gap:0.5rem; margin-bottom:2rem; font-size:0.82rem;">
+    <div style="flex:1; text-align:center; padding:0.5rem 0.25rem; background:#3b82f6; color:white; border-radius:0.375rem; font-weight:600;">1. Ścieżka</div>
+    <div style="color:#d1d5db; align-self:center;">›</div>
+    <div style="flex:1; text-align:center; padding:0.5rem 0.25rem; background:#f3f4f6; color:#9ca3af; border-radius:0.375rem;">2. Miejsce / Wniosek</div>
+    <div style="color:#d1d5db; align-self:center;">›</div>
+    <div style="flex:1; text-align:center; padding:0.5rem 0.25rem; background:#f3f4f6; color:#9ca3af; border-radius:0.375rem;">3. Harmonogram</div>
+    <div style="color:#d1d5db; align-self:center;">›</div>
+    <div style="flex:1; text-align:center; padding:0.5rem 0.25rem; background:#f3f4f6; color:#9ca3af; border-radius:0.375rem;">4. Realizacja</div>
+  </div>
+
+  <div class="karta">
+    <div class="karta__naglowek">
+      <h2 class="karta__tytul">Krok 1 — Wybierz ścieżkę praktyki</h2>
+    </div>
+    <div class="karta__tresc">
+      <form method="POST" id="form-sciezka">
+        {{ form.hidden_tag() }}
+        <input type="hidden" name="track_type" id="selected_track" value="{{ form.track_type.data or '' }}">
+
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:1rem; margin-bottom:1.5rem;">
+
+          <!-- Kafelek A -->
+          <div class="kafelek-sciezki" data-value="STANDARD" onclick="selectSciezka(this)"
+               style="border:2px solid {% if form.track_type.data == 'STANDARD' %}#3b82f6{% else %}#e2e8f0{% endif %};
+                      background:{% if form.track_type.data == 'STANDARD' %}#eff6ff{% else %}#fafafa{% endif %};
+                      border-radius:0.75rem; padding:1.25rem; cursor:pointer; transition:all 0.15s;">
+            <div style="font-weight:700; font-size:0.95rem; margin-bottom:0.4rem;">[A] Standardowa praktyka</div>
+            <div style="font-size:0.8rem; color:var(--kolor-tekst-drugor); line-height:1.4;">
+              Odbędę praktykę w firmie lub instytucji na podstawie porozumienia z uczelnią.
+            </div>
+            <div style="margin-top:0.75rem; font-size:0.78rem; color:#6b7280;">
+              4 dokumenty · 120 dni roboczych
+            </div>
+          </div>
+
+          <!-- Kafelek B -->
+          <div class="kafelek-sciezki" data-value="EMPLOYMENT" onclick="selectSciezka(this)"
+               style="border:2px solid {% if form.track_type.data == 'EMPLOYMENT' %}#3b82f6{% else %}#e2e8f0{% endif %};
+                      background:{% if form.track_type.data == 'EMPLOYMENT' %}#eff6ff{% else %}#fafafa{% endif %};
+                      border-radius:0.75rem; padding:1.25rem; cursor:pointer; transition:all 0.15s;">
+            <div style="font-weight:700; font-size:0.95rem; margin-bottom:0.4rem;">[B] Praca etatowa / staż</div>
+            <div style="font-size:0.8rem; color:var(--kolor-tekst-drugor); line-height:1.4;">
+              Pracuję lub pracowałem/am w branży IT w ciągu ostatnich 3 lat i chcę zaliczyć to jako praktykę.
+            </div>
+            <div style="margin-top:0.75rem; font-size:0.78rem; color:#6b7280;">
+              Wniosek + decyzja komisji
+            </div>
+          </div>
+
+          <!-- Kafelek C -->
+          <div class="kafelek-sciezki" data-value="OWN_BUSINESS" onclick="selectSciezka(this)"
+               style="border:2px solid {% if form.track_type.data == 'OWN_BUSINESS' %}#3b82f6{% else %}#e2e8f0{% endif %};
+                      background:{% if form.track_type.data == 'OWN_BUSINESS' %}#eff6ff{% else %}#fafafa{% endif %};
+                      border-radius:0.75rem; padding:1.25rem; cursor:pointer; transition:all 0.15s;">
+            <div style="font-weight:700; font-size:0.95rem; margin-bottom:0.4rem;">[C] Własna działalność</div>
+            <div style="font-size:0.8rem; color:var(--kolor-tekst-drugor); line-height:1.4;">
+              Prowadzę firmę informatyczną (CEIDG/KRS) i chcę zaliczyć działalność jako praktykę.
+            </div>
+            <div style="margin-top:0.75rem; font-size:0.78rem; color:#6b7280;">
+              Wniosek + decyzja Dyrektora IIS
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Podgląd wybranej ścieżki -->
+        <div id="podglad-sciezki" style="display:none; padding:1rem; border-radius:0.5rem; background:#f0fdf4; border:1px solid #a7f3d0; margin-bottom:1.5rem; font-size:0.875rem;">
+        </div>
+
+        {% if form.track_type.errors %}
+        <div style="color:#dc2626; font-size:0.85rem; margin-bottom:1rem;">Wybierz ścieżkę praktyki.</div>
+        {% endif %}
+
+        <div style="display:flex; justify-content:flex-end;">
+          <button type="submit" class="przycisk przycisk--glowny" id="btn-dalej" {% if not form.track_type.data %}disabled style="opacity:0.5;"{% endif %}>
+            Dalej →
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Info praktyki -->
+  <div style="margin-top:1rem; font-size:0.82rem; color:var(--kolor-tekst-drugor); text-align:center;">
+    Praktyka: <strong>{{ praktyka.rok_uczelniany }}</strong> · Semestr {{ praktyka.semestr }} · {{ praktyka.wymiar_godzin }} h
+  </div>
+</div>
+
+<style>
+.kafelek-sciezki:hover { border-color:#3b82f6 !important; background:#eff6ff !important; }
+.kafelek-sciezki.aktywny { border-color:#2563eb !important; background:#dbeafe !important; }
+</style>
+
+<script>
+const podglady = {
+  STANDARD:     'Odbędziesz 120 dni roboczych w zakładzie pracy. Potrzebujesz: Porozumienie (zał.1), Program (zał.2), Indywidualny Program (zał.2a), Kartę praktyki (zał.3). Po zakończeniu: Dziennik, Sprawozdanie, Potwierdzenie efektów.',
+  EMPLOYMENT:   'Złożysz wniosek o zaliczenie zatrudnienia (zał.4b) z dokumentami od pracodawcy. Komisja podejmie decyzję. Potrzebujesz: wniosek + skan umowy/zakres obowiązków.',
+  OWN_BUSINESS: 'Złożysz wniosek o zaliczenie działalności (zał.4b) z wypisem z CEIDG/KRS. Dyrektor IIS podejmie decyzję.'
+};
+
+function selectSciezka(el) {
+  document.querySelectorAll('.kafelek-sciezki').forEach(k => {
+    k.style.borderColor = '#e2e8f0';
+    k.style.background  = '#fafafa';
+  });
+  el.style.borderColor = '#2563eb';
+  el.style.background  = '#dbeafe';
+
+  const val = el.dataset.value;
+  document.getElementById('selected_track').value = val;
+  const box = document.getElementById('podglad-sciezki');
+  box.textContent = podglady[val];
+  box.style.display = 'block';
+
+  const btn = document.getElementById('btn-dalej');
+  btn.disabled = false;
+  btn.style.opacity = '1';
+}
+
+// Inicjalizacja jeśli jest wybrana ścieżka
+const cur = document.getElementById('selected_track').value;
+if (cur) {
+  const el = document.querySelector(`[data-value="${cur}"]`);
+  if (el) selectSciezka(el);
+}
+</script>
+{% endblock %}

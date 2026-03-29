@@ -21,18 +21,12 @@ Kierunek studiów: Informatyka
 
 \vspace{1em}
 
-\noindent Student/ka: \textbf{<< student.first_name | s >> << student.last_name | s >>} \\
-Nr albumu: \textbf{<< student.album_number | s >>} \\
-Kierunek studiów: Informatyka \hfill Specjalność: \textbf{<< zapis.specjalnosc | s >>} \\
-Miejsce praktyki (instytucja): \textbf{<< zapis.firma_nazwa | s >>} \\
-\textbf{<< zapis.firma_adres | s >>, << zapis.firma_miasto | s >>} \\
-Termin realizacji praktyki: od
-{%- if zapis.termin_od and zapis.termin_do -%}
-\textbf{<< zapis.termin_od.strftime('%d.%m.%Y') >>}\ do \textbf{<< zapis.termin_do.strftime('%d.%m.%Y') >>}
-{%- else -%}
-\dots\dots\dots\dots\dots\ do \dots\dots\dots\dots\dots
-{%- endif -%}
-\ \hfill Liczba dni roboczych: 120
+\noindent Student/ka: \textbf{<< student.imie|s >> << student.nazwisko|s >>} \\
+Nr albumu: \textbf{<< student.nr_albumu|s >>} \\
+Kierunek studiów: Informatyka \hfill Specjalność: \textbf{<< specjalnosc|s >>} \\
+Miejsce praktyki (instytucja): \textbf{<< firma.nazwa|s >>} \\
+\textbf{<< firma.adres|s >>, << firma.miasto|s >>} \\
+Termin realizacji praktyki: od \textbf{<< terminy.od|s >>} do \textbf{<< terminy.do|s >>} \hfill Liczba dni roboczych: 120
 
 \vspace{2em}
 \begin{center}
@@ -47,14 +41,9 @@ Termin realizacji praktyki: od
 \hline
 \textbf{Lp.} & \textbf{Efekty kształcenia} & \textbf{Dział (komórka) / przykładowe prace wykonywane przez praktykanta} \\ \hline
 \endhead
-{%- for efekt in efekty_uczenia -%}
-<< "{:02d}".format(efekt.id) >> & << efekt.description | s >> &
-{%- set harmonogram_efekt = harmonogram | selectattr('learning_outcome_id', 'equalto', efekt.id) | first -%}
-{%- if harmonogram_efekt -%}
-\textbf{<< harmonogram_efekt.nazwa_dzialu | s >>} \\
-<< harmonogram_efekt.przykladowe_prace | s >>
-{%- endif -%} \\ \hline
-{%- endfor -%}
+<<% for item in harmonogram %>>
+\textbf{<< item.efekt_kod|s >>} & << item.efekt_opis|s >> & << item.dzial|s >> / << item.prace|s >> \\ \hline
+<<% endfor %>>
 \end{longtable}
 
 \newpage
@@ -68,19 +57,16 @@ Termin realizacji praktyki: od
 \begin{tabular}{|c|p{8cm}|p{4cm}|}
 \hline
 \textbf{L.p.} & \textbf{Dział / komórka (miejsce odbywania praktyki)} & \textbf{Planowana liczba dni roboczych} \\ \hline
-{%- for harmonogram_item in harmonogram -%}
-<< loop.index >> & << harmonogram_item.nazwa_dzialu | s >> & << harmonogram_item.liczba_dni >> \\ \hline
-{%- endfor -%}
-{%- for i in range(harmonogram | length + 1, 14) -%}
-<< i >> & & \\ \hline
-{%- endfor -%}
-\multicolumn{2}{|r|}{\textbf{Łącznie}} & \textbf{<< harmonogram | sum(attribute='liczba_dni') >>} \\ \hline
+<<% for item in harmonogram %>>
+<< loop.index >> & << item.dzial|s >> & \textbf{<< item.dni|num >>} \\ \hline
+<<% endfor %>>
+\multicolumn{2}{|r|}{\textbf{Łącznie}} & \\ \hline
 \multicolumn{2}{|r|}{\textbf{Wymagana}} & \textbf{120} \\ \hline
 \end{tabular}
 \end{center}
 
 \vspace{3em}
-\noindent Uzgodniono w dniu: \dotfill
+\noindent Opiekun uczelniany (UOPZ): \textbf{<< uopz.imie_nazwisko|s >>} \hfill Opiekun zakładowy (ZOPZ): \textbf{<< zopz.imie_nazwisko|s >>}
 
 \vspace{4em}
 \noindent

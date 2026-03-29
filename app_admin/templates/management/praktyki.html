@@ -44,7 +44,7 @@
                     style="display: inline;">
                 {{ csrf_form.hidden_tag() }}
                 <button type="submit"
-                        class="przycisk {% if p.status.value == 'ACTIVE' %}przycisk--drugorzedny{% else %}przycisk--glowny{% endif %} przycisk--maly"
+                        class="przycisk {% if p.status.value == 'ACTIVE' %}przycisk--ostrzezenie{% else %}przycisk--drugorzedny{% endif %} przycisk--maly"
                         onclick="return confirm('Zmienić status praktyki?')">
                   {{ 'Dezaktywuj' if p.status.value == 'ACTIVE' else 'Aktywuj' }}
                 </button>

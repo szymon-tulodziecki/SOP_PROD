@@ -43,28 +43,32 @@
     <ul class="sidebar__menu" role="list">
       <li class="sidebar__menu-pozycja">
         <a href="{{ url_for('dashboard.index') }}" class="sidebar__link {% if request.endpoint == 'dashboard.index' %}sidebar__link--aktywny{% endif %}" {% if request.endpoint == 'dashboard.index' %}aria-current="page"{% endif %}>
-          <span class="sidebar__ikona" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></span> Pulpit
+          <span class="sidebar__ikona" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg></span> Pulpit
         </a>
       </li>
       <li class="sidebar__menu-sekcja" aria-hidden="true">Praktyki</li>
       <li class="sidebar__menu-pozycja">
         <a href="{{ url_for('praktyki.lista') }}" class="sidebar__link {% if request.blueprint == 'praktyki' %}sidebar__link--aktywny{% endif %}" {% if request.blueprint == 'praktyki' %}aria-current="page"{% endif %}>
-          <span class="sidebar__ikona" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="15" y2="16"/></svg></span> Dostępne praktyki
+          <span class="sidebar__ikona" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span> Dostępne praktyki
         </a>
       </li>
+      {% if aktywny_zapis_info.ma_aktywny and aktywny_zapis_info.sciezka == 'STANDARD' %}
       <li class="sidebar__menu-pozycja">
         <a href="{{ url_for('dziennik.index') }}" class="sidebar__link {% if request.blueprint == 'dziennik' %}sidebar__link--aktywny{% endif %}" {% if request.blueprint == 'dziennik' %}aria-current="page"{% endif %}>
-          <span class="sidebar__ikona" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><line x1="9" y1="7" x2="16" y2="7"/><line x1="9" y1="11" x2="16" y2="11"/><line x1="9" y1="15" x2="13" y2="15"/></svg></span> Dziennik praktyki
+          <span class="sidebar__ikona" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></span> Dziennik praktyki
         </a>
       </li>
+      {% endif %}
+      {% if aktywny_zapis_info.ma_aktywny %}
       <li class="sidebar__menu-pozycja">
         <a href="{{ url_for('sprawozdania.index') }}" class="sidebar__link {% if request.blueprint == 'sprawozdania' %}sidebar__link--aktywny{% endif %}" {% if request.blueprint == 'sprawozdania' %}aria-current="page"{% endif %}>
-          <span class="sidebar__ikona" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg></span> Sprawozdanie
+          <span class="sidebar__ikona" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span> Sprawozdanie
         </a>
       </li>
+      {% endif %}
       <li class="sidebar__menu-pozycja">
-        <a href="{{ url_for('dokumenty.panel_dokumentow') }}" class="sidebar__link {% if request.blueprint == 'dokumenty' %}sidebar__link--aktywny{% endif %}" {% if request.blueprint == 'dokumenty' %}aria-current="page"{% endif %}>
-          <span class="sidebar__ikona" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="9" y1="9" x2="15" y2="9"></line><line x1="9" y1="13" x2="15" y2="13"></line><line x1="9" y1="17" x2="13" y2="17"></line></svg></span> Dokumenty do wydruku
+        <a href="{{ url_for('documents.moje_dokumenty') }}" class="sidebar__link {% if request.endpoint == 'documents.moje_dokumenty' %}sidebar__link--aktywny{% endif %}" {% if request.endpoint == 'documents.moje_dokumenty' %}aria-current="page"{% endif %}>
+          <span class="sidebar__ikona" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></span> Moje Dokumenty
         </a>
       </li>
     </ul>

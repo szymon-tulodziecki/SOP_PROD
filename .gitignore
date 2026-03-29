@@ -1,55 +1,98 @@
-# Byte-compiled / cache
+# Środowiska wirtualne Pythona
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Pliki tymczasowe i cache Pythona
 __pycache__/
 *.py[cod]
 *$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+*.log
 
-# Virtual environments
-.venv/
-venv/
-app_admin/.venv/
+# Konfiguracje IDE i narzędzi
+.idea/
+.vscode/
+.claude/
+.vs/
+*.swp
+*.swo
 
-# Environment / secrets
+# Foldery z uploadami i plikami generowanymi
+uploads/
+app_admin/logs/
+app_student/logs/
+database/*.sqlite3
+database/*.db
+
+# Pliki środowiskowe (NIGDY nie komituj haseł i kluczy!)
 .env
 .env.*
+!.env.example
 
-# Logs
-*.log
-logs/
-app_admin/logs/
+# macOS/Windows śmieci systemowe
+.DS_Store
+Thumbs.db
+desktop.ini
 
-# Flask instance folder
-instance/
-.webassets-cache
-
-# Test / coverage
-.pytest_cache/
-coverage/
-htmlcov/
-
-# Migrations / DB
-migrations/
-*.sqlite3
-
-# Celery
-celerybeat-schedule
-
-# PDF / build artifacts
-pdf_output/
-app_admin/pdf_output/
-
-# Packaging / build
+# Katalogi budowania (jeśli zaczniesz generować np. paczki)
 build/
 dist/
 *.egg-info/
-pip-wheel-metadata/
 
-# IDEs
-.vscode/
-.idea/
+# Node.js dependencies (jeśli używane)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
 
-# OS
-.DS_Store
+# Docker cache i volumes
+.docker/
+docker-compose.override.yml
 
-# Misc
-__pypackages__/
-*.pyc
+# LaTeX temporary files (dla tex-service)
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz
+*.toc
+*.bbl
+*.blg
+*.bcf
+*.run.xml
+
+# Jupyter notebook checkpoints
+.ipynb_checkpoints/
+
+# Celery i Redis cache
+celerybeat-schedule
+celerybeat.pid
+dump.rdb
+
+# Pliki backup baz danych
+*.sql.gz
+*.dump
+*.backup
+
+# Cache różnych narzędzi
+.mypy_cache/
+.pytest_cache/
+.cache/
+.ruff_cache/
+.black/
+
+# Pliki tymczasowe różnych OS/aplikacji
+*.tmp
+*.temp
+*.bak
+*~
+.temporary/

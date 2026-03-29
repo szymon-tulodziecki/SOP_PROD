@@ -1,22 +1,21 @@
 {% extends "layouts/base_auth.html" %}
 {% block tytul %}Błąd 403{% endblock %}
 {% block body %}
-<div class="panel-logowania">
-  <main class="panel-logowania__formularz" style="width: 100%; max-width: 600px; margin: auto;">
-    <div class="formularz__kontener strona-bledu">
-      <div class="strona-bledu__kod">403</div>
-      <h1 class="strona-bledu__tytul">Brak dostępu</h1>
-      <p class="strona-bledu__opis">
-        Nie masz uprawnień, aby przeglądać ten portal. <br>
-        Twoje aktualne konto: <strong>{{ current_user.email }}</strong> <br>
-        Odczytana rola: <strong>{{ current_user.role }} ({{ current_user.role.__class__.__name__ }})</strong>
-      </p>
+<div style="display: flex; align-items: center; justify-content: center; min-height: 80vh; text-align: center; padding: 2rem;">
+  <div>
+    <div class="strona-bledu__kod">403</div>
+    <h1 class="strona-bledu__tytul">Brak dostępu</h1>
+    <p class="strona-bledu__opis">
+      Nie masz uprawnień, aby przeglądać ten portal.<br>
       {% if current_user.is_authenticated %}
-      <form method="POST" action="{{ url_for('auth.wylogowanie') }}">
-        <button type="submit" class="przycisk-logowania" style="width: auto;">Wyloguj się i zmień konto</button>
-      </form>
+      Zalogowany jako: <strong>{{ current_user.email }}</strong>
       {% endif %}
-    </div>
-  </main>
+    </p>
+    {% if current_user.is_authenticated %}
+    <form method="POST" action="{{ url_for('auth.wylogowanie') }}" style="margin-top: 1rem;">
+      <button type="submit" class="przycisk przycisk--drugorzedny">Wyloguj się i zmień konto</button>
+    </form>
+    {% endif %}
+  </div>
 </div>
 {% endblock %}

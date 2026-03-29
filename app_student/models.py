@@ -87,6 +87,10 @@ class Uzytkownik(UserMixin, db.Model):
     first_name            = db.Column(db.String(100), nullable=False)
     last_name             = db.Column(db.String(100), nullable=False)
     album_number          = db.Column(db.String(20), nullable=True)
+    plec                  = db.Column(db.String(1), nullable=True)  # 'M' lub 'K'
+    kierunek              = db.Column(db.String(100), nullable=True)
+    specjalnosc           = db.Column(db.String(100), nullable=True)
+    tryb_studiow          = db.Column(db.String(20), nullable=True)
     role                  = db.Column(db.Enum(RolaUzytkownika, name='user_role', values_callable=lambda e: [x.value for x in e]), nullable=False)
     is_active             = db.Column(db.Boolean, default=True)
     wymagana_zmiana_hasla = db.Column(db.Boolean, default=True)

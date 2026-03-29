@@ -4,7 +4,6 @@
 \setmainlanguage{polish}
 \setmainfont{Latin Modern Roman}
 \usepackage{geometry}
-% Zmniejszone marginesy z 2.5cm na 1.5cm
 \geometry{margin=1.5cm}
 \usepackage{enumitem}
 \usepackage{tabularx}
@@ -17,40 +16,34 @@ Załącznik nr 1
 
 \vspace{-1em}
 \begin{center}
-\textbf{Porozumienie Nr << zapis.id | replace('-', '/') >>} \\[0.5em]
+\textbf{Porozumienie Nr \dots\dots\dots} \\[0.5em]
 \textbf{w sprawie praktyk studenckich}
 \end{center}
 \vspace{0.5em}
 
 \noindent
-zawarte w dniu << data_porozumienia | default('\\dots\\dots\\dots\\dots\\dots') >>\ pomiędzy Akademią Nauk Stosowanych w Elblągu, ul. Wojska Polskiego 1, 82-300 Elbląg zwaną dalej „Uczelnią" reprezentowaną przez << przedstawiciel_uczelni | default('\\dots\\dots\\dots\\dots\\dots\\dots\\dots\\dots\\dots\\dots\\dots\\dots') >> z jednej strony, a << zapis.firma_nazwa | s >>, zwanym dalej „Zakładem pracy", reprezentowanym przez << zapis.firma_upowazniony_osoba | s >> -- << zapis.firma_upowazniony_stanowisko | s >>\ \textendash\ z drugiej strony.
+zawarte w dniu \dots\dots\dots\dots\dots\ pomiędzy Akademią Nauk Stosowanych w Elblągu, ul. Wojska Polskiego 1, 82-300 Elbląg zwaną dalej „Uczelnią" reprezentowaną przez \dots\dots\dots\dots\dots\dots\dots\dots\dots\dots\dots\dots z jednej strony, a \textbf{<< firma.nazwa|s >>}, zwanym dalej „Zakładem pracy", reprezentowanym przez \textbf{<< firma_upowazniony|s >>} \textendash\ z drugiej strony.
 
 \vspace{0.5em}
 
-% Zagęszczona główna lista
 \begin{enumerate}[label=\arabic*., leftmargin=*, itemsep=2pt, parsep=0pt]
     \item Uczelnia kieruje studentów Uczelni na praktyki zawodowe na wskazany okres:
 
     \vspace{0.5em}
     \begin{center}
-    \renewcommand{\arraystretch}{1.3} % Nieco niższe wiersze w tabeli
+    \renewcommand{\arraystretch}{1.3}
     \begin{tabular}{|c|p{4cm}|p{5cm}|p{3cm}|}
     \hline
     Lp. & Imię i nazwisko & Termin odbywania praktyki zawodowej & Wymiar praktyki zawodowej \\ \hline
-    1. & << student.first_name | s >> << student.last_name | s >> &
-    {%- if zapis.termin_od and zapis.termin_do -%}
-    << zapis.termin_od.strftime('%d.%m.%Y') >> -- << zapis.termin_do.strftime('%d.%m.%Y') >>
-    {%- else -%}
-    \dots\dots\dots\dots\dots
-    {%- endif -%}
-     & << zapis.praktyka.wymiar_godzin >> h \\ \hline
+    1. & \textbf{<< student.imie|s >> << student.nazwisko|s >>} &
+    \textbf{<< terminy.od|s >>} -- \textbf{<< terminy.do|s >>} &
+    \textbf{<< praktyka.wymiar_godzin|num >>} h \\ \hline
     \end{tabular}
     \end{center}
     \vspace{0.5em}
 
     \item \textbf{Obowiązki Zakładu pracy:} \\
     Zakład pracy zobowiązuje się do sprawowania nadzoru nad studentami odbywającymi praktykę oraz zapewnienia warunków niezbędnych do jej przeprowadzenia zgodnie z porozumieniem zawartym z Uczelnią, a w szczególności do:
-    % Zagęszczona podlista
     \begin{enumerate}[label=\arabic*), itemsep=0pt, parsep=0pt]
         \item zapewnienia odpowiednich stanowisk pracy, urządzeń, pomieszczeń, zgodnie z programem praktyki,
         \item zapoznania studentów z zakładowym regulaminem pracy, z przepisami o bezpieczeństwie i higienie pracy oraz o ochronie tajemnicy państwowej i służbowej,

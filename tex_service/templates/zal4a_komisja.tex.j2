@@ -23,13 +23,13 @@ Załącznik nr 4a
 \vspace{1em}
 
 \noindent Kierunek studiów: Informatyka \\
-Student/ka: \textbf{<< student.first_name | s >> << student.last_name | s >>} \\
-Nr albumu: \textbf{<< student.album_number | s >>} \\
-Kierunek studiów: Informatyka \hfill Specjalność: \textbf{<< zapis.specjalnosc | s >>} \\
-\textbf{<< zapis.firma_nazwa | s >>}
+Student / ka: \textbf{<< student.imie|s >> << student.nazwisko|s >>} \\
+Nr albumu: \textbf{<< student.nr_albumu|s >>} \\
+Kierunek studiów: Informatyka \hfill Specjalność: \textbf{<< specjalnosc|s >>} \\
+Miejsce pracy/działalności: \textbf{<< firma.nazwa|s >>}
 
 \vspace{1em}
-\noindent W ramach pracy zawodowej/stażu/działalności gospodarczej* w wymiarze \textbf{<< zapis.praktyka.wymiar_godzin >>} godzin uzyskał/a / nie uzyskał/a * zakładane dla praktyki zawodowej efekty uczenia się:
+\noindent W ramach pracy zawodowej/stażu/działalności gospodarczej* uzyskał/a / nie uzyskał/a * zakładane dla praktyki zawodowej efekty uczenia się:
 
 \vspace{1em}
 
@@ -42,55 +42,33 @@ Kierunek studiów: Informatyka \hfill Specjalność: \textbf{<< zapis.specjalnos
 \textbf{Lp.} & \textbf{Efekty uczenia się} & \textbf{Potwierdzenie uzyskania efektów} \\ \hline
 \endhead
 
-{%- for efekt in efekty_uczenia -%}
-{%- set ocena = oceny_efektow | selectattr('learning_outcome_id', 'equalto', efekt.id) | first -%}
-<< "{:02d}".format(efekt.id) >> & << efekt.description | s >> & \makecell{
-{%- if ocena -%}
-  {%- if ocena.result.value == 'ACHIEVED' %}\textbf{uzyskał/a}
-  {%- elif ocena.result.value == 'PARTIALLY_ACHIEVED' %}\textbf{uzyskał/a częściowo}
-  {%- elif ocena.result.value == 'NOT_ACHIEVED' %}\textbf{nie uzyskał/a}
-  {%- else %}uzyskał/a *\\ uzyskał/a częściowo*\\ nie uzyskał/a*{%- endif -%}
-{%- else -%}
-uzyskał/a *\\ uzyskał/a częściowo*\\ nie uzyskał/a*
-{%- endif -%}
-} \\ \hline
-{%- endfor -%}
-
+01 & Ma wiedzę na temat sposobu realizacji zadań inżynierskich dotyczących informatyki z zachowaniem standardów i norm technicznych & \makecell{uzyskał/a *\\ uzyskał/a częściowo*\\ nie uzyskał/a*} \\ \hline
+02 & Zna technologie, narzędzia, metody, techniki oraz sprzęt stosowane w informatyce & \makecell{uzyskał/a *\\ uzyskał/a częściowo*\\ nie uzyskał/a*} \\ \hline
+03 & Zna ekonomiczne, prawne skutki własnych działań podejmowanych w ramach praktyki oraz ograniczenia wynikające z prawa autorskiego i kodeksu pracy & \makecell{uzyskał/a *\\ uzyskał/a częściowo*\\ nie uzyskał/a*} \\ \hline
+04 & Zna zasady bezpieczeństwa pracy i ergonomii w zawodzie informatyka & \makecell{uzyskał/a *\\ uzyskał/a częściowo*\\ nie uzyskał/a*} \\ \hline
+05 & Pozyskuje informacje odnośnie technologii, metod, technik, sprzętu wymaganego do realizacji powierzonego zadania, posługując się rozmaitymi źródłami literaturowymi i zasobami publikowanymi w języku polskim jak i angielskim & \makecell{uzyskał/a *\\ uzyskał/a częściowo*\\ nie uzyskał/a*} \\ \hline
+06 & W oparciu o kontakty ze środowiskiem inżynierskim zakładu, potrafi podnieść swoje kompetencje, wiedzę i umiejętności, co najmniej z dwóch zakresów & \makecell{uzyskał/a *\\ uzyskał/a częściowo*\\ nie uzyskał/a*} \\ \hline
+07 & Opracowuje dokumentację dotyczącą realizacji podejmowanych zadań w ramach praktyki, a także referuje ustnie prezentowane w niej zagadnienia & \makecell{uzyskał/a *\\ uzyskał/a częściowo*\\ nie uzyskał/a*} \\ \hline
+08 & Potrafi zidentyfikować problem informatyczny występujący w zakładzie pracy / instytucji, opisać go, przedstawić koncepcję rozwiązania i ją zrealizować. & \makecell{uzyskał/a *\\ uzyskał/a częściowo*\\ nie uzyskał/a*} \\ \hline
+09 & Potrafi rozwiązać rzeczywiste zadanie inżynierskie z zakresu działalności informatycznej zakładu pracy/instytucji stosując normy i standardy stosowane w informatyce oraz biorąc pod uwagę aspekty środowiskowe i etyczne. & \makecell{uzyskał/a *\\ uzyskał/a częściowo*\\ nie uzyskał/a*} \\ \hline
+10 & Pracuje w zespole zajmującym się zawodowo branżą IT & \makecell{uzyskał/a *\\ uzyskał/a częściowo*\\ nie uzyskał/a*} \\ \hline
+11 & Przestrzega zasad etyki zawodowej i zgodnie z tymi zasadami korzysta z wiedzy i pomocy doświadczonych kolegów & \makecell{uzyskał/a *\\ uzyskał/a częściowo*\\ nie uzyskał/a*} \\ \hline
+12 & Kontaktując się z osobami spoza branży potrafi zarówno pozyskać od nich niezbędne informacje do realizacji planowanego zadania, jak i przekazać im w sposób zrozumiały informacje i opinie z zakresu informatyki & \makecell{uzyskał/a *\\ uzyskał/a częściowo*\\ nie uzyskał/a*} \\ \hline
+13 & Dostrzega w praktyce tempo deaktualizacji wiedzy informatycznej oraz skutki działalności informatyków w szczególności ekonomiczne i społeczne & \makecell{uzyskał/a *\\ uzyskał/a częściowo*\\ nie uzyskał/a*} \\ \hline
 \end{longtable}
 
-\vspace{2em}
-
-\noindent \textbf{Opinia komisji powołanej do weryfikacji realizacji praktyki zawodowej na podstawie zatrudnienia/stażu/działalności gospodarczej*:}
-
-\vspace{0.5em}
-
-\noindent Student/ka spełnił/a wymagania praktyki zawodowej TAK / NIE * \\[2em]
-
-\noindent Uzasadnienie (w przypadku negatywnej opinii): \\
-{%- if zapis.uzasadnienie_sciezki -%}
-\textbf{<< zapis.uzasadnienie_sciezki | s >>}
-{%- else -%}
-\dotfill \\
-\dotfill \\
-\dotfill
-{%- endif -%}
+\vspace{1em}
+\noindent \textbf{Potwierdzenie merytorycznej oceny dokumentacji złożonej przez studenta ze wskazaniem jakie elementy efektów uczenia się zaliczonych częściowo powinny zostać uzupełnione:}
 
 \vspace{3em}
-
-\noindent
-\begin{minipage}[t]{0.45\textwidth}
+\noindent\hfill
+\begin{minipage}[t]{0.5\textwidth}
 \centering
-\dotfill\\
-\small (data i podpis przewodniczącego komisji)
-\end{minipage}
-\hfill
-\begin{minipage}[t]{0.45\textwidth}
-\centering
-\dotfill\\
-\small (data i podpis członka komisji)
+\dotfill \\
+\small data, podpis Przewodniczącego Komisji do spraw praktyk
 \end{minipage}
 
 \vspace{2em}
-\noindent {\footnotesize *) niewłaściwe skreślić}
+\noindent \footnotesize{* niepotrzebne skreślić} \normalsize
 
 \end{document}

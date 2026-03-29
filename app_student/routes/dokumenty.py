@@ -36,6 +36,43 @@ def get_next_document_number():
     return f"ANS/PZ/{current_year}/{next_num:03d}"
 
 
+@dokumenty_bp.route('/moje')
+@login_required
+def moje_dokumenty():
+    """Moje Dokumenty — lista dostępnych dokumentów wg ścieżki i statusu"""
+
+    zapisy = db.session.query(ZapisPraktyki)\
+        .filter_by(student_id=current_user.id)\
+        .order_by(ZapisPraktyki.enrolled_at.desc())\
+        .all()
+
+    dokumenty_list = []
+    for zapis in zapisy:
+        if zapis.status not in [StatusZapisu.IN_PROGRESS, StatusZapisu.COMPLETED]:
+            continue
+
+        sciezka = zapis.track_type.value if zapis.track_type else 'STANDARD'
+        harmonogram_count = db.session.query(HarmonogramPraktyki)\
+            .filter_by(enrollment_id=zapis.id).count()
+
+        docs = []
+        if sciezka == 'STANDARD':
+            docs.append({'nazwa': 'Załącznik 1 – Podanie o realizację praktyki', 'typ': 'ZALACZNIK_1', 'dostepny': True})
+            docs.append({'nazwa': 'Załącznik 2 – Skierowanie na praktykę', 'typ': 'ZALACZNIK_2', 'dostepny': True})
+            if not zapis.firma or not zapis.firma.has_standing_agreement:
+                docs.append({'nazwa': 'Załącznik 3 – Porozumienie o organizacji praktyki', 'typ': 'ZALACZNIK_3', 'dostepny': True})
+            if harmonogram_count > 0:
+                docs.append({'nazwa': 'Załącznik 4 – Indywidualny Program Praktyk', 'typ': 'ZALACZNIK_4', 'dostepny': True})
+        elif sciezka == 'EMPLOYMENT':
+            docs.append({'nazwa': 'Załącznik 7 – Wniosek o zaliczenie pracy zawodowej', 'typ': 'ZALACZNIK_7', 'dostepny': True})
+        elif sciezka == 'OWN_BUSINESS':
+            docs.append({'nazwa': 'Załącznik 8 – Wniosek o zaliczenie działalności', 'typ': 'ZALACZNIK_8', 'dostepny': True})
+
+        dokumenty_list.append({'zapis': zapis, 'docs': docs})
+
+    return render_template('dokumenty/moje_dokumenty.html', dokumenty_list=dokumenty_list)
+
+
 @dokumenty_bp.route('/')
 @login_required
 def panel_dokumentow():
@@ -65,7 +102,7 @@ def panel_dokumentow():
             .filter_by(enrollment_id=zapis.id)\
             .first()
 
-        program_approved = program and program.approved_by_uopz if program else False
+        program_approved = program and program.approved_by_uopz and program.status == StatusDokumentu.APPROVED if program else False
 
         dokumenty_data.append({
             'zapis': zapis,
@@ -191,18 +228,21 @@ def generuj_dokument(enrollment_id, doc_type):
     try:
         # Wywołaj tex-service
         response = httpx.post(
-            'http://tex-service:5002/compile',
+            'http://tex-service:5002/generuj',
             json={
                 'template': f'{doc_type.lower()}.tex.j2',
-                'data': data
+                'context': data,
+                'filename': f"{doc_type}_{zapis.student.last_name}.pdf"
             },
             timeout=30
         )
 
         if response.status_code == 200:
+            import unicodedata
+            safe_name = unicodedata.normalize('NFKD', zapis.student.last_name).encode('ascii', 'ignore').decode('ascii')
             pdf_response = make_response(response.content)
             pdf_response.headers['Content-Type'] = 'application/pdf'
-            pdf_response.headers['Content-Disposition'] = f'attachment; filename="{doc_type}_{zapis.student.last_name}.pdf"'
+            pdf_response.headers['Content-Disposition'] = f'attachment; filename="{doc_type}_{safe_name}.pdf"'
             return pdf_response
         else:
             flash(f'Błąd generowania dokumentu: {response.text}', 'error')
@@ -244,6 +284,12 @@ def zatwierdz_program(enrollment_id):
         )
         db.session.add(program)
     else:
+        # Tylko pozwól na ponowne złożenie jeśli program nie jest już zatwierdzony
+        if program.approved_by_uopz:
+            flash('Indywidualny Program Praktyk jest już zatwierdzony przez UOPZ.', 'info')
+            return redirect(url_for('dokumenty.panel_dokumentow'))
+
+        # Jeśli program był odrzucony lub jest w trakcie, pozwól na ponowne złożenie
         program.status = StatusDokumentu.AWAITING_APPROVAL
         program.approved_by_uopz = False
         program.approved_at = None

@@ -1,6 +1,6 @@
 {% extends "layouts/base_student.html" %}
-{% block tytul %}Nowy wpis{% endblock %}
-{% block naglowek %}Nowy wpis do dziennika{% endblock %}
+{% block tytul %}{% if edycja %}Edytuj wpis{% else %}Nowy wpis{% endif %}{% endblock %}
+{% block naglowek %}{% if edycja %}Edytuj wpis z {{ wpis.entry_date.strftime('%d.%m.%Y') }}{% else %}Nowy wpis do dziennika{% endif %}{% endblock %}
 
 {% block naglowek_akcje %}
 <a href="{{ url_for('dziennik.index') }}" class="przycisk przycisk--drugorzedny">Anuluj</a>
@@ -24,7 +24,7 @@
       <h2 class="karta__tytul">Dane wpisu</h2>
     </div>
     <div class="karta__tresc">
-      <form method="POST" action="{{ url_for('dziennik.nowy_wpis') }}" novalidate>
+      <form method="POST" action="{% if edycja %}{{ url_for('dziennik.edytuj_wpis', wpis_id=wpis.id) }}{% else %}{{ url_for('dziennik.nowy_wpis') }}{% endif %}" novalidate>
         {{ form.hidden_tag() }}
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
@@ -67,7 +67,7 @@
         </div>
 
         <div style="display: flex; gap: 0.5rem; justify-content: center;">
-          <button type="submit" class="przycisk przycisk--glowny">Zapisz wpis</button>
+          <button type="submit" class="przycisk przycisk--glowny">{% if edycja %}Zapisz zmiany{% else %}Dodaj wpis{% endif %}</button>
           <a href="{{ url_for('dziennik.index') }}" class="przycisk przycisk--drugorzedny">Anuluj</a>
         </div>
 

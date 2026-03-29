@@ -47,10 +47,8 @@ def upload_document(enrollment_id):
         abort(404)
 
     # Sprawdź uprawnienia
-    if current_user.rola != RolaUzytkownika.ADMIN:
-        if current_user.rola == RolaUzytkownika.STUDENT and zapis.student_id != current_user.id:
-            abort(403)
-        elif current_user.rola == RolaUzytkownika.UOPZ and zapis.uopz_id != current_user.id:
+    if current_user.role != RolaUzytkownika.ADMIN:
+        if current_user.role == RolaUzytkownika.UOPZ and zapis.uopz_id != current_user.id:
             abort(403)
 
     # Sprawdź czy przesłano plik
@@ -127,10 +125,8 @@ def download_document(document_id):
 
     # Sprawdź uprawnienia
     zapis = doc.enrollment
-    if current_user.rola != RolaUzytkownika.ADMIN:
-        if current_user.rola == RolaUzytkownika.STUDENT and zapis.student_id != current_user.id:
-            abort(403)
-        elif current_user.rola == RolaUzytkownika.UOPZ and zapis.uopz_id != current_user.id:
+    if current_user.role != RolaUzytkownika.ADMIN:
+        if current_user.role == RolaUzytkownika.UOPZ and zapis.uopz_id != current_user.id:
             abort(403)
 
     # Sprawdź czy plik istnieje na dysku
@@ -193,10 +189,8 @@ def list_documents(enrollment_id):
         abort(404)
 
     # Sprawdź uprawnienia
-    if current_user.rola != RolaUzytkownika.ADMIN:
-        if current_user.rola == RolaUzytkownika.STUDENT and zapis.student_id != current_user.id:
-            abort(403)
-        elif current_user.rola == RolaUzytkownika.UOPZ and zapis.uopz_id != current_user.id:
+    if current_user.role != RolaUzytkownika.ADMIN:
+        if current_user.role == RolaUzytkownika.UOPZ and zapis.uopz_id != current_user.id:
             abort(403)
 
     documents = db.session.query(UploadedDocument)\

@@ -7,9 +7,6 @@
 \geometry{margin=1.5cm}
 \usepackage{longtable}
 \usepackage{array}
-\usepackage{tabularx}
-\usepackage{booktabs}
-\renewcommand{\arraystretch}{1.8}
 
 \begin{document}
 
@@ -23,52 +20,40 @@ Instytut Informatyki Stosowanej im. Krzysztofa Brzeskiego
 \end{center}
 \vspace{1em}
 
-\noindent Student: \textbf{<< student.last_name | s >>, << student.first_name | s >>}
-\hfill Nr albumu: \textbf{<< student.album_number | s >>} \\
-Kierunek: informatyka \hfill W zakresie: \textbf{<< sciezka | s >>} \\
-Studia: inżynierskie, stacjonarne \hfill Rok ak.:
-  \textbf{<< zapis.praktyka.rok_uczelniany | s >>} \\
-Miejsce odbywania praktyki: \textbf{<< firma.name | s >>} \\
-\hspace*{2cm}{\small (<< firma.address | s >>, << firma.city | s >>)} \\[1.5em]
-Data rozpoczęcia: \textbf{<< data_rozpoczecia | date >>}
-\hfill
-Data zakończenia: \textbf{<< data_zakonczenia | date >>}
+\noindent Student: \textbf{<< student.imie|s >> << student.nazwisko|s >>} \hfill Nr albumu: \textbf{<< student.nr_albumu|s >>} \\
+Kierunek: informatyka \hfill W zakresie: \textbf{<< specjalnosc|s >>} \\
+Studia: inżynierskie, \textbf{<< student.tryb_studiow|s >>} \hfill Rok ak.: \textbf{<< praktyka.rok_uczelniany|s >>} \\
+Miejsce odbywania praktyki: \textbf{<< firma.nazwa|s >>} \\
+\textbf{<< firma.adres|s >>, << firma.miasto|s >>} \\
+Data rozpoczęcia praktyki: \textbf{<< terminy.od|s >>} \hfill Data zakończenia praktyki: \textbf{<< terminy.do|s >>}
 
 \vspace{1.5em}
-\noindent Łączna liczba przepracowanych godzin:
-  \textbf{<< zapis.total_hours_logged | num >>} / 960
+\noindent \textbf{WYKAZ ZAŁĄCZNIKÓW:} \\
+\dotfill \\
+\dotfill
 
 \vspace{1.5em}
 
-\begin{longtable}{|>{\centering\arraybackslash}p{0.7cm}|>{\centering\arraybackslash}p{2.4cm}|p{7.6cm}|>{\centering\arraybackslash}p{1.8cm}|>{\centering\arraybackslash}p{1.5cm}|}
+\renewcommand{\arraystretch}{2}
+
+\begin{longtable}{|>{\centering\arraybackslash}p{1.5cm}|>{\centering\arraybackslash}p{2.5cm}|p{7.5cm}|>{\centering\arraybackslash}p{2.5cm}|>{\centering\arraybackslash}p{3cm}|}
 \hline
-\textbf{Lp.} & \textbf{Data} & \centering\textbf{Opis wykonanych prac} & \textbf{Nr. efektu} & \textbf{Godz.} \\ \hline
-1 & 2 & \centering 3 & 4 & 5 \\ \hline
+\textbf{Dzień} & \textbf{Data} & \centering\textbf{Opis wykonanych prac} & \textbf{Nr. efektów uczenia się} & \textbf{Podpis osoby nadzorującej} \\ \hline
 \endfirsthead
-
 \hline
-\textbf{Lp.} & \textbf{Data} & \centering\textbf{Opis wykonanych prac} & \textbf{Nr. efektu} & \textbf{Godz.} \\ \hline
+\textbf{Dzień} & \textbf{Data} & \centering\textbf{Opis wykonanych prac} & \textbf{Nr. efektów uczenia się} & \textbf{Podpis osoby nadzorującej} \\ \hline
 \endhead
-
 \hline \endfoot
-\hline \endlastfoot
 
 <<% for wpis in wpisy %>>
-<< loop.index >> &
-<< wpis.entry_date | date >> &
-<< wpis.description | s(max_length=400) >> &
-<<% if wpis.efekt %>><< wpis.efekt.kod | s >><<% else %>>—<<% endif %>> &
-<< wpis.duration_hours | num >> \\ \hline
+<< loop.index >> & << wpis.data|s >> & << wpis.opis|s >> & << wpis.efekt_nr|s >> & \\ \hline
 <<% endfor %>>
+<<% if not wpisy %>>
+ & & & & \\ \hline
+ & & & & \\ \hline
+ & & & & \\ \hline
+<<% endif %>>
 
 \end{longtable}
-
-\vspace{2em}
-\noindent\hfill
-\begin{minipage}[t]{0.4\textwidth}
-\centering
-\dotfill \\
-{\small Data, podpis opiekuna zakładowego}
-\end{minipage}
 
 \end{document}

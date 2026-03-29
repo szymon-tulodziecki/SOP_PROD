@@ -27,9 +27,18 @@
               {{ tlumacz_status(zapis_info.status) }}
             </span>
             <a href="{{ url_for('praktyki.szczegoly_zgloszenia', id=zapis_info.id) }}" class="przycisk przycisk--maly przycisk--drugorzedny">Szczegóły</a>
+            {% if zapis_info.status == 'IN_PROGRESS' %}
+            <form method="POST" action="{{ url_for('praktyki.zakoncz_praktyke', id=zapis_info.id) }}" style="display:inline;">
+              {{ csrf_form.hidden_tag() }}
+              <button type="submit" class="przycisk przycisk--maly przycisk--glowny"
+                      onclick="return confirm('Czy na pewno chcesz oznaczyć praktykę jako zakończoną? Po zakończeniu zostaną udostępnione dokumenty końcowe.')">
+                Zakończ praktykę
+              </button>
+            </form>
+            {% endif %}
           </div>
         {% else %}
-          <a href="{{ url_for('praktyki.zapisz_krok1', id=p.id) }}" class="przycisk przycisk--glowny" style="text-decoration:none;">Zapisz się (Kreator)</a>
+          <a href="{{ url_for('praktyki.kreator_sciezka', id=p.id) }}" class="przycisk przycisk--glowny" style="text-decoration:none;">Zapisz się</a>
         {% endif %}
       </div>
     </div>

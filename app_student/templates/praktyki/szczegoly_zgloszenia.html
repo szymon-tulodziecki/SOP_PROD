@@ -48,6 +48,28 @@
     </div>
   </div>
 
+  <!-- Uploadowane załączniki -->
+  {% if uploaded_docs %}
+  <div class="karta" style="margin-bottom: 2rem;">
+    <div class="karta__naglowek">
+      <h2>Twoje załączniki ({{ uploaded_docs|length }})</h2>
+    </div>
+    <div class="karta__tresc">
+      <div style="display:flex; flex-direction:column; gap:0.5rem;">
+        {% for dok in uploaded_docs %}
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:0.625rem 0.875rem; background:#f8fafc; border:1px solid #e2e8f0; border-radius:0.375rem;">
+          <div>
+            <div style="font-weight:500; font-size:0.875rem;">{{ dok.original_filename }}</div>
+            <div style="font-size:0.75rem; color:var(--kolor-tekst-drugor);">{{ dok.document_type }}{% if dok.uploaded_at %} · {{ dok.uploaded_at.strftime('%d.%m.%Y') if dok.uploaded_at is not string else dok.uploaded_at[:10] }}{% endif %}</div>
+          </div>
+          <span style="font-size:0.75rem; color:#059669;">Przesłany</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
   <!-- Komentarze i uwagi -->
   {% if zapis.uopz_comments or zapis.admin_comments %}
   <div class="karta" style="margin-bottom: 2rem;">
@@ -192,6 +214,20 @@
 
     </div>
   </div>
+
+  {% if zapis.status.value in ['IN_PROGRESS', 'COMPLETED'] %}
+  <div class="karta">
+    <div class="karta__tresc" style="display: flex; align-items: center; justify-content: space-between;">
+      <div>
+        <div style="font-weight: 600; margin-bottom: 0.25rem;">Dokumenty praktyki gotowe do pobrania</div>
+        <div style="font-size: 0.85rem; color: var(--kolor-tekst-drugor);">Zał. 1 (Porozumienie), Zał. 2 (Program), Zał. 2a (Indywidualny Program), Zał. 3 (Karta ze Skierowaniem) — dostępne w zakładce Moje Dokumenty.</div>
+      </div>
+      <a href="{{ url_for('documents.moje_dokumenty') }}" class="przycisk przycisk--glowny">
+        Przejdź do Moich Dokumentów →
+      </a>
+    </div>
+  </div>
+  {% endif %}
 
 </div>
 {% endblock %}

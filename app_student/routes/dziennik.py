@@ -55,11 +55,12 @@ def index():
     if not zapis:
         jakikolwiek = db.session.query(ZapisPraktyki).filter_by(student_id=current_user.id).first()
         # Zwracamy puste wpisy, żeby szablon się nie wysypał
-        return render_template('dziennik/index.html', zapis=None, wpisy=[], jakikolwiek=jakikolwiek)
+        return render_template('dziennik/index.html', zapis=None, wpisy=[], jakikolwiek=jakikolwiek, csrf_form=FlaskForm())
 
     # Jeśli jest aktywny zapis, normalnie ładujemy wpisy
     wpisy = db.session.query(WpisDziennika).filter_by(enrollment_id=zapis.id).order_by(WpisDziennika.entry_date.desc()).all()
-    return render_template('dziennik/index.html', zapis=zapis, wpisy=wpisy, jakikolwiek=zapis)
+    csrf_form = FlaskForm()
+    return render_template('dziennik/index.html', zapis=zapis, wpisy=wpisy, jakikolwiek=zapis, csrf_form=csrf_form)
 
 
 @dziennik_bp.route('/nowy', methods=['GET', 'POST'])
@@ -101,3 +102,57 @@ def nowy_wpis():
         form.data_wpisu.data = date.today().isoformat()
 
     return render_template('dziennik/nowy_wpis.html', form=form, zapis=zapis)
+
+
+@dziennik_bp.route('/edytuj/<uuid:wpis_id>', methods=['GET', 'POST'])
+@login_required
+def edytuj_wpis(wpis_id):
+    wpis = db.session.get(WpisDziennika, wpis_id)
+    if not wpis:
+        from flask import abort
+        abort(404)
+
+    zapis = db.session.get(ZapisPraktyki, wpis.enrollment_id)
+    if not zapis or zapis.student_id != current_user.id:
+        from flask import abort
+        abort(403)
+
+    form = FormularzWpisu()
+    form.efekt_id.choices = [
+        (str(e.id), f'{e.kod}: {e.description[:80]}...' if len(e.description) > 80 else f'{e.kod}: {e.description}')
+        for e in db.session.query(EfektUczenia).order_by(EfektUczenia.id).all()
+    ]
+
+    if form.validate_on_submit():
+        wpis.entry_date     = date.fromisoformat(form.data_wpisu.data)
+        wpis.duration_hours = int(form.liczba_godzin.data)
+        wpis.description    = form.opis.data.strip()
+        wpis.learning_outcome_id = int(form.efekt_id.data)
+        db.session.commit()
+        flash('Wpis został zaktualizowany.', 'success')
+        return redirect(url_for('dziennik.index'))
+
+    if request.method == 'GET':
+        form.data_wpisu.data    = wpis.entry_date.isoformat()
+        form.liczba_godzin.data = str(wpis.duration_hours)
+        form.opis.data          = wpis.description
+        form.efekt_id.data      = str(wpis.learning_outcome_id)
+
+    return render_template('dziennik/nowy_wpis.html', form=form, zapis=zapis, edycja=True, wpis=wpis)
+
+
+@dziennik_bp.route('/usun/<uuid:wpis_id>', methods=['POST'])
+@login_required
+def usun_wpis(wpis_id):
+    wpis = db.session.get(WpisDziennika, wpis_id)
+    if not wpis:
+        from flask import abort
+        abort(404)
+    zapis = db.session.get(ZapisPraktyki, wpis.enrollment_id)
+    if not zapis or zapis.student_id != current_user.id:
+        from flask import abort
+        abort(403)
+    db.session.delete(wpis)
+    db.session.commit()
+    flash('Wpis został usunięty.', 'success')
+    return redirect(url_for('dziennik.index'))

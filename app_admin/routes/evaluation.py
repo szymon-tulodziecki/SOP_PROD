@@ -67,14 +67,18 @@ def lista_ocen():
     # Automatycznie przenoś praktyki do COMPLETED jeśli minęła data zakończenia
     _auto_complete_internships()
 
-    q = db.session.query(ZapisPraktyki).filter_by(status=StatusZapisu.COMPLETED)
+    q = db.session.query(ZapisPraktyki).filter(
+        ZapisPraktyki.status.in_([StatusZapisu.IN_PROGRESS, StatusZapisu.COMPLETED])
+    )
 
     if current_user.role == RolaUzytkownika.UOPZ:
         q = q.filter_by(uopz_id=current_user.id)
 
-    zapisy = q.order_by(ZapisPraktyki.enrolled_at.desc()).all()
+    zapisy = q.join(ZapisPraktyki.student).order_by(
+        ZapisPraktyki.status.desc(),
+        ZapisPraktyki.enrolled_at.desc()
+    ).all()
 
-    # Dodaj informacje o deadline'ach dla każdego zapisu
     from datetime import date, timedelta
 
     zapisy_z_deadlinami = []
@@ -83,8 +87,8 @@ def lista_ocen():
         dni_do_deadline = None
         przekroczony = False
 
-        if zapis.termin_do:
-            deadline = zapis.termin_do + timedelta(days=7)  # 7 dni na ocenę
+        if zapis.termin_do and zapis.status == StatusZapisu.COMPLETED:
+            deadline = zapis.termin_do + timedelta(days=7)
             dni_do_deadline = (deadline - date.today()).days
             przekroczony = dni_do_deadline < 0
 
@@ -92,10 +96,19 @@ def lista_ocen():
             'zapis': zapis,
             'deadline': deadline,
             'dni_do_deadline': dni_do_deadline,
-            'przekroczony': przekroczony
+            'przekroczony': przekroczony,
+            'w_trakcie': zapis.status == StatusZapisu.IN_PROGRESS,
+            'zakonczona': zapis.status == StatusZapisu.COMPLETED,
         })
 
-    return render_template('evaluation/lista_ocen.html', zapisy_z_deadlinami=zapisy_z_deadlinami)
+    # Podziel na sekcje
+    w_trakcie = [z for z in zapisy_z_deadlinami if z['w_trakcie']]
+    zakonczone = [z for z in zapisy_z_deadlinami if z['zakonczona']]
+
+    return render_template('evaluation/lista_ocen.html',
+                           zapisy_z_deadlinami=zapisy_z_deadlinami,
+                           w_trakcie=w_trakcie,
+                           zakonczone=zakonczone)
 
 @evaluation_bp.route('/zapis/<uuid:id>/karta_ocen', methods=['GET', 'POST'])
 @wymaga_roli(RolaUzytkownika.ADMIN, RolaUzytkownika.UOPZ)
@@ -197,3 +210,70 @@ def zakoncz_zapis(id):
     db.session.commit()
     flash(f'Praktyka studenta {zapis.student.first_name} {zapis.student.last_name} została zakończona.', 'success')
     return redirect(url_for('evaluation.lista_ocen'))
+
+
+@evaluation_bp.route('/zapis/<uuid:id>/protokol')
+@wymaga_roli(RolaUzytkownika.ADMIN, RolaUzytkownika.UOPZ)
+def generuj_protokol(id):
+    """Generuje Protokół egzaminu (zał.8) przez tex-service."""
+    import httpx, unicodedata
+    from flask import make_response, current_app
+    from datetime import date
+
+    zapis = db.session.get(ZapisPraktyki, id) or abort(404)
+    if not zapis.ocena_uopz:
+        flash('Protokół dostępny dopiero po wystawieniu oceny UOPZ.', 'warning')
+        return redirect(url_for('evaluation.ocen_praktyke', id=id))
+
+    s = zapis.student
+    tex_url = current_app.config.get('TEX_SERVICE_URL', 'http://tex-service:5002')
+    # Szablon zal8_protokol używa obiektu zapis bezpośrednio — przekazujemy dane jako słowniki
+    firma_nazwa = (zapis.firma.nazwa if zapis.firma else zapis.firma_nazwa) or ''
+    def _f(v):
+        """Konwertuj Decimal → float, None → None."""
+        return float(v) if v is not None else None
+
+    ctx = {
+        'zapis': {
+            'firma_nazwa': firma_nazwa,
+            'termin_od': zapis.termin_od.strftime('%d.%m.%Y') if zapis.termin_od else '',
+            'termin_do': zapis.termin_do.strftime('%d.%m.%Y') if zapis.termin_do else '',
+            'ocena_sprawozdania': _f(zapis.ocena_sprawozdania),
+            'ocena_uopz': _f(zapis.ocena_uopz),
+            'ocena_zopz': _f(zapis.ocena_zopz),
+            'sprawdzian_pytanie_1': zapis.sprawdzian_pytanie_1,
+            'sprawdzian_ocena_1': _f(zapis.sprawdzian_ocena_1),
+            'sprawdzian_pytanie_2': zapis.sprawdzian_pytanie_2,
+            'sprawdzian_ocena_2': _f(zapis.sprawdzian_ocena_2),
+            'sprawdzian_pytanie_3': zapis.sprawdzian_pytanie_3,
+            'sprawdzian_ocena_3': _f(zapis.sprawdzian_ocena_3),
+            'uopz': {'first_name': zapis.uopz.first_name, 'last_name': zapis.uopz.last_name} if zapis.uopz else None,
+        },
+        'student': {
+            'imie': s.first_name, 'nazwisko': s.last_name,
+            'first_name': s.first_name, 'last_name': s.last_name,
+            'nr_albumu': s.album_number or '', 'album_number': s.album_number or '',
+            'kierunek': getattr(s, 'kierunek', 'Informatyka') or 'Informatyka',
+        },
+        'specjalnosc': getattr(s, 'specjalnosc', '') or getattr(zapis, 'specjalnosc', '') or '',
+        'praktyka': {
+            'rok_uczelniany': zapis.praktyka.rok_uczelniany if zapis.praktyka else '',
+            'semestr': zapis.praktyka.semestr if zapis.praktyka else '',
+            'wymiar_godzin': zapis.praktyka.wymiar_godzin if zapis.praktyka else 960,
+        },
+        'data_egzaminu': date.today().strftime('%d.%m.%Y'),
+    }
+    try:
+        r = httpx.post(f'{tex_url}/generuj',
+                       json={'template': 'zal8_protokol.tex.j2', 'context': ctx, 'filename': 'zal8_protokol.pdf'},
+                       timeout=60)
+        if r.status_code == 200:
+            safe = unicodedata.normalize('NFKD', s.last_name).encode('ascii', 'ignore').decode('ascii') or 'student'
+            resp = make_response(r.content)
+            resp.headers['Content-Type'] = 'application/pdf'
+            resp.headers['Content-Disposition'] = f'attachment; filename="zal8_protokol_{safe}.pdf"'
+            return resp
+        flash(f'Błąd generowania protokołu: {r.text[:200]}', 'danger')
+    except Exception as e:
+        flash(f'Błąd połączenia z tex-service: {str(e)}', 'danger')
+    return redirect(url_for('evaluation.ocen_praktyke', id=id))

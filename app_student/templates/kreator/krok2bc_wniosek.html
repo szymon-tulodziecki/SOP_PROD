@@ -1,0 +1,160 @@
+{% extends "layouts/base_student.html" %}
+{% block tytul %}Kreator praktyki — Wniosek{% endblock %}
+{% block naglowek %}Rejestracja praktyki{% endblock %}
+
+{% block tresc %}
+<div style="max-width: 700px; margin: 0 auto;">
+
+  <!-- Pasek postępu -->
+  <div style="display: flex; gap: 0.5rem; margin-bottom: 2rem; align-items: center;">
+    <div style="flex:1; text-align:center; padding:0.5rem; background:#d1fae5; color:#065f46; border-radius:0.375rem; font-size:0.85rem;">Ścieżka</div>
+    <div style="color:#d1d5db;">›</div>
+    <div style="flex:1; text-align:center; padding:0.5rem; background:#3b82f6; color:white; border-radius:0.375rem; font-weight:600; font-size:0.85rem;">2. Wniosek</div>
+    <div style="color:#d1d5db;">›</div>
+    <div style="flex:1; text-align:center; padding:0.5rem; background:#f3f4f6; color:#9ca3af; border-radius:0.375rem; font-size:0.85rem;">3. Decyzja komisji</div>
+    <div style="color:#d1d5db;">›</div>
+    <div style="flex:1; text-align:center; padding:0.5rem; background:#f3f4f6; color:#9ca3af; border-radius:0.375rem; font-size:0.85rem;">4. Sprawozdanie</div>
+  </div>
+
+  <div class="karta">
+    <div class="karta__naglowek">
+      <h2 class="karta__tytul">
+        {% if zapis.track_type.value == 'EMPLOYMENT' %}
+          Krok 2: Wniosek — Praca etatowa / staż
+        {% else %}
+          Krok 2: Wniosek — Własna działalność gospodarcza
+        {% endif %}
+      </h2>
+    </div>
+    <div class="karta__tresc">
+
+      <!-- Info o wymaganych załącznikach -->
+      <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:0.5rem; padding:1rem; margin-bottom:1.5rem; font-size:0.85rem;">
+        <div style="font-weight:600; margin-bottom:0.4rem;">Wymagane załączniki do wniosku:</div>
+        {% if zapis.track_type.value == 'EMPLOYMENT' %}
+        <ul style="margin:0; padding-left:1.2rem; color:#1e40af;">
+          <li>Umowa o pracę / zakres obowiązków (PDF)</li>
+          <li>Zaświadczenie od pracodawcy o zatrudnieniu (PDF)</li>
+        </ul>
+        {% else %}
+        <ul style="margin:0; padding-left:1.2rem; color:#1e40af;">
+          <li>Aktualny wpis do CEIDG lub KRS (PDF)</li>
+          <li>Kody PKD zgodne z profilem IT</li>
+        </ul>
+        {% endif %}
+      </div>
+
+      <!-- Upload załączników -->
+      <div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:0.5rem; padding:1rem; margin-bottom:1.5rem;">
+        <div style="font-weight:600; margin-bottom:0.75rem; font-size:0.9rem;">Dodaj załączniki (PDF, maks. 10 MB)</div>
+        <input type="file" id="upload-file" accept=".pdf,.jpg,.jpeg,.png"
+               style="font-size:0.85rem; width:100%; margin-bottom:0.5rem;">
+        <select id="upload-type" style="font-size:0.85rem; padding:0.4rem 0.75rem; border:1px solid #d1d5db; border-radius:0.375rem; margin-bottom:0.5rem; width:100%;">
+          {% if zapis.track_type.value == 'EMPLOYMENT' %}
+          <option value="umowa_pracy">Umowa o pracę</option>
+          <option value="zakres_obowiazkow">Zakres obowiązków</option>
+          <option value="zaswiadczenie_zatrudnienie">Zaświadczenie o zatrudnieniu</option>
+          <option value="inne">Inne</option>
+          {% else %}
+          <option value="ceidg">Wpis z CEIDG</option>
+          <option value="krs">Odpis z KRS</option>
+          <option value="inne">Inne</option>
+          {% endif %}
+        </select>
+        <button type="button" onclick="uploadZalacznik()" class="przycisk przycisk--drugorzedny przycisk--maly">Dodaj plik</button>
+        <div id="upload-status" style="font-size:0.8rem; margin-top:0.5rem;"></div>
+        <div id="upload-lista" style="margin-top:0.75rem;"></div>
+      </div>
+
+      <form method="POST" novalidate>
+        {{ form.hidden_tag() }}
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
+          <div class="pole-formularza {% if form.pracodawca_nazwa.errors %}pole-formularza--blad{% endif %}">
+            {{ form.pracodawca_nazwa.label(class="pole-formularza__etykieta") }}
+            {{ form.pracodawca_nazwa(class="pole-formularza__input") }}
+            {% for e in form.pracodawca_nazwa.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
+          </div>
+          <div class="pole-formularza {% if form.stanowisko.errors %}pole-formularza--blad{% endif %}">
+            {{ form.stanowisko.label(class="pole-formularza__etykieta") }}
+            {{ form.stanowisko(class="pole-formularza__input") }}
+            {% for e in form.stanowisko.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
+          <div class="pole-formularza">
+            {{ form.pracodawca_adres.label(class="pole-formularza__etykieta") }}
+            {{ form.pracodawca_adres(class="pole-formularza__input") }}
+          </div>
+          <div class="pole-formularza">
+            {{ form.pracodawca_miasto.label(class="pole-formularza__etykieta") }}
+            {{ form.pracodawca_miasto(class="pole-formularza__input") }}
+          </div>
+        </div>
+
+        <div class="pole-formularza {% if form.uzasadnienie.errors %}pole-formularza--blad{% endif %}" style="margin-bottom:1.5rem;">
+          {{ form.uzasadnienie.label(class="pole-formularza__etykieta") }}
+          {{ form.uzasadnienie(class="pole-formularza__input", rows=5, style="height:auto;", placeholder="Opisz zakres obowiązków/działalności i dlaczego spełniają wymagania praktyki zawodowej...") }}
+          {% for e in form.uzasadnienie.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
+        </div>
+
+        <div style="display:flex; justify-content:space-between; gap:1rem;">
+          <a href="{{ url_for('praktyki.kreator_sciezka', id=zapis.internship_id) }}" class="przycisk przycisk--drugorzedny">← Wróć</a>
+          <button type="submit" class="przycisk przycisk--glowny">Złóż wniosek →</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+const uploadUrl = "{{ url_for('uploads.upload_document', enrollment_id=zapis.id) }}";
+let uploadedFiles = [];
+
+async function uploadZalacznik() {
+  const fileInput = document.getElementById('upload-file');
+  const typeSelect = document.getElementById('upload-type');
+  const status = document.getElementById('upload-status');
+
+  if (!fileInput.files.length) {
+    status.textContent = 'Wybierz plik.';
+    status.style.color = '#dc2626';
+    return;
+  }
+
+  const fd = new FormData();
+  fd.append('file', fileInput.files[0]);
+  fd.append('document_type', typeSelect.value);
+  fd.append('csrf_token', document.querySelector('[name=csrf_token]').value);
+
+  status.textContent = 'Wysyłanie...';
+  status.style.color = '#6b7280';
+
+  try {
+    const r = await fetch(uploadUrl, { method: 'POST', body: fd });
+    const data = await r.json();
+    if (r.ok) {
+      status.textContent = 'Plik dodany pomyslnie.';
+      status.style.color = '#059669';
+      uploadedFiles.push({ name: fileInput.files[0].name, type: typeSelect.options[typeSelect.selectedIndex].text });
+      renderLista();
+      fileInput.value = '';
+    } else {
+      status.textContent = 'Blad: ' + (data.error || 'Nie udalo sie przeslac.');
+      status.style.color = '#dc2626';
+    }
+  } catch(e) {
+    status.textContent = 'Blad polaczenia.';
+    status.style.color = '#dc2626';
+  }
+}
+
+function renderLista() {
+  const el = document.getElementById('upload-lista');
+  el.innerHTML = uploadedFiles.map(f =>
+    '<div style="font-size:0.8rem; color:#059669; margin-top:0.2rem;">+ ' + f.name + ' (' + f.type + ')</div>'
+  ).join('');
+}
+</script>
+{% endblock %}
