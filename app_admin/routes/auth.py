@@ -6,8 +6,8 @@ from wtforms import StringField, PasswordField, BooleanField
 from wtforms.validators import DataRequired, Email, Length
 from werkzeug.security import check_password_hash
 
-from app_admin.models import Uzytkownik, RolaUzytkownika
-from app_admin.extensions import db
+from core.models import Uzytkownik, RolaUzytkownika
+from core.extensions import db
 from sqlalchemy.exc import SQLAlchemyError, OperationalError
 
 auth_bp = Blueprint('auth', __name__)

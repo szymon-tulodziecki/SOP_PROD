@@ -5,8 +5,8 @@ from wtforms import StringField, PasswordField, BooleanField
 from wtforms.validators import DataRequired, Email, Length, EqualTo
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from app_student.models import Uzytkownik, RolaUzytkownika
-from app_student.extensions import db
+from core.models import Uzytkownik, RolaUzytkownika
+from core.extensions import db
 
 auth_bp = Blueprint('auth', __name__)
 

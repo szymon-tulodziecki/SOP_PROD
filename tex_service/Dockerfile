@@ -17,10 +17,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --no-cache-dir flask jinja2 gunicorn
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY sanitizer.py compiler.py app.py ./
 COPY templates/ ./templates/
+
+# Bezpieczeństwo: dedykowany nieuprzywilejowany użytkownik (nie root).
+# LuaLaTeX potrzebuje /tmp do plików pomocniczych — tmpfs montowany
+# jest w docker-compose, więc chown /tmp nie jest wymagany.
+RUN addgroup --system appgroup \
+    && adduser --system --ingroup appgroup --no-create-home appuser \
+    && chown -R appuser:appgroup /app
+
+USER appuser
 
 EXPOSE 5002
 

@@ -9,10 +9,10 @@ class Config:
     # Podstawowe zabezpieczenie sesji i formularzy WTF
     SECRET_KEY = os.environ.get('SECRET_KEY', 'student-tajny-klucz-tylko-na-dev-xd')
 
-    # Konfiguracja połączenia z bazą danych
+    # Konfiguracja połączenia z bazą danych — sterownik psycopg2 (C, wydajny)
     SQLALCHEMY_DATABASE_URI = os.environ.get(
         'DATABASE_URL',
-        'postgresql+pg8000://ans_admin:secure_password_123@localhost:5432/ans_praktyki'
+        'postgresql+psycopg2://ans_admin:secure_password_123@localhost:5432/ans_praktyki'
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 

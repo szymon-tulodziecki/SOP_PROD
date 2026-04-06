@@ -6,66 +6,36 @@ import uuid
 from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
 from flask_login import login_required, current_user
 
-from app_admin.models import (ZapisPraktyki, OcenaPraktyki, EfektUczenia,
+from core.models import (ZapisPraktyki, OcenaPraktyki, EfektUczenia,
                     RolaUzytkownika, StatusZapisu, WynikOceny)
-from app_admin.extensions import db
+from core.extensions import db
 from app_admin.routes.auth import wymaga_roli
 
 evaluation_bp = Blueprint('evaluation', __name__)
 
 
-def get_pilne_oceny(uopz_id=None):
-    """Zwraca listę praktyk z pilnymi ocenami dla danego UOPZ lub wszystkich."""
-    from datetime import date, timedelta
+def _parse_grade(val: str):
+    """Konwertuje ocenę z formularza na float, obsługując przecinki i kropki.
 
-    q = db.session.query(ZapisPraktyki).filter_by(status=StatusZapisu.COMPLETED)
-
-    if uopz_id:
-        q = q.filter_by(uopz_id=uopz_id)
-
-    zapisy = q.all()
-    pilne_oceny = []
-
-    for zapis in zapisy:
-        if zapis.termin_do:
-            deadline = zapis.termin_do + timedelta(days=7)  # 7 dni na ocenę
-            dni_do_deadline = (deadline - date.today()).days
-
-            # Tylko pilne (3 dni lub mniej) lub przekroczone
-            if dni_do_deadline <= 3:
-                pilne_oceny.append({
-                    'zapis': zapis,
-                    'deadline': deadline,
-                    'dni_do_deadline': dni_do_deadline,
-                    'przekroczony': dni_do_deadline < 0
-                })
-
-    return sorted(pilne_oceny, key=lambda x: x['dni_do_deadline'])
+    Zwraca None jeśli wartość jest pusta lub nie da się przekonwertować.
+    Reużywalna w każdym kontrolerze obsługującym oceny.
+    """
+    if not val or not val.strip():
+        return None
+    try:
+        return float(val.strip().replace(',', '.'))
+    except (ValueError, AttributeError):
+        return None
 
 
-def _auto_complete_internships():
-    """Automatycznie przenosi praktyki do statusu COMPLETED po zakończeniu terminu."""
-    from datetime import date
-
-    # Znajdź praktyki IN_PROGRESS z przekroczonym terminem zakończenia
-    praktyki_do_zakonczenia = db.session.query(ZapisPraktyki).filter(
-        ZapisPraktyki.status == StatusZapisu.IN_PROGRESS,
-        ZapisPraktyki.termin_do < date.today()
-    ).all()
-
-    for praktyka in praktyki_do_zakonczenia:
-        praktyka.status = StatusZapisu.COMPLETED
-        # TODO: Wysłać notyfikację email do UOPZ o nowej praktyce do oceny
-
-    if praktyki_do_zakonczenia:
-        db.session.commit()
+from app_admin.services.evaluation_service import EvaluationService
 
 
 @evaluation_bp.route('/')
 @login_required
 def lista_ocen():
     # Automatycznie przenoś praktyki do COMPLETED jeśli minęła data zakończenia
-    _auto_complete_internships()
+    EvaluationService.auto_complete_internships()
 
     q = db.session.query(ZapisPraktyki).filter(
         ZapisPraktyki.status.in_([StatusZapisu.IN_PROGRESS, StatusZapisu.COMPLETED])
@@ -120,22 +90,18 @@ def ocen_praktyke(id):
         zapis.ocena_opisowa_zopz = request.form.get('ocena_opisowa_zopz')
 
         # Zapisujemy parametryczne (z konwersją na float/numeric)
-        def parse_grade(val):
-            try: return float(val.replace(',', '.'))
-            except: return None
-
-        zapis.ocena_sprawozdania = parse_grade(request.form.get('ocena_sprawozdania', ''))
-        zapis.ocena_uopz = parse_grade(request.form.get('ocena_uopz', ''))
-        zapis.ocena_zopz = parse_grade(request.form.get('ocena_zopz', ''))
+        zapis.ocena_sprawozdania = _parse_grade(request.form.get('ocena_sprawozdania', ''))
+        zapis.ocena_uopz = _parse_grade(request.form.get('ocena_uopz', ''))
+        zapis.ocena_zopz = _parse_grade(request.form.get('ocena_zopz', ''))
 
         zapis.sprawdzian_pytanie_1 = request.form.get('sprawdzian_pytanie_1')
-        zapis.sprawdzian_ocena_1 = parse_grade(request.form.get('sprawdzian_ocena_1', ''))
+        zapis.sprawdzian_ocena_1 = _parse_grade(request.form.get('sprawdzian_ocena_1', ''))
         
         zapis.sprawdzian_pytanie_2 = request.form.get('sprawdzian_pytanie_2')
-        zapis.sprawdzian_ocena_2 = parse_grade(request.form.get('sprawdzian_ocena_2', ''))
+        zapis.sprawdzian_ocena_2 = _parse_grade(request.form.get('sprawdzian_ocena_2', ''))
         
         zapis.sprawdzian_pytanie_3 = request.form.get('sprawdzian_pytanie_3')
-        zapis.sprawdzian_ocena_3 = parse_grade(request.form.get('sprawdzian_ocena_3', ''))
+        zapis.sprawdzian_ocena_3 = _parse_grade(request.form.get('sprawdzian_ocena_3', ''))
 
         if request.form.get('zakoncz'):
             zapis.status = StatusZapisu.COMPLETED

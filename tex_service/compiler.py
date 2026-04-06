@@ -110,8 +110,52 @@ def render_tex(template_name: str, context: dict) -> str:
     return template.render(**context)
 
 
+def _check_dangerous_commands(tex_source: str) -> None:
+    """Sprawdza surowy kod TeX pod kątem niebezpiecznych komend.
+
+    Blokuje komendy umożliwiające odczyt/zapis plików systemowych
+    nawet bez flagi --shell-escape:
+    - \\input, \\include, \\includegraphics z ścieżkami bezwzględnymi
+    - \\openin, \\openout, \\read, \\write — operacje I/O
+    - \\catcode — zmiana znaczenia znaków (obejście sanityzacji)
+    - \\newwrite, \\newread, \\immediate — niskopoziomowe I/O
+    - usepackage{shellesc} — próby włączenia shell escape
+    """
+    import re
+
+    # Wzorce niebezpiecznych komend LaTeX
+    _DANGEROUS_PATTERNS = [
+        (r'\\input\s*\{[^}]*/', 'Komenda \\input z ścieżką bezwzględną'),
+        (r'\\include\s*\{[^}]*/', 'Komenda \\include z ścieżką bezwzględną'),
+        (r'\\openin', 'Komenda \\openin (odczyt plików)'),
+        (r'\\openout', 'Komenda \\openout (zapis plików)'),
+        (r'\\read\b', 'Komenda \\read (odczyt plików)'),
+        (r'\\write\s*\\', 'Komenda \\write (zapis plików)'),
+        (r'\\newwrite', 'Komenda \\newwrite (tworzenie strumienia zapisu)'),
+        (r'\\newread', 'Komenda \\newread (tworzenie strumienia odczytu)'),
+        (r'\\immediate\s*\\write', 'Komenda \\immediate\\write (natychmiastowy zapis)'),
+        (r'\\catcode', 'Komenda \\catcode (zmiana interpretera znaków)'),
+        (r'\\usepackage\s*\{shellesc\}', 'Pakiet shellesc (shell escape)'),
+        (r'\\directlua', 'Komenda \\directlua (wykonanie kodu Lua)'),
+        (r'\\latelua', 'Komenda \\latelua (wykonanie kodu Lua)'),
+    ]
+
+    for pattern, description in _DANGEROUS_PATTERNS:
+        if re.search(pattern, tex_source, re.IGNORECASE):
+            raise TexCompilationError(
+                f"Zablokowana niebezpieczna komenda LaTeX: {description}. "
+                f"Ze względów bezpieczeństwa nie można używać tej komendy w trybie ręcznym."
+            )
+
+
 def compile_raw_tex(tex_source: str) -> bytes:
-    """Kompiluje surowy kod TeX → bajty PDF."""
+    """Kompiluje surowy kod TeX → bajty PDF.
+
+    Przed kompilacją sprawdza kod pod kątem niebezpiecznych komend
+    (ochrona przed LaTeX Command Injection).
+    """
+    _check_dangerous_commands(tex_source)
+
     lualatex = _find_lualatex()
 
     with tempfile.TemporaryDirectory(prefix="tex_") as tmpdir:

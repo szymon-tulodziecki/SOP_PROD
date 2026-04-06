@@ -11,9 +11,10 @@ from wtforms import StringField, SelectField
 from wtforms.validators import DataRequired, Email, Length, Optional, ValidationError
 from werkzeug.security import generate_password_hash
 
-from app_admin.models import (Uzytkownik, Praktyka, ZapisPraktyki, HarmonogramPraktyki, EfektUczenia,
+from core.models import (Uzytkownik, Praktyka, ZapisPraktyki, HarmonogramPraktyki, EfektUczenia,
                     RolaUzytkownika, StatusPraktyki, StatusZapisu, UploadedDocument, Firma)
-from app_admin.extensions import db
+from core.extensions import db
+from app_admin.services.internship_service import InternshipService
 from app_admin.routes.auth import wymaga_roli
 
 management_bp = Blueprint('management', __name__)
@@ -99,24 +100,7 @@ class FormularzPraktyki(FlaskForm):
 
 # ── Pomocniki ─────────────────────────────────────────────────────────────────
 
-def _utworz_studenta(imie, nazwisko, email, numer_albumu, plec=None, kierunek=None, specjalnosc=None, tryb_studiow=None):
-    u = Uzytkownik(
-        id                    = uuid.uuid4(),
-        first_name            = imie.strip(),
-        last_name             = nazwisko.strip(),
-        email                 = email.lower().strip(),
-        album_number          = numer_albumu.strip(),
-        plec                  = plec or None,
-        kierunek              = kierunek or None,
-        specjalnosc           = specjalnosc or None,
-        tryb_studiow          = tryb_studiow or None,
-        role                  = RolaUzytkownika.STUDENT,
-        password_hash         = generate_password_hash(numer_albumu.strip()),
-        wymagana_zmiana_hasla = True,
-        is_active             = True,
-    )
-    db.session.add(u)
-    return u
+
 
 
 # ── Użytkownicy ───────────────────────────────────────────────────────────────
@@ -158,7 +142,7 @@ def nowy_student():
     uopz_list = db.session.query(Uzytkownik).filter_by(role=RolaUzytkownika.UOPZ, is_active=True).order_by(Uzytkownik.last_name, Uzytkownik.first_name).all()
     form.uopz_id.choices = [(str(u.id), f"{u.first_name} {u.last_name}") for u in uopz_list]
     if form.validate_on_submit():
-        u = _utworz_studenta(
+        u = InternshipService.create_student(
             form.imie.data, form.nazwisko.data,
             form.email.data, form.numer_albumu.data,
             plec=form.plec.data or None,
@@ -268,40 +252,70 @@ def import_csv():
 
         utworzono, pominieto, bledy = 0, 0, []
 
+        # ── Faza 1: Zbierz i zwaliduj dane z CSV ──
+        wiersze_csv = []
         for nr_wiersza, wiersz in enumerate(czytnik, start=2):
-            try:
-                imie         = (wiersz.get('imie') or wiersz.get('Imię') or '').strip()
-                nazwisko     = (wiersz.get('nazwisko') or wiersz.get('Nazwisko') or '').strip()
-                email        = (wiersz.get('email') or wiersz.get('Email') or '').strip().lower()
-                nr_albumu    = (wiersz.get('numer_albumu') or wiersz.get('Nr albumu') or '').strip()
-                plec         = (wiersz.get('plec') or wiersz.get('Płeć') or '').strip().upper() or None
-                kierunek     = (wiersz.get('kierunek') or wiersz.get('Kierunek') or '').strip() or None
-                specjalnosc  = (wiersz.get('specjalnosc') or wiersz.get('Specjalność') or '').strip() or None
-                tryb_studiow = (wiersz.get('tryb_studiow') or wiersz.get('Tryb') or '').strip().lower() or None
+            imie         = (wiersz.get('imie') or wiersz.get('Imię') or '').strip()
+            nazwisko     = (wiersz.get('nazwisko') or wiersz.get('Nazwisko') or '').strip()
+            email        = (wiersz.get('email') or wiersz.get('Email') or '').strip().lower()
+            nr_albumu    = (wiersz.get('numer_albumu') or wiersz.get('Nr albumu') or '').strip()
+            plec         = (wiersz.get('plec') or wiersz.get('Płeć') or '').strip().upper() or None
+            kierunek     = (wiersz.get('kierunek') or wiersz.get('Kierunek') or '').strip() or None
+            specjalnosc  = (wiersz.get('specjalnosc') or wiersz.get('Specjalność') or '').strip() or None
+            tryb_studiow = (wiersz.get('tryb_studiow') or wiersz.get('Tryb') or '').strip().lower() or None
 
-                if not all([imie, nazwisko, email, nr_albumu]):
-                    bledy.append(f'Wiersz {nr_wiersza}: brakujące dane (imie, nazwisko, email, numer_albumu)')
-                    pominieto += 1
-                    continue
-
-                if db.session.query(Uzytkownik).filter(db.or_(
-                    Uzytkownik.email == email,
-                    Uzytkownik.album_number == nr_albumu
-                )).first():
-                    bledy.append(f'Wiersz {nr_wiersza}: {email} lub nr {nr_albumu} już istnieje')
-                    pominieto += 1
-                    continue
-
-                _utworz_studenta(imie, nazwisko, email, nr_albumu,
-                                 plec=plec, kierunek=kierunek,
-                                 specjalnosc=specjalnosc, tryb_studiow=tryb_studiow)
-                utworzono += 1
-
-            except Exception as e:
-                bledy.append(f'Wiersz {nr_wiersza}: {str(e)}')
+            if not all([imie, nazwisko, email, nr_albumu]):
+                bledy.append(f'Wiersz {nr_wiersza}: brakujące dane (imie, nazwisko, email, numer_albumu)')
                 pominieto += 1
+                continue
 
-        db.session.commit()
+            wiersze_csv.append({
+                'nr': nr_wiersza, 'imie': imie, 'nazwisko': nazwisko,
+                'email': email, 'nr_albumu': nr_albumu, 'plec': plec,
+                'kierunek': kierunek, 'specjalnosc': specjalnosc,
+                'tryb_studiow': tryb_studiow,
+            })
+
+        # ── Faza 2: Batch query — jedno zapytanie zamiast N ──
+        if wiersze_csv:
+            all_emails = [w['email'] for w in wiersze_csv]
+            all_albums = [w['nr_albumu'] for w in wiersze_csv]
+
+            existing = db.session.query(
+                Uzytkownik.email, Uzytkownik.album_number
+            ).filter(
+                db.or_(
+                    Uzytkownik.email.in_(all_emails),
+                    Uzytkownik.album_number.in_(all_albums)
+                )
+            ).all()
+
+            existing_emails = {row.email for row in existing}
+            existing_albums = {row.album_number for row in existing if row.album_number}
+
+            # ── Faza 3: Tworzenie nowych rekordów ──
+            for w in wiersze_csv:
+                if w['email'] in existing_emails or w['nr_albumu'] in existing_albums:
+                    bledy.append(f"Wiersz {w['nr']}: {w['email']} lub nr {w['nr_albumu']} już istnieje")
+                    pominieto += 1
+                    continue
+
+                try:
+                    InternshipService.create_student(
+                        w['imie'], w['nazwisko'], w['email'], w['nr_albumu'],
+                        plec=w['plec'], kierunek=w['kierunek'],
+                        specjalnosc=w['specjalnosc'], tryb_studiow=w['tryb_studiow']
+                    )
+                    # Zapamiętaj, żeby nie duplikować w ramach jednej paczki
+                    existing_emails.add(w['email'])
+                    existing_albums.add(w['nr_albumu'])
+                    utworzono += 1
+                except Exception as e:
+                    bledy.append(f"Wiersz {w['nr']}: {str(e)}")
+                    pominieto += 1
+
+            db.session.commit()
+
         wyniki = {'utworzono': utworzono, 'pominieto': pominieto, 'bledy': bledy}
         if utworzono:
             flash(f'Import zakończony: {utworzono} kont utworzonych.', 'success')
@@ -403,6 +417,9 @@ def lista_zgloszen():
     status_filter = request.args.get('status', '').strip()
 
     q = db.session.query(ZapisPraktyki).join(Uzytkownik, ZapisPraktyki.student_id == Uzytkownik.id)
+
+    # Tylko zgłoszenia standardowe
+    q = q.filter(ZapisPraktyki.track_type == 'STANDARD')
 
     # Filtrowanie według statusu
     if status_filter:
@@ -576,6 +593,13 @@ def moje_zgloszenia():
 def usun_praktyke(id):
     p = db.session.get(Praktyka, id) or abort(404)
     opis = f'{p.rok_uczelniany} ({p.semestr})'
+    from sqlalchemy import text as _text
+    db.session.execute(_text("""
+        DELETE FROM uploaded_documents
+        WHERE enrollment_id IN (
+            SELECT id FROM internship_enrollments WHERE internship_id = :pid
+        )
+    """), {'pid': str(id)})
     db.session.delete(p)
     db.session.commit()
     flash(f'Praktyka {opis} została usunięta.', 'success')
@@ -624,11 +648,17 @@ def komisja_lista():
     """Lista wniosków do weryfikacji przez komisję"""
     strona = request.args.get('page', 1, type=int)
 
-    # Wnioski wymagające weryfikacji komisji
+    # Wnioski wymagające weryfikacji komisji (nowe + zwrócone do uzupełnienia)
+    from sqlalchemy import or_
     q = db.session.query(ZapisPraktyki)\
           .join(Uzytkownik, ZapisPraktyki.student_id == Uzytkownik.id)\
-          .filter(ZapisPraktyki.status == StatusZapisu.COMMISSION_REVIEW)\
-          .filter(ZapisPraktyki.track_type.in_(['EMPLOYMENT', 'OWN_BUSINESS']))
+          .filter(ZapisPraktyki.track_type.in_(['EMPLOYMENT', 'OWN_BUSINESS']))\
+          .filter(or_(
+              ZapisPraktyki.status == StatusZapisu.COMMISSION_REVIEW,
+              (ZapisPraktyki.status == StatusZapisu.AWAITING_APPROVAL) &
+              ZapisPraktyki.uopz_comments.isnot(None) &
+              (ZapisPraktyki.uopz_comments != '')
+          ))
 
     wnioski = q.order_by(ZapisPraktyki.enrolled_at.desc())\
                .paginate(page=strona, per_page=25, error_out=False)

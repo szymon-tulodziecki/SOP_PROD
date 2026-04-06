@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template
 from flask_login import login_required, current_user
-from app_admin.models import Praktyka, ZapisPraktyki, Uzytkownik, RolaUzytkownika, StatusPraktyki, StatusZapisu
-from app_admin.extensions import db
+from core.models import Praktyka, ZapisPraktyki, Uzytkownik, RolaUzytkownika, StatusPraktyki, StatusZapisu
+from core.extensions import db
 from flask_wtf import FlaskForm
 
 dashboard_bp = Blueprint('dashboard', __name__)

@@ -72,9 +72,6 @@
             <a href="{{ url_for('documents.pobierz_dynamiczny', zapis_id=doc.zapis_id, typ=doc.typ) }}"
                class="przycisk przycisk--drugorzedny przycisk--maly">Pobierz PDF</a>
 
-            {% elif doc.typ_gen is defined %}
-            <a href="{{ url_for('praktyki.generuj_dokument_praktyki', id=doc.zapis_id, doc_type=doc.typ_gen) }}"
-               class="przycisk przycisk--drugorzedny przycisk--maly">Pobierz PDF</a>
             {% endif %}
           {% else %}
           <span style="font-size: 0.78rem; color: var(--kolor-tekst-drugor); padding: 0.3rem 0.625rem; white-space: nowrap;">Niedostępny</span>

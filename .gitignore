@@ -96,3 +96,5 @@ dump.rdb
 *.bak
 *~
 .temporary/
+x.py
+y.py

@@ -19,7 +19,7 @@
     <form method="POST" novalidate class="formularz-panel" aria-label="Formularz studenta">
       {{ form.hidden_tag() }}
 
-      <div class="formularz-panel__siatka">
+      <div class="formularz-panel__siatka" style="margin-bottom: 1.5rem;">
         <div class="pole-formularza {% if form.imie.errors %}pole-formularza--blad{% endif %}">
           <label for="imie" class="pole-formularza__etykieta">Imię <span class="pole-formularza__wymagane" aria-label="wymagane">*</span></label>
           <input type="text" id="imie" name="imie" class="pole-formularza__input"
@@ -36,7 +36,7 @@
         </div>
       </div>
 
-      <div class="formularz-panel__siatka">
+      <div class="formularz-panel__siatka" style="margin-bottom: 1.5rem;">
         <div class="pole-formularza {% if form.email.errors %}pole-formularza--blad{% endif %}">
           <label for="email" class="pole-formularza__etykieta">E-mail uczelniany <span class="pole-formularza__wymagane" aria-label="wymagane">*</span></label>
           <input type="email" id="email" name="email" class="pole-formularza__input"
@@ -63,7 +63,7 @@
         </div>
       </div>
 
-      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
         <div class="pole-formularza">
           <label for="kierunek" class="pole-formularza__etykieta">Kierunek studiów</label>
           <input type="text" id="kierunek" name="kierunek" class="pole-formularza__input"
@@ -84,7 +84,7 @@
         </div>
       </div>
 
-      <div class="pole-formularza {% if form.uopz_id.errors %}pole-formularza--blad{% endif %}">
+      <div class="pole-formularza {% if form.uopz_id.errors %}pole-formularza--blad{% endif %}" style="margin-bottom: 1.5rem;">
         <label for="uopz_id" class="pole-formularza__etykieta">Opiekun uczelniany (UOPZ) <span class="pole-formularza__wymagane" aria-label="wymagane">*</span></label>
         <select id="uopz_id" name="uopz_id" class="filtr-select" style="width:100%;" required>
           <option value="">— wybierz opiekuna —</option>
@@ -96,7 +96,7 @@
       </div>
 
       {% if not uzytkownik %}
-      <div style="background: #f4f6f9; border-radius: var(--promien); padding: 0.875rem 1rem; font-size: 0.875rem; color: var(--kolor-tekst-drugor);">
+      <div style="background: #f4f6f9; border-radius: var(--promien); padding: 0.875rem 1rem; font-size: 0.875rem; color: var(--kolor-tekst-drugor); margin-bottom: 1.5rem;">
         Student zaloguje się e-mailem i hasłem tymczasowym (nr albumu), a następnie zostanie poproszony o ustawienie własnego hasła.
       </div>
       {% endif %}

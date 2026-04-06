@@ -112,9 +112,10 @@
                 <form method="POST" action="{{ url_for('management.przelacz_aktywnosc_firmy', id=firma.id) }}"
                       style="display: inline-block; margin-left: 0.25rem;">
                   {{ csrf_form.hidden_tag() }}
+                  {% set text = 'dezaktywować' if firma.is_active else 'aktywować' %}
                   <button type="submit"
                           class="przycisk {% if firma.is_active %}przycisk--ostrzezenie{% else %}przycisk--drugorzedny{% endif %} przycisk--maly"
-                          onclick="return confirm('Czy na pewno chcesz {{ 'dezaktywować' if firma.is_active else 'aktywować' }} firmę?')">
+                          onclick="return confirm('Czy na pewno chcesz {{ text }} firmę?')">
                     {{ 'Dezaktywuj' if firma.is_active else 'Aktywuj' }}
                   </button>
                 </form>
@@ -166,7 +167,7 @@
       <!-- Pusty stan -->
       <div style="text-align: center; padding: 4rem 2rem;">
         <div style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;">
-          <svg viewBox="0 0 24 24" style="width: 3rem; height: 3rem; fill: currentColor;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 3rem; height: 3rem;">
             <rect x="4" y="2" width="16" height="20" rx="2" ry="2"/>
             <line x1="9" y1="6" x2="9" y2="6.01"/>
             <line x1="15" y1="6" x2="15" y2="6.01"/>

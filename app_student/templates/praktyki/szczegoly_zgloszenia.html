@@ -11,6 +11,28 @@
 {% block tresc %}
 <div style="max-width: 800px; margin: 0 auto;">
 
+  <!-- Baner akcji — wymaga uzupełnienia -->
+  {% if zapis.status.value == 'AWAITING_APPROVAL' and zapis.uopz_comments %}
+  <div style="background:#fffbeb; border:1px solid #f59e0b; border-left:4px solid #d97706; border-radius:0.5rem; padding:1rem 1.25rem; margin-bottom:1.5rem; display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;">
+    <div>
+      <div style="font-weight:600; color:#92400e; margin-bottom:0.25rem;">Zgłoszenie wymaga uzupełnienia</div>
+      <div style="font-size:0.85rem; color:#92400e;">{{ zapis.uopz_comments }}</div>
+    </div>
+    <div style="display:flex; gap:0.5rem; flex-shrink:0; flex-wrap:wrap;">
+      {% if zapis.track_type.value == 'STANDARD' %}
+      <a href="{{ url_for('praktyki.kreator_firma', zapis_id=zapis.id) }}" class="przycisk przycisk--glowny przycisk--maly">Edytuj i odeślij →</a>
+      {% else %}
+      <a href="{{ url_for('praktyki.kreator_wniosek', zapis_id=zapis.id) }}" class="przycisk przycisk--glowny przycisk--maly">Edytuj i odeślij →</a>
+      {% endif %}
+      <form method="POST" action="{{ url_for('praktyki.resubmit_zgloszenia', id=zapis.id) }}" style="margin:0;">
+        <input type="hidden" name="csrf_token" id="resubmit-csrf">
+        <button type="submit" class="przycisk przycisk--drugorzedny przycisk--maly">Odeślij bez zmian</button>
+      </form>
+    </div>
+  </div>
+  <script>document.getElementById('resubmit-csrf').value = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')||'';</script>
+  {% endif %}
+
   <!-- Status zgłoszenia -->
   <div class="karta" style="margin-bottom: 2rem;">
     <div class="karta__naglowek">
@@ -96,28 +118,6 @@
       </div>
       {% endif %}
 
-      {% if (zapis.status.value == 'AWAITING_APPROVAL' and zapis.uopz_comments) or (zapis.status.value == 'PENDING' and zapis.admin_comments) %}
-      <div style="margin-top: 1.5rem; padding: 1rem; background: #f3f4f6; border-radius: 0.5rem; text-align: center;">
-        <p style="margin-bottom: 1rem; color: var(--kolor-tekst-drugor);">
-          {% if zapis.uopz_comments %}
-            Twoje zgłoszenie wymaga uwagi. Skontaktuj się z Opiekunem Uczelnianum lub popraw zgłoszenie zgodnie z uwagami.
-          {% elif zapis.admin_comments %}
-            Twoje zgłoszenie zostało zwrócone przez administratora. Popraw dane zgodnie z uwagami i wyślij ponownie.
-          {% endif %}
-        </p>
-        <div style="display: flex; gap: 1rem; justify-content: center;">
-          {% if zapis.uopz_comments %}
-          <a href="mailto:{{ zapis.uopz.email if zapis.uopz else '' }}" class="przycisk przycisk--drugorzedny">
-            Skontaktuj się z UOPZ
-          </a>
-          {% elif zapis.admin_comments %}
-          <a href="{{ url_for('praktyki.zapisz_krok1', id=zapis.praktyka.id) }}" class="przycisk przycisk--glowny">
-            Popraw i wyślij ponownie
-          </a>
-          {% endif %}
-        </div>
-      </div>
-      {% endif %}
 
     </div>
   </div>

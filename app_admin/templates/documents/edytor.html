@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const taskId = data.task_id;
-            pollStatus(taskId);
+            watchTaskSSE(taskId);
 
         } catch(err) {
             statusBox.innerHTML = `<span style="color: var(--kolor-blad);">Błąd uruchomienia: ${err.message}</span>`;
@@ -83,30 +83,36 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    async function pollStatus(taskId) {
-        try {
-            const res = await fetch(`/dokumenty/status/${taskId}`);
-            const data = await res.json();
-            
-            if(data.status === 'SUCCESS') {
+    // SSE — jedno trwałe połączenie zamiast pollingu co 2 sekundy
+    function watchTaskSSE(taskId) {
+        const es = new EventSource(`/dokumenty/stream/${taskId}`);
+
+        es.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+
+            if (data.status === 'SUCCESS') {
+                es.close();
                 statusBox.innerHTML = `<span style="color: var(--kolor-sukces);">✅ Kompilacja zakończona!</span>`;
                 btn.innerHTML = '⚙️ Kompiluj ponownie';
                 btn.disabled = false;
-                window.location.href = data.download_url; // Auto-pobieranie
-            } else if(data.status === 'FAILURE') {
+                window.location.href = data.download_url;
+            } else if (data.status === 'FAILURE') {
+                es.close();
                 statusBox.innerHTML = `<span style="color: var(--kolor-blad);">❌ Błąd kompilacji. Sprawdź składnię TeX.</span>`;
                 btn.innerHTML = '⚙️ Kompiluj ponownie';
                 btn.disabled = false;
-                alert("Błąd: " + data.error);
+                alert('Błąd: ' + data.error);
             } else {
-                statusBox.innerHTML = `<span style="color: var(--kolor-glowny);">⏳ Kompilacja w toku... (${data.progress}%)</span>`;
-                setTimeout(() => pollStatus(taskId), 2000);
+                statusBox.innerHTML = `<span style="color: var(--kolor-glowny);">⏳ Kompilacja w toku... (${data.progress || 0}%)</span>`;
             }
-        } catch(err) {
-            statusBox.innerHTML = `<span style="color: var(--kolor-blad);">Błąd sieci: ${err.message}</span>`;
+        };
+
+        es.onerror = () => {
+            es.close();
+            statusBox.innerHTML = `<span style="color: var(--kolor-blad);">Błąd połączenia SSE.</span>`;
             btn.innerHTML = '⚙️ Kompiluj ponownie';
             btn.disabled = false;
-        }
+        };
     }
 });
 </script>

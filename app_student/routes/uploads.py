@@ -6,8 +6,8 @@ from werkzeug.utils import secure_filename
 from flask import Blueprint, request, jsonify, send_from_directory, abort, flash, redirect, url_for
 from flask_login import login_required, current_user
 
-from app_student.models import ZapisPraktyki, RolaUzytkownika
-from app_student.extensions import db
+from core.models import ZapisPraktyki, RolaUzytkownika
+from core.extensions import db
 
 uploads_bp = Blueprint('uploads', __name__)
 

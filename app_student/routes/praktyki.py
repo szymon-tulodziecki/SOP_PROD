@@ -3,11 +3,12 @@ import datetime
 from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, make_response
 from flask_wtf import FlaskForm
 from wtforms import StringField, SelectField, DateField, BooleanField, TextAreaField
-from wtforms.validators import DataRequired, Optional, Length, Email
+from wtforms.validators import DataRequired, Optional, Length, Email, ValidationError
+import re
 from flask_login import login_required, current_user
-from app_student.extensions import db
+from core.extensions import db
 import httpx
-from app_student.models import Praktyka, ZapisPraktyki, StatusPraktyki, StatusZapisu, SciezkaPraktyki, Uzytkownik, RolaUzytkownika, EfektUczenia, HarmonogramPraktyki, Firma, IndywidualnyProgram, StatusDokumentu, NumerPisma
+from core.models import Praktyka, ZapisPraktyki, StatusPraktyki, StatusZapisu, SciezkaPraktyki, Uzytkownik, RolaUzytkownika, EfektUczenia, HarmonogramPraktyki, Firma, IndywidualnyProgram, StatusDokumentu
 
 praktyki_bp = Blueprint('praktyki', __name__)
 
@@ -51,6 +52,30 @@ class FormularzDaneFirmy(FlaskForm):
     zopz_stanowisko    = StringField('Stanowisko ZOPZ', validators=[Optional(), Length(max=255)])
     zopz_telefon       = StringField('Telefon ZOPZ', validators=[Optional(), Length(max=50)])
     zopz_email         = StringField('E-mail ZOPZ', validators=[Optional(), Email(message='Nieprawidłowy email.')])
+
+    def validate_firma_miasto(self, field):
+        if not field.data:
+            return
+        if re.fullmatch(r'\d{2}-\d{3}', field.data.strip()):
+            raise ValidationError('Podaj nazwę miasta, nie kod pocztowy. Kod pocztowy możesz dołączyć do adresu.')
+
+    def validate_zopz_imie_nazwisko(self, field):
+        if not field.data:
+            return
+        parts = field.data.strip().split()
+        if len(parts) < 2:
+            raise ValidationError('Podaj imię i nazwisko (co najmniej dwa wyrazy).')
+        if any(char.isdigit() for char in field.data):
+            raise ValidationError('Imię i nazwisko nie może zawierać cyfr.')
+
+    def validate_firma_upowazniony_osoba(self, field):
+        if not field.data:
+            return
+        parts = field.data.strip().split()
+        if len(parts) < 2:
+            raise ValidationError('Podaj imię i nazwisko osoby upoważnionej (co najmniej dwa wyrazy).')
+        if any(char.isdigit() for char in field.data):
+            raise ValidationError('Imię i nazwisko nie może zawierać cyfr.')
 
 
 class FormularzWniosek(FlaskForm):
@@ -156,6 +181,12 @@ def kreator_firma(zapis_id):
         zapis.zopz_telefon       = form.zopz_telefon.data
         zapis.zopz_email         = form.zopz_email.data
         db.session.commit()
+        if zapis.status == StatusZapisu.AWAITING_APPROVAL:
+            zapis.uopz_comments = None
+            zapis.status = StatusZapisu.COMMISSION_REVIEW
+            db.session.commit()
+            flash('Dane zaktualizowane i zgłoszenie odesłane do komisji.', 'success')
+            return redirect(url_for('praktyki.szczegoly_zgloszenia', id=zapis.id))
         return redirect(url_for('praktyki.zapisz_krok2', id=zapis.id))
 
     if request.method == 'GET':
@@ -197,9 +228,12 @@ def kreator_wniosek(zapis_id):
         zapis.firma_miasto = form.pracodawca_miasto.data
         zapis.zopz_stanowisko = form.stanowisko.data
         zapis.uzasadnienie_sciezki = form.uzasadnienie.data
+        byl_awaiting = zapis.status == StatusZapisu.AWAITING_APPROVAL
         zapis.status = StatusZapisu.COMMISSION_REVIEW
+        if byl_awaiting:
+            zapis.uopz_comments = None
         db.session.commit()
-        flash('Wniosek złożony. Oczekujesz na decyzję komisji.', 'success')
+        flash('Dane zaktualizowane i wniosek odesłany do komisji.' if byl_awaiting else 'Wniosek złożony. Oczekujesz na decyzję komisji.', 'success')
         return redirect(url_for('praktyki.szczegoly_zgloszenia', id=zapis.id))
 
     if request.method == 'GET':
@@ -212,58 +246,25 @@ def kreator_wniosek(zapis_id):
     return render_template('kreator/krok2bc_wniosek.html', form=form, zapis=zapis)
 
 
-# ═══════════════════════════════════════════════════════════
-# STARE FORMULARZE (zachowane dla zgodności)
-# ═══════════════════════════════════════════════════════════
-
-class FormularzZapisuKrok1(FlaskForm):
-    track_type = SelectField('Ścieżka praktyki', choices=[
-        ('STANDARD', 'Standardowa'),
-        ('EMPLOYMENT', 'Praca etatowa'),
-        ('OWN_BUSINESS', 'Własna działalność gospodarcza')
-    ], validators=[DataRequired(message='To pole jest wymagane.')])
-
-    termin_od = DateField('Data rozpoczęcia', validators=[DataRequired(message='To pole jest wymagane.')])
-    termin_do = DateField('Data zakończenia', validators=[DataRequired(message='To pole jest wymagane.')])
-    specjalnosc = StringField('Specjalność', validators=[DataRequired(message='To pole jest wymagane.')])
-    ubezpieczenie_nw = BooleanField('Posiadam ubezpieczenie NW (wymagane)')
-
-    # Wybór typu firmy
-    firma_typ = SelectField('Typ firmy', choices=[
-        ('database', 'Wybierz firmę z bazy (ma stałą umowę z uczelnią)'),
-        ('custom', 'Podaj własną firmę (wymagane Załącznik 3)')
-    ], validators=[DataRequired(message='To pole jest wymagane.')])
-
-    # Firma z bazy
-    firma_id = SelectField('Firma z bazy', choices=[], validators=[Optional()])
-
-    # Firma własna (walidacja manualna — pola Optional, bo zależą od firma_typ)
-    firma_nazwa = StringField('Nazwa zakładu pracy', validators=[Optional()])
-    firma_adres = StringField('Adres (ulica, nr)', validators=[Optional()])
-    firma_miasto = StringField('Miasto i kod pocztowy', validators=[Optional()])
-    firma_nip_krs = StringField('NIP / KRS', validators=[Optional()])
-    firma_upowazniony_osoba = StringField('Osoba upoważniona do podpisania Porozumienia (Imię i nazwisko)', validators=[Optional()])
-    firma_upowazniony_stanowisko = StringField('Stanowisko osoby upoważnionej', validators=[Optional()])
-
-    # ZOPZ (Optional — walidacja manualna, bo widoczność zależy od firma_typ)
-    zopz_imie_nazwisko = StringField('Opiekun Zakładowy (ZOPZ) - Imię i nazwisko', validators=[Optional()])
-    zopz_stanowisko = StringField('Stanowisko ZOPZ', validators=[Optional()])
-    zopz_telefon = StringField('Telefon ZOPZ', validators=[Optional()])
-    zopz_email = StringField('E-mail ZOPZ', validators=[Optional(), Email(message='Nieprawidłowy adres email.')])
-
-    # UOPZ
-    uopz_id = SelectField('Wybierz Opiekuna Uczelnianego (UOPZ)', choices=[], validators=[Optional()])
 
 
 @praktyki_bp.route('/')
 @login_required
 def lista():
     dostepne = db.session.query(Praktyka)\
+                 .filter_by(is_active=True)\
                  .order_by(Praktyka.rok_uczelniany.desc())\
                  .all()
 
     zapisy_data = {
-        str(z.internship_id): {'id': str(z.id), 'status': z.status.value}
+        str(z.internship_id): {
+            'id': str(z.id),
+            'status': z.status.value,
+            'wymaga_uwagi': (
+                z.status == StatusZapisu.AWAITING_APPROVAL
+                and bool(z.uopz_comments)
+            ),
+        }
         for z in db.session.query(ZapisPraktyki)\
                    .filter_by(student_id=current_user.id).all()
     }
@@ -287,136 +288,12 @@ def zakoncz_praktyke(id):
     return redirect(url_for('praktyki.lista'))
 
 
-@praktyki_bp.route('/<uuid:id>/zapisz/krok1', methods=['GET', 'POST'])
+@praktyki_bp.route('/<uuid:id>/zapisz/krok1')
 @login_required
 def zapisz_krok1(id):
-    praktyka = db.session.get(Praktyka, id)
-    if not praktyka:
-        flash('Ta praktyka nie jest dostępna.', 'danger')
-        return redirect(url_for('praktyki.lista'))
+    """Stara trasa — przekierowanie do nowego kreatora."""
+    return redirect(url_for('praktyki.kreator_sciezka', id=id))
 
-    # Sprawdź czy istnieje aktualny zapis w statusie edytowalnym
-    istniejacy = db.session.query(ZapisPraktyki).filter_by(
-        internship_id=id,
-        student_id=current_user.id
-    ).filter(
-        ZapisPraktyki.status.in_([StatusZapisu.PENDING, StatusZapisu.AWAITING_APPROVAL])
-    ).first()
-
-    if istniejacy:
-        if istniejacy.status == StatusZapisu.PENDING:
-            # Zawsze pozwól edytować krok 1 gdy status PENDING (nowe lub zwrócone do poprawy)
-            form = FormularzZapisuKrok1(obj=istniejacy)
-        else:
-            # AWAITING_APPROVAL lub wyższy — tylko szczegóły
-            flash('Zgłoszenie zostało wysłane i oczekuje na zatwierdzenie. Nie można edytować.', 'info')
-            return redirect(url_for('praktyki.szczegoly_zgloszenia', id=istniejacy.id))
-    else:
-        form = FormularzZapisuKrok1()
-
-    uopz_list = db.session.query(Uzytkownik).filter_by(role=RolaUzytkownika.UOPZ, is_active=True).order_by(Uzytkownik.last_name).all()
-    form.uopz_id.choices = [('', '--- Wybierz UOPZ ---')] + [(str(u.id), f"{u.first_name} {u.last_name}") for u in uopz_list]
-
-    # Pobierz firmy z bazy (te które mają stałą umowę)
-    firmy_list = db.session.query(Firma).filter_by(has_standing_agreement=True, is_active=True).order_by(Firma.nazwa).all()
-    form.firma_id.choices = [('', '--- Wybierz firmę ---')] + [(str(f.id), f.nazwa) for f in firmy_list]
-
-    if form.validate_on_submit():
-        if not form.ubezpieczenie_nw.data:
-            flash('Ubezpieczenie NW jest wymagane przed startem.', 'danger')
-            return render_template('praktyki/krok1.html', form=form, praktyka=praktyka)
-
-        # Walidacja wyboru firmy
-        if form.firma_typ.data == 'database':
-            if not form.firma_id.data:
-                flash('Musisz wybrać firmę z bazy danych.', 'danger')
-                return render_template('praktyki/krok1.html', form=form, praktyka=praktyka)
-        elif form.firma_typ.data == 'custom':
-            if not form.firma_nazwa.data or not form.firma_adres.data or not form.firma_miasto.data:
-                flash('Musisz podać dane własnej firmy (nazwa, adres, miasto).', 'danger')
-                return render_template('praktyki/krok1.html', form=form, praktyka=praktyka)
-            if not form.zopz_imie_nazwisko.data or not form.zopz_email.data:
-                flash('Musisz podać dane opiekuna zakładowego (ZOPZ) - przynajmniej imię/nazwisko i email.', 'danger')
-                return render_template('praktyki/krok1.html', form=form, praktyka=praktyka)
-
-        if istniejacy and istniejacy.status == StatusZapisu.PENDING:
-            # Aktualizuj istniejący zapis (powrót do edycji lub poprawa po komentarzu admina)
-            zapis = istniejacy
-            zapis.track_type = SciezkaPraktyki[form.track_type.data]
-            zapis.termin_od = form.termin_od.data
-            zapis.termin_do = form.termin_do.data
-            zapis.specjalnosc = form.specjalnosc.data
-            zapis.ubezpieczenie_nw = form.ubezpieczenie_nw.data
-
-            # Ustaw firmę na podstawie wyboru
-            if form.firma_typ.data == 'database':
-                zapis.firma_id = form.firma_id.data
-                # Wyczyść pola custom firmy
-                zapis.firma_nazwa = None
-                zapis.firma_adres = None
-                zapis.firma_miasto = None
-                zapis.firma_nip_krs = None
-                zapis.firma_upowazniony_osoba = None
-                zapis.firma_upowazniony_stanowisko = None
-            else:
-                zapis.firma_id = None
-                zapis.firma_nazwa = form.firma_nazwa.data
-                zapis.firma_adres = form.firma_adres.data
-                zapis.firma_miasto = form.firma_miasto.data
-                zapis.firma_nip_krs = form.firma_nip_krs.data
-                zapis.firma_upowazniony_osoba = form.firma_upowazniony_osoba.data
-                zapis.firma_upowazniony_stanowisko = form.firma_upowazniony_stanowisko.data
-            zapis.zopz_imie_nazwisko = form.zopz_imie_nazwisko.data
-            zapis.zopz_stanowisko = form.zopz_stanowisko.data
-            zapis.zopz_telefon = form.zopz_telefon.data
-            zapis.zopz_email = form.zopz_email.data
-            zapis.uopz_id = form.uopz_id.data if form.uopz_id.data else None
-            # Wyczyść komentarze admina po poprawie
-            zapis.admin_comments = None
-            # Sprawdź czy istnieją dane harmonogramu - jeśli tak, nie zmieniaj statusu jeszcze
-            harmonogramy_count = db.session.query(HarmonogramPraktyki).filter_by(enrollment_id=zapis.id).count()
-            if harmonogramy_count > 0:
-                # Są dane harmonogramu, pozwól na dalszą edycję bez zmiany statusu
-                flash('Poprawiono dane podstawowe. Możesz przejść do dalszych kroków lub wysłać zgłoszenie.', 'success')
-            else:
-                # Brak harmonogramu, wymaga przejścia przez kolejne kroki
-                flash('Poprawiono dane podstawowe. Przejdź do planowania harmonogramu.', 'success')
-        else:
-            # Stwórz nowy zapis
-            zapis = ZapisPraktyki(
-                id            = uuid.uuid4(),
-                internship_id = id,
-                student_id    = current_user.id,
-                status        = StatusZapisu.PENDING,
-                track_type    = SciezkaPraktyki[form.track_type.data],
-                termin_od     = form.termin_od.data,
-                termin_do     = form.termin_do.data,
-                specjalnosc   = form.specjalnosc.data,
-                ubezpieczenie_nw = form.ubezpieczenie_nw.data,
-                zopz_imie_nazwisko = form.zopz_imie_nazwisko.data,
-                zopz_stanowisko = form.zopz_stanowisko.data,
-                zopz_telefon = form.zopz_telefon.data,
-                zopz_email = form.zopz_email.data,
-                uopz_id = form.uopz_id.data if form.uopz_id.data else None
-            )
-
-            # Ustaw firmę na podstawie wyboru
-            if form.firma_typ.data == 'database':
-                zapis.firma_id = form.firma_id.data
-            else:
-                zapis.firma_nazwa = form.firma_nazwa.data
-                zapis.firma_adres = form.firma_adres.data
-                zapis.firma_miasto = form.firma_miasto.data
-                zapis.firma_nip_krs = form.firma_nip_krs.data
-                zapis.firma_upowazniony_osoba = form.firma_upowazniony_osoba.data
-                zapis.firma_upowazniony_stanowisko = form.firma_upowazniony_stanowisko.data
-            db.session.add(zapis)
-            flash(f'Zapisano wstępne dane. Przejdź do planowania harmonogramu.', 'success')
-
-        db.session.commit()
-        return redirect(url_for('praktyki.zapisz_krok2', id=zapis.id))
-
-    return render_template('praktyki/krok1.html', form=form, praktyka=praktyka)
 
 
 @praktyki_bp.route('/zgloszenie/<uuid:id>/krok2', methods=['GET', 'POST'])
@@ -457,12 +334,8 @@ def zapisz_krok2(id):
         db.session.add_all(nowe_wiersze)
         db.session.commit()
         
-        if zapis.track_type.value != 'STANDARD':
-            flash('Harmonogram zapisany. Przejdź do uzasadnienia ścieżki zawodowej.', 'success')
-            return redirect(url_for('praktyki.zapisz_krok3', id=zapis.id))
-        else:
-            flash('Wniosek został w pełni zapisany. Oczekuje teraz na akceptację UOPZ.', 'success')
-            return redirect(url_for('dashboard.index'))
+        flash('Harmonogram zapisany.', 'success')
+        return redirect(url_for('praktyki.szczegoly_zgloszenia', id=zapis.id))
     else:
         # GET request - pobranie istniejących danych harmonogramu
         istniejace_harmonogramy = {}
@@ -476,102 +349,11 @@ def zapisz_krok2(id):
 
     csrf_form = FlaskForm()
 
-    return render_template('praktyki/krok2.html',
+    return render_template('kreator/krok3_harmonogram.html',
                          zapis=zapis,
                          efekty=efekty,
                          csrf_form=csrf_form,
                          istniejace_harmonogramy=istniejace_harmonogramy)
-
-
-class FormularzZapisuKrok3(FlaskForm):
-    uzasadnienie = TextAreaField('Uzasadnienie wniosku', validators=[DataRequired()])
-    zalaczniki = StringField('Załączane dokumenty (wymień)', validators=[DataRequired()])
-
-@praktyki_bp.route('/zgloszenie/<uuid:id>/krok3', methods=['GET', 'POST'])
-@login_required
-def zapisz_krok3(id):
-    zapis = db.session.get(ZapisPraktyki, id)
-    if not zapis or zapis.student_id != current_user.id:
-        abort(404)
-        
-    if zapis.track_type.value == 'STANDARD':
-        return redirect(url_for('dashboard.index'))
-        
-    form = FormularzZapisuKrok3()
-
-    # Wypełnij formularz istniejącymi danymi jeśli są
-    if request.method == 'GET' and zapis.uzasadnienie_sciezki:
-        form.uzasadnienie.data = zapis.uzasadnienie_sciezki
-    if request.method == 'GET' and zapis.zalaczniki_sciezki:
-        form.zalaczniki.data = zapis.zalaczniki_sciezki
-
-    if form.validate_on_submit():
-        zapis.uzasadnienie_sciezki = form.uzasadnienie.data
-        zapis.zalaczniki_sciezki = form.zalaczniki.data
-        db.session.commit()
-
-        flash('Wniosek zapisany. Przejdź do załączania dokumentów.', 'success')
-        return redirect(url_for('praktyki.zapisz_krok4', id=zapis.id))
-
-    return render_template('praktyki/krok3.html', form=form, zapis=zapis)
-
-
-@praktyki_bp.route('/zgloszenie/<uuid:id>/krok4', methods=['GET', 'POST'])
-@login_required
-def zapisz_krok4(id):
-    """Krok 4: Upload dokumentów dla ścieżek B i C"""
-    zapis = db.session.get(ZapisPraktyki, id)
-    if not zapis or zapis.student_id != current_user.id:
-        abort(404)
-
-    if zapis.track_type.value == 'STANDARD':
-        return redirect(url_for('dashboard.index'))
-
-    # Sprawdź czy poprzednie kroki zostały ukończone
-    if not zapis.uzasadnienie_sciezki:
-        flash('Najpierw uzupełnij uzasadnienie w kroku 3.', 'warning')
-        return redirect(url_for('praktyki.zapisz_krok3', id=id))
-
-    # Zdefiniuj wymagane typy dokumentów dla każdej ścieżki
-    required_docs = {
-        'EMPLOYMENT': [
-            ('umowa_pracy', 'Umowa o pracę lub zaświadczenie o zatrudnieniu'),
-            ('opis_stanowiska', 'Opis stanowiska pracy / karta stanowiskowa'),
-            ('zakres_obowiazkow', 'Zakres obowiązków i realizowanych zadań')
-        ],
-        'OWN_BUSINESS': [
-            ('ceidg_krs', 'Aktualny wpis do CEIDG lub KRS'),
-            ('opis_dzialalnosci', 'Opis profilu działalności gospodarczej'),
-            ('projekty_komercyjne', 'Dokumenty potwierdzające realizowane projekty')
-        ]
-    }
-
-    docs_for_track = required_docs.get(zapis.track_type.value, [])
-
-    if request.method == 'POST':
-        if request.form.get('action') == 'finalize':
-            # Sprawdź czy wszystkie wymagane dokumenty zostały uploadowane
-            from sqlalchemy import text
-            uploaded_types_query = text("""
-                SELECT DISTINCT document_type
-                FROM uploaded_documents
-                WHERE enrollment_id = :enrollment_id
-            """)
-            uploaded_types = {row[0] for row in db.session.execute(uploaded_types_query, {'enrollment_id': str(id)})}
-
-            required_types = {doc_type for doc_type, _ in docs_for_track}
-            missing_docs = required_types - uploaded_types
-
-            if missing_docs:
-                flash(f'Brakuje dokumentów: {", ".join(missing_docs)}', 'warning')
-            else:
-                # Zmień status na COMMISSION_REVIEW
-                zapis.status = StatusZapisu.COMMISSION_REVIEW
-                db.session.commit()
-                flash('Wniosek został przesłany do weryfikacji przez komisję!', 'success')
-                return redirect(url_for('dashboard.index'))
-
-    return render_template('praktyki/krok4.html', zapis=zapis, required_docs=docs_for_track)
 
 
 @praktyki_bp.route('/zgloszenie/<uuid:id>/szczegoly')
@@ -593,160 +375,20 @@ def szczegoly_zgloszenia(id):
     return render_template('praktyki/szczegoly_zgloszenia.html', zapis=zapis, uploaded_docs=uploaded_docs)
 
 
-def get_next_document_number():
-    """Generuje kolejny numer pisma wychodzącego"""
-    current_year = datetime.datetime.now().year
-
-    # Znajdź ostatni numer w tym roku
-    last_number = db.session.query(NumerPisma)\
-        .filter(NumerPisma.numer.like(f'ANS/PZ/{current_year}/%'))\
-        .order_by(NumerPisma.numer.desc())\
-        .first()
-
-    if last_number:
-        # Wyciągnij numer i zwiększ o 1
-        parts = last_number.numer.split('/')
-        last_num = int(parts[-1])
-        next_num = last_num + 1
-    else:
-        next_num = 1
-
-    return f"ANS/PZ/{current_year}/{next_num:03d}"
-
-
-@praktyki_bp.route('/zgloszenie/<uuid:id>/dokument/<doc_type>')
+@praktyki_bp.route('/zgloszenie/<uuid:id>/resubmit', methods=['POST'])
 @login_required
-def generuj_dokument_praktyki(id, doc_type):
-    """Generuje konkretny dokument PDF dla praktyki"""
-
+def resubmit_zgloszenia(id):
+    """Student ponownie wysyła zgłoszenie po poprawkach."""
     zapis = db.session.get(ZapisPraktyki, id)
     if not zapis or zapis.student_id != current_user.id:
         abort(404)
-
-    # Sprawdź czy można generować dokumenty - tylko dla zatwierdzonych praktyk
-    if zapis.status not in [StatusZapisu.IN_PROGRESS, StatusZapisu.COMPLETED]:
-        flash('Dokumenty można generować tylko dla zatwierdzonych praktyk.', 'error')
+    if zapis.status != StatusZapisu.AWAITING_APPROVAL:
+        flash('Zgłoszenie nie może być ponownie wysłane w tym statusie.', 'warning')
         return redirect(url_for('praktyki.szczegoly_zgloszenia', id=id))
-
-    # Sprawdź czy harmonogram jest wypełniony
-    harmonogram_count = db.session.query(HarmonogramPraktyki)\
-        .filter_by(enrollment_id=zapis.id)\
-        .count()
-
-    if harmonogram_count == 0:
-        flash('Najpierw uzupełnij harmonogram praktyki.', 'error')
-        return redirect(url_for('praktyki.zapisz_krok2', id=zapis.id))
-
-    # Dla załącznika 3 sprawdź czy firma nie ma stałej umowy
-    if doc_type == 'ZALACZNIK_3':
-        if zapis.firma and zapis.firma.has_standing_agreement:
-            flash('Załącznik 3 nie jest wymagany - firma ma stałą umowę z uczelnią.', 'error')
-            return redirect(url_for('praktyki.szczegoly_zgloszenia', id=id))
-
-    # Dla załącznika 4 wystarczy że harmonogram jest wypełniony (sprawdzono wyżej)
-
-    # Generuj numer pisma dla załącznika 2
-    numer_pisma = None
-    if doc_type == 'ZALACZNIK_2':
-        existing_number = db.session.query(NumerPisma)\
-            .filter_by(enrollment_id=zapis.id, document_type='ZALACZNIK_2')\
-            .first()
-
-        if not existing_number:
-            numer_pisma = get_next_document_number()
-            new_number = NumerPisma(
-                id=uuid.uuid4(),
-                enrollment_id=zapis.id,
-                document_type='ZALACZNIK_2',
-                numer=numer_pisma
-            )
-            db.session.add(new_number)
-            db.session.commit()
-        else:
-            numer_pisma = existing_number.numer
-
-    # Przygotuj dane do generacji PDF
-    data = {
-        'student': {
-            'imie': zapis.student.first_name,
-            'nazwisko': zapis.student.last_name,
-            'nr_albumu': zapis.student.album_number,
-            'plec': getattr(zapis.student, 'plec', '') or '',
-        },
-        'praktyka': {
-            'rok_uczelniany': zapis.praktyka.rok_uczelniany,
-            'semestr': zapis.praktyka.semestr,
-            'wymiar_godzin': zapis.praktyka.wymiar_godzin
-        },
-        'firma': {
-            'nazwa': (zapis.firma.nazwa if zapis.firma else None) or zapis.firma_nazwa or '',
-            'adres': (zapis.firma.adres if zapis.firma else None) or zapis.firma_adres or '',
-            'miasto': (zapis.firma.miasto if zapis.firma else None) or zapis.firma_miasto or '',
-            'nip_krs': (zapis.firma.nip_krs if zapis.firma else None) or zapis.firma_nip_krs or '',
-        },
-        'firma_upowazniony': zapis.firma_upowazniony_osoba or '',
-        'specjalnosc': zapis.specjalnosc or '',
-        'terminy': {
-            'od': zapis.termin_od.strftime('%d.%m.%Y') if zapis.termin_od else '',
-            'do': zapis.termin_do.strftime('%d.%m.%Y') if zapis.termin_do else ''
-        },
-        'numer_pisma': numer_pisma,
-        'zopz': {
-            'imie_nazwisko': zapis.zopz_imie_nazwisko,
-            'stanowisko': zapis.zopz_stanowisko,
-            'telefon': zapis.zopz_telefon,
-            'email': zapis.zopz_email
-        },
-        'uopz': {
-            'imie_nazwisko': f"{zapis.uopz.first_name} {zapis.uopz.last_name}" if zapis.uopz else '',
-        }
-    }
-
-    # Dodaj harmonogram dla załącznika 4
-    if doc_type == 'ZALACZNIK_4':
-        harmonogram = db.session.query(HarmonogramPraktyki)\
-            .filter_by(enrollment_id=zapis.id)\
-            .all()
-
-        data['harmonogram'] = [{
-            'efekt_kod': h.efekt.kod,
-            'efekt_opis': h.efekt.opis,
-            'dzial': h.nazwa_dzialu,
-            'prace': h.przykladowe_prace,
-            'dni': h.liczba_dni
-        } for h in harmonogram]
-
-    # Mapowanie typów dokumentów na szablony (poprawne numery załączników)
-    SZABLONY_MAP = {
-        'ZALACZNIK_3': 'zal1_porozumienie.tex.j2',  # Porozumienie = Zał. 1
-        'ZALACZNIK_4': 'zal2a_program.tex.j2',      # Indywidualny Program = Zał. 2a
-    }
-    template_name = SZABLONY_MAP.get(doc_type, f'{doc_type.lower()}.tex.j2')
-
-    try:
-        # Wywołaj tex-service
-        response = httpx.post(
-            'http://tex-service:5002/generuj',
-            json={
-                'template': template_name,
-                'context': data,
-                'filename': f"{template_name.replace('.tex.j2', '')}_{zapis.student.last_name}.pdf"
-            },
-            timeout=30
-        )
-
-        if response.status_code == 200:
-            import unicodedata
-            safe_name = unicodedata.normalize('NFKD', zapis.student.last_name).encode('ascii', 'ignore').decode('ascii') or 'student'
-            pdf_name = template_name.replace('.tex.j2', '')
-            pdf_response = make_response(response.content)
-            pdf_response.headers['Content-Type'] = 'application/pdf'
-            pdf_response.headers['Content-Disposition'] = f'attachment; filename="{pdf_name}_{safe_name}.pdf"'
-            return pdf_response
-        else:
-            flash(f'Błąd generowania dokumentu: {response.text}', 'error')
-
-    except Exception as e:
-        flash(f'Błąd połączenia z serwisem PDF: {str(e)}', 'error')
-
+    zapis.status = StatusZapisu.COMMISSION_REVIEW
+    zapis.uopz_comments = None
+    db.session.commit()
+    flash('Zgłoszenie zostało ponownie wysłane do weryfikacji komisji.', 'success')
     return redirect(url_for('praktyki.szczegoly_zgloszenia', id=id))
+
+

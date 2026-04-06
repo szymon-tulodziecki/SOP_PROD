@@ -29,6 +29,10 @@
            class="przycisk przycisk--{% if request.args.get('status') == 'IN_PROGRESS' %}glowny{% else %}drugorzedny{% endif %} przycisk--maly">
           Zatwierdzone
         </a>
+        <a href="{{ url_for('management.lista_zgloszen', status='AWAITING_APPROVAL') }}"
+           class="przycisk przycisk--{% if request.args.get('status') == 'AWAITING_APPROVAL' %}glowny{% else %}drugorzedny{% endif %} przycisk--maly">
+          Nowe zgłoszenia
+        </a>
       </div>
     </div>
   </div>

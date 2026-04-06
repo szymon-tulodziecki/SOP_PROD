@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 from tex_engine.pdf_service import pdf_service
 from tex_engine.compiler import TexCompilationError
-from app_admin.models import Praktyka, RolaUzytkownika
+from core.models import Praktyka, RolaUzytkownika
 
 pdf_bp = Blueprint("pdf", __name__, url_prefix="/pdf")
 

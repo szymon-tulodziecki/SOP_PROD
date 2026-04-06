@@ -47,10 +47,17 @@
 
         </div>
 
-        <div class="pole-formularza {% if form.efekt_id.errors %}pole-formularza--blad{% endif %}" style="margin-bottom: 1rem;">
-          {{ form.efekt_id.label(class="pole-formularza__etykieta") }}
-          {{ form.efekt_id(class="filtr-select", style="width: 100%;") }}
-          {% for e in form.efekt_id.errors %}
+        <div class="pole-formularza {% if form.efekty_ids.errors %}pole-formularza--blad{% endif %}" style="margin-bottom: 1rem;">
+          {{ form.efekty_ids.label(class="pole-formularza__etykieta") }}
+          <div style="border: 1px solid var(--kolor-ramka, #d1d5db); border-radius: 6px; padding: 0.75rem; max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem;">
+            {% for subfield in form.efekty_ids %}
+            <label style="display: flex; align-items: flex-start; gap: 0.5rem; cursor: pointer; font-size: 0.875rem; line-height: 1.4;">
+              {{ subfield(style="margin-top: 2px; flex-shrink: 0;") }}
+              <span>{{ subfield.label.text }}</span>
+            </label>
+            {% endfor %}
+          </div>
+          {% for e in form.efekty_ids.errors %}
             <span class="pole-formularza__blad">{{ e }}</span>
           {% endfor %}
         </div>

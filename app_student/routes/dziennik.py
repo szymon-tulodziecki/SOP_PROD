@@ -4,11 +4,12 @@ from datetime import date
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
 from flask_wtf import FlaskForm
-from wtforms import StringField, SelectField, TextAreaField
+from wtforms import StringField, SelectMultipleField, TextAreaField
 from wtforms.validators import DataRequired, ValidationError
+from wtforms.widgets import ListWidget, CheckboxInput
 
-from app_student.models import ZapisPraktyki, WpisDziennika, EfektUczenia, StatusZapisu
-from app_student.extensions import db
+from core.models import ZapisPraktyki, WpisDziennika, EfektUczenia, StatusZapisu
+from core.extensions import db
 
 dziennik_bp = Blueprint('dziennik', __name__)
 
@@ -17,7 +18,12 @@ class FormularzWpisu(FlaskForm):
     data_wpisu    = StringField('Data', validators=[DataRequired()])
     liczba_godzin = StringField('Liczba godzin (1–8)', validators=[DataRequired()])
     opis          = TextAreaField('Opis wykonanych prac', validators=[DataRequired()])
-    efekt_id      = SelectField('Efekt uczenia się', validators=[DataRequired()])
+    efekty_ids    = SelectMultipleField(
+        'Efekty uczenia się',
+        validators=[DataRequired(message='Wybierz co najmniej jeden efekt uczenia się.')],
+        widget=ListWidget(prefix_label=False),
+        option_widget=CheckboxInput(),
+    )
 
     def validate_liczba_godzin(self, pole):
         try:
@@ -71,10 +77,11 @@ def nowy_wpis():
         flash('Nie masz aktywnej praktyki. Skontaktuj się z opiekunem.', 'danger')
         return redirect(url_for('dziennik.index'))
 
+    efekty = db.session.query(EfektUczenia).order_by(EfektUczenia.id).all()
     form = FormularzWpisu()
-    form.efekt_id.choices = [
+    form.efekty_ids.choices = [
         (str(e.id), f'{e.kod}: {e.description[:80]}...' if len(e.description) > 80 else f'{e.kod}: {e.description}')
-        for e in db.session.query(EfektUczenia).order_by(EfektUczenia.id).all()
+        for e in efekty
     ]
 
     if form.validate_on_submit():
@@ -83,15 +90,18 @@ def nowy_wpis():
         if duplikat:
             flash('Wpis na ten dzień już istnieje. Możesz go edytować.', 'danger')
             return render_template('dziennik/nowy_wpis.html', form=form, zapis=zapis)
-        
+
         godziny = int(form.liczba_godzin.data)
+        wybrane_efekty = db.session.query(EfektUczenia).filter(
+            EfektUczenia.id.in_([int(i) for i in form.efekty_ids.data])
+        ).all()
         wpis = WpisDziennika(
             id = uuid.uuid4(),
             enrollment_id = zapis.id,
             entry_date = data,
             duration_hours = godziny,
             description = form.opis.data.strip(),
-            learning_outcome_id = int(form.efekt_id.data),
+            efekty_uczenia = wybrane_efekty,
         )
         db.session.add(wpis)
         db.session.commit()
@@ -117,17 +127,20 @@ def edytuj_wpis(wpis_id):
         from flask import abort
         abort(403)
 
+    efekty = db.session.query(EfektUczenia).order_by(EfektUczenia.id).all()
     form = FormularzWpisu()
-    form.efekt_id.choices = [
+    form.efekty_ids.choices = [
         (str(e.id), f'{e.kod}: {e.description[:80]}...' if len(e.description) > 80 else f'{e.kod}: {e.description}')
-        for e in db.session.query(EfektUczenia).order_by(EfektUczenia.id).all()
+        for e in efekty
     ]
 
     if form.validate_on_submit():
         wpis.entry_date     = date.fromisoformat(form.data_wpisu.data)
         wpis.duration_hours = int(form.liczba_godzin.data)
         wpis.description    = form.opis.data.strip()
-        wpis.learning_outcome_id = int(form.efekt_id.data)
+        wpis.efekty_uczenia = db.session.query(EfektUczenia).filter(
+            EfektUczenia.id.in_([int(i) for i in form.efekty_ids.data])
+        ).all()
         db.session.commit()
         flash('Wpis został zaktualizowany.', 'success')
         return redirect(url_for('dziennik.index'))
@@ -136,7 +149,7 @@ def edytuj_wpis(wpis_id):
         form.data_wpisu.data    = wpis.entry_date.isoformat()
         form.liczba_godzin.data = str(wpis.duration_hours)
         form.opis.data          = wpis.description
-        form.efekt_id.data      = str(wpis.learning_outcome_id)
+        form.efekty_ids.data    = [str(e.id) for e in wpis.efekty_uczenia]
 
     return render_template('dziennik/nowy_wpis.html', form=form, zapis=zapis, edycja=True, wpis=wpis)
 

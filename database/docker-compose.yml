@@ -28,7 +28,7 @@ services:
       dockerfile: Dockerfile.worker
     container_name: ans_celery_worker
     environment:
-      DATABASE_URL: postgresql+pg8000://ans_admin:secure_password_123@db:5432/ans_praktyki
+      DATABASE_URL: postgresql+psycopg2://ans_admin:secure_password_123@db:5432/ans_praktyki
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0
       FLASK_ENV: development

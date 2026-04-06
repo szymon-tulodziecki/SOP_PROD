@@ -77,7 +77,7 @@
 async function triggerAuto(docType) {
     const btn = document.getElementById('btn-auto-' + docType);
     const statusBox = document.getElementById('status-' + docType);
-    
+
     btn.disabled = true;
     statusBox.innerHTML = '<span style="color: var(--kolor-glowny);">Uruchamianie...</span>';
 
@@ -92,37 +92,46 @@ async function triggerAuto(docType) {
             headers: {'X-Requested-With': 'XMLHttpRequest'}
         });
         const data = await res.json();
-        if(!res.ok) throw new Error(data.error || 'Błąd serwera');
-        
-        pollGenerateStatus(data.task_id, docType, btn, statusBox);
-    } catch(err) {
+        if (!res.ok) throw new Error(data.error || 'Błąd serwera');
+
+        // SSE — jedno trwałe połączenie zamiast pollingu co 2 sekundy
+        watchTaskSSE(data.task_id, btn, statusBox);
+    } catch (err) {
         statusBox.innerHTML = `<span style="color: var(--kolor-blad);">Błąd: ${err.message}</span>`;
         btn.disabled = false;
     }
 }
 
-async function pollGenerateStatus(taskId, docType, btn, statusBox) {
-    try {
-        const res = await fetch(`/dokumenty/status/${taskId}`);
-        const data = await res.json();
-        
-        if(data.status === 'SUCCESS') {
+function watchTaskSSE(taskId, btn, statusBox) {
+    const es = new EventSource(`/dokumenty/stream/${taskId}`);
+
+    statusBox.innerHTML = '<span style="color: var(--kolor-glowny);">⏳ Trwa kompilacja...</span>';
+
+    es.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+
+        if (data.status === 'SUCCESS') {
+            es.close();
             statusBox.innerHTML = `<span style="color: var(--kolor-sukces);">✅ Gotowe! Pobieranie...</span>`;
             btn.disabled = false;
             window.location.href = data.download_url;
             setTimeout(() => { statusBox.innerHTML = ''; window.location.reload(); }, 3000);
-        } else if(data.status === 'FAILURE') {
+        } else if (data.status === 'FAILURE') {
+            es.close();
             statusBox.innerHTML = `<span style="color: var(--kolor-blad);">❌ Błąd generacji.</span>`;
             btn.disabled = false;
-            alert("Błąd integracji: " + data.error);
+            alert('Błąd kompilacji: ' + data.error);
         } else {
-            statusBox.innerHTML = `<span style="color: var(--kolor-glowny);">⏳ Trwa kompilacja...</span>`;
-            setTimeout(() => pollGenerateStatus(taskId, docType, btn, statusBox), 2000);
+            const prog = data.progress || 0;
+            statusBox.innerHTML = `<span style="color: var(--kolor-glowny);">⏳ Kompilacja... ${prog}%</span>`;
         }
-    } catch(err) {
-        statusBox.innerHTML = `<span style="color: var(--kolor-blad);">Błąd sieci: ${err.message}</span>`;
+    };
+
+    es.onerror = () => {
+        es.close();
+        statusBox.innerHTML = `<span style="color: var(--kolor-blad);">Błąd połączenia SSE.</span>`;
         btn.disabled = false;
-    }
+    };
 }
 </script>
 {% endblock %}

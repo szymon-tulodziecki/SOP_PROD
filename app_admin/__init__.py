@@ -1,13 +1,19 @@
 import os
 
 from flask import Flask, render_template
-from app_admin.extensions import db, login_manager
+from jinja2 import select_autoescape
+from core.extensions import db, login_manager
 import logging
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
 def create_app():
     app = Flask(__name__)
+
+    app.jinja_options = app.jinja_options.copy()
+    app.jinja_options.update(dict(
+        autoescape=select_autoescape(['html', 'xml'])
+    ))
 
     # Configure file-based logging so exceptions are captured when console is silent
     logs_dir = Path(app.root_path) / 'logs'
@@ -51,6 +57,26 @@ def create_app():
         app.register_blueprint(uploads_bp,    url_prefix='/uploads')
 
     @app.context_processor
+    def inject_nav_counts():
+        counts = {}
+        try:
+            from flask_login import current_user
+            if current_user.is_authenticated:
+                from core.models import ZapisPraktyki, StatusZapisu
+                counts['nav_oczekujace'] = db.session.query(ZapisPraktyki).filter(
+                    ZapisPraktyki.status == StatusZapisu.AWAITING_APPROVAL
+                ).count()
+                counts['nav_komisja'] = db.session.query(ZapisPraktyki).filter(
+                    ZapisPraktyki.status == StatusZapisu.COMMISSION_REVIEW
+                ).count()
+                counts['nav_dziekan'] = db.session.query(ZapisPraktyki).filter(
+                    ZapisPraktyki.status == StatusZapisu.DEAN_APPROVAL
+                ).count()
+        except Exception:
+            pass
+        return counts
+
+    @app.context_processor
     def inject_tlumacz():
         return dict(tlumacz_status=lambda val: {
             'PENDING': 'Oczekuje',
@@ -88,5 +114,5 @@ def create_app():
 
 @login_manager.user_loader
 def wczytaj_uzytkownika(user_id):
-    from app_admin.models import Uzytkownik
+    from core.models import Uzytkownik
     return db.session.get(Uzytkownik, user_id)

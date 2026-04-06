@@ -168,8 +168,14 @@ CREATE TABLE journal_entries (
     entry_date DATE NOT NULL,
     duration_hours INTEGER NOT NULL CHECK (duration_hours > 0 AND duration_hours <= 8),
     description TEXT NOT NULL,
-    learning_outcome_id INTEGER NOT NULL REFERENCES learning_outcomes(id),
     UNIQUE(enrollment_id, entry_date)
+);
+
+-- 6a. Tabela pośrednia: efekty uczenia się powiązane z wpisem dziennika (wiele-do-wielu)
+CREATE TABLE journal_entry_outcomes (
+    journal_entry_id UUID NOT NULL REFERENCES journal_entries(id) ON DELETE CASCADE,
+    learning_outcome_id INTEGER NOT NULL REFERENCES learning_outcomes(id),
+    PRIMARY KEY (journal_entry_id, learning_outcome_id)
 );
 
 -- 7. Ewaluacje (powiązane z zapisem)

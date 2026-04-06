@@ -9,9 +9,9 @@ from flask import Blueprint, render_template, request, abort, send_file, jsonify
 from flask_login import login_required, current_user
 from sqlalchemy import func
 
-from app_admin.models import (ZapisPraktyki, WpisDziennika, Uzytkownik,
+from core.models import (ZapisPraktyki, WpisDziennika, Uzytkownik,
                               RolaUzytkownika, StatusZapisu)
-from app_admin.extensions import db
+from core.extensions import db
 
 journal_bp = Blueprint('journal', __name__)
 

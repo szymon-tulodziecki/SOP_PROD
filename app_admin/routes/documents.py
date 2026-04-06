@@ -1,10 +1,12 @@
 import uuid
-from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, abort, send_file
+import json
+import time
+from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, abort, send_file, current_app, Response
 from flask_login import login_required, current_user
 from pathlib import Path
 
-from app_admin.models import ZapisPraktyki, DocumentAuditLog, RolaUzytkownika
-from app_admin.extensions import db
+from core.models import ZapisPraktyki, DocumentAuditLog, RolaUzytkownika
+from core.extensions import db
 from app_admin.routes.auth import wymaga_roli
 
 import logging
@@ -70,7 +72,7 @@ def edytuj(id, doc_type):
         # Generic context fallback for the rest
         context = {
             'student': zapis.student,
-            'firma': zapis.zaklad, # Wait, firma is strings inside ZapisPraktyki now. Let's fix this in templates later.
+            'firma': zapis.zaklad, 
             'zapis': zapis,
         }
 
@@ -145,6 +147,7 @@ def kompiluj_recznie(id, doc_type):
 @documents_bp.route('/status/<task_id>')
 @wymaga_roli(RolaUzytkownika.ADMIN, RolaUzytkownika.UOPZ)
 def status_pdf(task_id):
+    """Legacy polling endpoint — zachowany dla kompatybilności wstecznej."""
     try:
         from celery_app import celery
         task = celery.AsyncResult(task_id)
@@ -160,6 +163,57 @@ def status_pdf(task_id):
             return jsonify({'status': task.state, 'progress': progress})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+@documents_bp.route('/stream/<task_id>')
+@wymaga_roli(RolaUzytkownika.ADMIN, RolaUzytkownika.UOPZ)
+def stream_status(task_id):
+    """Server-Sent Events endpoint — jedno trwałe połączenie zamiast pollingu.
+
+    Klient otwiera EventSource('/dokumenty/stream/<task_id>') i odbiera
+    zdarzenia bez potrzeby wielokrotnego odpytywania serwera.
+    """
+    from celery_app import celery
+
+    def generate():
+        while True:
+            try:
+                task = celery.AsyncResult(task_id)
+                if task.state == 'SUCCESS':
+                    res = task.result
+                    if isinstance(res, dict) and res.get('status') == 'error':
+                        data = {'status': 'FAILURE', 'error': res.get('message', 'Nieznany błąd')}
+                    else:
+                        data = {
+                            'status': 'SUCCESS',
+                            'download_url': url_for('documents.pobierz_pdf', task_id=task_id),
+                        }
+                    yield f"data: {json.dumps(data)}\n\n"
+                    return
+                elif task.state == 'FAILURE':
+                    data = {'status': 'FAILURE', 'error': str(task.info)}
+                    yield f"data: {json.dumps(data)}\n\n"
+                    return
+                else:
+                    progress = task.info.get('progress', 0) if task.info else 0
+                    data = {'status': task.state, 'progress': progress}
+                    yield f"data: {json.dumps(data)}\n\n"
+            except GeneratorExit:
+                return
+            except Exception as exc:
+                logger.error("SSE stream error for task %s: %s", task_id, exc)
+                yield f"data: {json.dumps({'status': 'FAILURE', 'error': str(exc)})}\n\n"
+                return
+            time.sleep(1)
+
+    return Response(
+        generate(),
+        mimetype='text/event-stream',
+        headers={
+            'Cache-Control': 'no-cache',
+            'X-Accel-Buffering': 'no',  # wyłącza buforowanie w nginx
+        },
+    )
 
 @documents_bp.route('/pobierz/<task_id>')
 @wymaga_roli(RolaUzytkownika.ADMIN, RolaUzytkownika.UOPZ)

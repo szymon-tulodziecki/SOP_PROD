@@ -1,10 +1,15 @@
 from flask import Flask, render_template
-from app_student.extensions import db, login_manager
+from jinja2 import select_autoescape
+from core.extensions import db, login_manager
 from app_student.config import config_dict
 
 
 def create_app():
     app = Flask(__name__)
+    app.jinja_options = app.jinja_options.copy()
+    app.jinja_options.update(dict(
+        autoescape=select_autoescape(['html', 'xml'])
+    ))
     env = __import__('os').environ.get('FLASK_ENV', 'development')
     app.config.from_object(config_dict.get(env, config_dict['default']))
 
@@ -20,7 +25,7 @@ def create_app():
         from app_student.routes.praktyki import praktyki_bp
         from app_student.routes.dziennik import dziennik_bp
         from app_student.routes.sprawozdania import sprawozdania_bp
-        from app_student.routes.documents import documents_bp
+        from app_student.routes.dokumenty import documents_bp
         from app_student.routes.uploads import uploads_bp
 
         app.register_blueprint(auth_bp)
@@ -35,7 +40,7 @@ def create_app():
     @app.context_processor
     def inject_aktywny_zapis():
         from flask_login import current_user
-        from app_student.models import ZapisPraktyki, StatusZapisu
+        from core.models import ZapisPraktyki, StatusZapisu
         info = {'ma_aktywny': False, 'sciezka': None, 'status': None}
         try:
             if current_user.is_authenticated:
@@ -55,7 +60,21 @@ def create_app():
                     }
         except Exception:
             pass
-        return {'aktywny_zapis_info': info}
+        wymaga_uwagi = False
+        try:
+            if current_user.is_authenticated:
+                from core.models import ZapisPraktyki, StatusZapisu
+                z = db.session.query(ZapisPraktyki).filter(
+                    ZapisPraktyki.student_id == current_user.id,
+                    ZapisPraktyki.status == StatusZapisu.AWAITING_APPROVAL,
+                    ZapisPraktyki.uopz_comments.isnot(None),
+                    ZapisPraktyki.uopz_comments != '',
+                ).first()
+                if z:
+                    wymaga_uwagi = True
+        except Exception:
+            pass
+        return {'aktywny_zapis_info': info, 'nav_wymaga_uwagi': wymaga_uwagi}
 
     # Dodaj funkcje pomocnicze do szablonów
     @app.template_global()
@@ -75,7 +94,7 @@ def create_app():
     def sprawdz_studenta():
         from flask import request, redirect, url_for, abort
         from flask_login import current_user
-        from app_student.models import RolaUzytkownika
+        from core.models import RolaUzytkownika
 
         if not current_user.is_authenticated:
             return
@@ -100,5 +119,5 @@ def create_app():
 
 @login_manager.user_loader
 def wczytaj_uzytkownika(user_id):
-    from app_student.models import Uzytkownik
+    from core.models import Uzytkownik
     return db.session.get(Uzytkownik, user_id)

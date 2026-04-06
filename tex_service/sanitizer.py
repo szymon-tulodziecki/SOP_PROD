@@ -1,20 +1,9 @@
 import re
 from datetime import date, datetime
 
-_LATEX_SPECIAL = {
-    '&': r'\&',
-    '%': r'\%',
-    '$': r'\$',
-    '#': r'\#',
-    '_': r'\_',
-    '{': r'\{',
-    '}': r'\}',
-    '~': r'\textasciitilde{}',
-    '^': r'\textasciicircum{}',
-    '\\': r'\textbackslash{}',
-}
-
-_LATEX_SPECIAL_RE = re.compile('|'.join(re.escape(k) for k in _LATEX_SPECIAL.keys()))
+import re
+from datetime import date, datetime
+from pylatexenc.latexencode import unicode_to_latex
 
 
 def sanitize(value, max_length: int = 500) -> str:
@@ -23,7 +12,7 @@ def sanitize(value, max_length: int = 500) -> str:
     text = str(value).strip()
     if max_length:
         text = text[:max_length]
-    return _LATEX_SPECIAL_RE.sub(lambda m: _LATEX_SPECIAL[m.group()], text)
+    return unicode_to_latex(text)
 
 
 def sanitize_date(value, fmt: str = '%d.%m.%Y') -> str:

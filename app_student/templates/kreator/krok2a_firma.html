@@ -82,9 +82,10 @@
               {{ form.firma_adres.label(class="pole-formularza__etykieta") }}
               {{ form.firma_adres(class="pole-formularza__input", placeholder="ul. Przykładowa 1") }}
             </div>
-            <div class="pole-formularza">
+            <div class="pole-formularza {% if form.firma_miasto.errors %}pole-formularza--blad{% endif %}">
               {{ form.firma_miasto.label(class="pole-formularza__etykieta") }}
-              {{ form.firma_miasto(class="pole-formularza__input", placeholder="82-300 Elbląg") }}
+              {{ form.firma_miasto(class="pole-formularza__input", placeholder="Elbląg") }}
+              {% for e in form.firma_miasto.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
             </div>
           </div>
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
@@ -92,9 +93,10 @@
               {{ form.firma_nip_krs.label(class="pole-formularza__etykieta") }}
               {{ form.firma_nip_krs(class="pole-formularza__input") }}
             </div>
-            <div class="pole-formularza">
+            <div class="pole-formularza {% if form.firma_upowazniony_osoba.errors %}pole-formularza--blad{% endif %}">
               {{ form.firma_upowazniony_osoba.label(class="pole-formularza__etykieta") }}
-              {{ form.firma_upowazniony_osoba(class="pole-formularza__input") }}
+              {{ form.firma_upowazniony_osoba(class="pole-formularza__input", placeholder="Jan Kowalski") }}
+              {% for e in form.firma_upowazniony_osoba.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
             </div>
           </div>
           <div class="pole-formularza">
@@ -110,9 +112,10 @@
       <div class="karta__naglowek"><h2 class="karta__tytul">Opiekun zakładowy (ZOPZ)</h2></div>
       <div class="karta__tresc">
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
-          <div class="pole-formularza">
+          <div class="pole-formularza {% if form.zopz_imie_nazwisko.errors %}pole-formularza--blad{% endif %}">
             {{ form.zopz_imie_nazwisko.label(class="pole-formularza__etykieta") }}
-            {{ form.zopz_imie_nazwisko(class="pole-formularza__input") }}
+            {{ form.zopz_imie_nazwisko(class="pole-formularza__input", placeholder="Jan Kowalski") }}
+            {% for e in form.zopz_imie_nazwisko.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
           </div>
           <div class="pole-formularza">
             {{ form.zopz_stanowisko.label(class="pole-formularza__etykieta") }}

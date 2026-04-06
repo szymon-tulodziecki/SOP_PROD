@@ -595,7 +595,7 @@ body {
 /* ── Sidebar ───────────────────────────────────────────────── */
 .sidebar {
   width: 260px;
-  min-height: 100vh;
+  height: 100vh;
   background: var(--kolor-glowny);
   color: rgba(255, 255, 255, 0.85);
   display: flex;

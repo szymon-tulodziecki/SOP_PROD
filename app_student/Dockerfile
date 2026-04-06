@@ -15,6 +15,13 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+# Bezpieczeństwo: dedykowany nieuprzywilejowany użytkownik (nie root)
+RUN addgroup --system appgroup \
+    && adduser --system --ingroup appgroup --no-create-home appuser \
+    && chown -R appuser:appgroup /app
+
+USER appuser
+
 EXPOSE 5001
 
 CMD ["gunicorn", "--bind", "0.0.0.0:5001", "--workers", "2", "app_student:create_app()"]

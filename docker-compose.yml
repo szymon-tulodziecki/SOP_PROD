@@ -4,14 +4,19 @@ services:
     container_name: sop_db
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ans_admin
-      POSTGRES_PASSWORD: secure_password_123
-      POSTGRES_DB: ans_praktyki
+      POSTGRES_USER: ${POSTGRES_USER:-ans_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-ans_praktyki}
     ports:
       - "5432:5432"
     volumes:
       - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
       - pgdata:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
 
   redis:
     image: redis:7-alpine
@@ -21,6 +26,11 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
 
   admin:
     build:
@@ -29,8 +39,9 @@ services:
     container_name: sop_admin
     restart: unless-stopped
     environment:
-      - FLASK_ENV=development
-      - DATABASE_URL=postgresql+pg8000://ans_admin:secure_password_123@db:5432/ans_praktyki
+      - FLASK_ENV=${FLASK_ENV:-production}
+      - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER:-ans_admin}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:-ans_praktyki}
+      - SECRET_KEY=${SECRET_KEY:?Set SECRET_KEY in .env}
       - TEX_SERVICE_URL=http://tex-service:5002
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
@@ -46,7 +57,16 @@ services:
     volumes:
       - pdf_data:/app/pdf_output
       - ./app_admin:/app/app_admin:ro
-      - ./shared:/app/shared:ro
+      - ./core:/app/core:ro
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /app/app_admin/logs
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
 
   student:
     build:
@@ -55,8 +75,9 @@ services:
     container_name: sop_student
     restart: unless-stopped
     environment:
-      - FLASK_ENV=development
-      - DATABASE_URL=postgresql+pg8000://ans_admin:secure_password_123@db:5432/ans_praktyki
+      - FLASK_ENV=${FLASK_ENV:-production}
+      - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER:-ans_admin}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:-ans_praktyki}
+      - SECRET_KEY=${SECRET_KEY:?Set SECRET_KEY in .env}
       - TEX_SERVICE_URL=http://tex-service:5002
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
@@ -72,6 +93,15 @@ services:
     volumes:
       - pdf_data:/app/pdf_output
       - ./app_student:/app/app_student:ro
+      - ./core:/app/core:ro
+    read_only: true
+    tmpfs:
+      - /tmp
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
 
   celery-worker:
     build:
@@ -80,8 +110,9 @@ services:
     container_name: sop_celery_worker
     restart: unless-stopped
     environment:
-      - FLASK_ENV=development
-      - DATABASE_URL=postgresql+pg8000://ans_admin:secure_password_123@db:5432/ans_praktyki
+      - FLASK_ENV=${FLASK_ENV:-production}
+      - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER:-ans_admin}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:-ans_praktyki}
+      - SECRET_KEY=${SECRET_KEY:?Set SECRET_KEY in .env}
       - TEX_SERVICE_URL=http://tex-service:5002
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
@@ -96,7 +127,16 @@ services:
     volumes:
       - pdf_data:/app/pdf_output
       - ./app_admin:/app/app_admin:ro
-      - ./shared:/app/shared:ro
+      - ./core:/app/core:ro
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /app/app_admin/logs
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
 
   tex-service:
     build:
@@ -116,6 +156,16 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
+    read_only: true
+    tmpfs:
+      - /tmp
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          memory: 128M
 
 volumes:
   pgdata:
