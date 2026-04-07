@@ -3,7 +3,7 @@
 {% block naglowek %}Rejestracja praktyki zawodowej{% endblock %}
 
 {% block tresc %}
-<div style="max-width: 860px; margin: 0 auto;">
+<div style="max-width: 900px; margin: 0 auto;">
 
   <!-- Pasek kroków -->
   <div style="display:flex; gap:0.5rem; margin-bottom:2rem; font-size:0.82rem;">
@@ -33,13 +33,16 @@
         <div style="font-size:0.78rem; color:var(--kolor-tekst-drugor); margin-bottom:0.35rem;">
           {{ e.opis }}
         </div>
-        <div style="display:grid; grid-template-columns:1fr 1fr 5rem; gap:0.5rem; align-items:center;">
+        <div style="display:grid; grid-template-columns:1fr 1fr auto; gap:0.5rem; align-items:center;">
           <input type="text" name="dzial_{{ e.id }}" value="{{ h.get('dzial', '') }}"
                  class="pole-formularza__input" style="font-size:0.8rem; padding:0.3rem 0.5rem;" placeholder="Dział zakładu pracy">
           <input type="text" name="prace_{{ e.id }}" value="{{ h.get('prace', '') }}"
                  class="pole-formularza__input" style="font-size:0.8rem; padding:0.3rem 0.5rem;" placeholder="Przykładowe czynności">
-          <input type="number" name="dni_{{ e.id }}" value="{{ h.get('dni', '') }}"
-                 class="pole-formularza__input" style="font-size:0.8rem; padding:0.3rem 0.5rem; text-align:center;" min="0" max="60" placeholder="0">
+          <div style="display:flex; align-items:center; gap:0.4rem;">
+            <input type="number" name="dni_{{ e.id }}" value="{{ h.get('dni', '') }}"
+                   class="pole-formularza__input" style="width:4rem; font-size:0.8rem; padding:0.3rem 0.5rem; text-align:center;" min="0" max="60" placeholder="0">
+            <span style="font-size:0.8rem; color:var(--kolor-tekst-drugor); white-space:nowrap;">dni</span>
+          </div>
         </div>
       </div>
       {% endfor %}

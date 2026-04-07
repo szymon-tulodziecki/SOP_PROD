@@ -84,17 +84,26 @@ def lista_ocen():
 def ocen_praktyke(id):
     zapis = db.session.get(ZapisPraktyki, id) or abort(404)
     if request.method == 'POST':
-        zapis.ocena_opisowa_uopz = request.form.get('ocena_opisowa_uopz')
-        zapis.ocena_opisowa_zopz = request.form.get('ocena_opisowa_zopz')
-        zapis.ocena_sprawozdania = _parse_grade(request.form.get('ocena_sprawozdania', ''))
-        zapis.ocena_uopz         = _parse_grade(request.form.get('ocena_uopz', ''))
-        zapis.ocena_zopz         = _parse_grade(request.form.get('ocena_zopz', ''))
-        zapis.sprawdzian_pytanie_1 = request.form.get('sprawdzian_pytanie_1')
-        zapis.sprawdzian_ocena_1   = _parse_grade(request.form.get('sprawdzian_ocena_1', ''))
-        zapis.sprawdzian_pytanie_2 = request.form.get('sprawdzian_pytanie_2')
-        zapis.sprawdzian_ocena_2   = _parse_grade(request.form.get('sprawdzian_ocena_2', ''))
-        zapis.sprawdzian_pytanie_3 = request.form.get('sprawdzian_pytanie_3')
-        zapis.sprawdzian_ocena_3   = _parse_grade(request.form.get('sprawdzian_ocena_3', ''))
+        from core.modele import OcenyKoncowe, Sprawdzian as SprawdzianModel
+        ok = zapis.oceny_koncowe or OcenyKoncowe(zapis_id=zapis.id)
+        if ok not in db.session:
+            db.session.add(ok)
+        ok.ocena_opisowa_uopz = request.form.get('ocena_opisowa_uopz')
+        ok.ocena_opisowa_zopz = request.form.get('ocena_opisowa_zopz')
+        ok.ocena_sprawozdania = _parse_grade(request.form.get('ocena_sprawozdania', ''))
+        ok.ocena_uopz         = _parse_grade(request.form.get('ocena_uopz', ''))
+        ok.ocena_zopz         = _parse_grade(request.form.get('ocena_zopz', ''))
+
+        sp = zapis.sprawdzian or SprawdzianModel(zapis_id=zapis.id)
+        if sp not in db.session:
+            db.session.add(sp)
+        sp.pytanie_1 = request.form.get('sprawdzian_pytanie_1')
+        sp.ocena_1   = _parse_grade(request.form.get('sprawdzian_ocena_1', ''))
+        sp.pytanie_2 = request.form.get('sprawdzian_pytanie_2')
+        sp.ocena_2   = _parse_grade(request.form.get('sprawdzian_ocena_2', ''))
+        sp.pytanie_3 = request.form.get('sprawdzian_pytanie_3')
+        sp.ocena_3   = _parse_grade(request.form.get('sprawdzian_ocena_3', ''))
+
         if request.form.get('zakoncz'):
             zapis.status = StatusZapisu.COMPLETED
         db.session.commit()
@@ -119,7 +128,7 @@ def ocen_zapis(id):
 
     istniejace = {
         str(o.learning_outcome_id): o
-        for o in db.session.query(OcenaPraktyki).filter_by(enrollment_id=id).all()
+        for o in db.session.query(OcenaPraktyki).filter_by(zapis_id=id).all()
     }
 
     if request.method == 'POST':
@@ -169,13 +178,16 @@ def generuj_protokol(id):
     from datetime import date
 
     zapis = db.session.get(ZapisPraktyki, id) or abort(404)
-    if not zapis.ocena_uopz:
+    ok = zapis.oceny_koncowe
+    sp = zapis.sprawdzian
+    if not (ok and ok.ocena_uopz):
         flash('Protokół dostępny dopiero po wystawieniu oceny UOPZ.', 'warning')
         return redirect(url_for('evaluation.ocen_praktyke', id=id))
 
     s = zapis.student
     tex_url = current_app.config.get('TEX_SERVICE_URL', 'http://tex-service:5002')
-    firma_nazwa = (zapis.firma.nazwa if zapis.firma else zapis.firma_nazwa) or ''
+    dm = zapis.dane_miejsca
+    firma_nazwa = (zapis.firma.nazwa if zapis.firma else (dm.firma_nazwa if dm else None)) or ''
 
     def _f(v):
         return float(v) if v is not None else None
@@ -185,15 +197,15 @@ def generuj_protokol(id):
             'firma_nazwa':          firma_nazwa,
             'termin_od':            zapis.termin_od.strftime('%d.%m.%Y') if zapis.termin_od else '',
             'termin_do':            zapis.termin_do.strftime('%d.%m.%Y') if zapis.termin_do else '',
-            'ocena_sprawozdania':   _f(zapis.ocena_sprawozdania),
-            'ocena_uopz':           _f(zapis.ocena_uopz),
-            'ocena_zopz':           _f(zapis.ocena_zopz),
-            'sprawdzian_pytanie_1': zapis.sprawdzian_pytanie_1,
-            'sprawdzian_ocena_1':   _f(zapis.sprawdzian_ocena_1),
-            'sprawdzian_pytanie_2': zapis.sprawdzian_pytanie_2,
-            'sprawdzian_ocena_2':   _f(zapis.sprawdzian_ocena_2),
-            'sprawdzian_pytanie_3': zapis.sprawdzian_pytanie_3,
-            'sprawdzian_ocena_3':   _f(zapis.sprawdzian_ocena_3),
+            'ocena_sprawozdania':   _f(ok.ocena_sprawozdania if ok else None),
+            'ocena_uopz':           _f(ok.ocena_uopz if ok else None),
+            'ocena_zopz':           _f(ok.ocena_zopz if ok else None),
+            'sprawdzian_pytanie_1': sp.pytanie_1 if sp else None,
+            'sprawdzian_ocena_1':   _f(sp.ocena_1 if sp else None),
+            'sprawdzian_pytanie_2': sp.pytanie_2 if sp else None,
+            'sprawdzian_ocena_2':   _f(sp.ocena_2 if sp else None),
+            'sprawdzian_pytanie_3': sp.pytanie_3 if sp else None,
+            'sprawdzian_ocena_3':   _f(sp.ocena_3 if sp else None),
             'uopz': {'first_name': zapis.uopz.first_name, 'last_name': zapis.uopz.last_name} if zapis.uopz else None,
         },
         'student': {

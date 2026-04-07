@@ -58,8 +58,6 @@ class SerwisPraktyk:
         zapis = db.session.get(ZapisPraktyki, enrollment_id)
         if not zapis:
             raise ValueError("Zapis nie istnieje.")
-        if zapis.zaklad:
-            zapis.zaklad.zatwierdzone = True
         zapis.status = StatusZapisu.IN_PROGRESS
         db.session.commit()
         return zapis

@@ -8,7 +8,7 @@ import re
 from flask_login import login_required, current_user
 from core.extensions import db
 import httpx
-from core.modele import Praktyka, ZapisPraktyki, StatusPraktyki, StatusZapisu, SciezkaPraktyki, Uzytkownik, RolaUzytkownika, EfektUczenia, HarmonogramPraktyki, Firma, IndywidualnyProgram, StatusDokumentu, DokumentPrzeslany
+from core.modele import Praktyka, ZapisPraktyki, StatusPraktyki, StatusZapisu, SciezkaPraktyki, EfektUczenia, HarmonogramPraktyki, Firma, IndywidualnyProgram, StatusDokumentu, DokumentPrzeslany
 
 praktyki_bp = Blueprint('praktyki', __name__)
 
@@ -29,9 +29,8 @@ class FormularzSciezka(FlaskForm):
 class FormularzDaneFirmy(FlaskForm):
     """Krok 2A: Dane zakładu pracy + ZOPZ + terminy (tylko ścieżka A)."""
     # Terminy i dane podstawowe
-    termin_od   = DateField('Data rozpoczęcia', validators=[DataRequired(message='Podaj datę.')])
-    termin_do   = DateField('Data zakończenia', validators=[DataRequired(message='Podaj datę.')])
-    uopz_id     = SelectField('Opiekun uczelniany (UOPZ)', choices=[], validators=[Optional()])
+    termin_od        = DateField('Data rozpoczęcia', validators=[DataRequired(message='Podaj datę.')])
+    termin_do        = DateField('Data zakończenia', validators=[DataRequired(message='Podaj datę.')])
     ubezpieczenie_nw = BooleanField('Posiadam ubezpieczenie NW na czas trwania praktyki')
 
     # Tryb znalezienia miejsca
@@ -139,50 +138,51 @@ def kreator_firma(zapis_id):
     form = FormularzDaneFirmy()
     firmy_list = db.session.query(Firma).filter_by(aktywna=True).order_by(Firma.nazwa).all()
     form.firma_id.choices = [('', '--- Wybierz firmę ---')] + [(str(f.id), f.nazwa) for f in firmy_list]
-    uopz_list = db.session.query(Uzytkownik).filter_by(rola=RolaUzytkownika.UOPZ, aktywny=True).order_by(Uzytkownik.nazwisko).all()
-    form.uopz_id.choices = [('', '--- Wybierz ---')] + [(str(u.id), f"{u.first_name} {u.last_name}") for u in uopz_list]
 
     if form.validate_on_submit():
         if not form.ubezpieczenie_nw.data:
             flash('Ubezpieczenie NW jest wymagane.', 'danger')
             return render_template('kreator/krok2a_firma.html', form=form, zapis=zapis, firmy_list=firmy_list)
 
-        zapis.termin_od  = form.termin_od.data
-        zapis.termin_do  = form.termin_do.data
-        zapis.uopz_id    = form.uopz_id.data if form.uopz_id.data else None
+        zapis.termin_od        = form.termin_od.data
+        zapis.termin_do        = form.termin_do.data
         zapis.ubezpieczenie_nw = True
-        zapis.specjalnosc = getattr(current_user, 'specjalnosc', '') or ''
+        zapis.specjalnosc      = getattr(current_user, 'specjalnosc', '') or ''
+
+        from core.modele import DaneMiejscaPraktyki
+        dm = zapis.dane_miejsca or DaneMiejscaPraktyki(zapis_id=zapis.id)
+        if dm not in db.session:
+            db.session.add(dm)
 
         if form.firma_typ.data == 'database':
             if not form.firma_id.data:
                 flash('Wybierz firmę z listy.', 'danger')
                 return render_template('kreator/krok2a_firma.html', form=form, zapis=zapis, firmy_list=firmy_list)
             zapis.firma_id = form.firma_id.data
-            zapis.firma_nazwa = zapis.firma_adres = zapis.firma_miasto = None
-            zapis.firma_nip_krs = zapis.firma_upowazniony_osoba = zapis.firma_upowazniony_stanowisko = None
+            dm.firma_nazwa = dm.firma_adres = dm.firma_miasto = None
+            dm.firma_nip_krs = dm.firma_upowazniony_osoba = dm.firma_upowazniony_stanowisko = None
         else:
             if not form.firma_nazwa.data or not form.firma_adres.data or not form.firma_miasto.data:
                 flash('Podaj nazwę, adres i miasto firmy.', 'danger')
                 return render_template('kreator/krok2a_firma.html', form=form, zapis=zapis, firmy_list=firmy_list)
             zapis.firma_id = None
-            zapis.firma_nazwa                  = form.firma_nazwa.data
-            zapis.firma_adres                  = form.firma_adres.data
-            zapis.firma_miasto                 = form.firma_miasto.data
-            zapis.firma_nip_krs                = form.firma_nip_krs.data
-            zapis.firma_upowazniony_osoba      = form.firma_upowazniony_osoba.data
-            zapis.firma_upowazniony_stanowisko = form.firma_upowazniony_stanowisko.data
+            dm.firma_nazwa                  = form.firma_nazwa.data
+            dm.firma_adres                  = form.firma_adres.data
+            dm.firma_miasto                 = form.firma_miasto.data
+            dm.firma_nip_krs                = form.firma_nip_krs.data
+            dm.firma_upowazniony_osoba      = form.firma_upowazniony_osoba.data
+            dm.firma_upowazniony_stanowisko = form.firma_upowazniony_stanowisko.data
 
         if not form.zopz_imie_nazwisko.data or not form.zopz_email.data:
             flash('Podaj imię/nazwisko i email opiekuna zakładowego (ZOPZ).', 'danger')
             return render_template('kreator/krok2a_firma.html', form=form, zapis=zapis, firmy_list=firmy_list)
 
-        zapis.zopz_imie_nazwisko = form.zopz_imie_nazwisko.data
-        zapis.zopz_stanowisko    = form.zopz_stanowisko.data
-        zapis.zopz_telefon       = form.zopz_telefon.data
-        zapis.zopz_email         = form.zopz_email.data
+        dm.zopz_imie_nazwisko = form.zopz_imie_nazwisko.data
+        dm.zopz_stanowisko    = form.zopz_stanowisko.data
+        dm.zopz_telefon       = form.zopz_telefon.data
+        dm.zopz_email         = form.zopz_email.data
         db.session.commit()
         if zapis.status == StatusZapisu.AWAITING_APPROVAL:
-            zapis.komentarze_uopz = None
             zapis.status = StatusZapisu.COMMISSION_REVIEW
             db.session.commit()
             flash('Dane zaktualizowane i zgłoszenie odesłane do komisji.', 'success')
@@ -190,22 +190,22 @@ def kreator_firma(zapis_id):
         return redirect(url_for('praktyki.zapisz_krok2', id=zapis.id))
 
     if request.method == 'GET':
-        form.termin_od.data = zapis.termin_od
-        form.termin_do.data = zapis.termin_do
-        form.uopz_id.data   = str(zapis.uopz_id) if zapis.uopz_id else ''
+        dm = zapis.dane_miejsca
+        form.termin_od.data        = zapis.termin_od
+        form.termin_do.data        = zapis.termin_do
         form.ubezpieczenie_nw.data = zapis.ubezpieczenie_nw
         form.firma_typ.data = 'database' if zapis.firma_id else 'custom'
         form.firma_id.data  = str(zapis.firma_id) if zapis.firma_id else ''
-        form.firma_nazwa.data = zapis.firma_nazwa
-        form.firma_adres.data = zapis.firma_adres
-        form.firma_miasto.data = zapis.firma_miasto
-        form.firma_nip_krs.data = zapis.firma_nip_krs
-        form.firma_upowazniony_osoba.data = zapis.firma_upowazniony_osoba
-        form.firma_upowazniony_stanowisko.data = zapis.firma_upowazniony_stanowisko
-        form.zopz_imie_nazwisko.data = zapis.zopz_imie_nazwisko
-        form.zopz_stanowisko.data = zapis.zopz_stanowisko
-        form.zopz_telefon.data = zapis.zopz_telefon
-        form.zopz_email.data = zapis.zopz_email
+        form.firma_nazwa.data                  = dm.firma_nazwa                  if dm else None
+        form.firma_adres.data                  = dm.firma_adres                  if dm else None
+        form.firma_miasto.data                 = dm.firma_miasto                 if dm else None
+        form.firma_nip_krs.data                = dm.firma_nip_krs                if dm else None
+        form.firma_upowazniony_osoba.data      = dm.firma_upowazniony_osoba      if dm else None
+        form.firma_upowazniony_stanowisko.data = dm.firma_upowazniony_stanowisko if dm else None
+        form.zopz_imie_nazwisko.data = dm.zopz_imie_nazwisko if dm else None
+        form.zopz_stanowisko.data    = dm.zopz_stanowisko    if dm else None
+        form.zopz_telefon.data       = dm.zopz_telefon       if dm else None
+        form.zopz_email.data         = dm.zopz_email         if dm else None
 
     return render_template('kreator/krok2a_firma.html', form=form, zapis=zapis, firmy_list=firmy_list)
 
@@ -223,25 +223,34 @@ def kreator_wniosek(zapis_id):
     form = FormularzWniosek()
 
     if form.validate_on_submit():
-        zapis.firma_nazwa  = form.pracodawca_nazwa.data
-        zapis.firma_adres  = form.pracodawca_adres.data
-        zapis.firma_miasto = form.pracodawca_miasto.data
-        zapis.zopz_stanowisko = form.stanowisko.data
-        zapis.uzasadnienie_sciezki = form.uzasadnienie.data
+        from core.modele import DaneMiejscaPraktyki, UzasadnienieSciezki
+        dm = zapis.dane_miejsca or DaneMiejscaPraktyki(zapis_id=zapis.id)
+        if dm not in db.session:
+            db.session.add(dm)
+        dm.firma_nazwa   = form.pracodawca_nazwa.data
+        dm.firma_adres   = form.pracodawca_adres.data
+        dm.firma_miasto  = form.pracodawca_miasto.data
+        dm.zopz_stanowisko = form.stanowisko.data
+
+        uz = zapis.uzasadnienie or UzasadnienieSciezki(zapis_id=zapis.id)
+        if uz not in db.session:
+            db.session.add(uz)
+        uz.uzasadnienie = form.uzasadnienie.data
+
         byl_awaiting = zapis.status == StatusZapisu.AWAITING_APPROVAL
         zapis.status = StatusZapisu.COMMISSION_REVIEW
-        if byl_awaiting:
-            zapis.komentarze_uopz = None
         db.session.commit()
         flash('Dane zaktualizowane i wniosek odesłany do komisji.' if byl_awaiting else 'Wniosek złożony. Oczekujesz na decyzję komisji.', 'success')
         return redirect(url_for('praktyki.szczegoly_zgloszenia', id=zapis.id))
 
     if request.method == 'GET':
-        form.pracodawca_nazwa.data  = zapis.firma_nazwa
-        form.pracodawca_adres.data  = zapis.firma_adres
-        form.pracodawca_miasto.data = zapis.firma_miasto
-        form.stanowisko.data        = zapis.zopz_stanowisko
-        form.uzasadnienie.data      = zapis.uzasadnienie_sciezki
+        dm = zapis.dane_miejsca
+        uz = zapis.uzasadnienie
+        form.pracodawca_nazwa.data  = dm.firma_nazwa      if dm else None
+        form.pracodawca_adres.data  = dm.firma_adres      if dm else None
+        form.pracodawca_miasto.data = dm.firma_miasto     if dm else None
+        form.stanowisko.data        = dm.zopz_stanowisko  if dm else None
+        form.uzasadnienie.data      = uz.uzasadnienie     if uz else None
 
     return render_template('kreator/krok2bc_wniosek.html', form=form, zapis=zapis)
 
@@ -334,9 +343,8 @@ def zapisz_krok2(id):
                 
         db.session.add_all(nowe_wiersze)
         db.session.commit()
-        
-        flash('Harmonogram zapisany.', 'success')
-        return redirect(url_for('praktyki.szczegoly_zgloszenia', id=zapis.id))
+
+        return redirect(url_for('praktyki.potwierdz_wyslanie', id=zapis.id))
     else:
         # GET request - pobranie istniejących danych harmonogramu
         istniejace_harmonogramy = {}
@@ -355,6 +363,34 @@ def zapisz_krok2(id):
                          efekty=efekty,
                          csrf_form=csrf_form,
                          istniejace_harmonogramy=istniejace_harmonogramy)
+
+
+@praktyki_bp.route('/zgloszenie/<uuid:id>/potwierdz-wyslanie')
+@login_required
+def potwierdz_wyslanie(id):
+    zapis = db.session.get(ZapisPraktyki, id)
+    if not zapis or zapis.student_id != current_user.id:
+        abort(404)
+    if zapis.status != StatusZapisu.PENDING:
+        return redirect(url_for('praktyki.szczegoly_zgloszenia', id=id))
+    from flask_wtf import FlaskForm
+    csrf_form = FlaskForm()
+    return render_template('kreator/potwierdz_wyslanie.html', zapis=zapis, csrf_form=csrf_form)
+
+
+@praktyki_bp.route('/zgloszenie/<uuid:id>/wyslij', methods=['POST'])
+@login_required
+def wyslij_do_zatwierdzenia(id):
+    zapis = db.session.get(ZapisPraktyki, id)
+    if not zapis or zapis.student_id != current_user.id:
+        abort(404)
+    if zapis.status != StatusZapisu.PENDING:
+        flash('Zgłoszenie zostało już wysłane.', 'info')
+        return redirect(url_for('praktyki.szczegoly_zgloszenia', id=id))
+    zapis.status = StatusZapisu.AWAITING_APPROVAL
+    db.session.commit()
+    flash('Zgłoszenie zostało przesłane do zatwierdzenia.', 'success')
+    return redirect(url_for('praktyki.szczegoly_zgloszenia', id=id))
 
 
 @praktyki_bp.route('/zgloszenie/<uuid:id>/szczegoly')
@@ -381,7 +417,9 @@ def szczegoly_zgloszenia(id):
         for d in rows
     ]
 
-    return render_template('praktyki/szczegoly_zgloszenia.html', zapis=zapis, uploaded_docs=uploaded_docs)
+    from flask_wtf import FlaskForm
+    csrf_form = FlaskForm()
+    return render_template('praktyki/szczegoly_zgloszenia.html', zapis=zapis, uploaded_docs=uploaded_docs, csrf_form=csrf_form)
 
 
 @praktyki_bp.route('/zgloszenie/<uuid:id>/resubmit', methods=['POST'])
@@ -395,7 +433,6 @@ def resubmit_zgloszenia(id):
         flash('Zgłoszenie nie może być ponownie wysłane w tym statusie.', 'warning')
         return redirect(url_for('praktyki.szczegoly_zgloszenia', id=id))
     zapis.status = StatusZapisu.COMMISSION_REVIEW
-    zapis.komentarze_uopz = None
     db.session.commit()
     flash('Zgłoszenie zostało ponownie wysłane do weryfikacji komisji.', 'success')
     return redirect(url_for('praktyki.szczegoly_zgloszenia', id=id))

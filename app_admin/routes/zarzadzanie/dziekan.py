@@ -60,18 +60,26 @@ def dziekan_decyzja(id):
     form = FormularzDziekana()
 
     if form.validate_on_submit():
-        zapis.decyzja_dziekana   = form.decyzja.data
-        zapis.komentarze_dziekana = form.komentarz.data
-        zapis.decyzja_dziekana_o  = db.func.current_timestamp()
+        from core.modele import ZdarzenieProces, TypZdarzenia
+        from datetime import datetime
 
         if form.decyzja.data == 'APPROVED':
             zapis.status = StatusZapisu.IN_PROGRESS
             flash('Wniosek zatwierdzony przez dziekana. Student może kontynuować praktykę.', 'success')
         else:
-            zapis.status          = StatusZapisu.REJECTED
-            zapis.komentarze_uopz = f"Dziekan nie wyraził zgody: {form.komentarz.data}"
+            zapis.status = StatusZapisu.REJECTED
+            db.session.add(ZdarzenieProces(
+                zapis_id=zapis.id, typ=TypZdarzenia.UOPZ_KOMENTARZ,
+                komentarz=f"Dziekan nie wyraził zgody: {form.komentarz.data}",
+                wykonane_przez_id=current_user.id, wykonano_o=datetime.utcnow(),
+            ))
             flash('Wniosek odrzucony przez dziekana.', 'warning')
 
+        db.session.add(ZdarzenieProces(
+            zapis_id=zapis.id, typ=TypZdarzenia.DZIEKAN_DECYZJA,
+            decyzja=form.decyzja.data, komentarz=form.komentarz.data,
+            wykonane_przez_id=current_user.id, wykonano_o=datetime.utcnow(),
+        ))
         db.session.commit()
         return redirect(url_for('zarzadzanie.dziekan_lista'))
 

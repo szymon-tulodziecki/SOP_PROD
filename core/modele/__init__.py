@@ -19,8 +19,14 @@ from core.modele.praktyki import (
     StatusPraktyki,
     StatusZapisu,
     SciezkaPraktyki,
+    TypZdarzenia,
     Praktyka,
     ZapisPraktyki,
+    DaneMiejscaPraktyki,
+    UzasadnienieSciezki,
+    Sprawdzian,
+    OcenyKoncowe,
+    ZdarzenieProces,
     HarmonogramPraktyki,
     Sprawozdanie,
     IndywidualnyProgram,
@@ -49,9 +55,10 @@ __all__ = [
     # firmy
     'Firma',
     # praktyki
-    'StatusPraktyki', 'StatusZapisu', 'SciezkaPraktyki',
-    'Praktyka', 'ZapisPraktyki', 'HarmonogramPraktyki',
-    'Sprawozdanie', 'IndywidualnyProgram', 'NumerPisma',
+    'StatusPraktyki', 'StatusZapisu', 'SciezkaPraktyki', 'TypZdarzenia',
+    'Praktyka', 'ZapisPraktyki',
+    'DaneMiejscaPraktyki', 'UzasadnienieSciezki', 'Sprawdzian', 'OcenyKoncowe', 'ZdarzenieProces',
+    'HarmonogramPraktyki', 'Sprawozdanie', 'IndywidualnyProgram', 'NumerPisma',
     # dziennik
     'WynikOceny', 'EfektUczenia', 'wpisy_efekty', 'WpisDziennika', 'OcenaPraktyki',
     # dokumenty

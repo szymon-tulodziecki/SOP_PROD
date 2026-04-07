@@ -28,14 +28,19 @@ from .formularze import *
 def komisja_lista():
     strona = request.args.get('page', 1, type=int)
     from sqlalchemy import or_
+    from sqlalchemy import exists
+    from core.modele import ZdarzenieProces, TypZdarzenia
+    ma_komentarz_uopz = exists().where(
+        (ZdarzenieProces.zapis_id == ZapisPraktyki.id) &
+        (ZdarzenieProces.typ == TypZdarzenia.UOPZ_KOMENTARZ) &
+        ZdarzenieProces.komentarz.isnot(None)
+    )
     q = db.session.query(ZapisPraktyki)\
           .join(Uzytkownik, ZapisPraktyki.student_id == Uzytkownik.id)\
           .filter(ZapisPraktyki.sciezka.in_(['EMPLOYMENT', 'OWN_BUSINESS']))\
           .filter(or_(
               ZapisPraktyki.status == StatusZapisu.COMMISSION_REVIEW,
-              (ZapisPraktyki.status == StatusZapisu.AWAITING_APPROVAL) &
-              ZapisPraktyki.komentarze_uopz.isnot(None) &
-              (ZapisPraktyki.komentarze_uopz != '')
+              (ZapisPraktyki.status == StatusZapisu.AWAITING_APPROVAL) & ma_komentarz_uopz,
           ))
     wnioski   = q.order_by(ZapisPraktyki.enrolled_at.desc()).paginate(page=strona, per_page=25, error_out=False)
     csrf_form = FlaskForm()
@@ -67,28 +72,43 @@ def komisja_weryfikuj(id):
     form = FormularzKomisji()
 
     if form.validate_on_submit():
-        zapis.decyzja_komisji   = form.decyzja.data
-        zapis.komentarze_komisji = form.komentarz.data
-        zapis.decyzja_komisji_o  = db.func.current_timestamp()
+        from core.modele import ZdarzenieProces, TypZdarzenia
+        from datetime import datetime
 
         if form.decyzja.data == 'APPROVED':
+            decyzja_db = 'APPROVED'
             zapis.status = StatusZapisu.DEAN_APPROVAL
             flash('Wniosek zatwierdzony i przekazany do dziekana.', 'success')
         elif form.decyzja.data == 'PARTIALLY_APPROVED':
-            zapis.status          = StatusZapisu.AWAITING_APPROVAL
-            zapis.komentarze_uopz = f"Komisja: {form.komentarz.data}"
+            decyzja_db = 'PARTIALLY_APPROVED'
+            zapis.status = StatusZapisu.AWAITING_APPROVAL
+            db.session.add(ZdarzenieProces(
+                zapis_id=zapis.id, typ=TypZdarzenia.UOPZ_KOMENTARZ,
+                komentarz=f"Komisja: {form.komentarz.data}",
+                wykonane_przez_id=current_user.id, wykonano_o=datetime.utcnow(),
+            ))
             flash('Wniosek wymaga uzupełnień - student zostanie powiadomiony.', 'info')
         else:
-            zapis.status          = StatusZapisu.REJECTED
-            zapis.komentarze_uopz = f"Wniosek odrzucony przez komisję: {form.komentarz.data}"
+            decyzja_db = 'REJECTED'
+            zapis.status = StatusZapisu.REJECTED
+            db.session.add(ZdarzenieProces(
+                zapis_id=zapis.id, typ=TypZdarzenia.UOPZ_KOMENTARZ,
+                komentarz=f"Wniosek odrzucony przez komisję: {form.komentarz.data}",
+                wykonane_przez_id=current_user.id, wykonano_o=datetime.utcnow(),
+            ))
             flash('Wniosek został odrzucony.', 'warning')
 
+        db.session.add(ZdarzenieProces(
+            zapis_id=zapis.id, typ=TypZdarzenia.KOMISJA_DECYZJA,
+            decyzja=decyzja_db, komentarz=form.komentarz.data,
+            wykonane_przez_id=current_user.id, wykonano_o=datetime.utcnow(),
+        ))
         db.session.commit()
         return redirect(url_for('zarzadzanie.komisja_lista'))
 
     dokumenty = db.session.query(UploadedDocument)\
-                  .filter_by(enrollment_id=id)\
-                  .order_by(UploadedDocument.uploaded_at.desc())\
+                  .filter_by(zapis_id=id)\
+                  .order_by(UploadedDocument.przeslano_o.desc())\
                   .all()
     return render_template('zarzadzanie/komisja/weryfikuj.html',
                            form=form, zapis=zapis, dokumenty=dokumenty)

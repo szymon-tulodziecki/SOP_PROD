@@ -1,0 +1,43 @@
+{% extends "layouts/base_student.html" %}
+{% block tytul %}Potwierdzenie wysłania zgłoszenia{% endblock %}
+{% block naglowek %}Rejestracja praktyki zawodowej{% endblock %}
+
+{% block tresc %}
+<div style="max-width: 600px; margin: 3rem auto; text-align: center;">
+
+  <div class="karta" style="padding: 2.5rem 2rem;">
+
+    <div style="margin-bottom: 1rem;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="52" height="52" viewBox="0 0 24 24" fill="none"
+           stroke="#3b82f6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <polyline points="9 15 11 17 15 13"/>
+      </svg>
+    </div>
+    <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">Harmonogram zapisany</h2>
+    <p style="color: var(--kolor-tekst-drugor); margin-bottom: 2rem; font-size: 0.9rem;">
+      Czy chcesz teraz przesłać zgłoszenie do zatwierdzenia przez opiekuna?<br>
+      Po wysłaniu nie będzie można edytować danych bez kontaktu z opiekunem.
+    </p>
+
+    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+
+      <form method="POST" action="{{ url_for('praktyki.wyslij_do_zatwierdzenia', id=zapis.id) }}">
+        {{ csrf_form.hidden_tag() }}
+        <button type="submit" class="przycisk przycisk--glowny" style="min-width: 180px;">
+          Tak, prześlij zgłoszenie
+        </button>
+      </form>
+
+      <a href="{{ url_for('praktyki.szczegoly_zgloszenia', id=zapis.id) }}"
+         class="przycisk przycisk--drugorzedny" style="min-width: 180px;">
+        Nie, wróć do szczegółów
+      </a>
+
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}

@@ -64,7 +64,7 @@ def index():
         return render_template('dziennik/index.html', zapis=None, wpisy=[], jakikolwiek=jakikolwiek, csrf_form=FlaskForm())
 
     # Jeśli jest aktywny zapis, normalnie ładujemy wpisy
-    wpisy = db.session.query(WpisDziennika).filter_by(enrollment_id=zapis.id).order_by(WpisDziennika.entry_date.desc()).all()
+    wpisy = db.session.query(WpisDziennika).filter_by(zapis_id=zapis.id).order_by(WpisDziennika.data_wpisu.desc()).all()
     csrf_form = FlaskForm()
     return render_template('dziennik/index.html', zapis=zapis, wpisy=wpisy, jakikolwiek=zapis, csrf_form=csrf_form)
 
@@ -86,7 +86,7 @@ def nowy_wpis():
 
     if form.validate_on_submit():
         data = date.fromisoformat(form.data_wpisu.data)
-        duplikat = db.session.query(WpisDziennika).filter_by(enrollment_id=zapis.id, entry_date=data).first()
+        duplikat = db.session.query(WpisDziennika).filter_by(zapis_id=zapis.id, entry_date=data).first()
         if duplikat:
             flash('Wpis na ten dzień już istnieje. Możesz go edytować.', 'danger')
             return render_template('dziennik/nowy_wpis.html', form=form, zapis=zapis)

@@ -55,8 +55,8 @@ def lista_dziennikow():
 
     dane = []
     for z in zapisy.items:
-        ostatni = db.session.query(func.max(WpisDziennika.entry_date)).filter_by(enrollment_id=z.id).scalar()
-        liczba_wpisow = db.session.query(func.count(WpisDziennika.id)).filter_by(enrollment_id=z.id).scalar()
+        ostatni = db.session.query(func.max(WpisDziennika.data_wpisu)).filter_by(zapis_id=z.id).scalar()
+        liczba_wpisow = db.session.query(func.count(WpisDziennika.id)).filter_by(zapis_id=z.id).scalar()
 
         alert = False
         if ostatni:
@@ -79,8 +79,8 @@ def lista_dziennikow():
 def dziennik_zapisu(id):
     zapis = db.session.get(ZapisPraktyki, id) or abort(404)
     wpisy = db.session.query(WpisDziennika)\
-              .filter_by(enrollment_id=id)\
-              .order_by(WpisDziennika.entry_date.desc())\
+              .filter_by(zapis_id=id)\
+              .order_by(WpisDziennika.data_wpisu.desc())\
               .all()
     przerwy     = _wykryj_przerwy(wpisy)
     suma_godzin = sum(w.duration_hours for w in wpisy)
@@ -93,8 +93,8 @@ def dziennik_zapisu(id):
 def pdf_dziennik(id):
     zapis = db.session.get(ZapisPraktyki, id) or abort(404)
     wpisy = db.session.query(WpisDziennika)\
-              .filter_by(enrollment_id=id)\
-              .order_by(WpisDziennika.entry_date)\
+              .filter_by(zapis_id=id)\
+              .order_by(WpisDziennika.data_wpisu)\
               .all()
     try:
         from tex_service.pdf_service import pdf_service

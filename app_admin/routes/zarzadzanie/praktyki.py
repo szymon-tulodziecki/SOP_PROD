@@ -12,7 +12,7 @@ from wtforms.validators import DataRequired, Email, Length, Optional, Validation
 from werkzeug.security import generate_password_hash
 
 from core.modele import (Uzytkownik, Student, Praktyka, ZapisPraktyki, HarmonogramPraktyki, EfektUczenia,
-                    RolaUzytkownika, StatusPraktyki, StatusZapisu, UploadedDocument, Firma)
+                    RolaUzytkownika, StatusPraktyki, StatusZapisu, SciezkaPraktyki, UploadedDocument, Firma)
 from core.extensions import db
 from core.uslugi import UslugaUzytkownikow as _UslugaUzytkownikow
 _serwis_uzytkownikow = _UslugaUzytkownikow()
@@ -83,7 +83,7 @@ def lista_zgloszen():
     status_filter = request.args.get('status', '').strip()
 
     q = db.session.query(ZapisPraktyki).join(Uzytkownik, ZapisPraktyki.student_id == Uzytkownik.id)
-    q = q.filter(ZapisPraktyki.track_type == 'STANDARD')
+    q = q.filter(ZapisPraktyki.sciezka == 'STANDARD')
 
     if status_filter:
         try:
@@ -144,17 +144,31 @@ def szczegoly_zgloszenia(id):
     form = FormularzKomentarza()
 
     if form.validate_on_submit():
-        if current_user.role == RolaUzytkownika.ADMIN:
-            zapis.komentarze_admina = form.komentarz.data
-        else:
-            zapis.komentarze_uopz = form.komentarz.data
+        from core.modele import ZdarzenieProces, TypZdarzenia
+        from datetime import datetime
 
         if form.zatwierdz.data:
+            if form.komentarz.data:
+                db.session.add(ZdarzenieProces(
+                    zapis_id=zapis.id,
+                    typ=TypZdarzenia.ADMIN_KOMENTARZ if current_user.role == RolaUzytkownika.ADMIN else TypZdarzenia.UOPZ_KOMENTARZ,
+                    komentarz=form.komentarz.data,
+                    wykonane_przez_id=current_user.id, wykonano_o=datetime.utcnow(),
+                ))
             zapis.status = StatusZapisu.IN_PROGRESS
             flash('Zgłoszenie zostało zatwierdzone!', 'success')
         elif form.odrzuc.data:
-            zapis.status                 = StatusZapisu.PENDING
-            zapis.powiadomiono_studenta_o = db.func.now()
+            db.session.add(ZdarzenieProces(
+                zapis_id=zapis.id,
+                typ=TypZdarzenia.ADMIN_KOMENTARZ if current_user.role == RolaUzytkownika.ADMIN else TypZdarzenia.UOPZ_KOMENTARZ,
+                komentarz=form.komentarz.data,
+                wykonane_przez_id=current_user.id, wykonano_o=datetime.utcnow(),
+            ))
+            db.session.add(ZdarzenieProces(
+                zapis_id=zapis.id, typ=TypZdarzenia.POWIADOMIENIE_STUDENTA,
+                wykonane_przez_id=current_user.id, wykonano_o=datetime.utcnow(),
+            ))
+            zapis.status = StatusZapisu.PENDING
             flash('Wysłano prośbę o poprawki do studenta.', 'info')
 
         db.session.commit()
@@ -175,11 +189,6 @@ def szczegoly_zgloszenia(id):
 @wymaga_roli(RolaUzytkownika.UOPZ, RolaUzytkownika.ADMIN)
 def zatwierdz_zaklad(id):
     zapis = db.session.get(ZapisPraktyki, id) or abort(404)
-    if zapis.zaklad:
-        try:
-            zapis.zaklad.zatwierdzone = True
-        except Exception:
-            pass
     zapis.status = StatusZapisu.IN_PROGRESS
     db.session.commit()
     flash('Zakład zatwierdzony. Praktyka rozpoczęła się.', 'success')

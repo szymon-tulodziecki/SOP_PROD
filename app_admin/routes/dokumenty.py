@@ -43,7 +43,7 @@ def log_audit(zapis_id, doc_type, action, details=""):
 @wymaga_roli(RolaUzytkownika.ADMIN, RolaUzytkownika.UOPZ)
 def panel(id):
     zapis = db.session.get(ZapisPraktyki, id) or abort(404)
-    logs = db.session.query(DocumentAuditLog).filter_by(enrollment_id=id).order_by(DocumentAuditLog.created_at.desc()).limit(20).all()
+    logs = db.session.query(DocumentAuditLog).filter_by(zapis_id=id).order_by(DocumentAuditLog.wykonano_o.desc()).limit(20).all()
     return render_template('documents/panel.html', zapis=zapis, docs=DOCUMENTS, logs=logs)
 
 @documents_bp.route('/zapis/<uuid:id>/edytuj/<doc_type>', methods=['GET'])
@@ -68,7 +68,7 @@ def edytuj(id, doc_type):
                  'efekty_opisy': ['' for _ in range(13)]}
         context = pdf_service.build_context_sprawozdanie(zapis, tresc)
     else:
-        context = {'student': zapis.student, 'firma': zapis.zaklad, 'zapis': zapis}
+        context = {'student': zapis.student, 'firma': zapis.dane_miejsca, 'zapis': zapis}
 
     try:
         raw_tex = render_tex(template_name, context)
@@ -100,7 +100,7 @@ def generuj_auto(id, doc_type):
                  'efekty_opisy': ['' for _ in range(13)]}
         context = pdf_service.build_context_sprawozdanie(zapis, tresc)
     else:
-        context = {'student': zapis.student, 'firma': zapis.zaklad, 'zapis': zapis}
+        context = {'student': zapis.student, 'firma': zapis.dane_miejsca, 'zapis': zapis}
 
     try:
         raw_tex = render_tex(template_name, context)

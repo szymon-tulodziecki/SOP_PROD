@@ -81,8 +81,8 @@ def generate_pdf_dziennik(self, enrollment_id: str) -> dict:
             raise ValueError(f'Zapis {enrollment_id} nie istnieje')
         wpisy = (
             db.session.query(WpisDziennika)
-            .filter_by(enrollment_id=zapis.id)
-            .order_by(WpisDziennika.entry_date)
+            .filter_by(zapis_id=zapis.id)
+            .order_by(WpisDziennika.data_wpisu)
             .all()
         )
 
@@ -216,7 +216,7 @@ def generate_zip_task(self, enrollment_id: str) -> dict:
                     }
                     context = pdf_service._build_context_sprawozdanie(zapis, tresc)
                 else:
-                    context = {'student': zapis.student, 'firma': zapis.zaklad, 'zapis': zapis}
+                    context = {'student': zapis.student, 'firma': zapis.dane_miejsca, 'zapis': zapis}
 
                 try:
                     raw_tex = render_tex(template_name, context)

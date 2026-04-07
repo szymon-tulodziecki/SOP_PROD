@@ -84,12 +84,17 @@ def create_app():
         wymaga_uwagi = False
         try:
             if current_user.is_authenticated:
-                from core.modele import ZapisPraktyki, StatusZapisu
+                from sqlalchemy import exists
+                from core.modele import ZapisPraktyki, StatusZapisu, ZdarzenieProces, TypZdarzenia
+                ma_komentarz = exists().where(
+                    (ZdarzenieProces.zapis_id == ZapisPraktyki.id) &
+                    (ZdarzenieProces.typ == TypZdarzenia.UOPZ_KOMENTARZ) &
+                    ZdarzenieProces.komentarz.isnot(None),
+                )
                 z = db.session.query(ZapisPraktyki).filter(
                     ZapisPraktyki.student_id == current_user.id,
                     ZapisPraktyki.status == StatusZapisu.AWAITING_APPROVAL,
-                    ZapisPraktyki.komentarze_uopz.isnot(None),
-                    ZapisPraktyki.komentarze_uopz != '',
+                    ma_komentarz,
                 ).first()
                 if z:
                     wymaga_uwagi = True

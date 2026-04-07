@@ -55,7 +55,7 @@ def moje_dokumenty():
         # Dziekan zatwierdził (dla ścieżki B/C)
         dziekan_zatwierdził = zapis.decyzja_dziekana == 'APPROVED'
         harmonogram_count = db.session.query(HarmonogramPraktyki)\
-            .filter_by(enrollment_id=zapis.id).count()
+            .filter_by(zapis_id=zapis.id).count()
         firma_bez_umowy = not zapis.firma or not zapis.firma.has_standing_agreement
         firma_custom = not zapis.firma_id  # własna firma, nie z bazy
 
@@ -263,7 +263,7 @@ def _build_context(zapis, typ):
     if typ in ('ZAL_2A',):
         from core.modele import HarmonogramPraktyki, EfektUczenia
         harmonogramy = db.session.query(HarmonogramPraktyki)\
-            .filter_by(enrollment_id=zapis.id)\
+            .filter_by(zapis_id=zapis.id)\
             .order_by(HarmonogramPraktyki.learning_outcome_id)\
             .all()
         ctx['harmonogram'] = [{
@@ -276,8 +276,8 @@ def _build_context(zapis, typ):
     if typ in ('ZAL_6',):
         from core.modele import WpisDziennika
         wpisy = db.session.query(WpisDziennika)\
-            .filter_by(enrollment_id=zapis.id)\
-            .order_by(WpisDziennika.entry_date)\
+            .filter_by(zapis_id=zapis.id)\
+            .order_by(WpisDziennika.data_wpisu)\
             .all()
         ctx['wpisy'] = [{
             'data':    _d(w.entry_date),

@@ -201,8 +201,8 @@ def stworz_blueprint_pliki(
             abort(403)
 
         docs = db.session.query(UploadedDocument)\
-                 .filter_by(enrollment_id=enrollment_id)\
-                 .order_by(UploadedDocument.uploaded_at.desc())\
+                 .filter_by(zapis_id=enrollment_id)\
+                 .order_by(UploadedDocument.przeslano_o.desc())\
                  .all()
 
         return jsonify([{

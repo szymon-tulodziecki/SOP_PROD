@@ -44,9 +44,11 @@
           <div style="font-size: 0.9rem; color: var(--kolor-tekst-drugor); margin-bottom: 0.5rem;">
             Praktyka: {{ zapis.praktyka.rok_uczelniany }} ({{ zapis.praktyka.semestr }})
           </div>
+          {% if zapis.status.value != 'PENDING' %}
           <div style="font-size: 0.9rem; color: var(--kolor-tekst-drugor);">
             Wysłano: {{ zapis.enrolled_at.strftime('%d.%m.%Y %H:%M') }}
           </div>
+          {% endif %}
         </div>
         <span class="status
           {%- if zapis.status.value == 'PENDING' %} status--draft
@@ -69,6 +71,22 @@
       </div>
     </div>
   </div>
+
+  <!-- Przycisk wysłania dla szkicu -->
+  {% if zapis.status.value == 'PENDING' %}
+  <div class="karta" style="margin-bottom:1.5rem; border:1px solid #fde68a; background:#fffbeb;">
+    <div style="padding:1.25rem 1.5rem; display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;">
+      <div>
+        <div style="font-weight:600; margin-bottom:0.2rem;">Zgłoszenie nie zostało jeszcze wysłane</div>
+        <div style="font-size:0.85rem; color:var(--kolor-tekst-drugor);">Gdy jesteś gotowy, prześlij zgłoszenie do zatwierdzenia przez opiekuna.</div>
+      </div>
+      <form method="POST" action="{{ url_for('praktyki.wyslij_do_zatwierdzenia', id=zapis.id) }}">
+        {{ csrf_form.hidden_tag() }}
+        <button type="submit" class="przycisk przycisk--glowny">Prześlij do zatwierdzenia →</button>
+      </form>
+    </div>
+  </div>
+  {% endif %}
 
   <!-- Uploadowane załączniki -->
   {% if uploaded_docs %}

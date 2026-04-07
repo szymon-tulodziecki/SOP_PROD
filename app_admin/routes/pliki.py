@@ -148,8 +148,8 @@ def list_documents(enrollment_id):
         if current_user.role == RolaUzytkownika.UOPZ and zapis.uopz_id != current_user.id:
             abort(403)
     documents = db.session.query(UploadedDocument)\
-        .filter_by(enrollment_id=enrollment_id)\
-        .order_by(UploadedDocument.uploaded_at.desc())\
+        .filter_by(zapis_id=enrollment_id)\
+        .order_by(UploadedDocument.przeslano_o.desc())\
         .all()
     return jsonify([{
         'id':                str(doc.id),
