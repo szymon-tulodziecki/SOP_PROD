@@ -1,0 +1,18 @@
+{% extends "layouts/base.html" %}
+{% block tytul %}Przypisz UOPZ{% endblock %}
+{% block tresc %}
+<h1>Przypisz opiekuna uczelnianego</h1>
+<div class="karta">
+  <form method="post">
+    {{ form.hidden_tag() }}
+    <div class="pole-form">
+      <label>{{ form.uopz_id.label }}</label>
+      {{ form.uopz_id(class_='select') }}
+    </div>
+    <div style="margin-top:1rem;">
+      <button type="submit" class="przycisk przycisk--glowny">Zapisz</button>
+      <a href="{{ url_for('zarzadzanie.lista_zgloszen') }}" class="przycisk przycisk--drugorzedny">Anuluj</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

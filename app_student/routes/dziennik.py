@@ -8,7 +8,7 @@ from wtforms import StringField, SelectMultipleField, TextAreaField
 from wtforms.validators import DataRequired, ValidationError
 from wtforms.widgets import ListWidget, CheckboxInput
 
-from core.models import ZapisPraktyki, WpisDziennika, EfektUczenia, StatusZapisu
+from core.modele import ZapisPraktyki, WpisDziennika, EfektUczenia, StatusZapisu
 from core.extensions import db
 
 dziennik_bp = Blueprint('dziennik', __name__)

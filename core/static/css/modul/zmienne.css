@@ -1,0 +1,79 @@
+/* ============================================================
+   zmienne.css — Zmienne CSS, reset, podstawy, dostępność
+   System Praktyk Zawodowych — ANS Elbląg
+   WCAG 2.1 AA: kontrast ≥ 4.5:1, fokus widoczny
+   ============================================================ */
+
+:root {
+  --kolor-glowny:        #1a3a5c;
+  --kolor-glowny-ciemny: #0f2540;
+  --kolor-glowny-jasny:  #2a5080;
+  --kolor-akcent:        #c8963e;
+  --kolor-akcent-jasny:  #e8b45a;
+
+  --kolor-tlo:           #f4f6f9;
+  --kolor-biale:         #ffffff;
+  --kolor-tekst:         #1a1a2e;
+  --kolor-tekst-drugor:  #4a5568;
+  --kolor-tekst-trzeciorzed: #718096;
+
+  --kolor-ramka:         #d1d9e6;
+  --kolor-blad:          #c0392b;
+  --kolor-sukces:        #1e6e3a;
+  --kolor-info:          #1a5276;
+
+  --fokus-kolor:         #c8963e;
+  --fokus-grubosc:       3px;
+  --fokus-offset:        3px;
+
+  --font-glowny:    'IBM Plex Sans', 'Segoe UI', Tahoma, sans-serif;
+  --font-mono:      'IBM Plex Mono', 'Courier New', monospace;
+
+  --promien:        8px;
+  --promien-duzy:   16px;
+  --cien-karta:     0 2px 12px rgba(26, 58, 92, 0.12);
+  --cien-glowny:    0 8px 32px rgba(26, 58, 92, 0.18);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  font-size: 100%;
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+body {
+  font-family: var(--font-glowny), serif;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--kolor-tekst);
+  background-color: var(--kolor-tlo);
+  min-height: 100vh;
+}
+
+.skip-link {
+  position: absolute; top: -100px; left: 1rem; z-index: 9999;
+  padding: 0.75rem 1.5rem; background: var(--kolor-glowny); color: var(--kolor-biale);
+  font-weight: 600; border-radius: var(--promien); text-decoration: none; transition: top 0.2s;
+}
+.skip-link:focus { top: 1rem; }
+
+:focus-visible {
+  outline: var(--fokus-grubosc) solid var(--fokus-kolor);
+  outline-offset: var(--fokus-offset);
+  border-radius: calc(var(--promien) - 2px);
+}
+:focus:not(:focus-visible) { outline: none; }
+
+@media (prefers-contrast: more) {
+  :root { --kolor-ramka: #000; --fokus-kolor: #000; --fokus-grubosc: 4px; }
+  .pole-formularza__input { border-width: 2px; }
+}

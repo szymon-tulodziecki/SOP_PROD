@@ -8,7 +8,7 @@ import re
 from flask_login import login_required, current_user
 from core.extensions import db
 import httpx
-from core.models import Praktyka, ZapisPraktyki, StatusPraktyki, StatusZapisu, SciezkaPraktyki, Uzytkownik, RolaUzytkownika, EfektUczenia, HarmonogramPraktyki, Firma, IndywidualnyProgram, StatusDokumentu
+from core.modele import Praktyka, ZapisPraktyki, StatusPraktyki, StatusZapisu, SciezkaPraktyki, Uzytkownik, RolaUzytkownika, EfektUczenia, HarmonogramPraktyki, Firma, IndywidualnyProgram, StatusDokumentu
 
 praktyki_bp = Blueprint('praktyki', __name__)
 
@@ -101,7 +101,7 @@ def kreator_sciezka(id):
         return redirect(url_for('praktyki.lista'))
 
     istniejacy = db.session.query(ZapisPraktyki).filter_by(
-        internship_id=id, student_id=current_user.id
+        praktyka_id=id, student_id=current_user.id
     ).filter(ZapisPraktyki.status == StatusZapisu.PENDING).first()
 
     form = FormularzSciezka()
@@ -110,7 +110,7 @@ def kreator_sciezka(id):
         if istniejacy:
             zapis = istniejacy
         else:
-            zapis = ZapisPraktyki(id=uuid.uuid4(), internship_id=id,
+            zapis = ZapisPraktyki(id=uuid.uuid4(), praktyka_id=id,
                                    student_id=current_user.id, status=StatusZapisu.PENDING)
             db.session.add(zapis)
 
@@ -137,9 +137,9 @@ def kreator_firma(zapis_id):
         abort(404)
 
     form = FormularzDaneFirmy()
-    firmy_list = db.session.query(Firma).filter_by(is_active=True).order_by(Firma.nazwa).all()
+    firmy_list = db.session.query(Firma).filter_by(aktywna=True).order_by(Firma.nazwa).all()
     form.firma_id.choices = [('', '--- Wybierz firmę ---')] + [(str(f.id), f.nazwa) for f in firmy_list]
-    uopz_list = db.session.query(Uzytkownik).filter_by(role=RolaUzytkownika.UOPZ, is_active=True).order_by(Uzytkownik.last_name).all()
+    uopz_list = db.session.query(Uzytkownik).filter_by(rola=RolaUzytkownika.UOPZ, aktywny=True).order_by(Uzytkownik.nazwisko).all()
     form.uopz_id.choices = [('', '--- Wybierz ---')] + [(str(u.id), f"{u.first_name} {u.last_name}") for u in uopz_list]
 
     if form.validate_on_submit():
@@ -182,7 +182,7 @@ def kreator_firma(zapis_id):
         zapis.zopz_email         = form.zopz_email.data
         db.session.commit()
         if zapis.status == StatusZapisu.AWAITING_APPROVAL:
-            zapis.uopz_comments = None
+            zapis.komentarze_uopz = None
             zapis.status = StatusZapisu.COMMISSION_REVIEW
             db.session.commit()
             flash('Dane zaktualizowane i zgłoszenie odesłane do komisji.', 'success')
@@ -231,7 +231,7 @@ def kreator_wniosek(zapis_id):
         byl_awaiting = zapis.status == StatusZapisu.AWAITING_APPROVAL
         zapis.status = StatusZapisu.COMMISSION_REVIEW
         if byl_awaiting:
-            zapis.uopz_comments = None
+            zapis.komentarze_uopz = None
         db.session.commit()
         flash('Dane zaktualizowane i wniosek odesłany do komisji.' if byl_awaiting else 'Wniosek złożony. Oczekujesz na decyzję komisji.', 'success')
         return redirect(url_for('praktyki.szczegoly_zgloszenia', id=zapis.id))
@@ -252,17 +252,18 @@ def kreator_wniosek(zapis_id):
 @login_required
 def lista():
     dostepne = db.session.query(Praktyka)\
-                 .filter_by(is_active=True)\
+                 .filter_by(status=StatusPraktyki.ACTIVE)\
                  .order_by(Praktyka.rok_uczelniany.desc())\
                  .all()
 
     zapisy_data = {
-        str(z.internship_id): {
+        str(z.praktyka_id): {
             'id': str(z.id),
             'status': z.status.value,
+            'sciezka': z.sciezka.value if z.sciezka else None,
             'wymaga_uwagi': (
                 z.status == StatusZapisu.AWAITING_APPROVAL
-                and bool(z.uopz_comments)
+                and bool(z.komentarze_uopz)
             ),
         }
         for z in db.session.query(ZapisPraktyki)\
@@ -386,7 +387,7 @@ def resubmit_zgloszenia(id):
         flash('Zgłoszenie nie może być ponownie wysłane w tym statusie.', 'warning')
         return redirect(url_for('praktyki.szczegoly_zgloszenia', id=id))
     zapis.status = StatusZapisu.COMMISSION_REVIEW
-    zapis.uopz_comments = None
+    zapis.komentarze_uopz = None
     db.session.commit()
     flash('Zgłoszenie zostało ponownie wysłane do weryfikacji komisji.', 'success')
     return redirect(url_for('praktyki.szczegoly_zgloszenia', id=id))

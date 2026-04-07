@@ -1,0 +1,44 @@
+/* uklad.css — Layout panelu: sidebar, panel-main, nagłówek */
+
+.panel-body { display: flex; min-height: 100vh; background: var(--kolor-tlo); }
+
+.sidebar {
+  width: 260px; height: 100vh; background: var(--kolor-glowny);
+  color: rgba(255,255,255,0.85); display: flex; flex-direction: column;
+  flex-shrink: 0; position: sticky; top: 0; overflow-y: auto;
+}
+.sidebar__naglowek { padding: 1.5rem 1.25rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.1); }
+.sidebar__logo { max-width: 100%; height: auto; display: block; }
+.sidebar__system-label { display: block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--kolor-akcent); font-weight: 600; margin-top: 0.5rem; }
+
+.sidebar__uzytkownik { display: flex; align-items: center; gap: 0.75rem; padding: 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.08); }
+.sidebar__uzytkownik-avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--kolor-akcent); color: var(--kolor-glowny-ciemny); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem; flex-shrink: 0; }
+.sidebar__uzytkownik-info { display: flex; flex-direction: column; min-width: 0; }
+.sidebar__uzytkownik-imie { font-size: 0.85rem; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sidebar__uzytkownik-rola { font-size: 0.7rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.05em; }
+
+.sidebar__menu { list-style: none; padding: 0.75rem 0; flex: 1; }
+.sidebar__menu-sekcja { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255,255,255,0.35); padding: 1.25rem 1.25rem 0.375rem; font-weight: 600; }
+.sidebar__menu-pozycja { margin: 1px 0; }
+.sidebar__link { display: flex; align-items: center; gap: 0.75rem; padding: 0.625rem 1.25rem; color: rgba(255,255,255,0.75); text-decoration: none; font-size: 0.875rem; font-weight: 500; border-left: 3px solid transparent; transition: background 0.15s, color 0.15s, border-color 0.15s; }
+.sidebar__link:hover { background: rgba(255,255,255,0.08); color: #fff; }
+.sidebar__link--aktywny { background: rgba(255,255,255,0.12); color: #fff; border-left-color: var(--kolor-akcent); font-weight: 600; }
+.sidebar__ikona { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; flex-shrink: 0; }
+.sidebar__ikona svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+.sidebar__stopka { padding: 1rem 1.25rem; border-top: 1px solid rgba(255,255,255,0.08); margin-top: auto; }
+.sidebar__wylogowanie { display: flex; align-items: center; gap: 0.5rem; width: 100%; padding: 0.625rem 0.75rem; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--promien); color: rgba(255,255,255,0.7); font-family: var(--font-glowny); font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: background 0.15s, color 0.15s; }
+.sidebar__wylogowanie:hover { background: rgba(192,57,43,0.3); color: #fff; }
+.sidebar__wylogowanie svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+.panel-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.panel-main__naglowek { background: var(--kolor-biale); border-bottom: 1px solid var(--kolor-ramka); padding: 1.25rem 2rem; }
+.panel-main__naglowek-tresc { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.panel-main__tytul { font-size: 1.35rem; font-weight: 600; color: var(--kolor-tekst); letter-spacing: -0.01em; }
+.panel-main__tresc { flex: 1; padding: 2rem; }
+
+@media (max-width: 768px) {
+  .sidebar { display: none; }
+  .panel-main__tresc { padding: 1rem; }
+  .panel-main__naglowek { padding: 1rem; }
+}

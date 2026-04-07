@@ -7,19 +7,14 @@ Rejestracja w app_admin/__init__.py:
     app.register_blueprint(pdf_bp)
 """
 
-import io
-import sys
-import os
 
 from flask import Blueprint, send_file, abort, current_app
 from flask_login import login_required, current_user
 
-# Dodaj tex_engine do ścieżki Pythona (gdy uruchamiasz z app_admin/)
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+from tex_service.pdf_service import pdf_service
+from tex_service.compiler import TexCompilationError
+from core.modele import Praktyka, RolaUzytkownika
 
-from tex_engine.pdf_service import pdf_service
-from tex_engine.compiler import TexCompilationError
-from core.models import Praktyka, RolaUzytkownika
 
 pdf_bp = Blueprint("pdf", __name__, url_prefix="/pdf")
 

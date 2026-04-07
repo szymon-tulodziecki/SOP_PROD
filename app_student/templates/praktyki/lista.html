@@ -23,15 +23,24 @@
         {% if p.id|string in zapisy_data %}
           {% set zapis_info = zapisy_data[p.id|string] %}
           <div style="display: flex; align-items: center; gap: 0.75rem;">
-            {% if zapis_info.wymaga_uwagi %}
+            {% if zapis_info.status == 'PENDING' %}
+              <span class="status status--draft">Nieukończone</span>
+              {% if zapis_info.track_type == 'STANDARD' %}
+                <a href="{{ url_for('praktyki.kreator_firma', zapis_id=zapis_info.id) }}" class="przycisk przycisk--maly przycisk--glowny">Kontynuuj zgłoszenie</a>
+              {% elif zapis_info.track_type in ('EMPLOYMENT', 'OWN_BUSINESS') %}
+                <a href="{{ url_for('praktyki.kreator_wniosek', zapis_id=zapis_info.id) }}" class="przycisk przycisk--maly przycisk--glowny">Kontynuuj zgłoszenie</a>
+              {% else %}
+                <a href="{{ url_for('praktyki.kreator_sciezka', id=p.id) }}" class="przycisk przycisk--maly przycisk--glowny">Kontynuuj zgłoszenie</a>
+              {% endif %}
+            {% elif zapis_info.wymaga_uwagi %}
             <span style="display:inline-flex;align-items:center;gap:0.3rem;background:#fef2f2;color:#dc2626;border:1px solid #fecaca;border-radius:0.375rem;padding:0.25rem 0.6rem;font-size:0.8rem;font-weight:600;">
               <span style="font-size:1rem;line-height:1;">!</span> Wymaga uzupełnienia
             </span>
+            <a href="{{ url_for('praktyki.szczegoly_zgloszenia', id=zapis_info.id) }}" class="przycisk przycisk--maly przycisk--drugorzedny">Szczegóły</a>
             {% else %}
-            <span class="status status--{% if zapis_info.status == 'PENDING' %}draft{% elif zapis_info.status == 'AWAITING_APPROVAL' %}planned{% elif zapis_info.status == 'COMMISSION_REVIEW' %}planned{% elif zapis_info.status == 'DEAN_APPROVAL' %}planned{% elif zapis_info.status == 'IN_PROGRESS' %}w-trakcie{% elif zapis_info.status == 'COMPLETED' %}zakonczona{% elif zapis_info.status == 'REJECTED' %}draft{% endif %}">
+            <span class="status status--{% if zapis_info.status == 'AWAITING_APPROVAL' %}planned{% elif zapis_info.status == 'COMMISSION_REVIEW' %}planned{% elif zapis_info.status == 'DEAN_APPROVAL' %}planned{% elif zapis_info.status == 'IN_PROGRESS' %}w-trakcie{% elif zapis_info.status == 'COMPLETED' %}zakonczona{% elif zapis_info.status == 'REJECTED' %}draft{% endif %}">
               {{ tlumacz_status(zapis_info.status) }}
             </span>
-            {% endif %}
             <a href="{{ url_for('praktyki.szczegoly_zgloszenia', id=zapis_info.id) }}" class="przycisk przycisk--maly przycisk--drugorzedny">Szczegóły</a>
             {% if zapis_info.status == 'IN_PROGRESS' %}
             <form method="POST" action="{{ url_for('praktyki.zakoncz_praktyke', id=zapis_info.id) }}" style="display:inline;">
@@ -41,6 +50,7 @@
                 Zakończ praktykę
               </button>
             </form>
+            {% endif %}
             {% endif %}
           </div>
         {% else %}

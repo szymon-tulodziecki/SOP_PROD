@@ -6,7 +6,7 @@ from wtforms import TextAreaField
 from wtforms.validators import DataRequired, Optional
 
 from core.extensions import db
-from core.models import ZapisPraktyki, SprawozdaniePraktyki as Sprawozdanie, StatusZapisu, SciezkaPraktyki
+from core.modele import ZapisPraktyki, Sprawozdanie, StatusZapisu, SciezkaPraktyki
 
 sprawozdania_bp = Blueprint('sprawozdania', __name__)
 

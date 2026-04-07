@@ -1,0 +1,472 @@
+{% extends "layouts/base_panel.html" %}
+
+{% block tytul %}Szczegóły zgłoszenia — {{ zapis.student.first_name }} {{ zapis.student.last_name }}{% endblock %}
+{% block naglowek %}Szczegóły zgłoszenia{% endblock %}
+
+{% block naglowek_akcje %}
+<div style="display: flex; gap: 0.5rem; align-items: center;">
+  {% if current_user.role.value == 'ADMIN' %}
+    <a href="{{ url_for('zarzadzanie.lista_zgloszen') }}" class="przycisk przycisk--drugorzedny">← Powrót do listy</a>
+  {% else %}
+    <a href="{{ url_for('zarzadzanie.moje_zgloszenia') }}" class="przycisk przycisk--drugorzedny">← Moje zgłoszenia</a>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block tresc %}
+<div style="max-width: 1200px; margin: 0 auto;">
+
+  {# ── Karta identyfikacyjna zgłoszenia ── #}
+  {% set status_val = zapis.status.value %}
+  {% if status_val == 'PENDING' %}
+    {% set border_color = 'var(--kolor-akcent)' %}
+    {% set status_cls = 'status--in-progress' %}
+    {% set status_label = 'Oczekuje na zatwierdzenie' %}
+  {% elif status_val == 'AWAITING_APPROVAL' %}
+    {% set border_color = '#3b82f6' %}
+    {% set status_cls = 'status--planned' %}
+    {% set status_label = 'Oczekuje na akceptację UOPZ' %}
+  {% elif status_val == 'IN_PROGRESS' %}
+    {% set border_color = 'var(--kolor-sukces)' %}
+    {% set status_cls = 'status--completed' %}
+    {% set status_label = 'Zatwierdzona — w realizacji' %}
+  {% elif status_val == 'COMPLETED' %}
+    {% set border_color = 'var(--kolor-glowny)' %}
+    {% set status_cls = 'status--completed' %}
+    {% set status_label = 'Zakończona' %}
+  {% else %}
+    {% set border_color = 'var(--kolor-ramka)' %}
+    {% set status_cls = 'status--draft' %}
+    {% set status_label = status_val %}
+  {% endif %}
+
+  <div style="background: var(--kolor-biale); border-radius: var(--promien-duzy); border-top: 4px solid {{ border_color }}; box-shadow: var(--cien-karta); margin-bottom: 2rem; overflow: hidden;">
+    <div style="padding: 1.75rem 2rem; display: grid; grid-template-columns: auto 1fr auto; gap: 2rem; align-items: center;">
+
+      {# Awatar inicjałowy #}
+      <div style="width: 56px; height: 56px; border-radius: 50%; background: var(--kolor-glowny); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; font-weight: 700; flex-shrink: 0; letter-spacing: 0.5px;">
+        {{ zapis.student.first_name[0] }}{{ zapis.student.last_name[0] }}
+      </div>
+
+      {# Dane studenta i praktyki #}
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; min-width: 0;">
+        <div>
+          <div style="font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--kolor-tekst-trzeciorzed); margin-bottom: 0.35rem;">Student</div>
+          <div style="font-weight: 700; font-size: 1rem; color: var(--kolor-tekst);">{{ zapis.student.first_name }} {{ zapis.student.last_name }}</div>
+          <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor); margin-top: 0.15rem;">{{ zapis.student.email }}</div>
+          {% if zapis.student.album_number %}
+          <div style="font-size: 0.75rem; color: var(--kolor-tekst-trzeciorzed);">nr alb. {{ zapis.student.album_number }}</div>
+          {% endif %}
+        </div>
+        <div>
+          <div style="font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--kolor-tekst-trzeciorzed); margin-bottom: 0.35rem;">Rok akademicki</div>
+          <div style="font-weight: 600; color: var(--kolor-tekst);">{{ zapis.praktyka.rok_uczelniany }}</div>
+          <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor);">Semestr {{ zapis.praktyka.semestr }}</div>
+        </div>
+        <div>
+          <div style="font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--kolor-tekst-trzeciorzed); margin-bottom: 0.35rem;">Ścieżka</div>
+          <div style="font-weight: 600; color: var(--kolor-tekst);">
+            {% if zapis.track_type.value == 'STANDARD' %}Standardowa
+            {% elif zapis.track_type.value == 'EMPLOYMENT' %}Na podst. zatrudnienia
+            {% elif zapis.track_type.value == 'OWN_BUSINESS' %}Własna działalność
+            {% else %}{{ zapis.track_type.value }}{% endif %}
+          </div>
+        </div>
+        <div>
+          <div style="font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--kolor-tekst-trzeciorzed); margin-bottom: 0.35rem;">Data zgłoszenia</div>
+          <div style="font-weight: 600; color: var(--kolor-tekst);">{{ zapis.enrolled_at.strftime('%d.%m.%Y') if zapis.enrolled_at else '—' }}</div>
+          <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor);">{{ zapis.enrolled_at.strftime('%H:%M') if zapis.enrolled_at else '' }}</div>
+        </div>
+      </div>
+
+      {# Odznaka statusu #}
+      <div style="text-align: right; flex-shrink: 0;">
+        <span class="status {{ status_cls }}" style="font-size: 0.75rem; padding: 0.4rem 1rem;">{{ status_label }}</span>
+        {% if zapis.uopz %}
+        <div style="margin-top: 0.75rem; font-size: 0.75rem; color: var(--kolor-tekst-trzeciorzed); text-align: right;">
+          UOPZ: <strong style="color: var(--kolor-tekst-drugor);">{{ zapis.uopz.first_name }} {{ zapis.uopz.last_name }}</strong>
+        </div>
+        {% endif %}
+      </div>
+
+    </div>
+
+  </div>
+
+  {# ── Główna siatka treści ── #}
+  <div style="display: grid; grid-template-columns: 1fr 360px; gap: 1.5rem; align-items: start;">
+
+    {# ═══ LEWA KOLUMNA ═══ #}
+    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+
+      {# Dane podstawowe #}
+      <div class="karta">
+        <div class="karta__naglowek">
+          <h3 class="karta__tytul">Dane podstawowe</h3>
+        </div>
+        <div class="karta__tresc">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
+            <div class="pole-info">
+              <div class="pole-info__etykieta">Ścieżka praktyki</div>
+              <div class="pole-info__wartosc">
+                {% if zapis.track_type.value == 'STANDARD' %}Standardowa
+                {% elif zapis.track_type.value == 'EMPLOYMENT' %}Na podstawie zatrudnienia
+                {% elif zapis.track_type.value == 'OWN_BUSINESS' %}Własna działalność gospodarcza
+                {% else %}{{ zapis.track_type.value }}{% endif %}
+              </div>
+            </div>
+            <div class="pole-info">
+              <div class="pole-info__etykieta">Specjalność</div>
+              <div class="pole-info__wartosc">{{ zapis.specjalnosc or '—' }}</div>
+            </div>
+            {% if zapis.track_type.value == 'STANDARD' %}
+            <div class="pole-info">
+              <div class="pole-info__etykieta">Termin praktyki</div>
+              <div class="pole-info__wartosc">
+                {{ zapis.termin_od.strftime('%d.%m.%Y') if zapis.termin_od else 'Brak' }}
+                <span style="color: var(--kolor-tekst-trzeciorzed); margin: 0 0.25rem;">→</span>
+                {{ zapis.termin_do.strftime('%d.%m.%Y') if zapis.termin_do else 'Brak' }}
+              </div>
+            </div>
+            <div class="pole-info">
+              <div class="pole-info__etykieta">Ubezpieczenie NW</div>
+              <div class="pole-info__wartosc">
+                {% if zapis.ubezpieczenie_nw %}
+                  <span style="color: var(--kolor-sukces); display: inline-flex; align-items: center; gap: 0.35rem;">
+                    <span style="width: 8px; height: 8px; border-radius: 50%; background: currentColor; display: inline-block;"></span>
+                    Potwierdzone
+                  </span>
+                {% else %}
+                  <span style="color: var(--kolor-blad); display: inline-flex; align-items: center; gap: 0.35rem;">
+                    <span style="width: 8px; height: 8px; border-radius: 50%; background: currentColor; display: inline-block;"></span>
+                    Nie potwierdzone
+                  </span>
+                {% endif %}
+              </div>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      {% if zapis.track_type.value == 'STANDARD' %}
+
+      {# Dane zakładu pracy #}
+      <div class="karta">
+        <div class="karta__naglowek">
+          <h3 class="karta__tytul">Zakład pracy</h3>
+        </div>
+        <div class="karta__tresc">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
+            <div class="pole-info">
+              <div class="pole-info__etykieta">Nazwa firmy</div>
+              <div class="pole-info__wartosc" style="font-weight: 600;">{{ zapis.firma_nazwa or '—' }}</div>
+            </div>
+            <div class="pole-info">
+              <div class="pole-info__etykieta">NIP / KRS</div>
+              <div class="pole-info__wartosc">{{ zapis.firma_nip_krs or '—' }}</div>
+            </div>
+            <div class="pole-info">
+              <div class="pole-info__etykieta">Adres</div>
+              <div class="pole-info__wartosc">{{ zapis.firma_adres or '—' }}</div>
+            </div>
+            <div class="pole-info">
+              <div class="pole-info__etykieta">Miasto</div>
+              <div class="pole-info__wartosc">{{ zapis.firma_miasto or '—' }}</div>
+            </div>
+            <div class="pole-info" style="grid-column: 1 / -1;">
+              <div class="pole-info__etykieta">Przedstawiciel firmy</div>
+              <div class="pole-info__wartosc">
+                {{ zapis.firma_upowazniony_osoba or '—' }}
+                {% if zapis.firma_upowazniony_stanowisko %}
+                  <span style="color: var(--kolor-tekst-drugor); font-weight: 400;"> · {{ zapis.firma_upowazniony_stanowisko }}</span>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {# Opiekun zakładowy (ZOPZ) #}
+      <div class="karta">
+        <div class="karta__naglowek">
+          <h3 class="karta__tytul">Opiekun zakładowy (ZOPZ)</h3>
+        </div>
+        <div class="karta__tresc">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
+            <div class="pole-info">
+              <div class="pole-info__etykieta">Imię i nazwisko</div>
+              <div class="pole-info__wartosc" style="font-weight: 600;">{{ zapis.zopz_imie_nazwisko or '—' }}</div>
+            </div>
+            <div class="pole-info">
+              <div class="pole-info__etykieta">Stanowisko</div>
+              <div class="pole-info__wartosc">{{ zapis.zopz_stanowisko or '—' }}</div>
+            </div>
+            <div class="pole-info">
+              <div class="pole-info__etykieta">Telefon</div>
+              <div class="pole-info__wartosc">{{ zapis.zopz_telefon or '—' }}</div>
+            </div>
+            <div class="pole-info">
+              <div class="pole-info__etykieta">E-mail</div>
+              <div class="pole-info__wartosc">{{ zapis.zopz_email or '—' }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {# Harmonogram #}
+      <div class="karta">
+        <div class="karta__naglowek" style="display: flex; justify-content: space-between; align-items: center;">
+          <h3 class="karta__tytul">Harmonogram praktyki</h3>
+          {% set suma_dni = namespace(wartosc=0) %}
+          {% for e in efekty %}
+            {% set h = harmonogram_dict.get(e.id) %}
+            {% if h and h.liczba_dni > 0 %}{% set suma_dni.wartosc = suma_dni.wartosc + h.liczba_dni %}{% endif %}
+          {% endfor %}
+          <span class="status {% if suma_dni.wartosc > 120 %}status--draft" style="background:#fee2e2;color:var(--kolor-blad){% elif suma_dni.wartosc < 100 %}status--in-progress{% else %}status--completed{% endif %}">
+            {{ suma_dni.wartosc }} / 120 dni
+          </span>
+        </div>
+        <div class="karta__tresc" style="padding: 0;">
+          <div class="tabela-wrapper">
+            <table class="tabela">
+              <thead>
+                <tr>
+                  <th style="width: 4%; text-align: center;">Nr</th>
+                  <th style="width: 38%;">Efekt uczenia się</th>
+                  <th style="width: 25%;">Dział / Jednostka</th>
+                  <th style="width: 25%;">Przykładowe zadania</th>
+                  <th style="width: 8%; text-align: center;">Dni</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for e in efekty %}
+                {% set h = harmonogram_dict.get(e.id) %}
+                {% set brak = not h or h.liczba_dni == 0 %}
+                <tr {% if brak %}style="opacity: 0.55;"{% endif %}>
+                  <td style="text-align: center; font-weight: 600; color: var(--kolor-tekst-trzeciorzed); font-size: 0.8rem;">{{ '%02d'|format(e.id) }}</td>
+                  <td style="font-size: 0.82rem; line-height: 1.45;">{{ e.description }}</td>
+                  <td style="font-size: 0.85rem;">
+                    {% if h and h.nazwa_dzialu %}{{ h.nazwa_dzialu }}
+                    {% else %}<span style="color: var(--kolor-tekst-trzeciorzed); font-style: italic;">Nie przypisano</span>{% endif %}
+                  </td>
+                  <td style="font-size: 0.85rem;">
+                    {% if h and h.przykladowe_prace %}{{ h.przykladowe_prace }}
+                    {% else %}<span style="color: var(--kolor-tekst-trzeciorzed); font-style: italic;">Nie podano</span>{% endif %}
+                  </td>
+                  <td style="text-align: center; font-weight: 700; font-size: 0.95rem;
+                    color: {% if brak %}var(--kolor-tekst-trzeciorzed){% else %}var(--kolor-glowny){% endif %};">
+                    {{ h.liczba_dni if h else 0 }}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+              <tfoot>
+                <tr style="background: var(--kolor-tlo);">
+                  <td colspan="4" style="text-align: right; font-weight: 600; padding-right: 1rem; font-size: 0.85rem; color: var(--kolor-tekst-drugor);">Suma dni:</td>
+                  <td style="text-align: center; font-weight: 700; font-size: 1.05rem;
+                    color: {% if suma_dni.wartosc > 120 %}var(--kolor-blad){% elif suma_dni.wartosc < 100 %}#92400e{% else %}var(--kolor-sukces){% endif %};">
+                    {{ suma_dni.wartosc }}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+          {% if suma_dni.wartosc > 120 %}
+          <div style="margin: 1rem 1.5rem; padding: 0.75rem 1rem; background: #fee2e2; border-radius: var(--promien); color: var(--kolor-blad); font-size: 0.85rem; display: flex; gap: 0.5rem; align-items: flex-start;">
+            <strong>Przekroczono limit 120 dni.</strong> Harmonogram wymaga korekty przed zatwierdzeniem.
+          </div>
+          {% elif suma_dni.wartosc < 100 %}
+          <div style="margin: 1rem 1.5rem; padding: 0.75rem 1rem; background: #fef3c7; border-radius: var(--promien); color: #92400e; font-size: 0.85rem; display: flex; gap: 0.5rem; align-items: flex-start;">
+            <strong>Niewystarczająca liczba dni (min. 100).</strong> Harmonogram wymaga uzupełnienia.
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      {% else %}
+      {# ── Ścieżka B/C ── #}
+      <div class="karta">
+        <div class="karta__naglowek">
+          <h3 class="karta__tytul">Dane pracodawcy / działalności</h3>
+        </div>
+        <div class="karta__tresc">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
+            <div class="pole-info">
+              <div class="pole-info__etykieta">Nazwa firmy / działalności</div>
+              <div class="pole-info__wartosc" style="font-weight: 600;">{{ zapis.firma_nazwa or '—' }}</div>
+            </div>
+            <div class="pole-info">
+              <div class="pole-info__etykieta">Stanowisko / zakres obowiązków</div>
+              <div class="pole-info__wartosc">{{ zapis.zopz_stanowisko or '—' }}</div>
+            </div>
+            <div class="pole-info" style="grid-column: 1 / -1;">
+              <div class="pole-info__etykieta">Adres</div>
+              <div class="pole-info__wartosc">{{ zapis.firma_adres or '—' }}{% if zapis.firma_miasto %}, {{ zapis.firma_miasto }}{% endif %}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {% if zapis.uzasadnienie_sciezki %}
+      <div class="karta">
+        <div class="karta__naglowek">
+          <h3 class="karta__tytul">Uzasadnienie wniosku</h3>
+        </div>
+        <div class="karta__tresc">
+          <p style="white-space: pre-line; font-size: 0.9rem; line-height: 1.7; color: var(--kolor-tekst);">{{ zapis.uzasadnienie_sciezki }}</p>
+        </div>
+      </div>
+      {% endif %}
+
+      {% if zapis.decyzja_komisji or zapis.decyzja_dziekana %}
+      <div class="karta">
+        <div class="karta__naglowek">
+          <h3 class="karta__tytul">Decyzje</h3>
+        </div>
+        <div class="karta__tresc" style="display: flex; flex-direction: column; gap: 1rem;">
+          {% if zapis.decyzja_komisji %}
+          <div style="padding: 1rem; border: 1px solid var(--kolor-ramka); border-radius: var(--promien); background: var(--kolor-tlo);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+              <span style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--kolor-tekst-trzeciorzed);">Komisja ds. praktyk</span>
+              <span class="status {% if zapis.decyzja_komisji == 'APPROVED' %}status--completed{% elif zapis.decyzja_komisji == 'REJECTED' %}status--draft" style="background:#fee2e2;color:var(--kolor-blad){% else %}status--in-progress{% endif %}">
+                {% if zapis.decyzja_komisji == 'APPROVED' %}Zatwierdzono
+                {% elif zapis.decyzja_komisji == 'PARTIALLY_APPROVED' %}Częściowo zatwierdzono
+                {% else %}Odrzucono{% endif %}
+              </span>
+            </div>
+            {% if zapis.komentarze_komisji %}<p style="font-size: 0.85rem; color: var(--kolor-tekst-drugor); line-height: 1.5; margin: 0;">{{ zapis.komentarze_komisji }}</p>{% endif %}
+          </div>
+          {% endif %}
+          {% if zapis.decyzja_dziekana %}
+          <div style="padding: 1rem; border: 1px solid var(--kolor-ramka); border-radius: var(--promien); background: var(--kolor-tlo);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+              <span style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--kolor-tekst-trzeciorzed);">Dyrektor IIS</span>
+              <span class="status {% if zapis.decyzja_dziekana == 'APPROVED' %}status--completed{% else %}status--draft" style="background:#fee2e2;color:var(--kolor-blad){% endif %}">
+                {{ 'Zatwierdzono' if zapis.decyzja_dziekana == 'APPROVED' else 'Odrzucono' }}
+              </span>
+            </div>
+            {% if zapis.komentarze_dziekana %}<p style="font-size: 0.85rem; color: var(--kolor-tekst-drugor); line-height: 1.5; margin: 0;">{{ zapis.komentarze_dziekana }}</p>{% endif %}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+      {% endif %}
+
+      {# Załączniki #}
+      {% if uploaded_docs %}
+      <div class="karta">
+        <div class="karta__naglowek">
+          <h3 class="karta__tytul">Załączniki studenta</h3>
+          <span style="font-size: 0.75rem; font-weight: 400; color: var(--kolor-tekst-trzeciorzed);">{{ uploaded_docs|length }} plik{% if uploaded_docs|length != 1 %}i{% endif %}</span>
+        </div>
+        <div class="karta__tresc" style="display: flex; flex-direction: column; gap: 0.5rem;">
+          {% for dok in uploaded_docs %}
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; border: 1px solid var(--kolor-ramka); border-radius: var(--promien); background: var(--kolor-tlo); transition: border-color 0.15s;">
+            <div style="min-width: 0;">
+              <div style="font-weight: 600; font-size: 0.875rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ dok.original_filename }}</div>
+              <div style="font-size: 0.75rem; color: var(--kolor-tekst-trzeciorzed); margin-top: 0.15rem;">{{ dok.document_type }} · {{ dok.uploaded_at.strftime('%d.%m.%Y, %H:%M') }}</div>
+            </div>
+            <a href="{{ url_for('uploads.download_document', document_id=dok.id) }}"
+               class="przycisk przycisk--maly przycisk--drugorzedny" style="flex-shrink: 0; margin-left: 1rem;">Pobierz</a>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+
+    {# ═══ PRAWA KOLUMNA ═══ #}
+    <div style="display: flex; flex-direction: column; gap: 1.5rem; position: sticky; top: 1.5rem;">
+
+      {# Komentarze #}
+      {% if zapis.komentarze_admina or zapis.komentarze_uopz %}
+      <div class="karta">
+        <div class="karta__naglowek">
+          <h3 class="karta__tytul">Komentarze</h3>
+        </div>
+        <div class="karta__tresc" style="display: flex; flex-direction: column; gap: 0.75rem;">
+          {% if zapis.komentarze_admina %}
+          <div style="padding: 0.875rem; border-left: 3px solid var(--kolor-glowny); background: var(--kolor-tlo); border-radius: 0 var(--promien) var(--promien) 0;">
+            <div style="font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--kolor-glowny); margin-bottom: 0.4rem;">Administrator</div>
+            <div style="font-size: 0.875rem; color: var(--kolor-tekst); line-height: 1.55; white-space: pre-wrap;">{{ zapis.komentarze_admina }}</div>
+          </div>
+          {% endif %}
+          {% if zapis.komentarze_uopz %}
+          <div style="padding: 0.875rem; border-left: 3px solid var(--kolor-akcent); background: var(--kolor-tlo); border-radius: 0 var(--promien) var(--promien) 0;">
+            <div style="font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--kolor-akcent); margin-bottom: 0.4rem;">UOPZ</div>
+            <div style="font-size: 0.875rem; color: var(--kolor-tekst); line-height: 1.55; white-space: pre-wrap;">{{ zapis.komentarze_uopz }}</div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+      {# Panel decyzji #}
+      {% if zapis.status.value in ['PENDING', 'AWAITING_APPROVAL'] %}
+      <div class="karta">
+        <div class="karta__naglowek">
+          <h3 class="karta__tytul">Decyzja</h3>
+        </div>
+        <div class="karta__tresc">
+          <form method="POST">
+            {{ form.hidden_tag() }}
+
+            <div style="margin-bottom: 1.25rem;">
+              <label class="pole-formularza__etykieta" style="display: block; margin-bottom: 0.4rem;">Komentarz do studenta <span style="font-weight: 400; color: var(--kolor-tekst-trzeciorzed);">(opcjonalny)</span></label>
+              {{ form.komentarz(class="pole-formularza__textarea", rows="4", placeholder="Uwagi widoczne dla studenta w panelu praktyk…") }}
+            </div>
+
+            <div style="border-top: 1px solid var(--kolor-ramka); padding-top: 1.25rem; display: flex; flex-direction: column; gap: 0.5rem;">
+              {{ form.zatwierdz(class="przycisk przycisk--glowny", style="width: 100%; justify-content: center;") }}
+              {{ form.odrzuc(class="przycisk przycisk--drugorzedny", style="width: 100%; justify-content: center;") }}
+            </div>
+
+          </form>
+        </div>
+      </div>
+
+      {% else %}
+
+      {# Stan po zatwierdzeniu #}
+      <div class="karta">
+        <div class="karta__tresc" style="text-align: center; padding: 2rem 1.5rem;">
+          <div style="width: 48px; height: 48px; border-radius: 50%; background: #d1fae5; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; font-size: 1.35rem; color: var(--kolor-sukces);">✓</div>
+          <div style="font-weight: 700; color: var(--kolor-sukces); font-size: 1rem; margin-bottom: 0.4rem;">Zgłoszenie zatwierdzone</div>
+          <div style="color: var(--kolor-tekst-drugor); font-size: 0.875rem; line-height: 1.5;">Praktyka jest w trakcie realizacji przez studenta.</div>
+        </div>
+      </div>
+      {% endif %}
+
+      {# Blok przypisania UOPZ #}
+      {% if not zapis.uopz and current_user.role.value == 'ADMIN' and zapis.track_type.value == 'STANDARD' %}
+      <div style="padding: 1rem; border: 1px dashed var(--kolor-ramka); border-radius: var(--promien); text-align: center;">
+        <div style="font-size: 0.8rem; color: var(--kolor-tekst-trzeciorzed); margin-bottom: 0.75rem;">Brak przypisanego opiekuna uczelnianego</div>
+        <a href="{{ url_for('zarzadzanie.przypisz_uopz', id=zapis.id) }}" class="przycisk przycisk--maly" style="width: 100%;">Przypisz UOPZ</a>
+      </div>
+      {% endif %}
+
+    </div>
+
+  </div>
+
+</div>
+
+<style>
+.pole-info__etykieta {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--kolor-tekst-trzeciorzed);
+  margin-bottom: 0.3rem;
+}
+.pole-info__wartosc {
+  font-size: 0.9rem;
+  color: var(--kolor-tekst);
+  line-height: 1.45;
+}
+</style>
+{% endblock %}

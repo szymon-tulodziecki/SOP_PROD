@@ -1,0 +1,31 @@
+/* ============================================================
+   karty.css — Komponent karty (.karta)
+   ============================================================ */
+
+.karta {
+  background: var(--kolor-biale);
+  border: 1px solid var(--kolor-ramka);
+  border-radius: var(--promien-duzy);
+  box-shadow: var(--cien-karta);
+  overflow: hidden;
+}
+
+.karta__naglowek {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--kolor-ramka);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.karta__tytul {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--kolor-tekst);
+}
+
+.karta__tresc {
+  padding: 1.5rem;
+}

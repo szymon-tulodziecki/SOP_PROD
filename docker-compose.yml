@@ -9,6 +9,8 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-ans_praktyki}
     ports:
       - "5432:5432"
+    networks:
+      - internal
     volumes:
       - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
       - pgdata:/var/lib/postgresql/data
@@ -24,6 +26,8 @@ services:
     restart: unless-stopped
     ports:
       - "6379:6379"
+    networks:
+      - internal
     volumes:
       - redis_data:/data
     deploy:
@@ -47,6 +51,9 @@ services:
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
     ports:
       - "5000:5000"
+    networks:
+      - internal
+      - public
     depends_on:
       tex-service:
         condition: service_healthy
@@ -56,12 +63,17 @@ services:
         condition: service_started
     volumes:
       - pdf_data:/app/pdf_output
+      - uploads_data:/app/uploads
       - ./app_admin:/app/app_admin:ro
       - ./core:/app/core:ro
     read_only: true
     tmpfs:
       - /tmp
       - /app/app_admin/logs
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     deploy:
       resources:
         limits:
@@ -83,6 +95,9 @@ services:
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
     ports:
       - "5001:5001"
+    networks:
+      - internal
+      - public
     depends_on:
       tex-service:
         condition: service_healthy
@@ -92,11 +107,16 @@ services:
         condition: service_started
     volumes:
       - pdf_data:/app/pdf_output
+      - uploads_data:/app/uploads
       - ./app_student:/app/app_student:ro
       - ./core:/app/core:ro
     read_only: true
     tmpfs:
       - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     deploy:
       resources:
         limits:
@@ -117,6 +137,8 @@ services:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
     command: celery -A celery_app worker --loglevel=info --concurrency=2
+    networks:
+      - internal
     depends_on:
       redis:
         condition: service_started
@@ -126,12 +148,17 @@ services:
         condition: service_healthy
     volumes:
       - pdf_data:/app/pdf_output
+      - uploads_data:/app/uploads
       - ./app_admin:/app/app_admin:ro
       - ./core:/app/core:ro
     read_only: true
     tmpfs:
       - /tmp
       - /app/app_admin/logs
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     deploy:
       resources:
         limits:
@@ -150,6 +177,8 @@ services:
       - ./tex_service/templates:/app/templates:ro
     expose:
       - "5002"
+    networks:
+      - internal
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5002/health"]
       interval: 10s
@@ -158,7 +187,11 @@ services:
       start_period: 30s
     read_only: true
     tmpfs:
-      - /tmp
+      - /tmp:size=256m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     deploy:
       resources:
         limits:
@@ -167,7 +200,16 @@ services:
         reservations:
           memory: 128M
 
+networks:
+  # Sieć wewnętrzna — bez dostępu do internetu.
+  # Wszystkie serwisy backendowe komunikują się wyłącznie przez tę sieć.
+  internal:
+    internal: true
+  # Sieć publiczna — wyłącznie dla admin i student (porty 5000/5001).
+  public:
+
 volumes:
   pgdata:
   pdf_data:
+  uploads_data:
   redis_data:

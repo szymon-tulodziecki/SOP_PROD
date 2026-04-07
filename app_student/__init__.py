@@ -5,7 +5,18 @@ from app_student.config import config_dict
 
 
 def create_app():
+    from pathlib import Path as _Path
+    from flask import Blueprint as _Blueprint
     app = Flask(__name__)
+
+    # ── Core static assets (CSS design system + templates) ──────
+    core_bp = _Blueprint(
+        'core_static', __name__,
+        static_folder=str(_Path(__file__).parent.parent / 'core' / 'static'),
+        static_url_path='/core/static',
+        template_folder=str(_Path(__file__).parent.parent / 'core' / 'templates'),
+    )
+    app.register_blueprint(core_bp)
     app.jinja_options = app.jinja_options.copy()
     app.jinja_options.update(dict(
         autoescape=select_autoescape(['html', 'xml'])
@@ -20,27 +31,35 @@ def create_app():
     login_manager.login_message = 'Zaloguj się, aby uzyskać dostęp.'
 
     with app.app_context():
-        from app_student.routes.auth import auth_bp
-        from app_student.routes.dashboard import dashboard_bp
-        from app_student.routes.praktyki import praktyki_bp
-        from app_student.routes.dziennik import dziennik_bp
+        from core.auth  import stworz_blueprint_auth
+        from core.pliki import stworz_blueprint_pliki
+        from core.modele import RolaUzytkownika
+        from app_student.routes.pulpit       import dashboard_bp
+        from app_student.routes.praktyki     import praktyki_bp
+        from app_student.routes.dziennik     import dziennik_bp
         from app_student.routes.sprawozdania import sprawozdania_bp
-        from app_student.routes.dokumenty import documents_bp
-        from app_student.routes.uploads import uploads_bp
+        from app_student.routes.dokumenty    import documents_bp
+
+        auth_bp    = stworz_blueprint_auth(
+            dozwolone_role=[RolaUzytkownika.STUDENT],
+            template_logowania='auth/logowanie.html',
+            template_zmiany_hasla='auth/zmien_haslo.html',
+        )
+        uploads_bp = stworz_blueprint_pliki()
 
         app.register_blueprint(auth_bp)
-        app.register_blueprint(dashboard_bp, url_prefix='/panel')
-        app.register_blueprint(praktyki_bp,  url_prefix='/praktyki')
-        app.register_blueprint(dziennik_bp,  url_prefix='/dziennik')
+        app.register_blueprint(dashboard_bp,  url_prefix='/panel')
+        app.register_blueprint(praktyki_bp,   url_prefix='/praktyki')
+        app.register_blueprint(dziennik_bp,   url_prefix='/dziennik')
         app.register_blueprint(sprawozdania_bp, url_prefix='/sprawozdanie')
-        app.register_blueprint(documents_bp, url_prefix='/dokumenty')
+        app.register_blueprint(documents_bp,  url_prefix='/dokumenty')
         app.register_blueprint(uploads_bp,    url_prefix='/uploads')
 
     # Kontekst globalny: informacje o aktywnym zapisie studenta
     @app.context_processor
     def inject_aktywny_zapis():
         from flask_login import current_user
-        from core.models import ZapisPraktyki, StatusZapisu
+        from core.modele import ZapisPraktyki, StatusZapisu
         info = {'ma_aktywny': False, 'sciezka': None, 'status': None}
         try:
             if current_user.is_authenticated:
@@ -63,12 +82,12 @@ def create_app():
         wymaga_uwagi = False
         try:
             if current_user.is_authenticated:
-                from core.models import ZapisPraktyki, StatusZapisu
+                from core.modele import ZapisPraktyki, StatusZapisu
                 z = db.session.query(ZapisPraktyki).filter(
                     ZapisPraktyki.student_id == current_user.id,
                     ZapisPraktyki.status == StatusZapisu.AWAITING_APPROVAL,
-                    ZapisPraktyki.uopz_comments.isnot(None),
-                    ZapisPraktyki.uopz_comments != '',
+                    ZapisPraktyki.komentarze_uopz.isnot(None),
+                    ZapisPraktyki.komentarze_uopz != '',
                 ).first()
                 if z:
                     wymaga_uwagi = True
@@ -94,7 +113,7 @@ def create_app():
     def sprawdz_studenta():
         from flask import request, redirect, url_for, abort
         from flask_login import current_user
-        from core.models import RolaUzytkownika
+        from core.modele import RolaUzytkownika
 
         if not current_user.is_authenticated:
             return
@@ -108,16 +127,28 @@ def create_app():
 
     @app.errorhandler(403)
     def blad_403(e):
-        return render_template('errors/403.html'), 403
+        return render_template('errors/blad.html',
+            kod='403', tytul='Brak dostępu',
+            opis='Nie masz uprawnień do wyświetlenia tej strony.',
+            tekst_przycisku='Wróć do pulpitu'), 403
 
     @app.errorhandler(404)
     def blad_404(e):
-        return render_template('errors/404.html'), 404
+        return render_template('errors/blad.html',
+            kod='404', tytul='Nie znaleziono strony',
+            opis='Strona, której szukasz nie istnieje lub została przeniesiona.',
+            tekst_przycisku='Wróć do pulpitu'), 404
 
-    return app
+    @app.errorhandler(500)
+    def blad_500(e):
+        app.logger.exception('Unhandled Exception:') if hasattr(app, 'logger') else None
+        return render_template('errors/blad.html',
+            kod='500', tytul='Błąd serwera',
+            opis='Wystąpił nieoczekiwany błąd. Administratorzy zostali powiadomieni.',
+            tekst_przycisku='Wróć do pulpitu'), 500
 
 
 @login_manager.user_loader
 def wczytaj_uzytkownika(user_id):
-    from core.models import Uzytkownik
+    from core.modele import Uzytkownik
     return db.session.get(Uzytkownik, user_id)

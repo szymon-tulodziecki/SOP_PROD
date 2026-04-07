@@ -8,7 +8,18 @@ from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
 def create_app():
+    from pathlib import Path as _Path
+    from flask import Blueprint as _Blueprint
     app = Flask(__name__)
+
+    # ── Core static assets (CSS design system + templates) ──────
+    core_bp = _Blueprint(
+        'core_static', __name__,
+        static_folder=str(_Path(__file__).parent.parent / 'core' / 'static'),
+        static_url_path='/core/static',
+        template_folder=str(_Path(__file__).parent.parent / 'core' / 'templates'),
+    )
+    app.register_blueprint(core_bp)
 
     app.jinja_options = app.jinja_options.copy()
     app.jinja_options.update(dict(
@@ -40,17 +51,25 @@ def create_app():
     login_manager.login_message = 'Zaloguj się, aby uzyskać dostęp do tej strony.'
     login_manager.login_message_category = 'warning'
     with app.app_context():
-        from app_admin.routes.auth       import auth_bp
-        from app_admin.routes.dashboard  import dashboard_bp
-        from app_admin.routes.management import management_bp
-        from app_admin.routes.evaluation import evaluation_bp
-        from app_admin.routes.journal    import journal_bp
-        from app_admin.routes.documents  import documents_bp
-        from app_admin.routes.uploads    import uploads_bp
+        from core.auth  import stworz_blueprint_auth, wymaga_roli
+        from core.pliki import stworz_blueprint_pliki
+        from core.modele import RolaUzytkownika
+        from app_admin.routes.pulpit      import dashboard_bp
+        from app_admin.routes.zarzadzanie import zarzadzanie_bp
+        from app_admin.routes.ocenianie   import evaluation_bp
+        from app_admin.routes.dziennik    import journal_bp
+        from app_admin.routes.dokumenty   import documents_bp
+
+        auth_bp    = stworz_blueprint_auth(
+            dozwolone_role=[RolaUzytkownika.ADMIN, RolaUzytkownika.UOPZ],
+            template_logowania='auth/logowanie.html',
+            template_zmiany_hasla='auth/zmien_haslo.html',
+        )
+        uploads_bp = stworz_blueprint_pliki()
 
         app.register_blueprint(auth_bp)
         app.register_blueprint(dashboard_bp,  url_prefix='/panel')
-        app.register_blueprint(management_bp, url_prefix='/zarzadzanie')
+        app.register_blueprint(zarzadzanie_bp, url_prefix='/zarzadzanie')
         app.register_blueprint(evaluation_bp, url_prefix='/oceny')
         app.register_blueprint(journal_bp,    url_prefix='/dzienniki')
         app.register_blueprint(documents_bp,  url_prefix='/dokumenty')
@@ -62,7 +81,7 @@ def create_app():
         try:
             from flask_login import current_user
             if current_user.is_authenticated:
-                from core.models import ZapisPraktyki, StatusZapisu
+                from core.modele import ZapisPraktyki, StatusZapisu
                 counts['nav_oczekujace'] = db.session.query(ZapisPraktyki).filter(
                     ZapisPraktyki.status == StatusZapisu.AWAITING_APPROVAL
                 ).count()
@@ -99,20 +118,31 @@ def create_app():
                 and request.endpoint not in ('auth.zmien_haslo', 'auth.wylogowanie', 'static')):
             return redirect(url_for('auth.zmien_haslo'))
 
+    @app.errorhandler(403)
+    def blad_403(e):
+        return render_template('errors/blad.html',
+            kod='403', tytul='Brak dostępu',
+            opis='Nie masz uprawnień do wyświetlenia tej strony.',
+            tekst_przycisku='Wróć do pulpitu'), 403
+
     @app.errorhandler(404)
     def blad_404(e):
-        return render_template('errors/404.html', kod='404'), 404
-
+        return render_template('errors/blad.html',
+            kod='404', tytul='Nie znaleziono strony',
+            opis='Strona, której szukasz nie istnieje lub została przeniesiona.',
+            tekst_przycisku='Wróć do pulpitu'), 404
 
     @app.errorhandler(500)
     def blad_500(e):
         app.logger.exception('Unhandled Exception:')
-        return render_template('errors/500.html', kod='500'), 500
-
+        return render_template('errors/blad.html',
+            kod='500', tytul='Błąd serwera',
+            opis='Wystąpił nieoczekiwany błąd. Administratorzy zostali powiadomieni.',
+            tekst_przycisku='Wróć do pulpitu'), 500
 
     return app
 
 @login_manager.user_loader
 def wczytaj_uzytkownika(user_id):
-    from core.models import Uzytkownik
+    from core.modele import Uzytkownik
     return db.session.get(Uzytkownik, user_id)

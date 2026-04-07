@@ -1,0 +1,15 @@
+/* dashboard.css — Statystyki, strona błędu */
+
+.statystyki-grid, .siatka-statystyk { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+.stat-karta, .karta-stat { background: var(--kolor-biale); padding: 1.5rem; border-radius: var(--promien-duzy); border: 1px solid var(--kolor-ramka); box-shadow: var(--cien-karta); display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0.5rem; }
+.stat-karta__etykieta, .karta-stat__etykieta { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--kolor-tekst-drugor); }
+.stat-karta__wartosc, .karta-stat__liczba { font-size: 2rem; font-weight: 700; color: var(--kolor-glowny); line-height: 1; }
+.karta-stat__ikona { color: var(--kolor-akcent); line-height: 1; }
+.karta-stat__ikona svg { width: 28px; height: 28px; }
+
+@media (max-width: 768px) { .statystyki-grid { grid-template-columns: 1fr 1fr; } }
+
+.strona-bledu { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 4rem 2rem; min-height: 60vh; }
+.strona-bledu__kod { font-size: 5rem; font-weight: 800; color: var(--kolor-ramka); line-height: 1; margin-bottom: 1rem; }
+.strona-bledu__tytul { font-size: 1.5rem; font-weight: 600; color: var(--kolor-tekst); margin-bottom: 0.5rem; }
+.strona-bledu__opis { color: var(--kolor-tekst-drugor); max-width: 400px; margin: 0 auto; }

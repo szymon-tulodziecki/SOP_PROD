@@ -12,11 +12,11 @@
 <div style="max-width: 800px; margin: 0 auto;">
 
   <!-- Baner akcji — wymaga uzupełnienia -->
-  {% if zapis.status.value == 'AWAITING_APPROVAL' and zapis.uopz_comments %}
+  {% if zapis.status.value == 'AWAITING_APPROVAL' and zapis.komentarze_uopz %}
   <div style="background:#fffbeb; border:1px solid #f59e0b; border-left:4px solid #d97706; border-radius:0.5rem; padding:1rem 1.25rem; margin-bottom:1.5rem; display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;">
     <div>
       <div style="font-weight:600; color:#92400e; margin-bottom:0.25rem;">Zgłoszenie wymaga uzupełnienia</div>
-      <div style="font-size:0.85rem; color:#92400e;">{{ zapis.uopz_comments }}</div>
+      <div style="font-size:0.85rem; color:#92400e;">{{ zapis.komentarze_uopz }}</div>
     </div>
     <div style="display:flex; gap:0.5rem; flex-shrink:0; flex-wrap:wrap;">
       {% if zapis.track_type.value == 'STANDARD' %}
@@ -93,28 +93,28 @@
   {% endif %}
 
   <!-- Komentarze i uwagi -->
-  {% if zapis.uopz_comments or zapis.admin_comments %}
+  {% if zapis.komentarze_uopz or zapis.komentarze_admina %}
   <div class="karta" style="margin-bottom: 2rem;">
     <div class="karta__naglowek">
       <h2>Uwagi i komentarze</h2>
     </div>
     <div class="karta__tresc">
 
-      {% if zapis.uopz_comments %}
+      {% if zapis.komentarze_uopz %}
       <div style="padding: 1rem; background: #fef3cd; border-radius: 0.5rem; border-left: 4px solid #f59e0b; margin-bottom: 1rem;">
         <div style="font-weight: 500; color: #92400e; margin-bottom: 0.5rem;">
           Uwagi Opiekuna Uczelnianego (UOPZ)
         </div>
-        <div style="color: #92400e; white-space: pre-wrap; line-height: 1.5;">{{ zapis.uopz_comments }}</div>
+        <div style="color: #92400e; white-space: pre-wrap; line-height: 1.5;">{{ zapis.komentarze_uopz }}</div>
       </div>
       {% endif %}
 
-      {% if zapis.admin_comments %}
+      {% if zapis.komentarze_admina %}
       <div style="padding: 1rem; background: #e0f2fe; border-radius: 0.5rem; border-left: 4px solid #0288d1;">
         <div style="font-weight: 500; color: #01579b; margin-bottom: 0.5rem;">
           Komentarz Administratora
         </div>
-        <div style="color: #01579b; white-space: pre-wrap; line-height: 1.5;">{{ zapis.admin_comments }}</div>
+        <div style="color: #01579b; white-space: pre-wrap; line-height: 1.5;">{{ zapis.komentarze_admina }}</div>
       </div>
       {% endif %}
 

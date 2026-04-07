@@ -4,7 +4,7 @@
 {% block naglowek %}Sprawozdanie: {{ zapis.student.imie }} {{ zapis.student.nazwisko }}{% endblock %}
 
 {% block naglowek_akcje %}
-<a href="{{ url_for('management.szczegoly_praktyki', id=zapis.internship_id) }}" class="przycisk przycisk--drugorzedny">Powrót do szczegółów</a>
+<a href="{{ url_for('zarzadzanie.szczegoly_praktyki', id=zapis.internship_id) }}" class="przycisk przycisk--drugorzedny">Powrót do szczegółów</a>
 <a href="{{ url_for('evaluation.ocen_praktyke', id=zapis.id) }}" class="przycisk przycisk--glowny">Przejdź do oceniania</a>
 {% endblock %}
 

@@ -110,41 +110,86 @@ def render_tex(template_name: str, context: dict) -> str:
     return template.render(**context)
 
 
+_MAX_RAW_TEX_SIZE = 100_000  # 100 KB — wystarczy dla każdego dokumentu
+
+# Wzorce niebezpiecznych komend LaTeX.
+# Każdy wpis: (wzorzec_regex, opis_dla_użytkownika).
+# WAŻNE: to jest lista blokowanych wzorców (blocklist), nie lista dozwolonych.
+# Blocklist nigdy nie jest kompletna — główną ochroną jest sandboxing kontenera.
+_DANGEROUS_PATTERNS: list[tuple[str, str]] = [
+    # ── Shell escape — bezpośrednie wykonanie kodu powłoki ──────────────
+    (r'\\write\s*18\b',               r'\write18 — shell escape'),
+    (r'\\write\s*-\s*1\b',            r'\write-1 — zapis na terminal'),
+    (r'\\immediate\s*\\write\s*18\b', r'\immediate\write18 — shell escape'),
+    (r'\\ShellEscape\b',              r'\ShellEscape — shell escape (shellesc)'),
+
+    # ── Lua — wykonanie dowolnego kodu Lua/systemu ───────────────────────
+    (r'\\directlua\b',  r'\directlua — wykonanie kodu Lua'),
+    (r'\\latelua\b',    r'\latelua — wykonanie kodu Lua'),
+    (r'\\luacode\b',    r'\luacode — środowisko Lua'),
+    (r'\\luaexec\b',    r'\luaexec — wykonanie Lua'),
+    (r'\\luastring\b',  r'\luastring — ciąg Lua'),
+    (r'\\lua[A-Za-z]+', r'\lua* — komenda Lua'),
+
+    # ── Odczyt plików systemu ────────────────────────────────────────────
+    (r'\\input\s*\{',          r'\input{} — dołączenie pliku'),
+    (r'\\include\s*\{',        r'\include{} — dołączenie pliku'),
+    (r'\\verbatiminput\b',     r'\verbatiminput — odczyt pliku jako tekst'),
+    (r'\\lstinputlisting\b',   r'\lstinputlisting — odczyt pliku (listings)'),
+    (r'\\inputminted\b',       r'\inputminted — odczyt pliku (minted)'),
+    (r'\\subfile\b',           r'\subfile — dołączenie podpliku'),
+    (r'\\import\b',            r'\import — dołączenie z zewnętrznego katalogu'),
+    (r'\\openin\b',            r'\openin — otwarcie strumienia odczytu'),
+    (r'\\read\b',              r'\read — odczyt ze strumienia'),
+
+    # ── Zapis plików systemu ─────────────────────────────────────────────
+    (r'\\openout\b',           r'\openout — otwarcie strumienia zapisu'),
+    (r'\\newwrite\b',          r'\newwrite — rejestracja strumienia zapisu'),
+    (r'\\newread\b',           r'\newread — rejestracja strumienia odczytu'),
+    (r'\\immediate\s*\\write', r'\immediate\write — natychmiastowy zapis'),
+    (r'\\write\s*\\',          r'\write\register — zapis przez rejestr'),
+
+    # ── Niebezpieczne pakiety ────────────────────────────────────────────
+    (r'\\usepackage\s*(?:\[.*?\])?\s*\{shellesc\}',  r'pakiet shellesc — shell escape'),
+    (r'\\usepackage\s*(?:\[.*?\])?\s*\{minted\}',    r'pakiet minted — wykonanie kodu powłoki'),
+    (r'\\usepackage\s*(?:\[.*?\])?\s*\{sagetex\}',   r'pakiet sagetex — wykonanie kodu Python/Sage'),
+    (r'\\usepackage\s*(?:\[.*?\])?\s*\{pythontex\}', r'pakiet pythontex — wykonanie kodu Python'),
+
+    # ── Obejście interpretera — zmiana znaczenia znaków ─────────────────
+    (r'\\catcode\b',  r'\catcode — zmiana kodu kategorii znaków'),
+    (r'\\csname\b',   r'\csname — obfuskacja nazwy komendy'),
+
+    # ── Niskopoziomowe prymitywy pdftex/luatex ───────────────────────────
+    (r'\\pdfshellescape\b', r'\pdfshellescape — flaga shell escape'),
+    (r'\\pdfobj\b',         r'\pdfobj — niskopoziomowy obiekt PDF'),
+    (r'\\special\b',        r'\special — komenda sterownika wyjścia'),
+]
+
+
 def _check_dangerous_commands(tex_source: str) -> None:
     """Sprawdza surowy kod TeX pod kątem niebezpiecznych komend.
 
-    Blokuje komendy umożliwiające odczyt/zapis plików systemowych
-    nawet bez flagi --shell-escape:
-    - \\input, \\include, \\includegraphics z ścieżkami bezwzględnymi
-    - \\openin, \\openout, \\read, \\write — operacje I/O
-    - \\catcode — zmiana znaczenia znaków (obejście sanityzacji)
-    - \\newwrite, \\newread, \\immediate — niskopoziomowe I/O
-    - usepackage{shellesc} — próby włączenia shell escape
-    """
-    import re
+    Rzuca TexCompilationError przy pierwszym dopasowaniu.
+    Sprawdzanie jest case-insensitive i wieloliniowe.
 
-    # Wzorce niebezpiecznych komend LaTeX
-    _DANGEROUS_PATTERNS = [
-        (r'\\input\s*\{[^}]*/', 'Komenda \\input z ścieżką bezwzględną'),
-        (r'\\include\s*\{[^}]*/', 'Komenda \\include z ścieżką bezwzględną'),
-        (r'\\openin', 'Komenda \\openin (odczyt plików)'),
-        (r'\\openout', 'Komenda \\openout (zapis plików)'),
-        (r'\\read\b', 'Komenda \\read (odczyt plików)'),
-        (r'\\write\s*\\', 'Komenda \\write (zapis plików)'),
-        (r'\\newwrite', 'Komenda \\newwrite (tworzenie strumienia zapisu)'),
-        (r'\\newread', 'Komenda \\newread (tworzenie strumienia odczytu)'),
-        (r'\\immediate\s*\\write', 'Komenda \\immediate\\write (natychmiastowy zapis)'),
-        (r'\\catcode', 'Komenda \\catcode (zmiana interpretera znaków)'),
-        (r'\\usepackage\s*\{shellesc\}', 'Pakiet shellesc (shell escape)'),
-        (r'\\directlua', 'Komenda \\directlua (wykonanie kodu Lua)'),
-        (r'\\latelua', 'Komenda \\latelua (wykonanie kodu Lua)'),
-    ]
+    WAŻNE: Funkcja jest drugą linią obrony — pierwsze są:
+    1. Sandboxing kontenera (read_only, no-new-privileges, cap_drop)
+    2. lualatex -no-shell-escape
+
+    Nie należy polegać wyłącznie na tej funkcji.
+    """
+    if len(tex_source) > _MAX_RAW_TEX_SIZE:
+        raise TexCompilationError(
+            f"Kod TeX jest zbyt długi ({len(tex_source)} znaków). "
+            f"Maksymalny rozmiar to {_MAX_RAW_TEX_SIZE} znaków."
+        )
 
     for pattern, description in _DANGEROUS_PATTERNS:
-        if re.search(pattern, tex_source, re.IGNORECASE):
+        if re.search(pattern, tex_source, re.IGNORECASE | re.DOTALL):
             raise TexCompilationError(
                 f"Zablokowana niebezpieczna komenda LaTeX: {description}. "
-                f"Ze względów bezpieczeństwa nie można używać tej komendy w trybie ręcznym."
+                f"Ze względów bezpieczeństwa ta komenda jest niedozwolona "
+                f"w trybie ręcznej kompilacji."
             )
 
 

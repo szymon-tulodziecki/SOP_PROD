@@ -1,0 +1,64 @@
+{% extends "layouts/base_panel.html" %}
+
+{% block tytul %}{{ 'Edytuj zakład' if zaklad else 'Nowy zakład pracy' }}{% endblock %}
+{% block naglowek %}{{ 'Edytuj zakład' if zaklad else 'Nowy zakład pracy' }}{% endblock %}
+
+{% block naglowek_akcje %}
+<a href="{{ url_for('zarzadzanie.lista_zakladow') }}" class="przycisk przycisk--drugorzedny">Anuluj</a>
+{% endblock %}
+
+{% block tresc %}
+<div class="karta" style="max-width: 800px; margin: 0 auto;">
+  <div class="karta__tresc">
+    <form method="POST" class="formularz-panel" novalidate>
+      {{ form.hidden_tag() }}
+
+      <div class="pole-formularza {% if form.nazwa.errors %}pole-formularza--blad{% endif %}">
+        <label for="nazwa" class="pole-formularza__etykieta">Pełna nazwa zakładu</label>
+        {{ form.nazwa(class="pole-formularza__input", placeholder="np. Software House Sp. z o.o.") }}
+        {% for error in form.nazwa.errors %}<span class="pole-formularza__blad">{{ error }}</span>{% endfor %}
+      </div>
+
+      <div class="pole-formularza {% if form.adres.errors %}pole-formularza--blad{% endif %}">
+        <label for="adres" class="pole-formularza__etykieta">Adres (ulica i numer)</label>
+        {{ form.adres(class="pole-formularza__input", placeholder="np. ul. Grunwaldzka 137") }}
+        {% for error in form.adres.errors %}<span class="pole-formularza__blad">{{ error }}</span>{% endfor %}
+      </div>
+
+      <div class="formularz-panel__siatka">
+        <div class="pole-formularza {% if form.kod_pocztowy.errors %}pole-formularza--blad{% endif %}">
+          <label for="kod_pocztowy" class="pole-formularza__etykieta">Kod pocztowy</label>
+          {{ form.kod_pocztowy(class="pole-formularza__input", placeholder="np. 82-300") }}
+          {% for error in form.kod_pocztowy.errors %}<span class="pole-formularza__blad">{{ error }}</span>{% endfor %}
+        </div>
+
+        <div class="pole-formularza {% if form.miasto.errors %}pole-formularza--blad{% endif %}">
+          <label for="miasto" class="pole-formularza__etykieta">Miasto</label>
+          {{ form.miasto(class="pole-formularza__input", placeholder="np. Elbląg") }}
+          {% for error in form.miasto.errors %}<span class="pole-formularza__blad">{{ error }}</span>{% endfor %}
+        </div>
+      </div>
+
+      <div class="formularz-panel__siatka">
+        <div class="pole-formularza {% if form.nip_krs.errors %}pole-formularza--blad{% endif %}">
+          <label for="nip_krs" class="pole-formularza__etykieta">NIP / KRS</label>
+          {{ form.nip_krs(class="pole-formularza__input", placeholder="NIP lub numer rejestrowy") }}
+          {% for error in form.nip_krs.errors %}<span class="pole-formularza__blad">{{ error }}</span>{% endfor %}
+        </div>
+
+        <div class="pole-formularza {% if form.przedstawiciel_prawny.errors %}pole-formularza--blad{% endif %}">
+          <label for="przedstawiciel_prawny" class="pole-formularza__etykieta">Przedstawiciel prawny</label>
+          {{ form.przedstawiciel_prawny(class="pole-formularza__input", placeholder="Imię i nazwisko (np. Prezes Zarządu)") }}
+          {% for error in form.przedstawiciel_prawny.errors %}<span class="pole-formularza__blad">{{ error }}</span>{% endfor %}
+        </div>
+      </div>
+
+      <div class="formularz-panel__akcje" style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--kolor-ramka);">
+        <button type="submit" class="przycisk przycisk--glowny">
+          {{ 'Zapisz zmiany' if zaklad else 'Dodaj zakład pracy' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -20,7 +20,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY sanitizer.py compiler.py app.py ./
+COPY sanitizer.py compiler.py app.py pdf_service.py ./
 COPY templates/ ./templates/
 
 # Bezpieczeństwo: dedykowany nieuprzywilejowany użytkownik (nie root).

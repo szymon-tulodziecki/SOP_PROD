@@ -4,7 +4,7 @@
 {% block naglowek %}Generowanie dokumentów: {{ zapis.student.imie }} {{ zapis.student.nazwisko }}{% endblock %}
 
 {% block naglowek_akcje %}
-<a href="{{ url_for('management.szczegoly_praktyki', id=zapis.internship_id) }}" class="przycisk przycisk--drugorzedny">Powrót do szczegółów</a>
+<a href="{{ url_for('zarzadzanie.szczegoly_praktyki', id=zapis.internship_id) }}" class="przycisk przycisk--drugorzedny">Powrót do szczegółów</a>
 {% endblock %}
 
 {% block tresc %}

@@ -73,7 +73,7 @@ def generate_pdf_dziennik(self, enrollment_id: str) -> dict:
 
         # Importy modeli — baza jest wspólna, importujemy z app_admin
         from core.extensions import db
-        from core.models import ZapisPraktyki, WpisDziennika
+        from core.modele import ZapisPraktyki, WpisDziennika
 
         zapis = db.session.get(ZapisPraktyki, uuid.UUID(enrollment_id))
         if not zapis:
@@ -150,7 +150,7 @@ def compile_raw_tex_task(self, tex_source: str, filename_prefix: str) -> dict:
 
     try:
         self.update_state(state='STARTED', meta={'progress': 10})
-        from tex_engine.compiler import compile_raw_tex
+        from tex_service.compiler import compile_raw_tex
 
         pdf_bytes = compile_raw_tex(tex_source)
         self.update_state(state='STARTED', meta={'progress': 80})
@@ -181,10 +181,10 @@ def generate_zip_task(self, enrollment_id: str) -> dict:
 
     try:
         from core.extensions import db
-        from core.models import ZapisPraktyki
-        from tex_engine.compiler import render_tex, compile_raw_tex
-        from tex_engine.pdf_service import pdf_service
-        from app_admin.routes.documents import DOCUMENTS
+        from core.modele import ZapisPraktyki
+        from tex_service.compiler import render_tex, compile_raw_tex
+        from tex_service.pdf_service import pdf_service
+        from app_admin.routes.dokumenty import DOCUMENTS
 
         self.update_state(state='STARTED', meta={'progress': 5})
 

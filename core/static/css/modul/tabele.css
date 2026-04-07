@@ -1,0 +1,13 @@
+/* tabele.css — Tabele danych */
+
+.tabela-wrapper { overflow-x: auto; }
+.tabela { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+.tabela thead { background: var(--kolor-tlo); }
+.tabela th { padding: 0.75rem 1rem; text-align: left; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--kolor-tekst-drugor); border-bottom: 2px solid var(--kolor-ramka); white-space: nowrap; }
+.tabela td { padding: 0.875rem 1rem; border-bottom: 1px solid var(--kolor-ramka); vertical-align: middle; color: var(--kolor-tekst); }
+.tabela tbody tr:hover { background: rgba(26,58,92,0.03); }
+.tabela--pusta { text-align: center; color: var(--kolor-tekst-trzeciorzed); padding: 2rem 1rem !important; font-style: italic; }
+
+.komorka-uzytkownik { display: flex; flex-direction: column; }
+.komorka-uzytkownik__nazwa { font-weight: 600; }
+.komorka-uzytkownik__info { font-size: 0.75rem; color: var(--kolor-tekst-trzeciorzed); }

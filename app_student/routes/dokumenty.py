@@ -11,7 +11,7 @@ import httpx
 from flask import Blueprint, abort, send_file, jsonify, request, current_app, flash, redirect, url_for, make_response, render_template
 from flask_login import login_required, current_user
 from core.extensions import db
-from core.models import ZapisPraktyki, StatusZapisu, HarmonogramPraktyki
+from core.modele import ZapisPraktyki, StatusZapisu, HarmonogramPraktyki
 
 logger = logging.getLogger(__name__)
 documents_bp = Blueprint('documents', __name__)
@@ -53,7 +53,7 @@ def moje_dokumenty():
         # Ocena wystawiona przez UOPZ (po egzaminie komisji)
         oceniona = zakonczona and zapis.ocena_uopz is not None
         # Dziekan zatwierdził (dla ścieżki B/C)
-        dziekan_zatwierdził = zapis.dean_decision == 'APPROVED'
+        dziekan_zatwierdził = zapis.decyzja_dziekana == 'APPROVED'
         harmonogram_count = db.session.query(HarmonogramPraktyki)\
             .filter_by(enrollment_id=zapis.id).count()
         firma_bez_umowy = not zapis.firma or not zapis.firma.has_standing_agreement
@@ -261,7 +261,7 @@ def _build_context(zapis, typ):
     }
     # Dane harmonogramu dla ZAL_6
     if typ in ('ZAL_2A',):
-        from core.models import HarmonogramPraktyki, EfektUczenia
+        from core.modele import HarmonogramPraktyki, EfektUczenia
         harmonogramy = db.session.query(HarmonogramPraktyki)\
             .filter_by(enrollment_id=zapis.id)\
             .order_by(HarmonogramPraktyki.learning_outcome_id)\
@@ -274,7 +274,7 @@ def _build_context(zapis, typ):
             'dni': g(h, 'liczba_dni', 0),
         } for h in harmonogramy]
     if typ in ('ZAL_6',):
-        from core.models import WpisDziennika
+        from core.modele import WpisDziennika
         wpisy = db.session.query(WpisDziennika)\
             .filter_by(enrollment_id=zapis.id)\
             .order_by(WpisDziennika.entry_date)\

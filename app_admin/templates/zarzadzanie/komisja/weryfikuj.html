@@ -1,0 +1,323 @@
+{% extends "layouts/base_panel.html" %}
+
+{% block tytul %}Weryfikacja wniosku — {{ zapis.student.first_name }} {{ zapis.student.last_name }}{% endblock %}
+{% block naglowek %}Weryfikacja wniosku komisji{% endblock %}
+
+{% block naglowek_akcje %}
+<div style="display: flex; gap: 0.5rem; align-items: center;">
+  <a href="{{ url_for('zarzadzanie.komisja_lista') }}" class="przycisk przycisk--drugorzedny">← Powrót do listy</a>
+</div>
+{% endblock %}
+
+{% block tresc %}
+<div style="max-width: 1200px; margin: 0 auto;">
+
+  {# ── Karta identyfikacyjna ── #}
+  {% set status_val = zapis.status.value %}
+  {% if status_val == 'COMMISSION_REVIEW' %}
+    {% set border_color = '#3b82f6' %}
+    {% set status_cls = 'status--planned' %}
+    {% set status_label = 'Do rozpatrzenia przez komisję' %}
+  {% elif status_val == 'AWAITING_APPROVAL' %}
+    {% set border_color = 'var(--kolor-akcent)' %}
+    {% set status_cls = 'status--in-progress' %}
+    {% set status_label = 'Zwrócone do uzupełnienia' %}
+  {% elif status_val == 'DEAN_APPROVAL' %}
+    {% set border_color = 'var(--kolor-glowny)' %}
+    {% set status_cls = 'status--planned' %}
+    {% set status_label = 'Przekazane do dziekana' %}
+  {% elif status_val == 'IN_PROGRESS' %}
+    {% set border_color = 'var(--kolor-sukces)' %}
+    {% set status_cls = 'status--completed' %}
+    {% set status_label = 'Zatwierdzona — w realizacji' %}
+  {% else %}
+    {% set border_color = 'var(--kolor-ramka)' %}
+    {% set status_cls = 'status--draft' %}
+    {% set status_label = status_val %}
+  {% endif %}
+
+  <div style="background: var(--kolor-biale); border-radius: var(--promien-duzy); border-top: 4px solid {{ border_color }}; box-shadow: var(--cien-karta); margin-bottom: 2rem; overflow: hidden;">
+    <div style="padding: 1.75rem 2rem; display: grid; grid-template-columns: auto 1fr auto; gap: 2rem; align-items: center;">
+
+      <div style="width: 56px; height: 56px; border-radius: 50%; background: var(--kolor-glowny); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; font-weight: 700; flex-shrink: 0; letter-spacing: 0.5px;">
+        {{ zapis.student.first_name[0] }}{{ zapis.student.last_name[0] }}
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; min-width: 0;">
+        <div>
+          <div style="font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--kolor-tekst-trzeciorzed); margin-bottom: 0.35rem;">Student</div>
+          <div style="font-weight: 700; font-size: 1rem; color: var(--kolor-tekst);">{{ zapis.student.first_name }} {{ zapis.student.last_name }}</div>
+          <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor); margin-top: 0.15rem;">{{ zapis.student.email }}</div>
+          {% if zapis.student.album_number %}
+          <div style="font-size: 0.75rem; color: var(--kolor-tekst-trzeciorzed);">nr alb. {{ zapis.student.album_number }}</div>
+          {% endif %}
+        </div>
+        <div>
+          <div style="font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--kolor-tekst-trzeciorzed); margin-bottom: 0.35rem;">Rok akademicki</div>
+          <div style="font-weight: 600; color: var(--kolor-tekst);">{{ zapis.praktyka.rok_uczelniany }}</div>
+          <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor);">Semestr {{ zapis.praktyka.semestr }}</div>
+        </div>
+        <div>
+          <div style="font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--kolor-tekst-trzeciorzed); margin-bottom: 0.35rem;">Ścieżka</div>
+          <div style="font-weight: 600; color: var(--kolor-tekst);">
+            {% if zapis.track_type.value == 'EMPLOYMENT' %}Na podst. zatrudnienia
+            {% elif zapis.track_type.value == 'OWN_BUSINESS' %}Własna działalność
+            {% else %}{{ zapis.track_type.value }}{% endif %}
+          </div>
+        </div>
+        <div>
+          <div style="font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--kolor-tekst-trzeciorzed); margin-bottom: 0.35rem;">Data zgłoszenia</div>
+          <div style="font-weight: 600; color: var(--kolor-tekst);">{{ zapis.enrolled_at.strftime('%d.%m.%Y') if zapis.enrolled_at else '—' }}</div>
+          <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor);">{{ zapis.enrolled_at.strftime('%H:%M') if zapis.enrolled_at else '' }}</div>
+        </div>
+      </div>
+
+      <div style="text-align: right; flex-shrink: 0;">
+        <span class="status {{ status_cls }}" style="font-size: 0.75rem; padding: 0.4rem 1rem;">{{ status_label }}</span>
+      </div>
+
+    </div>
+  </div>
+
+  {# ── Główna siatka treści ── #}
+  <div style="display: grid; grid-template-columns: 1fr 360px; gap: 1.5rem; align-items: start;">
+
+    {# ═══ LEWA KOLUMNA ═══ #}
+    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+
+      {# Dane pracodawcy / działalności #}
+      <div class="karta">
+        <div class="karta__naglowek">
+          <h3 class="karta__tytul">Dane pracodawcy / działalności</h3>
+        </div>
+        <div class="karta__tresc">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
+            <div class="pole-info">
+              <div class="pole-info__etykieta">Nazwa firmy / działalności</div>
+              <div class="pole-info__wartosc" style="font-weight: 600;">{{ zapis.firma_nazwa or '—' }}</div>
+            </div>
+            <div class="pole-info">
+              <div class="pole-info__etykieta">Stanowisko / zakres obowiązków</div>
+              <div class="pole-info__wartosc">{{ zapis.zopz_stanowisko or '—' }}</div>
+            </div>
+            <div class="pole-info" style="grid-column: 1 / -1;">
+              <div class="pole-info__etykieta">Adres</div>
+              <div class="pole-info__wartosc">{{ zapis.firma_adres or '—' }}{% if zapis.firma_miasto %}, {{ zapis.firma_miasto }}{% endif %}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {# Uzasadnienie studenta #}
+      {% if zapis.uzasadnienie_sciezki %}
+      <div class="karta">
+        <div class="karta__naglowek">
+          <h3 class="karta__tytul">Uzasadnienie wniosku</h3>
+        </div>
+        <div class="karta__tresc">
+          <div style="padding: 1rem; background: var(--kolor-tlo); border-left: 3px solid var(--kolor-glowny); border-radius: 0 var(--promien) var(--promien) 0;">
+            <p style="white-space: pre-line; font-size: 0.9rem; line-height: 1.7; color: var(--kolor-tekst); margin: 0;">{{ zapis.uzasadnienie_sciezki }}</p>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      {# Dokumenty do wygenerowania #}
+      <div class="karta">
+        <div class="karta__naglowek">
+          <h3 class="karta__tytul">Dokumenty praktyki</h3>
+          <span style="font-size: 0.75rem; color: var(--kolor-tekst-trzeciorzed);">Generuj powiązane dokumenty</span>
+        </div>
+        <div class="karta__tresc">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+            {% if zapis.track_type.value == 'EMPLOYMENT' %}
+            <div style="padding: 1rem; border: 1px solid var(--kolor-ramka); border-radius: var(--promien); background: var(--kolor-tlo); display: flex; flex-direction: column; gap: 0.5rem;">
+              <div style="font-weight: 600; font-size: 0.875rem; color: var(--kolor-glowny);">ZAL_7 — Wniosek o zaliczenie</div>
+              <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor); flex-grow: 1;">Wniosek o zaliczenie praktyki na podstawie pracy zawodowej</div>
+              <a href="{{ url_for('documents.generuj_auto', id=zapis.id, doc_type='ZAL_7') }}"
+                 class="przycisk przycisk--maly przycisk--glowny" target="_blank" style="width: 100%; justify-content: center;">Generuj PDF</a>
+            </div>
+            <div style="padding: 1rem; border: 1px solid var(--kolor-ramka); border-radius: var(--promien); background: var(--kolor-tlo); display: flex; flex-direction: column; gap: 0.5rem;">
+              <div style="font-weight: 600; font-size: 0.875rem; color: var(--kolor-glowny);">ZAL_4a — Efekty uczenia</div>
+              <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor); flex-grow: 1;">Zestawienie efektów uczenia się dla pracy zawodowej</div>
+              <a href="{{ url_for('documents.generuj_auto', id=zapis.id, doc_type='ZAL_4a') }}"
+                 class="przycisk przycisk--maly przycisk--drugorzedny" target="_blank" style="width: 100%; justify-content: center;">Generuj PDF</a>
+            </div>
+            {% elif zapis.track_type.value == 'OWN_BUSINESS' %}
+            <div style="padding: 1rem; border: 1px solid var(--kolor-ramka); border-radius: var(--promien); background: var(--kolor-tlo); display: flex; flex-direction: column; gap: 0.5rem;">
+              <div style="font-weight: 600; font-size: 0.875rem; color: var(--kolor-glowny);">ZAL_4b — Wniosek działalność</div>
+              <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor); flex-grow: 1;">Wniosek o zaliczenie na podstawie działalności gospodarczej</div>
+              <a href="{{ url_for('documents.generuj_auto', id=zapis.id, doc_type='ZAL_4b') }}"
+                 class="przycisk przycisk--maly przycisk--glowny" target="_blank" style="width: 100%; justify-content: center;">Generuj PDF</a>
+            </div>
+            <div style="padding: 1rem; border: 1px solid var(--kolor-ramka); border-radius: var(--promien); background: var(--kolor-tlo); display: flex; flex-direction: column; gap: 0.5rem;">
+              <div style="font-weight: 600; font-size: 0.875rem; color: var(--kolor-glowny);">ZAL_8 — Protokół egzaminacyjny</div>
+              <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor); flex-grow: 1;">Protokół z egzaminu praktycznego</div>
+              <a href="{{ url_for('documents.generuj_auto', id=zapis.id, doc_type='ZAL_8') }}"
+                 class="przycisk przycisk--maly przycisk--drugorzedny" target="_blank" style="width: 100%; justify-content: center;">Generuj PDF</a>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      {# Załączniki studenta #}
+      <div class="karta">
+        <div class="karta__naglowek">
+          <h3 class="karta__tytul">Załączone dokumenty</h3>
+          <span style="font-size: 0.75rem; color: var(--kolor-tekst-trzeciorzed);">{{ dokumenty|length }} plik{% if dokumenty|length != 1 %}i{% endif %}</span>
+        </div>
+        <div class="karta__tresc">
+          {% if dokumenty %}
+          <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+            {% for dok in dokumenty %}
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; border: 1px solid var(--kolor-ramka); border-radius: var(--promien); background: var(--kolor-tlo);">
+              <div style="display: flex; align-items: center; gap: 0.75rem; min-width: 0;">
+                <div style="color: var(--kolor-glowny); flex-shrink: 0;">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14,2 14,8 20,8"/>
+                  </svg>
+                </div>
+                <div style="min-width: 0;">
+                  <div style="font-weight: 600; font-size: 0.875rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ dok.original_filename }}</div>
+                  <div style="font-size: 0.75rem; color: var(--kolor-tekst-trzeciorzed); margin-top: 0.1rem;">
+                    {{ dok.document_type }} · {{ (dok.file_size / 1024)|round(1) }} KB · {{ dok.uploaded_at.strftime('%d.%m.%Y %H:%M') }}
+                  </div>
+                </div>
+              </div>
+              <a href="{{ url_for('uploads.download_document', document_id=dok.id) }}"
+                 class="przycisk przycisk--maly przycisk--drugorzedny" style="flex-shrink: 0; margin-left: 1rem;">Pobierz</a>
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div style="text-align: center; padding: 2rem; color: var(--kolor-tekst-trzeciorzed); font-size: 0.9rem;">
+            Brak załączonych dokumentów
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+    </div>
+
+    {# ═══ PRAWA KOLUMNA ═══ #}
+    <div style="display: flex; flex-direction: column; gap: 1.5rem; position: sticky; top: 1.5rem;">
+
+      {# Historia decyzji #}
+      {% if zapis.decyzja_komisji or zapis.decyzja_dziekana %}
+      <div class="karta">
+        <div class="karta__naglowek">
+          <h3 class="karta__tytul">Historia decyzji</h3>
+        </div>
+        <div class="karta__tresc" style="display: flex; flex-direction: column; gap: 0.75rem;">
+          {% if zapis.decyzja_komisji %}
+          <div style="padding: 0.875rem; border-left: 3px solid var(--kolor-glowny); background: var(--kolor-tlo); border-radius: 0 var(--promien) var(--promien) 0;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+              <span style="font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--kolor-glowny);">Komisja</span>
+              {% if zapis.decyzja_komisji_o %}
+              <span style="font-size: 0.72rem; color: var(--kolor-tekst-trzeciorzed);">{{ zapis.decyzja_komisji_o.strftime('%d.%m.%Y') }}</span>
+              {% endif %}
+            </div>
+            <span class="status {% if zapis.decyzja_komisji == 'APPROVED' %}status--completed{% elif zapis.decyzja_komisji == 'PARTIALLY_APPROVED' %}status--in-progress{% else %}status--draft{% endif %}" style="margin-bottom: 0.5rem; display: inline-block;">
+              {% if zapis.decyzja_komisji == 'APPROVED' %}Zatwierdzone
+              {% elif zapis.decyzja_komisji == 'PARTIALLY_APPROVED' %}Częściowo zatwierdzone
+              {% else %}Odrzucone{% endif %}
+            </span>
+            {% if zapis.komentarze_komisji %}
+            <div style="font-size: 0.85rem; color: var(--kolor-tekst-drugor); line-height: 1.5; margin-top: 0.4rem;">{{ zapis.komentarze_komisji }}</div>
+            {% endif %}
+          </div>
+          {% endif %}
+
+          {% if zapis.decyzja_dziekana %}
+          <div style="padding: 0.875rem; border-left: 3px solid var(--kolor-akcent); background: var(--kolor-tlo); border-radius: 0 var(--promien) var(--promien) 0;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+              <span style="font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--kolor-akcent);">Dyrektor IIS</span>
+              {% if zapis.decyzja_dziekana_o %}
+              <span style="font-size: 0.72rem; color: var(--kolor-tekst-trzeciorzed);">{{ zapis.decyzja_dziekana_o.strftime('%d.%m.%Y') }}</span>
+              {% endif %}
+            </div>
+            <span class="status {% if zapis.decyzja_dziekana == 'APPROVED' %}status--completed{% else %}status--draft{% endif %}" style="margin-bottom: 0.5rem; display: inline-block;">
+              {{ 'Zatwierdzone' if zapis.decyzja_dziekana == 'APPROVED' else 'Odrzucone' }}
+            </span>
+            {% if zapis.komentarze_dziekana %}
+            <div style="font-size: 0.85rem; color: var(--kolor-tekst-drugor); line-height: 1.5; margin-top: 0.4rem;">{{ zapis.komentarze_dziekana }}</div>
+            {% endif %}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+      {# Komentarz zwrotu (jeśli komisja wcześniej zwróciła) #}
+      {% if zapis.komentarze_uopz %}
+      <div class="karta">
+        <div class="karta__naglowek">
+          <h3 class="karta__tytul">Poprzedni komentarz komisji</h3>
+        </div>
+        <div class="karta__tresc">
+          <div style="padding: 0.875rem; border-left: 3px solid var(--kolor-akcent); background: var(--kolor-tlo); border-radius: 0 var(--promien) var(--promien) 0;">
+            <div style="font-size: 0.875rem; color: var(--kolor-tekst); line-height: 1.55; white-space: pre-wrap;">{{ zapis.komentarze_uopz }}</div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      {# Formularz decyzji komisji #}
+      <div class="karta">
+        <div class="karta__naglowek">
+          <h3 class="karta__tytul">Decyzja komisji</h3>
+        </div>
+        <div class="karta__tresc">
+          <form method="POST">
+            {{ form.hidden_tag() }}
+
+            <div style="margin-bottom: 1.25rem;">
+              {{ form.decyzja.label(class="pole-formularza__etykieta", style="display: block; margin-bottom: 0.4rem;") }}
+              {{ form.decyzja(class="pole-formularza__select") }}
+              {% for error in form.decyzja.errors %}
+                <span class="pole-formularza__blad">{{ error }}</span>
+              {% endfor %}
+            </div>
+
+            <div style="margin-bottom: 1.25rem;">
+              <label class="pole-formularza__etykieta" style="display: block; margin-bottom: 0.4rem;">Komentarz <span style="font-weight: 400; color: var(--kolor-tekst-trzeciorzed);">(opcjonalny)</span></label>
+              {{ form.komentarz(class="pole-formularza__textarea", rows="5", placeholder="Uzasadnienie decyzji widoczne dla studenta i dziekana…") }}
+              {% for error in form.komentarz.errors %}
+                <span class="pole-formularza__blad">{{ error }}</span>
+              {% endfor %}
+            </div>
+
+            <div style="border-top: 1px solid var(--kolor-ramka); padding-top: 1.25rem; display: flex; flex-direction: column; gap: 0.5rem;">
+              {{ form.submit(class="przycisk przycisk--glowny", style="width: 100%; justify-content: center;") }}
+              <a href="{{ url_for('zarzadzanie.komisja_lista') }}" class="przycisk przycisk--drugorzedny" style="width: 100%; justify-content: center; text-align: center;">Anuluj</a>
+            </div>
+
+          </form>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<style>
+.pole-info__etykieta {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--kolor-tekst-trzeciorzed);
+  margin-bottom: 0.3rem;
+}
+.pole-info__wartosc {
+  font-size: 0.9rem;
+  color: var(--kolor-tekst);
+  line-height: 1.45;
+}
+</style>
+
+{% endblock %}

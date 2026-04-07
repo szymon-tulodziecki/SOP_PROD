@@ -1,0 +1,7 @@
+{% extends "layouts/base_auth.html" %}
+{% block tytul %}Błąd {{ kod }}{% endblock %}
+
+{% block body %}
+  {% set url_glowna = url_for('dashboard.index') %}
+  {% include "errors/blad_bazowy.html" %}
+{% endblock %}

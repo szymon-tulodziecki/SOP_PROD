@@ -1,0 +1,19 @@
+/* komponenty.css — Pasek postępu, paginacja, filtry */
+
+.pasek-postep { height: 6px; background: var(--kolor-tlo); border-radius: 10px; overflow: hidden; }
+.pasek-postep__wypelnienie { height: 100%; background: var(--kolor-glowny); border-radius: 10px; transition: width 0.4s ease; }
+.pasek-postep__wypelnienie--zakonczony { background: var(--kolor-sukces); }
+
+.paginacja { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.5rem; border-top: 1px solid var(--kolor-ramka); }
+.paginacja__info { font-size: 0.8rem; color: var(--kolor-tekst-drugor); }
+.paginacja__przyciski { display: flex; align-items: center; gap: 0.25rem; }
+.paginacja__przycisk { display: inline-flex; align-items: center; justify-content: center; min-width: 32px; height: 32px; padding: 0 0.5rem; font-size: 0.8rem; font-weight: 500; text-decoration: none; color: var(--kolor-tekst-drugor); background: var(--kolor-biale); border: 1px solid var(--kolor-ramka); border-radius: var(--promien); transition: background 0.15s; }
+.paginacja__przycisk:hover { background: var(--kolor-tlo); }
+.paginacja__przycisk--aktywny { background: var(--kolor-glowny); color: var(--kolor-biale); border-color: var(--kolor-glowny); }
+.paginacja__separator { padding: 0 0.25rem; color: var(--kolor-tekst-trzeciorzed); }
+
+.pasek-filtrow { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; width: 100%; }
+.filtr-szukaj { display: flex; align-items: center; gap: 0.5rem; flex: 1; min-width: 200px; background: var(--kolor-tlo); border: 1px solid var(--kolor-ramka); border-radius: var(--promien); padding: 0 0.75rem; }
+.filtr-szukaj__ikona { color: var(--kolor-tekst-trzeciorzed); font-size: 0.85rem; flex-shrink: 0; }
+.filtr-szukaj__input { flex: 1; border: none; background: transparent; padding: 0.5rem 0; font-family: var(--font-glowny); font-size: 0.85rem; color: var(--kolor-tekst); outline: none; }
+.filtr-select { padding: 0.5rem 0.75rem; font-family: var(--font-glowny); font-size: 0.85rem; color: var(--kolor-tekst); background: var(--kolor-tlo); border: 1px solid var(--kolor-ramka); border-radius: var(--promien); cursor: pointer; }

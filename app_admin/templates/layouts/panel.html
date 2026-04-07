@@ -44,7 +44,7 @@
       </li>
       <li class="sidebar__menu-sekcja" aria-hidden="true">Praktyki</li>
       <li class="sidebar__menu-pozycja">
-        <a href="{{ url_for('management.lista_praktyk') }}" class="sidebar__link {% if 'lista_praktyk' in request.endpoint %}sidebar__link--aktywny{% endif %}" {% if 'lista_praktyk' in request.endpoint %}aria-current="page"{% endif %}>
+        <a href="{{ url_for('zarzadzanie.lista_praktyk') }}" class="sidebar__link {% if 'lista_praktyk' in request.endpoint %}sidebar__link--aktywny{% endif %}" {% if 'lista_praktyk' in request.endpoint %}aria-current="page"{% endif %}>
           <span class="sidebar__ikona" aria-hidden="true">📋</span> Wszystkie praktyki
         </a>
       </li>
@@ -58,12 +58,12 @@
       {% if current_user.rola.value == 'ADMIN' %}
       <li class="sidebar__menu-sekcja" aria-hidden="true">Zarządzanie</li>
       <li class="sidebar__menu-pozycja">
-        <a href="{{ url_for('management.lista_uzytkownikow') }}" class="sidebar__link {% if 'uzytkownik' in request.endpoint %}sidebar__link--aktywny{% endif %}" {% if 'uzytkownik' in request.endpoint %}aria-current="page"{% endif %}>
+        <a href="{{ url_for('zarzadzanie.lista_uzytkownikow') }}" class="sidebar__link {% if 'uzytkownik' in request.endpoint %}sidebar__link--aktywny{% endif %}" {% if 'uzytkownik' in request.endpoint %}aria-current="page"{% endif %}>
           <span class="sidebar__ikona" aria-hidden="true">👤</span> Użytkownicy
         </a>
       </li>
       <li class="sidebar__menu-pozycja">
-        <a href="{{ url_for('management.lista_zakladow') }}" class="sidebar__link {% if 'zaklad' in request.endpoint %}sidebar__link--aktywny{% endif %}" {% if 'zaklad' in request.endpoint %}aria-current="page"{% endif %}>
+        <a href="{{ url_for('zarzadzanie.lista_zakladow') }}" class="sidebar__link {% if 'zaklad' in request.endpoint %}sidebar__link--aktywny{% endif %}" {% if 'zaklad' in request.endpoint %}aria-current="page"{% endif %}>
           <span class="sidebar__ikona" aria-hidden="true">🏢</span> Zakłady pracy
         </a>
       </li>

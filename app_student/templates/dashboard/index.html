@@ -55,10 +55,10 @@
       <div class="pasek-postep" style="height:12px;">
         <div class="pasek-postep__wypelnienie" style="width:{{ procent }}%;"></div>
       </div>
-      {% if zapis.uopz_comments %}
+      {% if zapis.komentarze_uopz %}
       <div style="margin-top:1rem; padding:0.75rem; background:#fef3cd; border-radius:0.375rem; border-left:4px solid #f59e0b;">
         <div style="font-weight:500; color:#92400e; margin-bottom:0.5rem;">Uwagi UOPZ:</div>
-        <div style="color:#92400e; font-size:0.9rem; white-space: pre-wrap;">{{ zapis.uopz_comments }}</div>
+        <div style="color:#92400e; font-size:0.9rem; white-space: pre-wrap;">{{ zapis.komentarze_uopz }}</div>
         <div style="margin-top:0.75rem;">
           <a href="{{ url_for('praktyki.szczegoly_zgloszenia', id=zapis.id) }}" class="przycisk przycisk--maly przycisk--drugorzedny">Zobacz szczegóły zgłoszenia</a>
         </div>

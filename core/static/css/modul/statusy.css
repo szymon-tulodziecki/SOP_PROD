@@ -1,0 +1,14 @@
+/* statusy.css — Odznaki statusów i ról */
+
+.status { display: inline-block; padding: 0.25rem 0.625rem; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; border-radius: 100px; white-space: nowrap; }
+.status--draft, .status--szkic { background: #e2e8f0; color: var(--kolor-tekst-drugor); }
+.status--planned, .status--zaplanowana { background: #dbeafe; color: #1e40af; }
+.status--in-progress, .status--w-trakcie { background: #fef3c7; color: #92400e; }
+.status--pending-evaluation, .status--oczekuje-oceny { background: #fce7f3; color: #9d174d; }
+.status--completed, .status--zakonczona { background: #d1fae5; color: var(--kolor-sukces); }
+
+.rola-odznaka { display: inline-block; padding: 0.2rem 0.5rem; font-size: 0.7rem; font-weight: 600; border-radius: 100px; text-transform: uppercase; letter-spacing: 0.03em; }
+.rola-odznaka--admin { background: #fef3c7; color: #92400e; }
+.rola-odznaka--uopz { background: #dbeafe; color: #1e40af; }
+.rola-odznaka--zopz { background: #d1fae5; color: var(--kolor-sukces); }
+.rola-odznaka--student { background: #e2e8f0; color: var(--kolor-tekst-drugor); }

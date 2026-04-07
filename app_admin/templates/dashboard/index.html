@@ -6,10 +6,10 @@
 {% block naglowek_akcje %}
   {% if current_user.role.value == 'ADMIN' %}
   <div class="akcje-panelu" style="display: flex; gap: 0.5rem; align-items: center;">
-    <a href="{{ url_for('management.nowy_student') }}" class="przycisk przycisk--glowny">
+    <a href="{{ url_for('zarzadzanie.nowy_student') }}" class="przycisk przycisk--glowny">
       <span aria-hidden="true">+</span> Dodaj studenta
     </a>
-    <a href="{{ url_for('management.nowy_pracownik') }}" class="przycisk przycisk--glowny">
+    <a href="{{ url_for('zarzadzanie.nowy_pracownik') }}" class="przycisk przycisk--glowny">
       <span aria-hidden="true">+</span> Dodaj pracownika
     </a>
   </div>
@@ -83,7 +83,7 @@
   <section class="karta" aria-labelledby="tytul-ostatnie">
     <header class="karta__naglowek">
       <h2 id="tytul-ostatnie" class="karta__tytul">Ostatnie aktywności</h2>
-      <a href="{{ url_for('management.lista_praktyk') }}" class="przycisk przycisk--drugorzedny przycisk--maly">Wszystkie</a>
+      <a href="{{ url_for('zarzadzanie.lista_praktyk') }}" class="przycisk przycisk--drugorzedny przycisk--maly">Wszystkie</a>
     </header>
     <div class="karta__tresc">
       <div class="tabela-wrapper">
@@ -108,7 +108,7 @@
               </td>
               <td style="text-align:right;">
                 {% if z.status.value == 'PENDING' %}
-                <form method="POST" action="{{ url_for('management.potwierdz_zapis', id=z.id) }}" style="display:inline;">
+                <form method="POST" action="{{ url_for('zarzadzanie.potwierdz_zapis', id=z.id) }}" style="display:inline;">
                   {{ csrf_form.hidden_tag() }}
                   <button type="submit" class="przycisk przycisk--drugorzedny przycisk--maly" onclick="return confirm('Potwierdzić ten zapis?')">Zatwierdź</button>
                 </form>
