@@ -129,7 +129,7 @@ def szczegoly_zgloszenia(id):
     if current_user.role == RolaUzytkownika.UOPZ and zapis.uopz_id != current_user.id:
         abort(403)
 
-    harmonogram      = db.session.query(HarmonogramPraktyki).filter_by(enrollment_id=id).all()
+    harmonogram      = db.session.query(HarmonogramPraktyki).filter_by(zapis_id=id).all()
     harmonogram_dict = {h.learning_outcome_id: h for h in harmonogram}
     efekty           = db.session.query(EfektUczenia).order_by(EfektUczenia.id).all()
 
@@ -162,8 +162,8 @@ def szczegoly_zgloszenia(id):
                         else url_for('zarzadzanie.moje_zgloszenia'))
 
     uploaded_docs = db.session.query(UploadedDocument)\
-        .filter_by(enrollment_id=id)\
-        .order_by(UploadedDocument.uploaded_at.desc())\
+        .filter_by(zapis_id=id)\
+        .order_by(UploadedDocument.przeslano_o.desc())\
         .all()
 
     return render_template('zarzadzanie/enrollments/szczegoly.html',
@@ -237,9 +237,9 @@ def usun_praktyke(id):
     opis = f'{p.rok_uczelniany} ({p.semestr})'
     from sqlalchemy import text as _text
     db.session.execute(_text("""
-        DELETE FROM uploaded_documents
-        WHERE enrollment_id IN (
-            SELECT id FROM internship_enrollments WHERE internship_id = :pid
+        DELETE FROM dokumenty_przeslane
+        WHERE zapis_id IN (
+            SELECT id FROM zapisy_praktyk WHERE praktyka_id = :pid
         )
     """), {'pid': str(id)})
     db.session.delete(p)

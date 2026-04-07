@@ -6,7 +6,7 @@ from werkzeug.utils import secure_filename
 from flask import Blueprint, request, jsonify, send_from_directory, abort, flash, redirect, url_for
 from flask_login import login_required, current_user
 
-from core.modele import ZapisPraktyki, RolaUzytkownika
+from core.modele import ZapisPraktyki, DokumentPrzeslany, Uzytkownik, RolaUzytkownika
 from core.extensions import db
 
 uploads_bp = Blueprint('uploads', __name__)
@@ -68,29 +68,20 @@ def upload_document(enrollment_id):
         file_path         = UPLOAD_FOLDER / stored_filename
         file.save(file_path)
 
-        from sqlalchemy import text
-        result = db.session.execute(text("""
-            INSERT INTO uploaded_documents (
-                enrollment_id, document_type, original_filename, stored_filename,
-                file_path, file_size, mime_type, uploaded_by_id
-            ) VALUES (
-                :enrollment_id, :document_type, :original_filename, :stored_filename,
-                :file_path, :file_size, :mime_type, :uploaded_by_id
-            ) RETURNING id
-        """), {
-            'enrollment_id':    str(enrollment_id),
-            'document_type':    document_type,
-            'original_filename': original_filename,
-            'stored_filename':  stored_filename,
-            'file_path':        str(file_path),
-            'file_size':        file_size,
-            'mime_type':        content_type,
-            'uploaded_by_id':   str(current_user.id),
-        })
-        doc_id = result.fetchone()[0]
+        doc = DokumentPrzeslany(
+            zapis_id=enrollment_id,
+            typ_dokumentu=document_type,
+            oryginalna_nazwa=original_filename,
+            zapisana_nazwa=stored_filename,
+            sciezka_pliku=str(file_path),
+            rozmiar_pliku=file_size,
+            typ_mime=content_type,
+            przeslane_przez_id=current_user.id,
+        )
+        db.session.add(doc)
         db.session.commit()
 
-        return jsonify({'success': True, 'document_id': str(doc_id),
+        return jsonify({'success': True, 'document_id': str(doc.id),
                         'filename': original_filename, 'size': file_size})
 
     except Exception as e:
@@ -103,48 +94,35 @@ def upload_document(enrollment_id):
 @uploads_bp.route('/document/<uuid:document_id>/download')
 @login_required
 def download_document(document_id):
-    from sqlalchemy import text
-    result = db.session.execute(text("""
-        SELECT ud.*, ie.student_id
-        FROM uploaded_documents ud
-        JOIN internship_enrollments ie ON ud.enrollment_id = ie.id
-        WHERE ud.id = :document_id
-    """), {'document_id': str(document_id)}).fetchone()
-
-    if not result:
+    doc = db.session.get(DokumentPrzeslany, document_id)
+    if not doc or not doc.zapis:
         abort(404)
-    if str(result.student_id) != str(current_user.id):
+    if str(doc.zapis.student_id) != str(current_user.id):
         abort(403)
 
-    file_path = Path(result.file_path)
+    file_path = Path(doc.sciezka_pliku)
     if not file_path.exists():
         abort(404)
 
     return send_from_directory(file_path.parent, file_path.name,
-                               as_attachment=True, download_name=result.original_filename,
-                               mimetype=result.mime_type)
+                               as_attachment=True, download_name=doc.oryginalna_nazwa,
+                               mimetype=doc.typ_mime)
 
 
 @uploads_bp.route('/document/<uuid:document_id>/delete', methods=['POST'])
 @login_required
 def delete_document(document_id):
-    from sqlalchemy import text
-    result = db.session.execute(text("""
-        SELECT ud.*, ie.student_id
-        FROM uploaded_documents ud
-        JOIN internship_enrollments ie ON ud.enrollment_id = ie.id
-        WHERE ud.id = :document_id
-    """), {'document_id': str(document_id)}).fetchone()
-
-    if not result or str(result.student_id) != str(current_user.id):
+    doc = db.session.get(DokumentPrzeslany, document_id)
+    if not doc or not doc.zapis:
+        abort(404)
+    if str(doc.zapis.student_id) != str(current_user.id):
         abort(404)
 
     try:
-        file_path = Path(result.file_path)
+        file_path = Path(doc.sciezka_pliku)
         if file_path.exists():
             file_path.unlink()
-        db.session.execute(text("DELETE FROM uploaded_documents WHERE id = :document_id"),
-                           {'document_id': str(document_id)})
+        db.session.delete(doc)
         db.session.commit()
         flash('Dokument został usunięty.', 'success')
     except Exception as e:
@@ -161,23 +139,30 @@ def list_documents(enrollment_id):
     if not zapis or zapis.student_id != current_user.id:
         abort(404)
 
-    from sqlalchemy import text
-    results = db.session.execute(text("""
-        SELECT ud.*, u.first_name, u.last_name
-        FROM uploaded_documents ud
-        LEFT JOIN users u ON ud.uploaded_by_id = u.id
-        WHERE ud.enrollment_id = :enrollment_id
-        ORDER BY ud.uploaded_at DESC
-    """), {'enrollment_id': str(enrollment_id)}).fetchall()
+    results = (
+        db.session.query(DokumentPrzeslany, Uzytkownik)
+        .outerjoin(Uzytkownik, DokumentPrzeslany.przeslane_przez_id == Uzytkownik.id)
+        .filter(DokumentPrzeslany.zapis_id == enrollment_id)
+        .order_by(DokumentPrzeslany.przeslano_o.desc())
+        .all()
+    )
 
-    return jsonify([{
-        'id':                str(row.id),
-        'document_type':     row.document_type,
-        'original_filename': row.original_filename,
-        'file_size':         row.file_size,
-        'mime_type':         row.mime_type,
-        'uploaded_at':       row.uploaded_at.isoformat(),
-        'uploaded_by':       f"{row.first_name} {row.last_name}" if row.first_name else None,
-        'download_url':      url_for('uploads.download_document', document_id=row.id),
-        'delete_url':        url_for('uploads.delete_document', document_id=row.id),
-    } for row in results])
+    payload = []
+    for doc, user in results:
+        uploaded_by = None
+        if user is not None:
+            uploaded_by = f"{user.imie} {user.nazwisko}".strip() or None
+
+        payload.append({
+            'id':                str(doc.id),
+            'document_type':     doc.typ_dokumentu,
+            'original_filename': doc.oryginalna_nazwa,
+            'file_size':         doc.rozmiar_pliku,
+            'mime_type':         doc.typ_mime,
+            'uploaded_at':       doc.przeslano_o.isoformat() if doc.przeslano_o else None,
+            'uploaded_by':       uploaded_by,
+            'download_url':      url_for('uploads.download_document', document_id=doc.id),
+            'delete_url':        url_for('uploads.delete_document', document_id=doc.id),
+        })
+
+    return jsonify(payload)

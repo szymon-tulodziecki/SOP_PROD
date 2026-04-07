@@ -8,7 +8,7 @@ import re
 from flask_login import login_required, current_user
 from core.extensions import db
 import httpx
-from core.modele import Praktyka, ZapisPraktyki, StatusPraktyki, StatusZapisu, SciezkaPraktyki, Uzytkownik, RolaUzytkownika, EfektUczenia, HarmonogramPraktyki, Firma, IndywidualnyProgram, StatusDokumentu
+from core.modele import Praktyka, ZapisPraktyki, StatusPraktyki, StatusZapisu, SciezkaPraktyki, Uzytkownik, RolaUzytkownika, EfektUczenia, HarmonogramPraktyki, Firma, IndywidualnyProgram, StatusDokumentu, DokumentPrzeslany
 
 praktyki_bp = Blueprint('praktyki', __name__)
 
@@ -308,7 +308,7 @@ def zapisz_krok2(id):
         
     if request.method == 'POST':
         # Czyszczenie starego jeśli student wraca z jakiegoś powodu
-        db.session.query(HarmonogramPraktyki).filter_by(enrollment_id=zapis.id).delete()
+        db.session.query(HarmonogramPraktyki).filter_by(zapis_id=zapis.id).delete()
         
         suma_dni = 0
         nowe_wiersze = []
@@ -340,7 +340,7 @@ def zapisz_krok2(id):
     else:
         # GET request - pobranie istniejących danych harmonogramu
         istniejace_harmonogramy = {}
-        harmonogramy = db.session.query(HarmonogramPraktyki).filter_by(enrollment_id=zapis.id).all()
+        harmonogramy = db.session.query(HarmonogramPraktyki).filter_by(zapis_id=zapis.id).all()
         for h in harmonogramy:
             istniejace_harmonogramy[str(h.learning_outcome_id)] = {
                 'dzial': h.nazwa_dzialu,
@@ -365,13 +365,21 @@ def szczegoly_zgloszenia(id):
     if not zapis or zapis.student_id != current_user.id:
         abort(404)
 
-    # Pobierz uploadowane dokumenty (raw SQL — model jest w app_admin)
-    from sqlalchemy import text as _text
-    rows = db.session.execute(
-        _text("SELECT id, original_filename, document_type, uploaded_at FROM uploaded_documents WHERE enrollment_id=:eid ORDER BY uploaded_at DESC"),
-        {'eid': str(id)}
-    ).fetchall()
-    uploaded_docs = [{'id': r[0], 'original_filename': r[1], 'document_type': r[2], 'uploaded_at': r[3]} for r in rows]
+    rows = (
+        db.session.query(DokumentPrzeslany)
+        .filter_by(zapis_id=id)
+        .order_by(DokumentPrzeslany.przeslano_o.desc())
+        .all()
+    )
+    uploaded_docs = [
+        {
+            'id': str(d.id),
+            'original_filename': d.oryginalna_nazwa,
+            'document_type': d.typ_dokumentu,
+            'uploaded_at': d.przeslano_o,
+        }
+        for d in rows
+    ]
 
     return render_template('praktyki/szczegoly_zgloszenia.html', zapis=zapis, uploaded_docs=uploaded_docs)
 
