@@ -170,9 +170,13 @@ class ZapisPraktyki(db.Model):
     def track_type(self, v):
         self.sciezka = v
 
-    @property
+    @hybrid_property
     def enrolled_at(self):
         return self.zapisano_o
+
+    @enrolled_at.expression
+    def enrolled_at(cls):
+        return cls.zapisano_o
 
     @property
     def total_hours_logged(self):

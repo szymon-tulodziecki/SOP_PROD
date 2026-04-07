@@ -2,32 +2,29 @@
 {% block tytul %}Ustaw hasło{% endblock %}
 
 {% block body %}
-<div class="panel-logowania">
+<div class="panel-logowania" role="main">
 
   <!-- Lewa kolumna: branding -->
-  <aside class="panel-logowania__branding" aria-hidden="true">
+  <aside class="panel-logowania__branding" aria-label="Informacje o instytucji">
     <div class="branding__tresc">
       <div class="branding__logo-kontener">
         <img src="{{ url_for('static', filename='img/logo.png') }}"
-             alt="ANS Elbląg" class="branding__logo">
+             alt="ANS Elbląg" class="branding__logo" width="220">
       </div>
-      <div class="branding__separator"></div>
-      <p class="branding__nazwa-systemu">System Praktyk Zawodowych</p>
-      <p class="branding__podtytul">Panel studenta — Pierwsze logowanie</p>
-      <div class="branding__dekoracja">
-        <span></span><span></span><span></span>
-      </div>
+      <div class="branding__separator" aria-hidden="true"></div>
+      <p class="branding__nazwa-systemu">Pierwsza konfiguracja</p>
+      <p class="branding__podtytul">Ustaw własne hasło</p>
     </div>
   </aside>
 
   <!-- Prawa kolumna: formularz -->
-  <main class="panel-logowania__formularz">
+  <main class="panel-logowania__formularz" id="main-content">
     <div class="formularz__kontener">
 
       <div class="formularz__naglowek">
         <h1 class="formularz__tytul">Ustaw własne hasło</h1>
         <p class="formularz__opis">
-          Twoje konto wymaga ustawienia hasła przed kontynuowaniem. 
+          Twoje konto wymaga ustawienia hasła przed kontynuowaniem.
           Hasło musi mieć minimum 8 znaków.
         </p>
       </div>
@@ -91,6 +88,7 @@
 
     </div>
   </main>
+
 </div>
 {% endblock %}
 

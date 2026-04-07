@@ -1,9 +1,9 @@
-"""tex_service/sanitizer.py
+r"""tex_service/sanitizer.py
 
 Sanityzacja danych wejściowych przed wstrzyknięciem do szablonów LaTeX.
 
-Warstwa ochrony: dane z bazy/requestu → sanitize() → szablon LaTeX.
-Nawet jeśli użytkownik wpisze '\directlua{...}' w pole formularza,
+Warstwa ochrony: dane z bazy/requestu -> sanitize() -> szablon LaTeX.
+Nawet jeśli użytkownik wpisze '\\directlua{...}' w pole formularza,
 po przejściu przez sanitize() zostanie to zamienione na bezpieczny
 ciąg znaków LaTeX (np. \textbackslash{}directlua\{...\}).
 """

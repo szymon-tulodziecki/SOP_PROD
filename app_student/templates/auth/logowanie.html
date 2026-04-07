@@ -1,101 +1,93 @@
-<!DOCTYPE html>
-<html lang="pl">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Logowanie — Panel Studenta ANS Elbląg</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/student.css') }}">
-</head>
-<body>
-  <a href="#formularz-logowania" class="skip-link">Przejdź do formularza</a>
+{% extends "layouts/base_auth.html" %}
+{% block tytul %}Logowanie{% endblock %}
 
-  <main class="panel-logowania">
+{% block body %}
+<a href="#formularz-logowania" class="skip-link">Przejdź do formularza</a>
 
-    <!-- Lewa kolumna: branding -->
-    <div class="panel-logowania__branding" aria-hidden="true">
-      <div class="branding__tresc">
-        <div class="branding__logo-kontener">
-          <img src="{{ url_for('static', filename='img/logo.png') }}"
-               alt="ANS Elbląg" class="branding__logo">
-        </div>
-        <div class="branding__separator"></div>
-        <p class="branding__nazwa-systemu">System Praktyk Zawodowych</p>
-        <p class="branding__podtytul">Panel studenta</p>
-        <div class="branding__dekoracja">
-          <span></span><span></span><span></span>
-        </div>
+<main class="panel-logowania">
+
+  <div class="panel-logowania__branding" aria-hidden="true">
+    <div class="branding__tresc">
+      <div class="branding__logo-kontener">
+        <img src="{{ url_for('static', filename='img/logo.png') }}"
+             alt="ANS Elbląg" class="branding__logo">
+      </div>
+      <div class="branding__separator"></div>
+      <p class="branding__nazwa-systemu">System Praktyk Zawodowych</p>
+      <p class="branding__podtytul">Panel studenta</p>
+      <div class="branding__dekoracja">
+        <span></span><span></span><span></span>
       </div>
     </div>
+  </div>
 
-    <!-- Prawa kolumna: formularz -->
-    <div class="panel-logowania__formularz">
-      <div class="formularz__kontener" id="formularz-logowania">
+  <div class="panel-logowania__formularz">
+    <div class="formularz__kontener" id="formularz-logowania">
 
-        <div class="formularz__naglowek">
-          <h1 class="formularz__tytul">Zaloguj się</h1>
-          <p class="formularz__opis">Wprowadź dane swojego konta studenckiego.</p>
-        </div>
-
-        {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-          <div class="komunikaty" aria-live="polite">
-            {% for kategoria, wiadomosc in messages %}
-            <div class="komunikat komunikat--{{ kategoria }}" role="alert">
-              <span class="komunikat__ikona" aria-hidden="true">
-                {% if kategoria == 'success' %}✓{% elif kategoria == 'danger' %}✕{% else %}i{% endif %}
-              </span>
-              {{ wiadomosc }}
-            </div>
-            {% endfor %}
-          </div>
-          {% endif %}
-        {% endwith %}
-
-        <form method="POST" action="{{ url_for('auth.logowanie') }}"
-              class="formularz__forma" novalidate>
-          {{ form.hidden_tag() }}
-
-          <div class="pole-formularza {% if form.email.errors %}pole-formularza--blad{% endif %}">
-            {{ form.email.label(class="pole-formularza__etykieta") }}
-            {{ form.email(class="pole-formularza__input",
-                          placeholder="jan.kowalski@student.ans-elblag.pl",
-                          autocomplete="email") }}
-            {% for e in form.email.errors %}
-              <span class="pole-formularza__blad" role="alert">{{ e }}</span>
-            {% endfor %}
-          </div>
-
-          <div class="pole-formularza {% if form.haslo.errors %}pole-formularza--blad{% endif %}">
-            {{ form.haslo.label(class="pole-formularza__etykieta") }}
-            {{ form.haslo(class="pole-formularza__input",
-                          autocomplete="current-password") }}
-            {% for e in form.haslo.errors %}
-              <span class="pole-formularza__blad" role="alert">{{ e }}</span>
-            {% endfor %}
-          </div>
-
-          <div class="pole-formularza pole-formularza--checkbox">
-            <label class="pole-formularza__etykieta-checkbox">
-              {{ form.zapamietaj(class="pole-formularza__checkbox") }}
-              Zapamiętaj mnie na tym urządzeniu
-            </label>
-          </div>
-
-          <button type="submit" class="przycisk-logowania">
-            Zaloguj się
-          </button>
-        </form>
-
-        <div class="formularz__stopka">
-          <p class="formularz__stopka-tekst">
-            Hasło tymczasowe to Twój numer albumu.<br>
-            Przy pierwszym logowaniu zostaniesz poproszony o jego zmianę.
-          </p>
-        </div>
-
+      <div class="formularz__naglowek">
+        <h1 class="formularz__tytul">Zaloguj się</h1>
+        <p class="formularz__opis">Wprowadź dane swojego konta studenckiego.</p>
       </div>
-    </div>
 
-  </main>
-</body>
-</html>
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="komunikaty" aria-live="polite">
+          {% for kategoria, wiadomosc in messages %}
+          <div class="komunikat komunikat--{{ kategoria }}" role="alert">
+            <span class="komunikat__ikona" aria-hidden="true">
+              {% if kategoria == 'success' %}✓{% elif kategoria == 'danger' %}✕{% else %}i{% endif %}
+            </span>
+            {{ wiadomosc }}
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      {% endwith %}
+
+      <form method="POST" action="{{ url_for('auth.logowanie') }}"
+            class="formularz__forma" novalidate>
+        {{ form.hidden_tag() }}
+
+        <div class="pole-formularza {% if form.email.errors %}pole-formularza--blad{% endif %}">
+          {{ form.email.label(class="pole-formularza__etykieta") }}
+          {{ form.email(class="pole-formularza__input",
+                        placeholder="jan.kowalski@student.ans-elblag.pl",
+                        autocomplete="email") }}
+          {% for e in form.email.errors %}
+            <span class="pole-formularza__blad" role="alert">{{ e }}</span>
+          {% endfor %}
+        </div>
+
+        <div class="pole-formularza {% if form.haslo.errors %}pole-formularza--blad{% endif %}">
+          {{ form.haslo.label(class="pole-formularza__etykieta") }}
+          {{ form.haslo(class="pole-formularza__input",
+                        autocomplete="current-password") }}
+          {% for e in form.haslo.errors %}
+            <span class="pole-formularza__blad" role="alert">{{ e }}</span>
+          {% endfor %}
+        </div>
+
+        <div class="pole-formularza pole-formularza--checkbox">
+          <label class="pole-formularza__etykieta-checkbox">
+            {{ form.zapamietaj(class="pole-formularza__checkbox") }}
+            Zapamiętaj mnie na tym urządzeniu
+          </label>
+        </div>
+
+        <button type="submit" class="przycisk-logowania">
+          Zaloguj się
+        </button>
+      </form>
+
+      <div class="formularz__stopka">
+        <p class="formularz__stopka-tekst">
+          Hasło tymczasowe to Twój numer albumu.<br>
+          Przy pierwszym logowaniu zostaniesz poproszony o jego zmianę.
+        </p>
+      </div>
+
+    </div>
+  </div>
+
+</main>
+{% endblock %}

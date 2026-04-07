@@ -10,7 +10,7 @@ from flask_login import login_required, current_user
 from core.modele import (ZapisPraktyki, OcenaPraktyki, EfektUczenia,
                     RolaUzytkownika, StatusZapisu, WynikOceny)
 from core.extensions import db
-from core.auth import wymaga_roli
+from core.autoryzacja import wymaga_roli
 
 evaluation_bp = Blueprint('evaluation', __name__)
 

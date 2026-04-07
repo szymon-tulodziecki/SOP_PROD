@@ -2,23 +2,13 @@ import uuid
 import csv
 import io
 import datetime
-from flask import (Blueprint, render_template, redirect, url_for,
-                   flash, request, abort)
-from flask_login import login_required, current_user
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
 from wtforms import StringField, SelectField
 from wtforms.validators import DataRequired, Email, Length, Optional, ValidationError
-from werkzeug.security import generate_password_hash
 
-from core.modele import (Uzytkownik, Student, Praktyka, ZapisPraktyki, HarmonogramPraktyki, EfektUczenia,
-                    RolaUzytkownika, StatusPraktyki, StatusZapisu, UploadedDocument, Firma)
+from core.modele import Uzytkownik, Student
 from core.extensions import db
-from core.uslugi import UslugaUzytkownikow as _UslugaUzytkownikow
-_serwis_uzytkownikow = _UslugaUzytkownikow()
-from core.auth import wymaga_roli
-
-zarzadzanie_bp = Blueprint('zarzadzanie', __name__)
 
 
 # ── Formularze ────────────────────────────────────────────────────────────────

@@ -1,9 +1,9 @@
 """
-core/auth.py
+core/autoryzacja.py
 Kanoniczny moduł autoryzacji — jeden dla całej platformy SOP.
 
 Rejestracja w aplikacji:
-    from core.auth import stworz_blueprint_auth
+    from core.autoryzacja import stworz_blueprint_auth
     app.register_blueprint(stworz_blueprint_auth(
         dozwolone_role=[RolaUzytkownika.STUDENT],
         template_logowania='auth/logowanie.html',

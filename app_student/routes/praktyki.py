@@ -114,7 +114,7 @@ def kreator_sciezka(id):
                                    student_id=current_user.id, status=StatusZapisu.PENDING)
             db.session.add(zapis)
 
-        zapis.track_type = SciezkaPraktyki[form.track_type.data]
+        zapis.track_type = SciezkaPraktyki(form.track_type.data)
         db.session.commit()
 
         if form.track_type.data == 'STANDARD':

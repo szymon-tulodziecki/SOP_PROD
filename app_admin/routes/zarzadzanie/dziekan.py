@@ -16,7 +16,7 @@ from core.modele import (Uzytkownik, Student, Praktyka, ZapisPraktyki, Harmonogr
 from core.extensions import db
 from core.uslugi import UslugaUzytkownikow as _UslugaUzytkownikow
 _serwis_uzytkownikow = _UslugaUzytkownikow()
-from core.auth import wymaga_roli
+from core.autoryzacja import wymaga_roli
 
 from . import zarzadzanie_bp
 from .formularze import *

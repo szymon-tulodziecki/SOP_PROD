@@ -1,6 +1,7 @@
-from flask import Flask, render_template
+from flask import Flask
 from jinja2 import select_autoescape
 from core.extensions import db, login_manager
+from core.error_handlers import register_error_handlers
 from app_student.config import config_dict
 
 
@@ -26,12 +27,13 @@ def create_app():
 
     db.init_app(app)
     login_manager.init_app(app)
+    register_error_handlers(app)
 
     login_manager.login_view = 'auth.logowanie'
     login_manager.login_message = 'Zaloguj się, aby uzyskać dostęp.'
 
     with app.app_context():
-        from core.auth  import stworz_blueprint_auth
+        from core.autoryzacja  import stworz_blueprint_auth
         from core.pliki import stworz_blueprint_pliki
         from core.modele import RolaUzytkownika
         from app_student.routes.pulpit       import dashboard_bp
@@ -122,30 +124,11 @@ def create_app():
             abort(403)
 
         if (getattr(current_user, 'wymagana_zmiana_hasla', False)
-                and request.endpoint not in ('auth.zmien_haslo', 'auth.wylogowanie', 'static')):
+            and request.endpoint not in ('auth.zmien_haslo', 'auth.wylogowanie', 'static')
+            and not (request.endpoint and request.endpoint.endswith('.static'))):
             return redirect(url_for('auth.zmien_haslo'))
 
-    @app.errorhandler(403)
-    def blad_403(e):
-        return render_template('errors/blad.html',
-            kod='403', tytul='Brak dostępu',
-            opis='Nie masz uprawnień do wyświetlenia tej strony.',
-            tekst_przycisku='Wróć do pulpitu'), 403
-
-    @app.errorhandler(404)
-    def blad_404(e):
-        return render_template('errors/blad.html',
-            kod='404', tytul='Nie znaleziono strony',
-            opis='Strona, której szukasz nie istnieje lub została przeniesiona.',
-            tekst_przycisku='Wróć do pulpitu'), 404
-
-    @app.errorhandler(500)
-    def blad_500(e):
-        app.logger.exception('Unhandled Exception:') if hasattr(app, 'logger') else None
-        return render_template('errors/blad.html',
-            kod='500', tytul='Błąd serwera',
-            opis='Wystąpił nieoczekiwany błąd. Administratorzy zostali powiadomieni.',
-            tekst_przycisku='Wróć do pulpitu'), 500
+    return app
 
 
 @login_manager.user_loader

@@ -7,7 +7,7 @@ from pathlib import Path
 
 from core.modele import ZapisPraktyki, DocumentAuditLog, RolaUzytkownika
 from core.extensions import db
-from core.auth import wymaga_roli
+from core.autoryzacja import wymaga_roli
 
 import logging
 logger = logging.getLogger(__name__)

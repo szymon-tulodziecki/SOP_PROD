@@ -16,7 +16,7 @@ class Firma(db.Model):
     adres                = db.Column(db.String(255), nullable=True)
     miasto               = db.Column(db.String(100), nullable=True)
     nip_krs              = db.Column(db.String(50),  nullable=True)
-    stala_umowa          = db.Column('stala_umowa',  db.Boolean, default=True)
+    stala_umowa          = db.Column('ma_stala_umowe', db.Boolean, default=True)
     aktywna              = db.Column('aktywna',      db.Boolean, default=True)
     utworzono            = db.Column('utworzono',    db.DateTime, server_default=db.func.now())
 

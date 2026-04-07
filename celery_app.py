@@ -30,6 +30,7 @@ celery.conf.update(
     timezone='Europe/Warsaw',
     enable_utc=True,
     task_track_started=True,
+    broker_connection_retry_on_startup=True,
     result_expires=3600,  # wyniki trzymamy 1h
 )
 

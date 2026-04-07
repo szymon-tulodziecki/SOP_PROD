@@ -1,8 +1,9 @@
 import os
 
-from flask import Flask, render_template
+from flask import Flask
 from jinja2 import select_autoescape
 from core.extensions import db, login_manager
+from core.error_handlers import register_error_handlers
 import logging
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
@@ -45,13 +46,14 @@ def create_app():
 
     db.init_app(app)
     login_manager.init_app(app)
+    register_error_handlers(app)
 
     login_manager.login_view = 'auth.logowanie'
     # Polish translation for Flask-Login unauthorized message
     login_manager.login_message = 'Zaloguj się, aby uzyskać dostęp do tej strony.'
     login_manager.login_message_category = 'warning'
     with app.app_context():
-        from core.auth  import stworz_blueprint_auth, wymaga_roli
+        from core.autoryzacja  import stworz_blueprint_auth, wymaga_roli
         from core.pliki import stworz_blueprint_pliki
         from core.modele import RolaUzytkownika
         from app_admin.routes.pulpit      import dashboard_bp
@@ -115,30 +117,9 @@ def create_app():
         from flask_login import current_user
         if (current_user.is_authenticated
                 and getattr(current_user, 'wymagana_zmiana_hasla', False)
-                and request.endpoint not in ('auth.zmien_haslo', 'auth.wylogowanie', 'static')):
+                and request.endpoint not in ('auth.zmien_haslo', 'auth.wylogowanie', 'static')
+                and not (request.endpoint and request.endpoint.endswith('.static'))):
             return redirect(url_for('auth.zmien_haslo'))
-
-    @app.errorhandler(403)
-    def blad_403(e):
-        return render_template('errors/blad.html',
-            kod='403', tytul='Brak dostępu',
-            opis='Nie masz uprawnień do wyświetlenia tej strony.',
-            tekst_przycisku='Wróć do pulpitu'), 403
-
-    @app.errorhandler(404)
-    def blad_404(e):
-        return render_template('errors/blad.html',
-            kod='404', tytul='Nie znaleziono strony',
-            opis='Strona, której szukasz nie istnieje lub została przeniesiona.',
-            tekst_przycisku='Wróć do pulpitu'), 404
-
-    @app.errorhandler(500)
-    def blad_500(e):
-        app.logger.exception('Unhandled Exception:')
-        return render_template('errors/blad.html',
-            kod='500', tytul='Błąd serwera',
-            opis='Wystąpił nieoczekiwany błąd. Administratorzy zostali powiadomieni.',
-            tekst_przycisku='Wróć do pulpitu'), 500
 
     return app
 
