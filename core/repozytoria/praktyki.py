@@ -23,13 +23,13 @@ class RepozytoriumPraktyk:
         return db.session.get(Praktyka, praktyka_id)
 
     def wszystkie(self) -> list[Praktyka]:
-        return db.session.query(Praktyka).order_by(Praktyka.rok_uczelniany.desc(), Praktyka.semestr).all()
+        return db.session.query(Praktyka).order_by(Praktyka.academic_year.desc(), Praktyka.semester).all()
 
     def aktywne(self) -> list[Praktyka]:
         return (
             db.session.query(Praktyka)
-            .filter_by(status=StatusPraktyki.AKTYWNA)
-            .order_by(Praktyka.rok_uczelniany.desc())
+            .filter_by(status=StatusPraktyki.ACTIVE)
+            .order_by(Praktyka.academic_year.desc())
             .all()
         )
 
@@ -37,8 +37,8 @@ class RepozytoriumPraktyk:
         """Zwraca pierwszą aktywną edycję praktyk lub None."""
         return (
             db.session.query(Praktyka)
-            .filter_by(status=StatusPraktyki.AKTYWNA)
-            .order_by(Praktyka.rok_uczelniany.desc())
+            .filter_by(status=StatusPraktyki.ACTIVE)
+            .order_by(Praktyka.academic_year.desc())
             .first()
         )
 
@@ -58,29 +58,29 @@ class RepozytoriumZapisow:
         return db.session.get(ZapisPraktyki, zapis_id)
 
     def wszystkie(self) -> list[ZapisPraktyki]:
-        return db.session.query(ZapisPraktyki).order_by(ZapisPraktyki.zapisano_o.desc()).all()
+        return db.session.query(ZapisPraktyki).order_by(ZapisPraktyki.enrolled_at.desc()).all()
 
     def dla_studenta(self, student_id: uuid.UUID) -> list[ZapisPraktyki]:
         return (
             db.session.query(ZapisPraktyki)
             .filter_by(student_id=student_id)
-            .order_by(ZapisPraktyki.zapisano_o.desc())
+            .order_by(ZapisPraktyki.enrolled_at.desc())
             .all()
         )
 
     def dla_praktyki(self, praktyka_id: uuid.UUID) -> list[ZapisPraktyki]:
         return (
             db.session.query(ZapisPraktyki)
-            .filter_by(praktyka_id=praktyka_id)
-            .order_by(ZapisPraktyki.zapisano_o.desc())
+            .filter_by(internship_id=praktyka_id)
+            .order_by(ZapisPraktyki.enrolled_at.desc())
             .all()
         )
 
     def dla_opiekuna(self, uopz_id: uuid.UUID) -> list[ZapisPraktyki]:
         return (
             db.session.query(ZapisPraktyki)
-            .filter_by(uopz_id=uopz_id)
-            .order_by(ZapisPraktyki.zapisano_o.desc())
+            .filter_by(supervisor_id=uopz_id)
+            .order_by(ZapisPraktyki.enrolled_at.desc())
             .all()
         )
 
@@ -88,7 +88,7 @@ class RepozytoriumZapisow:
         return (
             db.session.query(ZapisPraktyki)
             .filter_by(status=status)
-            .order_by(ZapisPraktyki.zapisano_o.desc())
+            .order_by(ZapisPraktyki.enrolled_at.desc())
             .all()
         )
 
@@ -96,8 +96,8 @@ class RepozytoriumZapisow:
         """Sprawdza czy student ma już zapis do danej edycji (inny niż ODRZUCONY)."""
         q = (
             db.session.query(ZapisPraktyki)
-            .filter_by(student_id=student_id, praktyka_id=praktyka_id)
-            .filter(ZapisPraktyki.status != StatusZapisu.ODRZUCONA)
+            .filter_by(student_id=student_id, internship_id=praktyka_id)
+            .filter(ZapisPraktyki.status != StatusZapisu.REJECTED)
         )
         return db.session.query(q.exists()).scalar()
 

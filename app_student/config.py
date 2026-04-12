@@ -2,19 +2,28 @@ import os
 from datetime import timedelta
 
 
+def _require(name: str) -> str:
+    v = os.environ.get(name)
+    if not v:
+        raise RuntimeError(
+            f"Zmienna środowiskowa {name!r} nie jest ustawiona. "
+            "Uzupełnij plik .env lub zmienne środowiskowe kontenera."
+        )
+    return v
+
+
 class Config:
     # Osobne nazwy ciasteczek dla admina i studenta
     SESSION_COOKIE_NAME = 'student_session'
 
-    # Podstawowe zabezpieczenie sesji i formularzy WTF
-    SECRET_KEY = os.environ.get('SECRET_KEY', 'student-tajny-klucz-tylko-na-dev-xd')
-
-    # Konfiguracja połączenia z bazą danych — sterownik psycopg2 (C, wydajny)
-    SQLALCHEMY_DATABASE_URI = os.environ.get(
-        'DATABASE_URL',
-        'postgresql+psycopg2://ans_admin:secure_password_123@localhost:5432/ans_praktyki'
-    )
+    SECRET_KEY               = _require('SECRET_KEY')
+    SQLALCHEMY_DATABASE_URI  = _require('DATABASE_URL')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+    # Microsoft Entra ID (Azure AD) — OAuth 2.0
+    AZURE_CLIENT_ID     = _require('AZURE_CLIENT_ID')
+    AZURE_CLIENT_SECRET = _require('AZURE_CLIENT_SECRET')
+    AZURE_TENANT_ID     = _require('AZURE_TENANT_ID')
 
     # Session
     PERMANENT_SESSION_LIFETIME = timedelta(hours=8)

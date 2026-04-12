@@ -103,17 +103,6 @@
                    aria-label="Edytuj studenta {{ u.first_name }} {{ u.last_name }}">
                   Edytuj
                 </a>
-                <form method="POST"
-                      action="{{ url_for('zarzadzanie.reset_hasla', id=u.id) }}"
-                      style="display: inline;">
-                  {{ csrf_form.hidden_tag() }}
-                  <button type="submit"
-                          class="przycisk przycisk--drugorzedny przycisk--maly"
-                          aria-label="Resetuj hasło dla {{ u.first_name }} {{ u.last_name }}"
-                          onclick="return confirm('Zresetować hasło do nr albumu? Nastąpi wymóg zmiany hasła przy pierwszym logowaniu.')">
-                    Reset hasła
-                  </button>
-                </form>
               {% endif %}
 
               {% if u.id != current_user.id %}

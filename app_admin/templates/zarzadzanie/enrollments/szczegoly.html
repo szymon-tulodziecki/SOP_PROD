@@ -94,7 +94,7 @@
   </div>
 
   {# ── Główna siatka treści ── #}
-  <div style="display: grid; grid-template-columns: 1fr 360px; gap: 1.5rem; align-items: start;">
+  <div style="display: grid; grid-template-columns: 1fr 480px; gap: 1.5rem; align-items: start;">
 
     {# ═══ LEWA KOLUMNA ═══ #}
     <div style="display: flex; flex-direction: column; gap: 1.5rem;">
@@ -354,7 +354,7 @@
       {% endif %}
       {% endif %}
 
-      {# Załączniki #}
+      {# Załączniki studenta #}
       {% if uploaded_docs %}
       <div class="karta">
         <div class="karta__naglowek">
@@ -381,28 +381,6 @@
     {# ═══ PRAWA KOLUMNA ═══ #}
     <div style="display: flex; flex-direction: column; gap: 1.5rem; position: sticky; top: 1.5rem;">
 
-      {# Komentarze #}
-      {% if zapis.komentarze_admina or zapis.komentarze_uopz %}
-      <div class="karta">
-        <div class="karta__naglowek">
-          <h3 class="karta__tytul">Komentarze</h3>
-        </div>
-        <div class="karta__tresc" style="display: flex; flex-direction: column; gap: 0.75rem;">
-          {% if zapis.komentarze_admina %}
-          <div style="padding: 0.875rem; border-left: 3px solid var(--kolor-glowny); background: var(--kolor-tlo); border-radius: 0 var(--promien) var(--promien) 0;">
-            <div style="font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--kolor-glowny); margin-bottom: 0.4rem;">Administrator</div>
-            <div style="font-size: 0.875rem; color: var(--kolor-tekst); line-height: 1.55; white-space: pre-wrap;">{{ zapis.komentarze_admina }}</div>
-          </div>
-          {% endif %}
-          {% if zapis.komentarze_uopz %}
-          <div style="padding: 0.875rem; border-left: 3px solid var(--kolor-akcent); background: var(--kolor-tlo); border-radius: 0 var(--promien) var(--promien) 0;">
-            <div style="font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--kolor-akcent); margin-bottom: 0.4rem;">UOPZ</div>
-            <div style="font-size: 0.875rem; color: var(--kolor-tekst); line-height: 1.55; white-space: pre-wrap;">{{ zapis.komentarze_uopz }}</div>
-          </div>
-          {% endif %}
-        </div>
-      </div>
-      {% endif %}
 
       {# Panel decyzji #}
       {% if zapis.status.value in ['PENDING', 'AWAITING_APPROVAL'] %}
@@ -416,7 +394,7 @@
 
             <div style="margin-bottom: 1.25rem;">
               <label class="pole-formularza__etykieta" style="display: block; margin-bottom: 0.4rem;">Komentarz do studenta <span style="font-weight: 400; color: var(--kolor-tekst-trzeciorzed);">(opcjonalny)</span></label>
-              {{ form.komentarz(class="pole-formularza__textarea", rows="4", placeholder="Uwagi widoczne dla studenta w panelu praktyk…") }}
+              {{ form.komentarz(class="pole-formularza__textarea", rows="7", placeholder="Uwagi widoczne dla studenta w panelu praktyk…", style="width: 100%; box-sizing: border-box;") }}
             </div>
 
             <div style="border-top: 1px solid var(--kolor-ramka); padding-top: 1.25rem; display: flex; flex-direction: column; gap: 0.5rem;">

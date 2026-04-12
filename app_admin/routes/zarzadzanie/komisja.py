@@ -31,15 +31,21 @@ def komisja_lista():
     from sqlalchemy import exists
     from core.modele import ZdarzenieProces, TypZdarzenia
     ma_komentarz_uopz = exists().where(
-        (ZdarzenieProces.zapis_id == ZapisPraktyki.id) &
-        (ZdarzenieProces.typ == TypZdarzenia.UOPZ_KOMENTARZ) &
-        ZdarzenieProces.komentarz.isnot(None)
+        (ZdarzenieProces.enrollment_id == ZapisPraktyki.id) &
+        (ZdarzenieProces.event_type == TypZdarzenia.UOPZ_KOMENTARZ) &
+        ZdarzenieProces.comment.isnot(None)
     )
+    from sqlalchemy.orm import selectinload
     q = db.session.query(ZapisPraktyki)\
+          .options(
+              selectinload(ZapisPraktyki.student),
+              selectinload(ZapisPraktyki.firma),
+          )\
           .join(Uzytkownik, ZapisPraktyki.student_id == Uzytkownik.id)\
-          .filter(ZapisPraktyki.sciezka.in_(['EMPLOYMENT', 'OWN_BUSINESS']))\
+          .filter(ZapisPraktyki.path_type.in_(['EMPLOYMENT', 'OWN_BUSINESS']))\
           .filter(or_(
               ZapisPraktyki.status == StatusZapisu.COMMISSION_REVIEW,
+              ZapisPraktyki.status == StatusZapisu.REVISION_REQUIRED,
               (ZapisPraktyki.status == StatusZapisu.AWAITING_APPROVAL) & ma_komentarz_uopz,
           ))
     wnioski   = q.order_by(ZapisPraktyki.enrolled_at.desc()).paginate(page=strona, per_page=25, error_out=False)
@@ -56,7 +62,7 @@ def komisja_weryfikuj(id):
 
     zapis = db.session.get(ZapisPraktyki, id) or abort(404)
 
-    if zapis.status != StatusZapisu.COMMISSION_REVIEW:
+    if zapis.status not in (StatusZapisu.COMMISSION_REVIEW, StatusZapisu.AWAITING_APPROVAL, StatusZapisu.REVISION_REQUIRED):
         flash('Wniosek nie wymaga weryfikacji komisji.', 'warning')
         return redirect(url_for('zarzadzanie.komisja_lista'))
 
@@ -74,41 +80,50 @@ def komisja_weryfikuj(id):
     if form.validate_on_submit():
         from core.modele import ZdarzenieProces, TypZdarzenia
         from datetime import datetime
+        from core.uslugi.workflow import ZapisFSM, IllegalTransitionError
 
-        if form.decyzja.data == 'APPROVED':
-            decyzja_db = 'APPROVED'
-            zapis.status = StatusZapisu.DEAN_APPROVAL
-            flash('Wniosek zatwierdzony i przekazany do dziekana.', 'success')
-        elif form.decyzja.data == 'PARTIALLY_APPROVED':
-            decyzja_db = 'PARTIALLY_APPROVED'
-            zapis.status = StatusZapisu.AWAITING_APPROVAL
-            db.session.add(ZdarzenieProces(
-                zapis_id=zapis.id, typ=TypZdarzenia.UOPZ_KOMENTARZ,
-                komentarz=f"Komisja: {form.komentarz.data}",
-                wykonane_przez_id=current_user.id, wykonano_o=datetime.utcnow(),
-            ))
-            flash('Wniosek wymaga uzupełnień - student zostanie powiadomiony.', 'info')
-        else:
-            decyzja_db = 'REJECTED'
-            zapis.status = StatusZapisu.REJECTED
-            db.session.add(ZdarzenieProces(
-                zapis_id=zapis.id, typ=TypZdarzenia.UOPZ_KOMENTARZ,
-                komentarz=f"Wniosek odrzucony przez komisję: {form.komentarz.data}",
-                wykonane_przez_id=current_user.id, wykonano_o=datetime.utcnow(),
-            ))
-            flash('Wniosek został odrzucony.', 'warning')
+        try:
+            with ZapisFSM.lock(id) as fsm:
+                if fsm.zapis.status not in (StatusZapisu.COMMISSION_REVIEW, StatusZapisu.AWAITING_APPROVAL, StatusZapisu.REVISION_REQUIRED):
+                    flash('Wniosek zmienił status podczas przetwarzania — spróbuj ponownie.', 'warning')
+                    return redirect(url_for('zarzadzanie.komisja_lista'))
 
-        db.session.add(ZdarzenieProces(
-            zapis_id=zapis.id, typ=TypZdarzenia.KOMISJA_DECYZJA,
-            decyzja=decyzja_db, komentarz=form.komentarz.data,
-            wykonane_przez_id=current_user.id, wykonano_o=datetime.utcnow(),
-        ))
-        db.session.commit()
+                if form.decyzja.data == 'APPROVED':
+                    decyzja_db = 'APPROVED'
+                    fsm.zatwierdz_przez_komisje()
+                    flash('Wniosek zatwierdzony i przekazany do dziekana.', 'success')
+                elif form.decyzja.data == 'PARTIALLY_APPROVED':
+                    decyzja_db = 'PARTIALLY_APPROVED'
+                    fsm.zadaj_poprawki()
+                    db.session.add(ZdarzenieProces(
+                        enrollment_id=fsm.zapis.id, event_type=TypZdarzenia.UOPZ_KOMENTARZ,
+                        comment=f"Komisja: {form.komentarz.data}",
+                        executed_by_id=current_user.id, executed_at=datetime.utcnow(),
+                    ))
+                    flash('Wniosek wymaga uzupełnień - student zostanie powiadomiony.', 'info')
+                else:
+                    decyzja_db = 'REJECTED'
+                    fsm.odrzuc()
+                    db.session.add(ZdarzenieProces(
+                        enrollment_id=fsm.zapis.id, event_type=TypZdarzenia.UOPZ_KOMENTARZ,
+                        comment=f"Wniosek odrzucony przez komisję: {form.komentarz.data}",
+                        executed_by_id=current_user.id, executed_at=datetime.utcnow(),
+                    ))
+                    flash('Wniosek został odrzucony.', 'warning')
+
+                db.session.add(ZdarzenieProces(
+                    enrollment_id=fsm.zapis.id, event_type=TypZdarzenia.KOMISJA_DECYZJA,
+                    decision=decyzja_db, comment=form.komentarz.data,
+                    executed_by_id=current_user.id, executed_at=datetime.utcnow(),
+                ))
+                db.session.commit()
+        except IllegalTransitionError as e:
+            flash(str(e), 'danger')
         return redirect(url_for('zarzadzanie.komisja_lista'))
 
     dokumenty = db.session.query(UploadedDocument)\
-                  .filter_by(zapis_id=id)\
-                  .order_by(UploadedDocument.przeslano_o.desc())\
+                  .filter_by(enrollment_id=id, uploaded_by_id=zapis.student_id)\
+                  .order_by(UploadedDocument.uploaded_at.desc())\
                   .all()
     return render_template('zarzadzanie/komisja/weryfikuj.html',
                            form=form, zapis=zapis, dokumenty=dokumenty)

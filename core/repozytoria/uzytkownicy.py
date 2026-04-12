@@ -24,27 +24,27 @@ class RepozytoriumUzytkownikow:
         return db.session.query(Uzytkownik).filter_by(email=email).first()
 
     def wszyscy(self) -> list[Uzytkownik]:
-        return db.session.query(Uzytkownik).order_by(Uzytkownik.nazwisko, Uzytkownik.imie).all()
+        return db.session.query(Uzytkownik).order_by(Uzytkownik.last_name, Uzytkownik.first_name).all()
 
     def aktywni(self) -> list[Uzytkownik]:
-        return db.session.query(Uzytkownik).filter_by(aktywny=True).order_by(Uzytkownik.nazwisko).all()
+        return db.session.query(Uzytkownik).filter_by(is_active=True).order_by(Uzytkownik.last_name).all()
 
     # ── Według roli ───────────────────────────────────────────────────────────
 
     def wszyscy_studenci(self) -> list[Student]:
-        return db.session.query(Student).order_by(Uzytkownik.nazwisko, Uzytkownik.imie).all()
+        return db.session.query(Student).order_by(Uzytkownik.last_name, Uzytkownik.first_name).all()
 
     def wszyscy_administratorzy(self) -> list[Administrator]:
-        return db.session.query(Administrator).order_by(Uzytkownik.nazwisko).all()
+        return db.session.query(Administrator).order_by(Uzytkownik.last_name).all()
 
     def wszyscy_opiekunowie(self) -> list[OpikunUczelniany]:
-        return db.session.query(OpikunUczelniany).order_by(Uzytkownik.nazwisko).all()
+        return db.session.query(OpikunUczelniany).order_by(Uzytkownik.last_name).all()
 
     def opiekunowie_aktywni(self) -> list[OpikunUczelniany]:
         return (
             db.session.query(OpikunUczelniany)
-            .filter(Uzytkownik.aktywny.is_(True))
-            .order_by(Uzytkownik.nazwisko)
+            .filter(Uzytkownik.is_active.is_(True))
+            .order_by(Uzytkownik.last_name)
             .all()
         )
 

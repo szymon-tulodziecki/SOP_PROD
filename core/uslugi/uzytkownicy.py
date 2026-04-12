@@ -1,6 +1,6 @@
 """core/uslugi/uzytkownicy.py
 
-Usługa zarządzania kontami użytkowników.
+User account management service.
 """
 from __future__ import annotations
 
@@ -10,33 +10,33 @@ import uuid
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from core.extensions import db
-from core.modele.uzytkownicy import RolaUzytkownika, Uzytkownik, Student, Administrator, OpikunUczelniany
+from core.modele.uzytkownicy import UserRole, User, Student, Administrator, UniversityMentor
 from core.repozytoria.uzytkownicy import RepozytoriumUzytkownikow
 
 
 class UslugaUzytkownikow:
-    """Logika biznesowa kont użytkowników."""
+    """Business logic for user accounts."""
 
     def __init__(self, repozytorium: Optional[RepozytoriumUzytkownikow] = None) -> None:
         self._repo = repozytorium or RepozytoriumUzytkownikow()
 
-    # ── Uwierzytelnienie ──────────────────────────────────────────────────────
+    # ── Authentication ────────────────────────────────────────────────────────
 
-    def uwierzytelnij(self, email: str, haslo: str) -> Optional[Uzytkownik]:
-        """Zwraca użytkownika jeśli dane są poprawne, None w przeciwnym razie."""
-        uzytkownik = self._repo.znajdz_po_emailu(email)
-        if uzytkownik is None or not uzytkownik.aktywny:
+    def uwierzytelnij(self, email: str, haslo: str) -> Optional[User]:
+        """Returns user if credentials are valid, None otherwise."""
+        user = self._repo.znajdz_po_emailu(email)
+        if user is None or not user.is_active:
             return None
-        if not check_password_hash(uzytkownik.hash_hasla, haslo):
+        if not check_password_hash(user.password_hash, haslo):
             return None
-        return uzytkownik
+        return user
 
-    def zmien_haslo(self, uzytkownik: Uzytkownik, nowe_haslo: str) -> None:
-        uzytkownik.hash_hasla = generate_password_hash(nowe_haslo)
-        uzytkownik.wymagana_zmiana_hasla = False
+    def zmien_haslo(self, user: User, nowe_haslo: str) -> None:
+        user.password_hash = generate_password_hash(nowe_haslo)
+        user.require_password_change = False
         db.session.commit()
 
-    # ── Tworzenie kont ────────────────────────────────────────────────────────
+    # ── Account creation ──────────────────────────────────────────────────────
 
     def utworz_studenta(
         self,
@@ -51,11 +51,11 @@ class UslugaUzytkownikow:
             raise ValueError(f'Konto z adresem {email} już istnieje.')
         student = Student(
             email=email,
-            hash_hasla=generate_password_hash(haslo),
-            imie=imie,
-            nazwisko=nazwisko,
-            rola=RolaUzytkownika.STUDENT,
-            numer_albumu=numer_albumu,
+            password_hash=generate_password_hash(haslo),
+            first_name=imie,
+            last_name=nazwisko,
+            role=UserRole.STUDENT,
+            album_number=numer_albumu,
             **dane_studenta,
         )
         self._repo.zapisz(student)
@@ -67,49 +67,49 @@ class UslugaUzytkownikow:
             raise ValueError(f'Konto z adresem {email} już istnieje.')
         admin = Administrator(
             email=email,
-            hash_hasla=generate_password_hash(haslo),
-            imie=imie,
-            nazwisko=nazwisko,
-            rola=RolaUzytkownika.ADMIN,
+            password_hash=generate_password_hash(haslo),
+            first_name=imie,
+            last_name=nazwisko,
+            role=UserRole.ADMIN,
         )
         self._repo.zapisz(admin)
         db.session.commit()
         return admin
 
-    def utworz_opiekuna(self, email: str, haslo: str, imie: str, nazwisko: str) -> OpikunUczelniany:
+    def utworz_opiekuna(self, email: str, haslo: str, imie: str, nazwisko: str) -> UniversityMentor:
         if self._repo.istnieje_email(email):
             raise ValueError(f'Konto z adresem {email} już istnieje.')
-        opiekun = OpikunUczelniany(
+        mentor = UniversityMentor(
             email=email,
-            hash_hasla=generate_password_hash(haslo),
-            imie=imie,
-            nazwisko=nazwisko,
-            rola=RolaUzytkownika.UOPZ,
+            password_hash=generate_password_hash(haslo),
+            first_name=imie,
+            last_name=nazwisko,
+            role=UserRole.UOPZ,
         )
-        self._repo.zapisz(opiekun)
+        self._repo.zapisz(mentor)
         db.session.commit()
-        return opiekun
+        return mentor
 
-    # ── Aktualizacja ──────────────────────────────────────────────────────────
+    # ── Updates ───────────────────────────────────────────────────────────────
 
-    def aktualizuj(self, uzytkownik: Uzytkownik, **pola) -> Uzytkownik:
-        """Aktualizuje dowolne pola modelu i zapisuje."""
+    def aktualizuj(self, user: User, **pola) -> User:
+        """Updates arbitrary model fields and commits."""
         if 'haslo' in pola:
-            uzytkownik.hash_hasla = generate_password_hash(pola.pop('haslo'))
+            user.password_hash = generate_password_hash(pola.pop('haslo'))
         for klucz, wartosc in pola.items():
-            setattr(uzytkownik, klucz, wartosc)
+            setattr(user, klucz, wartosc)
         db.session.commit()
-        return uzytkownik
+        return user
 
-    def dezaktywuj(self, uzytkownik: Uzytkownik) -> None:
-        uzytkownik.aktywny = False
-        db.session.commit()
-
-    def aktywuj(self, uzytkownik: Uzytkownik) -> None:
-        uzytkownik.aktywny = True
+    def dezaktywuj(self, user: User) -> None:
+        user.is_active = False
         db.session.commit()
 
-    # ── Dostęp ────────────────────────────────────────────────────────────────
+    def aktywuj(self, user: User) -> None:
+        user.is_active = True
+        db.session.commit()
+
+    # ── Repository access ─────────────────────────────────────────────────────
 
     @property
     def repozytorium(self) -> RepozytoriumUzytkownikow:

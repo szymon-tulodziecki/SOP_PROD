@@ -43,7 +43,7 @@ def log_audit(zapis_id, doc_type, action, details=""):
 @wymaga_roli(RolaUzytkownika.ADMIN, RolaUzytkownika.UOPZ)
 def panel(id):
     zapis = db.session.get(ZapisPraktyki, id) or abort(404)
-    logs = db.session.query(DocumentAuditLog).filter_by(zapis_id=id).order_by(DocumentAuditLog.wykonano_o.desc()).limit(20).all()
+    logs = db.session.query(DocumentAuditLog).filter_by(enrollment_id=id).order_by(DocumentAuditLog.created_at.desc()).limit(20).all()
     return render_template('documents/panel.html', zapis=zapis, docs=DOCUMENTS, logs=logs)
 
 @documents_bp.route('/zapis/<uuid:id>/edytuj/<doc_type>', methods=['GET'])
@@ -110,17 +110,6 @@ def generuj_auto(id, doc_type):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@documents_bp.route('/zapis/<uuid:id>/generuj_zip', methods=['POST'])
-@wymaga_roli(RolaUzytkownika.ADMIN, RolaUzytkownika.UOPZ)
-def generuj_zip(id):
-    zapis = db.session.get(ZapisPraktyki, id) or abort(404)
-    try:
-        from celery_app import generate_zip_task
-        task = generate_zip_task.delay(str(zapis.id))
-        log_audit(zapis.id, 'PAKIET_ZIP', 'GENERATED_AUTO', 'Wygenerowano komplet dokumentów (ZIP)')
-        return jsonify({'task_id': task.id, 'status': 'PENDING'})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
 
 @documents_bp.route('/zapis/<uuid:id>/kompiluj/<doc_type>', methods=['POST'])
 @wymaga_roli(RolaUzytkownika.ADMIN)
@@ -150,44 +139,53 @@ def status_pdf(task_id):
         elif task.state == 'FAILURE':
             return jsonify({'status': 'FAILURE', 'error': str(task.info)})
         else:
-            progress = task.info.get('progress', 0) if task.info else 0
-            return jsonify({'status': task.state, 'progress': progress})
+            return jsonify({'status': task.state})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+_SSE_MAX_SECONDS = 120   # po tym czasie strumień jest zamykany niezależnie od stanu
 
 @documents_bp.route('/stream/<task_id>')
 @wymaga_roli(RolaUzytkownika.ADMIN, RolaUzytkownika.UOPZ)
 def stream_status(task_id):
-    """Server-Sent Events endpoint."""
+    """Server-Sent Events — status generowania PDF.
+
+    Strumień jest automatycznie zamykany po _SSE_MAX_SECONDS sekund,
+    co chroni wątki serwera przed blokadą przez osierocone połączenia
+    (np. po zamknięciu karty przez użytkownika).
+    """
     from celery_app import celery
 
     def generate():
-        while True:
-            try:
-                task = celery.AsyncResult(task_id)
-                if task.state == 'SUCCESS':
-                    res = task.result
-                    if isinstance(res, dict) and res.get('status') == 'error':
-                        data = {'status': 'FAILURE', 'error': res.get('message', 'Nieznany błąd')}
+        deadline = time.monotonic() + _SSE_MAX_SECONDS
+        try:
+            while time.monotonic() < deadline:
+                try:
+                    task = celery.AsyncResult(task_id)
+                    if task.state == 'SUCCESS':
+                        res = task.result
+                        if isinstance(res, dict) and res.get('status') == 'error':
+                            data = {'status': 'FAILURE', 'error': res.get('message', 'Nieznany błąd')}
+                        else:
+                            data = {'status': 'SUCCESS',
+                                    'download_url': url_for('documents.pobierz_pdf', task_id=task_id)}
+                        yield f"data: {json.dumps(data)}\n\n"
+                        return
+                    elif task.state == 'FAILURE':
+                        yield f"data: {json.dumps({'status': 'FAILURE', 'error': str(task.info)})}\n\n"
+                        return
                     else:
-                        data = {'status': 'SUCCESS', 'download_url': url_for('documents.pobierz_pdf', task_id=task_id)}
-                    yield f"data: {json.dumps(data)}\n\n"
+                        yield f"data: {json.dumps({'status': task.state})}\n\n"
+                except GeneratorExit:
                     return
-                elif task.state == 'FAILURE':
-                    data = {'status': 'FAILURE', 'error': str(task.info)}
-                    yield f"data: {json.dumps(data)}\n\n"
+                except Exception as exc:
+                    logger.error("SSE stream error for task %s: %s", task_id, exc)
+                    yield f"data: {json.dumps({'status': 'FAILURE', 'error': str(exc)})}\n\n"
                     return
-                else:
-                    progress = task.info.get('progress', 0) if task.info else 0
-                    data = {'status': task.state, 'progress': progress}
-                    yield f"data: {json.dumps(data)}\n\n"
-            except GeneratorExit:
-                return
-            except Exception as exc:
-                logger.error("SSE stream error for task %s: %s", task_id, exc)
-                yield f"data: {json.dumps({'status': 'FAILURE', 'error': str(exc)})}\n\n"
-                return
-            time.sleep(1)
+                time.sleep(1)
+        finally:
+            # Wysyłamy zamknięcie — klient może zareagować komunikatem timeout
+            yield f"data: {json.dumps({'status': 'TIMEOUT'})}\n\n"
 
     return Response(generate(), mimetype='text/event-stream',
                     headers={'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no'})

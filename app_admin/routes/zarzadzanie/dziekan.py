@@ -30,7 +30,7 @@ def dziekan_lista():
     q = db.session.query(ZapisPraktyki)\
           .join(Uzytkownik, ZapisPraktyki.student_id == Uzytkownik.id)\
           .filter(ZapisPraktyki.status == StatusZapisu.DEAN_APPROVAL)\
-          .filter(ZapisPraktyki.sciezka.in_(['EMPLOYMENT', 'OWN_BUSINESS']))
+          .filter(ZapisPraktyki.path_type.in_(['EMPLOYMENT', 'OWN_BUSINESS']))
     wnioski   = q.order_by(ZapisPraktyki.enrolled_at.desc()).paginate(page=strona, per_page=25, error_out=False)
     csrf_form = FlaskForm()
     return render_template('zarzadzanie/dziekan/lista.html', wnioski=wnioski, csrf_form=csrf_form)
@@ -62,25 +62,34 @@ def dziekan_decyzja(id):
     if form.validate_on_submit():
         from core.modele import ZdarzenieProces, TypZdarzenia
         from datetime import datetime
+        from core.uslugi.workflow import ZapisFSM, IllegalTransitionError
 
-        if form.decyzja.data == 'APPROVED':
-            zapis.status = StatusZapisu.IN_PROGRESS
-            flash('Wniosek zatwierdzony przez dziekana. Student może kontynuować praktykę.', 'success')
-        else:
-            zapis.status = StatusZapisu.REJECTED
-            db.session.add(ZdarzenieProces(
-                zapis_id=zapis.id, typ=TypZdarzenia.UOPZ_KOMENTARZ,
-                komentarz=f"Dziekan nie wyraził zgody: {form.komentarz.data}",
-                wykonane_przez_id=current_user.id, wykonano_o=datetime.utcnow(),
-            ))
-            flash('Wniosek odrzucony przez dziekana.', 'warning')
+        try:
+            with ZapisFSM.lock(id) as fsm:
+                if fsm.zapis.status != StatusZapisu.DEAN_APPROVAL:
+                    flash('Wniosek zmienił status podczas przetwarzania — spróbuj ponownie.', 'warning')
+                    return redirect(url_for('zarzadzanie.dziekan_lista'))
 
-        db.session.add(ZdarzenieProces(
-            zapis_id=zapis.id, typ=TypZdarzenia.DZIEKAN_DECYZJA,
-            decyzja=form.decyzja.data, komentarz=form.komentarz.data,
-            wykonane_przez_id=current_user.id, wykonano_o=datetime.utcnow(),
-        ))
-        db.session.commit()
+                if form.decyzja.data == 'APPROVED':
+                    fsm.zatwierdz_przez_dziekana()
+                    flash('Wniosek zatwierdzony przez dziekana. Student może kontynuować praktykę.', 'success')
+                else:
+                    fsm.odrzuc()
+                    db.session.add(ZdarzenieProces(
+                        enrollment_id=fsm.zapis.id, event_type=TypZdarzenia.UOPZ_KOMENTARZ,
+                        comment=f"Dziekan nie wyraził zgody: {form.komentarz.data}",
+                        executed_by_id=current_user.id, executed_at=datetime.utcnow(),
+                    ))
+                    flash('Wniosek odrzucony przez dziekana.', 'warning')
+
+                db.session.add(ZdarzenieProces(
+                    enrollment_id=fsm.zapis.id, event_type=TypZdarzenia.DZIEKAN_DECYZJA,
+                    decision=form.decyzja.data, comment=form.komentarz.data,
+                    executed_by_id=current_user.id, executed_at=datetime.utcnow(),
+                ))
+                db.session.commit()
+        except IllegalTransitionError as e:
+            flash(str(e), 'danger')
         return redirect(url_for('zarzadzanie.dziekan_lista'))
 
     return render_template('zarzadzanie/dziekan/decyzja.html', form=form, zapis=zapis)

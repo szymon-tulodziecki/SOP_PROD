@@ -5,7 +5,7 @@
   <a href="{{ url_for('zarzadzanie.lista_uzytkownikow') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
 {% endblock %}
 {% block tresc %}
-<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; align-items: start;">
+<div style="max-width: 560px; display: flex; flex-direction: column; gap: 1.25rem; margin: 0 auto;">
 
   <div class="karta">
     <div class="karta__naglowek"><h2 class="karta__tytul">Wgraj plik CSV</h2></div>
@@ -15,10 +15,19 @@
 
         <div class="pole-formularza">
           <label for="plik" class="pole-formularza__etykieta">
-            Plik CSV z USOS <span class="pole-formularza__wymagane" aria-label="wymagane">*</span>
+            Plik CSV <span class="pole-formularza__wymagane" aria-label="wymagane">*</span>
           </label>
-          <input type="file" id="plik" name="plik" accept=".csv"
-                 class="pole-formularza__input" required>
+          <label for="plik" style="display:flex; align-items:center; gap:0.75rem; padding:0.75rem 1rem;
+                 border:2px dashed var(--kolor-ramka); border-radius:var(--promien);
+                 cursor:pointer; background:var(--kolor-tlo); transition:border-color 0.15s;"
+                 onmouseover="this.style.borderColor='var(--kolor-glowny)'"
+                 onmouseout="this.style.borderColor='var(--kolor-ramka)'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22" style="flex-shrink:0;color:var(--kolor-tekst-drugor)"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <span id="plik-label" style="font-size:0.875rem; color:var(--kolor-tekst-drugor);">Wybierz plik CSV lub przeciągnij tutaj</span>
+          </label>
+          <input type="file" id="plik" name="plik" accept=".csv" required
+                 style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;"
+                 onchange="document.getElementById('plik-label').textContent = this.files[0]?.name || 'Wybierz plik CSV'">
           {% if form.plik.errors %}
             <span class="pole-formularza__blad" role="alert">{{ form.plik.errors[0] }}</span>
           {% endif %}
@@ -28,47 +37,46 @@
           <label for="uopz_id" class="pole-formularza__etykieta">
             Przypisz opiekuna (UOPZ) <span class="pole-formularza__wymagane" aria-label="wymagane">*</span>
           </label>
-          <select id="uopz_id" name="uopz_id" class="filtr-select" style="width:100%;" required>
-            <option value="">— wybierz —</option>
+          <select id="uopz_id" name="uopz_id" class="pole-formularza__input" required>
             {% for val, label in form.uopz_id.choices %}
-            <option value="{{ val }}">{{ label }}</option>
+            <option value="{{ val }}" {% if form.uopz_id.data == val %}selected{% endif %}>{{ label }}</option>
             {% endfor %}
           </select>
+          {% if form.uopz_id.errors %}
+            <span class="pole-formularza__blad" role="alert">{{ form.uopz_id.errors[0] }}</span>
+          {% endif %}
         </div>
 
-        <button type="submit" class="przycisk przycisk--glowny">Importuj</button>
+        <button type="submit" class="przycisk przycisk--glowny" style="width:100%; margin-top:0.75rem;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="vertical-align:middle;margin-right:0.4rem"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Importuj studentów
+        </button>
       </form>
     </div>
   </div>
 
   <div class="karta">
-    <div class="karta__naglowek"><h2 class="karta__tytul">Format pliku CSV</h2></div>
-    <div class="karta__tresc">
-      <p style="font-size: 0.875rem; color: var(--kolor-tekst-drugor); margin-bottom: 0.75rem;">
-        Pierwsza linia musi zawierać nagłówki. Obsługiwane nazwy kolumn:
+    <div class="karta__naglowek"><h2 class="karta__tytul">Format pliku</h2></div>
+    <div class="karta__tresc" style="display:flex; flex-direction:column; gap:0.75rem;">
+      <p style="font-size:0.85rem; color:var(--kolor-tekst-drugor);">
+        Pierwsza linia musi zawierać nagłówki. Wszystkie kolumny są wymagane.
+        Kolumna email musi zawierać konto Microsoft w domenie uczelni. Kodowanie: UTF-8 lub UTF-8 z BOM.
       </p>
-      <code style="display: block; background: var(--kolor-tlo); padding: 0.75rem; border-radius: var(--promien); font-size: 0.8rem; line-height: 1.8;">
-        imie,nazwisko,email,numer_albumu,plec,kierunek,specjalnosc,tryb_studiow<br>
-        Jan,Kowalski,j.kowalski@student.ans.elblag.pl,12345,M,Informatyka,PBDiOU,stacjonarne<br>
-        Anna,Nowak,a.nowak@student.ans.elblag.pl,12346,K,Informatyka,SIA,niestacjonarne
-      </code>
-      <p style="font-size: 0.8rem; color: var(--kolor-tekst-trzeciorzed); margin-top: 0.75rem;">
-        Kolumny <strong>plec, kierunek, specjalnosc, tryb_studiow</strong> są opcjonalne.<br>
-        Hasło tymczasowe każdego studenta = jego nr albumu.<br>
-        Kodowanie: UTF-8 lub UTF-8 z BOM (eksport z Excela).
-      </p>
+      <code style="display:block; background:var(--kolor-tlo); border:1px solid var(--kolor-ramka); border-radius:var(--promien); padding:0.75rem 1rem; font-size:0.8rem; line-height:2; white-space:pre; overflow-x:auto;">imie,nazwisko,email,numer_albumu,plec,kierunek,tryb_studiow
+Jan,Kowalski,54321@ans-elblag.pl,54321,M,Informatyka,stacjonarne
+Anna,Nowak,67890@ans-elblag.pl,67890,K,Informatyka,niestacjonarne</code>
     </div>
   </div>
 
 </div>
 
 {% if wyniki %}
-<div class="karta" style="margin-top: 1.25rem;">
+<div class="karta" style="margin-top: 1.25rem; max-width:560px;">
   <div class="karta__naglowek">
     <h2 class="karta__tytul">Wyniki importu</h2>
   </div>
   <div class="karta__tresc">
-    <div style="display: flex; gap: 1.5rem; margin-bottom: 1rem;">
+    <div style="display: flex; gap: 2rem; margin-bottom: 1rem;">
       <div style="text-align: center;">
         <p style="font-size: 2rem; font-weight: 700; color: var(--kolor-sukces);">{{ wyniki.utworzono }}</p>
         <p style="font-size: 0.85rem; color: var(--kolor-tekst-drugor);">Kont utworzonych</p>

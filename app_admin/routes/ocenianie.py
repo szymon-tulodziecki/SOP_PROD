@@ -42,7 +42,7 @@ def lista_ocen():
     )
 
     if current_user.role == RolaUzytkownika.UOPZ:
-        q = q.filter_by(uopz_id=current_user.id)
+        q = q.filter_by(supervisor_id=current_user.id)
 
     zapisy = q.join(ZapisPraktyki.student).order_by(
         ZapisPraktyki.status.desc(),
@@ -83,29 +83,31 @@ def lista_ocen():
 @wymaga_roli(RolaUzytkownika.ADMIN, RolaUzytkownika.UOPZ)
 def ocen_praktyke(id):
     zapis = db.session.get(ZapisPraktyki, id) or abort(404)
+
     if request.method == 'POST':
-        from core.modele import OcenyKoncowe, Sprawdzian as SprawdzianModel
-        ok = zapis.oceny_koncowe or OcenyKoncowe(zapis_id=zapis.id)
-        if ok not in db.session:
-            db.session.add(ok)
-        ok.ocena_opisowa_uopz = request.form.get('ocena_opisowa_uopz')
-        ok.ocena_opisowa_zopz = request.form.get('ocena_opisowa_zopz')
-        ok.ocena_sprawozdania = _parse_grade(request.form.get('ocena_sprawozdania', ''))
-        ok.ocena_uopz         = _parse_grade(request.form.get('ocena_uopz', ''))
-        ok.ocena_zopz         = _parse_grade(request.form.get('ocena_zopz', ''))
+        from core.uslugi.ocenianie import GradeFormData
 
-        sp = zapis.sprawdzian or SprawdzianModel(zapis_id=zapis.id)
-        if sp not in db.session:
-            db.session.add(sp)
-        sp.pytanie_1 = request.form.get('sprawdzian_pytanie_1')
-        sp.ocena_1   = _parse_grade(request.form.get('sprawdzian_ocena_1', ''))
-        sp.pytanie_2 = request.form.get('sprawdzian_pytanie_2')
-        sp.ocena_2   = _parse_grade(request.form.get('sprawdzian_ocena_2', ''))
-        sp.pytanie_3 = request.form.get('sprawdzian_pytanie_3')
-        sp.ocena_3   = _parse_grade(request.form.get('sprawdzian_ocena_3', ''))
+        dane = GradeFormData(
+            report_grade                 = _parse_grade(request.form.get('ocena_sprawozdania', '')),
+            supervisor_grade             = _parse_grade(request.form.get('ocena_uopz', '')),
+            workplace_grade              = _parse_grade(request.form.get('ocena_zopz', '')),
+            supervisor_grade_description = request.form.get('ocena_opisowa_uopz'),
+            workplace_grade_description  = request.form.get('ocena_opisowa_zopz'),
+            exam_question_1              = request.form.get('sprawdzian_pytanie_1'),
+            exam_grade_1                 = _parse_grade(request.form.get('sprawdzian_ocena_1', '')),
+            exam_question_2              = request.form.get('sprawdzian_pytanie_2'),
+            exam_grade_2                 = _parse_grade(request.form.get('sprawdzian_ocena_2', '')),
+            exam_question_3              = request.form.get('sprawdzian_pytanie_3'),
+            exam_grade_3                 = _parse_grade(request.form.get('sprawdzian_ocena_3', '')),
+            finalize                     = bool(request.form.get('zakoncz')),
+        )
 
-        if request.form.get('zakoncz'):
-            zapis.status = StatusZapisu.COMPLETED
+        wynik = SerwisOceniania.zapisz_oceny(zapis, dane)
+
+        if not wynik.success:
+            flash(wynik.error_message, 'danger')
+            return redirect(url_for('evaluation.ocen_praktyke', id=zapis.id))
+
         db.session.commit()
         flash('Oceny zostały zapisane.', 'success')
         return redirect(url_for('evaluation.ocen_praktyke', id=zapis.id))
@@ -128,7 +130,7 @@ def ocen_zapis(id):
 
     istniejace = {
         str(o.learning_outcome_id): o
-        for o in db.session.query(OcenaPraktyki).filter_by(zapis_id=id).all()
+        for o in db.session.query(OcenaPraktyki).filter_by(enrollment_id=id).all()
     }
 
     if request.method == 'POST':
@@ -143,15 +145,15 @@ def ocen_zapis(id):
                 continue
             ocena = istniejace.get(str(efekt.id))
             if ocena:
-                ocena.result          = wynik
-                ocena.evaluator_notes = uwagi or None
+                ocena.result = wynik
+                ocena.notes  = uwagi or None
             else:
                 db.session.add(OcenaPraktyki(
                     id                  = uuid.uuid4(),
                     enrollment_id       = zapis.id,
                     learning_outcome_id = efekt.id,
                     result              = wynik,
-                    evaluator_notes     = uwagi or None,
+                    notes               = uwagi or None,
                 ))
         db.session.commit()
         flash('Oceny zostały zapisane.', 'success')
@@ -164,7 +166,8 @@ def ocen_zapis(id):
 @wymaga_roli(RolaUzytkownika.ADMIN, RolaUzytkownika.UOPZ)
 def zakoncz_zapis(id):
     zapis = db.session.get(ZapisPraktyki, id) or abort(404)
-    zapis.status = StatusZapisu.COMPLETED
+    from core.uslugi.workflow import ZapisFSM
+    ZapisFSM(zapis).zakoncz()
     db.session.commit()
     flash(f'Praktyka studenta {zapis.student.first_name} {zapis.student.last_name} została zakończona.', 'success')
     return redirect(url_for('evaluation.lista_ocen'))

@@ -1,0 +1,127 @@
+{% extends "layouts/base_panel.html" %}
+{% block tytul %}Dokumenty studentów{% endblock %}
+{% block naglowek %}Dokumenty studentów{% endblock %}
+
+{% block tresc %}
+<div class="karta">
+  <div class="karta__naglowek">
+    <form method="GET" class="pasek-filtrow" role="search" aria-label="Filtruj studentów">
+      <div class="filtr-szukaj">
+        <span class="filtr-szukaj__ikona" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.3-4.3"></path>
+          </svg>
+        </span>
+        <input type="search" name="szukaj" id="szukaj" class="filtr-szukaj__input"
+               value="{{ szukaj }}"
+               placeholder="Szukaj po imieniu, nazwisku lub nr albumu..."
+               aria-label="Szukaj studenta">
+      </div>
+      <button type="submit" class="przycisk przycisk--drugorzedny">Szukaj</button>
+      {% if szukaj %}
+        <a href="{{ url_for('zarzadzanie.dokumenty_studentow') }}" class="przycisk przycisk--drugorzedny">
+          Wyczyść filtry
+        </a>
+      {% endif %}
+    </form>
+
+    <span style="font-size: 0.85rem; color: var(--kolor-tekst-drugor);">
+      {{ studenci.total }} studentów
+    </span>
+  </div>
+
+  <div class="tabela-wrapper">
+    <table class="tabela" aria-label="Lista studentów – dokumenty">
+      <thead>
+        <tr>
+          <th scope="col">Student</th>
+          <th scope="col">Nr albumu</th>
+          <th scope="col">Kierunek</th>
+          <th scope="col">Opiekun (UOPZ)</th>
+          <th scope="col">Aktywne praktyki</th>
+          <th scope="col"><span class="sr-only">Akcje</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for wpis in studenci_info %}
+        {% set s = wpis.student %}
+        <tr>
+          <td>
+            <div style="display: flex; flex-direction: column; gap: 0.15rem;">
+              <span style="font-weight: 500;">{{ s.first_name }} {{ s.last_name }}</span>
+              <span style="font-size: 0.8rem; color: var(--kolor-tekst-trzeciorzed);">{{ s.email }}</span>
+            </div>
+          </td>
+          <td>{{ s.album_number or '—' }}</td>
+          <td>
+            <div style="font-size: 0.875rem;">{{ s.kierunek or '—' }}</div>
+            {% if s.tryb_studiow %}<div style="font-size: 0.78rem; color: var(--kolor-tekst-drugor);">{{ s.tryb_studiow }}</div>{% endif %}
+          </td>
+          <td style="font-size: 0.875rem;">
+            {% if wpis.uopz %}{{ wpis.uopz.first_name }} {{ wpis.uopz.last_name }}{% else %}<span style="color: var(--kolor-tekst-trzeciorzed);">—</span>{% endif %}
+          </td>
+          <td>
+            {% if wpis.aktywne %}
+              <span class="status status--aktywna">{{ wpis.aktywne }}</span>
+            {% else %}
+              <span style="color: var(--kolor-tekst-trzeciorzed); font-size: 0.85rem;">—</span>
+            {% endif %}
+          </td>
+          <td style="white-space: nowrap;">
+            <a href="{{ url_for('zarzadzanie.dokumenty_studenta', student_id=s.id) }}"
+               class="przycisk przycisk--drugorzedny przycisk--maly">
+              Dokumenty
+            </a>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="6" class="tabela--pusta">
+            {% if szukaj %}
+              Nie znaleziono studentów pasujących do zapytania „{{ szukaj }}".
+            {% else %}
+              Brak studentów w systemie.
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if studenci.pages > 1 %}
+  <nav class="paginacja" aria-label="Paginacja listy studentów">
+    <span class="paginacja__info">
+      Wyświetlanie {{ studenci.per_page * (studenci.page - 1) + 1 }}–{{ [studenci.per_page * studenci.page, studenci.total] | min }}
+      z {{ studenci.total }}
+    </span>
+    <div class="paginacja__przyciski" role="list">
+      {% if studenci.has_prev %}
+        <a href="{{ url_for('zarzadzanie.dokumenty_studentow', strona=studenci.prev_num, szukaj=szukaj) }}"
+           class="paginacja__przycisk" aria-label="Poprzednia strona">←</a>
+      {% endif %}
+      {% for nr in studenci.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+        {% if nr %}
+          <a href="{{ url_for('zarzadzanie.dokumenty_studentow', strona=nr, szukaj=szukaj) }}"
+             class="paginacja__przycisk {% if nr == studenci.page %}paginacja__przycisk--aktywny{% endif %}"
+             {% if nr == studenci.page %}aria-current="page"{% endif %}>{{ nr }}</a>
+        {% else %}
+          <span class="paginacja__przycisk" aria-hidden="true">…</span>
+        {% endif %}
+      {% endfor %}
+      {% if studenci.has_next %}
+        <a href="{{ url_for('zarzadzanie.dokumenty_studentow', strona=studenci.next_num, szukaj=szukaj) }}"
+           class="paginacja__przycisk" aria-label="Następna strona">→</a>
+      {% endif %}
+    </div>
+  </nav>
+  {% endif %}
+
+</div>
+
+<style>
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+</style>
+{% endblock %}

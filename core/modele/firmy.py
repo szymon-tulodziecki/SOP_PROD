@@ -1,37 +1,49 @@
 """core/modele/firmy.py
 
-Modele domenowe: Zakłady pracy (firmy współpracujące z uczelnią).
+Domain models: Workplace companies (internship partners).
 """
 import uuid
 from sqlalchemy.dialects.postgresql import UUID
 from core.extensions import db
 
 
-class Firma(db.Model):
-    """Zakład pracy — partner praktyk o stałej umowie z ANS."""
-    __tablename__ = 'firmy'
+class Company(db.Model):
+    """Workplace — a partner company with a standing agreement with ANS."""
+    __tablename__ = 'companies'
 
     id                   = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    nazwa                = db.Column(db.String(255), nullable=False)
-    adres                = db.Column(db.String(255), nullable=True)
-    miasto               = db.Column(db.String(100), nullable=True)
-    nip_krs              = db.Column(db.String(50),  nullable=True)
-    ma_stala_umowe       = db.Column(db.Boolean, default=True)
-    aktywna              = db.Column(db.Boolean, default=True)
-    utworzono            = db.Column(db.DateTime, server_default=db.func.now())
+    name                 = db.Column(db.String(255), nullable=False)
+    address              = db.Column(db.String(255), nullable=True)
+    city                 = db.Column(db.String(100), nullable=True)
+    tax_id               = db.Column(db.String(50),  nullable=True)
+    has_standing_agreement = db.Column(db.Boolean, default=True)
+    is_active            = db.Column(db.Boolean, default=True)
+    created_at           = db.Column(db.DateTime, server_default=db.func.now())
 
-    # Compat
+    # Backward-compat shims
     @property
-    def stala_umowa(self):
-        return self.ma_stala_umowe
-
-    @property
-    def has_standing_agreement(self):
-        return self.ma_stala_umowe
+    def nazwa(self):
+        return self.name
 
     @property
-    def is_active(self):
-        return self.aktywna
+    def adres(self):
+        return self.address
+
+    @property
+    def miasto(self):
+        return self.city
+
+    @property
+    def nip_krs(self):
+        return self.tax_id
+
+    @property
+    def ma_stala_umowe(self):
+        return self.has_standing_agreement
 
     def __repr__(self) -> str:
-        return f'<Firma {self.nazwa}>'
+        return f'<Company {self.name}>'
+
+
+# Backward-compat alias
+Firma = Company

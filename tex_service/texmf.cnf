@@ -1,0 +1,18 @@
+% texmf.cnf — konfiguracja bezpieczeństwa dla tex-service
+%
+% openin_any = p  (paranoid)
+%   Zabrania \input/\include otwierania:
+%   - plików ukrytych (zaczynających się od kropki)
+%   - ścieżek bezwzględnych (/etc/passwd)
+%   - ścieżek wychodzących poza katalog roboczy (../../secret)
+%
+% openout_any = p
+%   Analogicznie blokuje zapis poza katalogiem roboczym.
+%
+% shell_escape = f
+%   Wymuszenie wyłączenia shell escape (f = false) na poziomie konfiguracji,
+%   niezależnie od flagi -no-shell-escape przekazanej do CLI.
+%
+openin_any = p
+openout_any = p
+shell_escape = f

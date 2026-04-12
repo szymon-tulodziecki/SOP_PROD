@@ -14,12 +14,12 @@ class SerwisOceniania:
         """Zwraca listę praktyk z pilnymi ocenami dla danego UOPZ lub wszystkich."""
         q = db.session.query(ZapisPraktyki).filter_by(status=StatusZapisu.COMPLETED)
         if uopz_id:
-            q = q.filter_by(uopz_id=uopz_id)
+            q = q.filter_by(supervisor_id=uopz_id)
 
         pilne_oceny = []
         for zapis in q.all():
-            if zapis.termin_do:
-                deadline = zapis.termin_do + timedelta(days=7)
+            if zapis.end_date:
+                deadline = zapis.end_date + timedelta(days=7)
                 dni_do_deadline = (deadline - date.today()).days
                 if dni_do_deadline <= 3:
                     pilne_oceny.append({
@@ -36,7 +36,7 @@ class SerwisOceniania:
         """Automatycznie przenosi praktyki z przekroczonym terminem do statusu COMPLETED."""
         do_zakonczenia = db.session.query(ZapisPraktyki).filter(
             ZapisPraktyki.status == StatusZapisu.IN_PROGRESS,
-            ZapisPraktyki.termin_do < date.today()
+            ZapisPraktyki.end_date < date.today()
         ).all()
 
         for praktyka in do_zakonczenia:

@@ -1,6 +1,6 @@
 """core/modele/dokumenty.py
 
-Modele domenowe: Przesłane dokumenty, Log audytu.
+Domain models: Uploaded documents, audit log.
 """
 import uuid
 import enum
@@ -9,119 +9,117 @@ from sqlalchemy.dialects.postgresql import UUID
 from core.extensions import db
 
 
-class StatusDokumentu(enum.Enum):
-    SZKIC      = 'DRAFT'
-    OCZEKUJACY = 'AWAITING_APPROVAL'
-    ZATWIERDZONY = 'APPROVED'
-    ODRZUCONY  = 'REJECTED'
-
-    # Compat
-    DRAFT = 'DRAFT'
+class DocumentStatus(enum.Enum):
+    DRAFT             = 'DRAFT'
     AWAITING_APPROVAL = 'AWAITING_APPROVAL'
-    APPROVED = 'APPROVED'
-    REJECTED = 'REJECTED'
+    APPROVED          = 'APPROVED'
+    REJECTED          = 'REJECTED'
 
 
-class LogAudytuDokumentow(db.Model):
-    """Ślad audytu dla operacji na dokumentach PDF."""
-    __tablename__ = 'logi_audytu_dokumentow'
+class DocumentAuditLog(db.Model):
+    """Audit trail for PDF document operations."""
+    __tablename__ = 'document_audit_logs'
 
-    id            = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    uzytkownik_id = db.Column('uzytkownik_id', UUID(as_uuid=True), db.ForeignKey('uzytkownicy.id', ondelete='SET NULL'), nullable=True)
-    zapis_id      = db.Column('zapis_id',      UUID(as_uuid=True), db.ForeignKey('zapisy_praktyk.id', ondelete='SET NULL'), nullable=True)
-    typ_dokumentu = db.Column('typ_dokumentu', db.String(50), nullable=False)
-    akcja         = db.Column('akcja',         db.String(50), nullable=False)
-    szczegoly     = db.Column('szczegoly',     db.Text, nullable=True)
-    wykonano_o    = db.Column('wykonano_o',    db.DateTime, server_default=db.func.now())
+    id             = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id        = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id',                  ondelete='SET NULL'), nullable=True)
+    enrollment_id  = db.Column(UUID(as_uuid=True), db.ForeignKey('internship_enrollments.id', ondelete='SET NULL'), nullable=True)
+    document_type  = db.Column(db.String(50),  nullable=False)
+    action         = db.Column(db.String(50),  nullable=False)
+    details        = db.Column(db.Text,        nullable=True)
+    created_at     = db.Column(db.DateTime,    server_default=db.func.now())
 
-    uzytkownik = db.relationship('Uzytkownik')
-    zapis      = db.relationship('ZapisPraktyki')
+    user       = db.relationship('User')
+    enrollment = db.relationship('InternshipEnrollment')
 
-    # Compat
+    # Backward-compat shims
     @property
-    def user_id(self):
-        return self.uzytkownik_id
-
-    @property
-    def enrollment_id(self):
-        return self.zapis_id
+    def uzytkownik_id(self):
+        return self.user_id
 
     @property
-    def document_type(self):
-        return self.typ_dokumentu
+    def zapis_id(self):
+        return self.enrollment_id
 
     @property
-    def action(self):
-        return self.akcja
+    def typ_dokumentu(self):
+        return self.document_type
 
     @property
-    def details(self):
-        return self.szczegoly
+    def akcja(self):
+        return self.action
 
     @property
-    def created_at(self):
-        return self.wykonano_o
-
-
-# Alias dla istniejącego kodu
-DocumentAuditLog = LogAudytuDokumentow
-
-
-class DokumentPrzeslany(db.Model):
-    """Plik przesłany przez studenta lub pracownika (umowy, zaświadczenia itp.)."""
-    __tablename__ = 'dokumenty_przeslane'
-
-    id                 = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    zapis_id           = db.Column('zapis_id',      UUID(as_uuid=True), db.ForeignKey('zapisy_praktyk.id', ondelete='CASCADE'), nullable=False)
-    typ_dokumentu      = db.Column('typ_dokumentu', db.String(50),  nullable=False)
-    oryginalna_nazwa   = db.Column('oryginalna_nazwa', db.String(255), nullable=False)
-    zapisana_nazwa     = db.Column('zapisana_nazwa',   db.String(255), nullable=False)
-    sciezka_pliku      = db.Column('sciezka_pliku',    db.String(500), nullable=False)
-    rozmiar_pliku      = db.Column('rozmiar_pliku',    db.Integer, nullable=False)
-    typ_mime           = db.Column('typ_mime',         db.String(100), nullable=False)
-    przeslano_o        = db.Column('przeslano_o',      db.DateTime, server_default=db.func.now())
-    przeslane_przez_id = db.Column('przeslane_przez_id', UUID(as_uuid=True), db.ForeignKey('uzytkownicy.id', ondelete='SET NULL'), nullable=True)
-
-    zapis          = db.relationship('ZapisPraktyki', backref=db.backref('uploaded_documents', passive_deletes=True))
-    przeslane_przez = db.relationship('Uzytkownik')
-
-    # Compat
-    @property
-    def enrollment_id(self):
-        return self.zapis_id
+    def szczegoly(self):
+        return self.details
 
     @property
-    def document_type(self):
-        return self.typ_dokumentu
+    def wykonano_o(self):
+        return self.created_at
+
+
+class UploadedDocument(db.Model):
+    """File uploaded by a student or staff member (contracts, certificates, etc.).
+
+    Soft-delete pattern: documents are never physically removed — only marked
+    is_deleted=True.  The FK to internship_enrollments uses SET NULL so that
+    archival documents survive even after the enrollment record is deleted.
+    """
+    __tablename__ = 'uploaded_documents'
+
+    id                  = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    enrollment_id       = db.Column(UUID(as_uuid=True), db.ForeignKey('internship_enrollments.id', ondelete='SET NULL'), nullable=True)
+    document_type       = db.Column(db.String(50),  nullable=False)
+    original_filename   = db.Column(db.String(255), nullable=False)
+    stored_filename     = db.Column(db.String(255), nullable=False)
+    file_path           = db.Column(db.String(500), nullable=False)
+    file_size           = db.Column(db.Integer,     nullable=False)
+    mime_type           = db.Column(db.String(100), nullable=False)
+    uploaded_at         = db.Column(db.DateTime,    server_default=db.func.now())
+    uploaded_by_id      = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
+    is_deleted          = db.Column(db.Boolean,     nullable=False, default=False, server_default='false')
+
+    enrollment   = db.relationship('InternshipEnrollment', backref=db.backref('uploaded_documents', passive_deletes=True))
+    uploaded_by  = db.relationship('User')
+
+    # Backward-compat shims
+    @property
+    def zapis_id(self):
+        return self.enrollment_id
 
     @property
-    def original_filename(self):
-        return self.oryginalna_nazwa
+    def typ_dokumentu(self):
+        return self.document_type
 
     @property
-    def stored_filename(self):
-        return self.zapisana_nazwa
+    def oryginalna_nazwa(self):
+        return self.original_filename
 
     @property
-    def file_path(self):
-        return self.sciezka_pliku
+    def zapisana_nazwa(self):
+        return self.stored_filename
 
     @property
-    def file_size(self):
-        return self.rozmiar_pliku
+    def sciezka_pliku(self):
+        return self.file_path
 
     @property
-    def mime_type(self):
-        return self.typ_mime
+    def rozmiar_pliku(self):
+        return self.file_size
 
     @property
-    def uploaded_at(self):
-        return self.przeslano_o
+    def typ_mime(self):
+        return self.mime_type
 
     @property
-    def uploaded_by_id(self):
-        return self.przeslane_przez_id
+    def przeslano_o(self):
+        return self.uploaded_at
+
+    @property
+    def przeslane_przez_id(self):
+        return self.uploaded_by_id
 
 
-# Alias dla istniejącego kodu
-UploadedDocument = DokumentPrzeslany
+# Backward-compat aliases
+StatusDokumentu      = DocumentStatus
+LogAudytuDokumentow  = DocumentAuditLog
+DokumentPrzeslany    = UploadedDocument

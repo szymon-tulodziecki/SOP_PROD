@@ -1,6 +1,6 @@
 """core/modele/praktyki.py
 
-Modele domenowe: Praktyki, Zapisy i powiązane encje satelitarne.
+Domain models: Internships, enrollments, and satellite entities.
 """
 import uuid
 import enum
@@ -11,454 +11,912 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from core.extensions import db
 
 
-# ── Enumy dziedziny praktyk ───────────────────────────────────────────────────
+# ── Enums ─────────────────────────────────────────────────────────────────────
 
-class StatusPraktyki(enum.Enum):
-    AKTYWNA    = 'ACTIVE'
-    NIEAKTYWNA = 'INACTIVE'
-
-
-class StatusZapisu(enum.Enum):
-    OCZEKUJACY          = 'PENDING'
-    OCZEKUJE_NA_AKCEPT  = 'AWAITING_APPROVAL'
-    WERYFIKACJA_KOMISJI = 'COMMISSION_REVIEW'
-    AKCEPTACJA_DZIEKANA = 'DEAN_APPROVAL'
-    W_REALIZACJI        = 'IN_PROGRESS'
-    ZAKONCZONA          = 'COMPLETED'
-    ODRZUCONA           = 'REJECTED'
+class InternshipStatus(enum.Enum):
+    ACTIVE   = 'ACTIVE'
+    INACTIVE = 'INACTIVE'
 
 
-class SciezkaPraktyki(enum.Enum):
-    STANDARDOWA        = 'STANDARD'
-    ZATRUDNIENIE       = 'EMPLOYMENT'
-    WLASNA_DZIALALNOSC = 'OWN_BUSINESS'
+class EnrollmentStatus(enum.Enum):
+    PENDING           = 'PENDING'
+    AWAITING_APPROVAL = 'AWAITING_APPROVAL'
+    REVISION_REQUIRED = 'REVISION_REQUIRED'   # komisja: wymaga uzupełnień
+    IN_PROGRESS       = 'IN_PROGRESS'
+    COMPLETED         = 'COMPLETED'
+    REJECTED          = 'REJECTED'
+    COMMISSION_REVIEW = 'COMMISSION_REVIEW'
+    DEAN_APPROVAL     = 'DEAN_APPROVAL'
 
 
-class TypZdarzenia(enum.Enum):
-    ADMIN_KOMENTARZ        = 'ADMIN_KOMENTARZ'
-    UOPZ_KOMENTARZ         = 'UOPZ_KOMENTARZ'
-    POWIADOMIENIE_STUDENTA = 'POWIADOMIENIE_STUDENTA'
-    KOMISJA_DECYZJA        = 'KOMISJA_DECYZJA'
-    DZIEKAN_DECYZJA        = 'DZIEKAN_DECYZJA'
+class InternshipPath(enum.Enum):
+    STANDARD     = 'STANDARD'
+    EMPLOYMENT   = 'EMPLOYMENT'
+    OWN_BUSINESS = 'OWN_BUSINESS'
 
 
-# Aliasy dla istniejącego kodu (nie usuwać do pełnej migracji kontrolerów)
-StatusPraktyki.ACTIVE   = StatusPraktyki.AKTYWNA
-StatusPraktyki.INACTIVE = StatusPraktyki.NIEAKTYWNA
-StatusZapisu.PENDING           = StatusZapisu.OCZEKUJACY
-StatusZapisu.AWAITING_APPROVAL = StatusZapisu.OCZEKUJE_NA_AKCEPT
-StatusZapisu.COMMISSION_REVIEW = StatusZapisu.WERYFIKACJA_KOMISJI
-StatusZapisu.DEAN_APPROVAL     = StatusZapisu.AKCEPTACJA_DZIEKANA
-StatusZapisu.IN_PROGRESS       = StatusZapisu.W_REALIZACJI
-StatusZapisu.COMPLETED         = StatusZapisu.ZAKONCZONA
-StatusZapisu.REJECTED          = StatusZapisu.ODRZUCONA
-SciezkaPraktyki.STANDARD      = SciezkaPraktyki.STANDARDOWA
-SciezkaPraktyki.EMPLOYMENT    = SciezkaPraktyki.ZATRUDNIENIE
-SciezkaPraktyki.OWN_BUSINESS  = SciezkaPraktyki.WLASNA_DZIALALNOSC
+class EventType(enum.Enum):
+    ADMIN_COMMENT        = 'ADMIN_KOMENTARZ'
+    SUPERVISOR_COMMENT   = 'UOPZ_KOMENTARZ'
+    STUDENT_NOTIFICATION = 'POWIADOMIENIE_STUDENTA'
+    COMMITTEE_DECISION   = 'KOMISJA_DECYZJA'
+    DEAN_DECISION        = 'DZIEKAN_DECYZJA'
 
 
-# ── Modele ────────────────────────────────────────────────────────────────────
+# Backward-compat aliases for enums (remove after all routes migrated)
+StatusPraktyki = InternshipStatus
+StatusPraktyki.AKTYWNA    = InternshipStatus.ACTIVE
+StatusPraktyki.NIEAKTYWNA = InternshipStatus.INACTIVE
 
-class Praktyka(db.Model):
-    """Edycja praktyk — rok akademicki i semestr."""
-    __tablename__ = 'praktyki'
+StatusZapisu = EnrollmentStatus
+StatusZapisu.OCZEKUJACY         = EnrollmentStatus.PENDING
+StatusZapisu.OCZEKUJE_NA_AKCEPT = EnrollmentStatus.AWAITING_APPROVAL
+StatusZapisu.WYMAGA_POPRAWEK    = EnrollmentStatus.REVISION_REQUIRED
+StatusZapisu.W_REALIZACJI       = EnrollmentStatus.IN_PROGRESS
+StatusZapisu.ZAKONCZONA         = EnrollmentStatus.COMPLETED
+StatusZapisu.ODRZUCONA          = EnrollmentStatus.REJECTED
+StatusZapisu.WERYFIKACJA_KOMISJI = EnrollmentStatus.COMMISSION_REVIEW
+StatusZapisu.AKCEPTACJA_DZIEKANA = EnrollmentStatus.DEAN_APPROVAL
+
+SciezkaPraktyki = InternshipPath
+SciezkaPraktyki.STANDARDOWA        = InternshipPath.STANDARD
+SciezkaPraktyki.ZATRUDNIENIE       = InternshipPath.EMPLOYMENT
+SciezkaPraktyki.WLASNA_DZIALALNOSC = InternshipPath.OWN_BUSINESS
+
+TypZdarzenia = EventType
+TypZdarzenia.ADMIN_KOMENTARZ        = EventType.ADMIN_COMMENT
+TypZdarzenia.UOPZ_KOMENTARZ         = EventType.SUPERVISOR_COMMENT
+TypZdarzenia.POWIADOMIENIE_STUDENTA = EventType.STUDENT_NOTIFICATION
+TypZdarzenia.KOMISJA_DECYZJA        = EventType.COMMITTEE_DECISION
+TypZdarzenia.DZIEKAN_DECYZJA        = EventType.DEAN_DECISION
+
+
+# ── Core models ───────────────────────────────────────────────────────────────
+
+class Internship(db.Model):
+    """Internship edition — academic year and semester."""
+    __tablename__ = 'internships'
 
     id             = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    rok_uczelniany = db.Column(db.String(9),  nullable=False)
-    semestr        = db.Column(db.String(10), nullable=False)
-    wymiar_godzin  = db.Column(db.Integer, nullable=False, default=160)
+    academic_year  = db.Column(db.String(9),  nullable=False)
+    semester       = db.Column(db.String(10), nullable=False)
+    required_hours = db.Column(db.Integer, nullable=False, default=160)
     status         = db.Column(
-        db.Enum(StatusPraktyki, name='status_praktyki', values_callable=lambda e: [x.value for x in e]),
-        nullable=False, default=StatusPraktyki.NIEAKTYWNA,
+        db.Enum(InternshipStatus, name='internship_status', values_callable=lambda e: [x.value for x in e]),
+        nullable=False, default=InternshipStatus.INACTIVE,
     )
-    utworzono = db.Column(db.DateTime, server_default=db.func.now())
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
 
-    zapisy = db.relationship(
-        'ZapisPraktyki', backref='praktyka',
+    enrollments = db.relationship(
+        'InternshipEnrollment', backref='internship',
         lazy='select', cascade='all, delete-orphan', passive_deletes=True,
     )
 
-
-class ZapisPraktyki(db.Model):
-    """Rdzeń zgłoszenia studenta do edycji praktyki."""
-    __tablename__ = 'zapisy_praktyk'
-
-    id          = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    praktyka_id = db.Column(UUID(as_uuid=True), db.ForeignKey('praktyki.id',    ondelete='CASCADE'), nullable=False)
-    student_id  = db.Column(UUID(as_uuid=True), db.ForeignKey('uzytkownicy.id', ondelete='CASCADE'), nullable=False)
-    uopz_id     = db.Column(UUID(as_uuid=True), db.ForeignKey('uzytkownicy.id', ondelete='SET NULL'), nullable=True)
-    firma_id    = db.Column(UUID(as_uuid=True), db.ForeignKey('firmy.id',       ondelete='SET NULL'), nullable=True)
-
-    status  = db.Column(
-        db.Enum(StatusZapisu, name='status_zapisu', values_callable=lambda e: [x.value for x in e]),
-        nullable=False, default=StatusZapisu.OCZEKUJACY,
-    )
-    sciezka = db.Column(
-        db.Enum(SciezkaPraktyki, name='sciezka_praktyki', values_callable=lambda e: [x.value for x in e]),
-        nullable=False, default=SciezkaPraktyki.STANDARDOWA,
-    )
-
-    termin_od        = db.Column(db.Date,        nullable=True)
-    termin_do        = db.Column(db.Date,        nullable=True)
-    specjalnosc      = db.Column(db.String(255), nullable=True)
-    ubezpieczenie_nw = db.Column(db.Boolean,     default=False)
-
-    lacznie_godzin = db.Column(db.Integer,  default=0)
-    zapisano_o     = db.Column(db.DateTime, server_default=db.func.now())
-
-    # ── Relacje do encji satelitarnych ────────────────────────
-    student            = db.relationship('Uzytkownik',          foreign_keys=[student_id], lazy='select')
-    uopz               = db.relationship('Uzytkownik',          foreign_keys=[uopz_id],    lazy='select')
-    firma              = db.relationship('Firma',               foreign_keys=[firma_id],   lazy='select')
-    dane_miejsca       = db.relationship('DaneMiejscaPraktyki', back_populates='zapis',    uselist=False, cascade='all, delete-orphan')
-    uzasadnienie       = db.relationship('UzasadnienieSciezki', back_populates='zapis',    uselist=False, cascade='all, delete-orphan')
-    sprawdzian         = db.relationship('Sprawdzian',          back_populates='zapis',    uselist=False, cascade='all, delete-orphan')
-    oceny_koncowe      = db.relationship('OcenyKoncowe',        back_populates='zapis',    uselist=False, cascade='all, delete-orphan')
-    zdarzenia          = db.relationship('ZdarzenieProces',     back_populates='zapis',    lazy='select', cascade='all, delete-orphan', order_by='ZdarzenieProces.wykonano_o')
-    wpisy_dziennika    = db.relationship('WpisDziennika',       backref='zapis',           lazy='select', cascade='all, delete-orphan')
-    oceny              = db.relationship('OcenaPraktyki',       backref='zapis',           lazy='select', cascade='all, delete-orphan')
-    harmonogram        = db.relationship('HarmonogramPraktyki', backref='zapis',           lazy='select', cascade='all, delete-orphan')
-    sprawozdanie       = db.relationship('Sprawozdanie',        backref='zapis',           uselist=False, lazy='select', cascade='all, delete-orphan')
-
-    # ── Compat — stare nazwy atrybutów ───────────────────────
+    # Backward-compat shims
     @property
-    def internship_id(self):
-        return self.praktyka_id
+    def rok_uczelniany(self):
+        return self.academic_year
 
-    @internship_id.setter
-    def internship_id(self, v):
-        self.praktyka_id = v
+    @property
+    def wymiar_godzin(self):
+        return self.required_hours
+
+    @property
+    def semestr(self):
+        return self.semester
+
+
+class InternshipEnrollment(db.Model):
+    """Core student enrollment record."""
+    __tablename__ = 'internship_enrollments'
+
+    id            = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    internship_id = db.Column(UUID(as_uuid=True), db.ForeignKey('internships.id',  ondelete='CASCADE'), nullable=False)
+    student_id    = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id',        ondelete='CASCADE'), nullable=False)
+    supervisor_id = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id',        ondelete='SET NULL'), nullable=True)
+    company_id    = db.Column(UUID(as_uuid=True), db.ForeignKey('companies.id',    ondelete='SET NULL'), nullable=True)
+
+    status = db.Column(
+        db.Enum(EnrollmentStatus, name='enrollment_status', values_callable=lambda e: [x.value for x in e]),
+        nullable=False, default=EnrollmentStatus.PENDING,
+    )
+    path_type = db.Column(
+        db.Enum(InternshipPath, name='internship_path', values_callable=lambda e: [x.value for x in e]),
+        nullable=False, default=InternshipPath.STANDARD,
+    )
+
+    start_date         = db.Column(db.Date,        nullable=True)
+    end_date           = db.Column(db.Date,        nullable=True)
+    specialization     = db.Column(db.String(255), nullable=True)
+    accident_insurance = db.Column(db.Boolean,     default=False)
+    total_hours_logged = db.Column(db.Integer,     default=0)
+    enrolled_at        = db.Column(db.DateTime,    server_default=db.func.now())
+
+    # ── Relationships ──────────────────────────────────────────
+    student          = db.relationship('User',              foreign_keys=[student_id],   lazy='select')
+    uopz             = db.relationship('User',              foreign_keys=[supervisor_id], lazy='select')
+    firma            = db.relationship('Company',           foreign_keys=[company_id],   lazy='select')
+    workplace_details = db.relationship('WorkplaceDetails', back_populates='enrollment', uselist=False, cascade='all, delete-orphan')
+    path_justification = db.relationship('PathJustification', back_populates='enrollment', uselist=False, cascade='all, delete-orphan')
+    examination      = db.relationship('Examination',       back_populates='enrollment', uselist=False, cascade='all, delete-orphan')
+    final_grades     = db.relationship('FinalGrades',       back_populates='enrollment', uselist=False, cascade='all, delete-orphan')
+    process_events   = db.relationship('ProcessEvent',      back_populates='enrollment', lazy='select', cascade='all, delete-orphan', order_by='ProcessEvent.executed_at')
+    journal_entries  = db.relationship('JournalEntry',      backref='enrollment',        lazy='select', cascade='all, delete-orphan')
+    outcome_assessments = db.relationship('OutcomeAssessment', backref='enrollment',     lazy='select', cascade='all, delete-orphan')
+    schedule         = db.relationship('InternshipSchedule', backref='enrollment',       lazy='select', cascade='all, delete-orphan')
+    report           = db.relationship('InternshipReport',  backref='enrollment',        uselist=False, lazy='select', cascade='all, delete-orphan')
+
+    # ── Backward-compat property shims ────────────────────────
+
+    @property
+    def praktyka_id(self):
+        return self.internship_id
+
+    @property
+    def praktyka(self):
+        return self.internship
+
+    @property
+    def uopz_id(self):
+        return self.supervisor_id
+
+    @uopz_id.setter
+    def uopz_id(self, v):
+        self.supervisor_id = v
+
+    @property
+    def firma_id(self):
+        return self.company_id
+
+    @firma_id.setter
+    def firma_id(self, v):
+        self.company_id = v
+
+    @property
+    def sciezka(self):
+        return self.path_type
+
+    @sciezka.setter
+    def sciezka(self, v):
+        self.path_type = v
 
     @property
     def track_type(self):
-        return self.sciezka
+        return self.path_type
 
     @track_type.setter
     def track_type(self, v):
-        self.sciezka = v
-
-    @hybrid_property
-    def enrolled_at(self):
-        return self.zapisano_o
-
-    @enrolled_at.expression
-    def enrolled_at(cls):
-        return cls.zapisano_o
+        self.path_type = v
 
     @property
-    def total_hours_logged(self):
-        return self.lacznie_godzin
+    def termin_od(self):
+        return self.start_date
 
-    # ── Skróty do odczytu danych z encji satelitarnych (compat dla g() i szablonów) ──
+    @termin_od.setter
+    def termin_od(self, v):
+        self.start_date = v
 
-    # dane_miejsca
     @property
-    def firma_nazwa(self): return self.dane_miejsca.firma_nazwa if self.dane_miejsca else None
-    @property
-    def firma_adres(self): return self.dane_miejsca.firma_adres if self.dane_miejsca else None
-    @property
-    def firma_miasto(self): return self.dane_miejsca.firma_miasto if self.dane_miejsca else None
-    @property
-    def firma_nip_krs(self): return self.dane_miejsca.firma_nip_krs if self.dane_miejsca else None
-    @property
-    def firma_upowazniony_osoba(self): return self.dane_miejsca.firma_upowazniony_osoba if self.dane_miejsca else None
-    @property
-    def firma_upowazniony_stanowisko(self): return self.dane_miejsca.firma_upowazniony_stanowisko if self.dane_miejsca else None
-    @property
-    def zopz_imie_nazwisko(self): return self.dane_miejsca.zopz_imie_nazwisko if self.dane_miejsca else None
-    @property
-    def zopz_stanowisko(self): return self.dane_miejsca.zopz_stanowisko if self.dane_miejsca else None
-    @property
-    def zopz_telefon(self): return self.dane_miejsca.zopz_telefon if self.dane_miejsca else None
-    @property
-    def zopz_email(self): return self.dane_miejsca.zopz_email if self.dane_miejsca else None
+    def termin_do(self):
+        return self.end_date
 
-    # uzasadnienie ścieżki
-    @property
-    def uzasadnienie_sciezki(self): return self.uzasadnienie.uzasadnienie if self.uzasadnienie else None
-    @property
-    def zalaczniki_sciezki(self): return self.uzasadnienie.zalaczniki if self.uzasadnienie else None
+    @termin_do.setter
+    def termin_do(self, v):
+        self.end_date = v
 
-    # oceny końcowe
     @property
-    def ocena_sprawozdania(self): return self.oceny_koncowe.ocena_sprawozdania if self.oceny_koncowe else None
-    @property
-    def ocena_uopz(self): return self.oceny_koncowe.ocena_uopz if self.oceny_koncowe else None
-    @property
-    def ocena_zopz(self): return self.oceny_koncowe.ocena_zopz if self.oceny_koncowe else None
-    @property
-    def ocena_opisowa_uopz(self): return self.oceny_koncowe.ocena_opisowa_uopz if self.oceny_koncowe else None
-    @property
-    def ocena_opisowa_zopz(self): return self.oceny_koncowe.ocena_opisowa_zopz if self.oceny_koncowe else None
+    def specjalnosc(self):
+        return self.specialization
 
-    # sprawdzian
-    @property
-    def sprawdzian_pytanie_1(self): return self.sprawdzian.pytanie_1 if self.sprawdzian else None
-    @property
-    def sprawdzian_ocena_1(self): return self.sprawdzian.ocena_1 if self.sprawdzian else None
-    @property
-    def sprawdzian_pytanie_2(self): return self.sprawdzian.pytanie_2 if self.sprawdzian else None
-    @property
-    def sprawdzian_ocena_2(self): return self.sprawdzian.ocena_2 if self.sprawdzian else None
-    @property
-    def sprawdzian_pytanie_3(self): return self.sprawdzian.pytanie_3 if self.sprawdzian else None
-    @property
-    def sprawdzian_ocena_3(self): return self.sprawdzian.ocena_3 if self.sprawdzian else None
+    @specjalnosc.setter
+    def specjalnosc(self, v):
+        self.specialization = v
 
-    # ── Skróty do danych procesowych (odczytywane z event log) ───────────────
+    @property
+    def ubezpieczenie_nw(self):
+        return self.accident_insurance
 
-    def _ostatnie_zdarzenie(self, typ: TypZdarzenia):
+    @ubezpieczenie_nw.setter
+    def ubezpieczenie_nw(self, v):
+        self.accident_insurance = v
+
+    @property
+    def lacznie_godzin(self):
+        return self.total_hours_logged
+
+    @property
+    def zapisano_o(self):
+        return self.enrolled_at
+
+    @property
+    def dane_miejsca(self):
+        return self.workplace_details
+
+    @property
+    def uzasadnienie(self):
+        return self.path_justification
+
+    @property
+    def sprawdzian(self):
+        return self.examination
+
+    @property
+    def oceny_koncowe(self):
+        return self.final_grades
+
+    @property
+    def zdarzenia(self):
+        return self.process_events
+
+    @property
+    def wpisy_dziennika(self):
+        return self.journal_entries
+
+    @property
+    def oceny(self):
+        return self.outcome_assessments
+
+    @property
+    def harmonogram(self):
+        return self.schedule
+
+    @property
+    def sprawozdanie(self):
+        return self.report
+
+    # ── Shortcuts to satellite entity data ────────────────────
+
+    @property
+    def firma_nazwa(self):
+        return self.workplace_details.company_name if self.workplace_details else None
+
+    @property
+    def firma_adres(self):
+        return self.workplace_details.company_address if self.workplace_details else None
+
+    @property
+    def firma_miasto(self):
+        return self.workplace_details.company_city if self.workplace_details else None
+
+    @property
+    def firma_nip_krs(self):
+        return self.workplace_details.company_tax_id if self.workplace_details else None
+
+    @property
+    def firma_upowazniony_osoba(self):
+        return self.workplace_details.authorized_person if self.workplace_details else None
+
+    @property
+    def firma_upowazniony_stanowisko(self):
+        return self.workplace_details.authorized_person_position if self.workplace_details else None
+
+    @property
+    def zopz_imie_nazwisko(self):
+        return self.workplace_details.workplace_mentor_name if self.workplace_details else None
+
+    @property
+    def zopz_stanowisko(self):
+        return self.workplace_details.workplace_mentor_position if self.workplace_details else None
+
+    @property
+    def zopz_telefon(self):
+        return self.workplace_details.workplace_mentor_phone if self.workplace_details else None
+
+    @property
+    def zopz_email(self):
+        return self.workplace_details.workplace_mentor_email if self.workplace_details else None
+
+    @property
+    def uzasadnienie_sciezki(self):
+        return self.path_justification.justification if self.path_justification else None
+
+    @property
+    def zalaczniki_sciezki(self):
+        return self.path_justification.attachments if self.path_justification else None
+
+    @property
+    def ocena_sprawozdania(self):
+        return self.final_grades.report_grade if self.final_grades else None
+
+    @property
+    def ocena_uopz(self):
+        return self.final_grades.supervisor_grade if self.final_grades else None
+
+    @property
+    def ocena_zopz(self):
+        return self.final_grades.workplace_grade if self.final_grades else None
+
+    @property
+    def ocena_opisowa_uopz(self):
+        return self.final_grades.supervisor_grade_description if self.final_grades else None
+
+    @property
+    def ocena_opisowa_zopz(self):
+        return self.final_grades.workplace_grade_description if self.final_grades else None
+
+    @property
+    def sprawdzian_pytanie_1(self):
+        return self.examination.question_1 if self.examination else None
+
+    @property
+    def sprawdzian_ocena_1(self):
+        return self.examination.grade_1 if self.examination else None
+
+    @property
+    def sprawdzian_pytanie_2(self):
+        return self.examination.question_2 if self.examination else None
+
+    @property
+    def sprawdzian_ocena_2(self):
+        return self.examination.grade_2 if self.examination else None
+
+    @property
+    def sprawdzian_pytanie_3(self):
+        return self.examination.question_3 if self.examination else None
+
+    @property
+    def sprawdzian_ocena_3(self):
+        return self.examination.grade_3 if self.examination else None
+
+    # ── Process event helpers ──────────────────────────────────
+
+    def _last_event(self, event_type: EventType):
         return next(
-            (z for z in reversed(self.zdarzenia) if z.typ == typ),
+            (e for e in reversed(self.process_events) if e.event_type == event_type),
             None,
         )
 
     @property
-    def decyzja_komisji(self):
-        z = self._ostatnie_zdarzenie(TypZdarzenia.KOMISJA_DECYZJA)
-        return z.decyzja if z else None
+    def committee_decision(self):
+        e = self._last_event(EventType.COMMITTEE_DECISION)
+        return e.decision if e else None
 
     @property
-    def komentarze_komisji(self):
-        z = self._ostatnie_zdarzenie(TypZdarzenia.KOMISJA_DECYZJA)
-        return z.komentarz if z else None
+    def committee_comment(self):
+        e = self._last_event(EventType.COMMITTEE_DECISION)
+        return e.comment if e else None
 
     @property
-    def decyzja_komisji_o(self):
-        z = self._ostatnie_zdarzenie(TypZdarzenia.KOMISJA_DECYZJA)
-        return z.wykonano_o if z else None
+    def committee_decision_at(self):
+        e = self._last_event(EventType.COMMITTEE_DECISION)
+        return e.executed_at if e else None
 
     @property
-    def decyzja_dziekana(self):
-        z = self._ostatnie_zdarzenie(TypZdarzenia.DZIEKAN_DECYZJA)
-        return z.decyzja if z else None
+    def dean_decision(self):
+        e = self._last_event(EventType.DEAN_DECISION)
+        return e.decision if e else None
 
     @property
-    def komentarze_dziekana(self):
-        z = self._ostatnie_zdarzenie(TypZdarzenia.DZIEKAN_DECYZJA)
-        return z.komentarz if z else None
+    def dean_comment(self):
+        e = self._last_event(EventType.DEAN_DECISION)
+        return e.comment if e else None
 
     @property
-    def decyzja_dziekana_o(self):
-        z = self._ostatnie_zdarzenie(TypZdarzenia.DZIEKAN_DECYZJA)
-        return z.wykonano_o if z else None
+    def dean_decision_at(self):
+        e = self._last_event(EventType.DEAN_DECISION)
+        return e.executed_at if e else None
 
+    @property
+    def admin_comments(self):
+        e = self._last_event(EventType.ADMIN_COMMENT)
+        return e.comment if e else None
+
+    @property
+    def supervisor_comments(self):
+        e = self._last_event(EventType.SUPERVISOR_COMMENT)
+        return e.comment if e else None
+
+    # Backward-compat event property names
     @property
     def komentarze_admina(self):
-        z = self._ostatnie_zdarzenie(TypZdarzenia.ADMIN_KOMENTARZ)
-        return z.komentarz if z else None
+        return self.admin_comments
 
     @property
     def komentarze_uopz(self):
-        z = self._ostatnie_zdarzenie(TypZdarzenia.UOPZ_KOMENTARZ)
-        return z.komentarz if z else None
+        return self.supervisor_comments
 
     @property
-    def powiadomiono_studenta_o(self):
-        z = self._ostatnie_zdarzenie(TypZdarzenia.POWIADOMIENIE_STUDENTA)
-        return z.wykonano_o if z else None
+    def decyzja_komisji(self):
+        return self.committee_decision
 
-    # ── Oceny (przez encję OcenyKoncowe i Sprawdzian) ────────────────────────
+    @property
+    def komentarze_komisji(self):
+        return self.committee_comment
+
+    @property
+    def decyzja_komisji_o(self):
+        return self.committee_decision_at
+
+    @property
+    def decyzja_dziekana(self):
+        return self.dean_decision
+
+    @property
+    def komentarze_dziekana(self):
+        return self.dean_comment
+
+    @property
+    def decyzja_dziekana_o(self):
+        return self.dean_decision_at
+
+    # ── Grade computations ─────────────────────────────────────
 
     @hybrid_property
-    def ocena_e(self):
-        """Średnia ze sprawdzianu (instancja)."""
-        if self.sprawdzian is None:
+    def exam_grade(self):
+        """Average of examination scores."""
+        if self.examination is None:
             return None
-        oceny = [
+        grades = [
             float(v) for v in (
-                self.sprawdzian.ocena_1,
-                self.sprawdzian.ocena_2,
-                self.sprawdzian.ocena_3,
+                self.examination.grade_1,
+                self.examination.grade_2,
+                self.examination.grade_3,
             ) if v is not None
         ]
-        return round(sum(oceny) / len(oceny), 2) if oceny else None
+        return round(sum(grades) / len(grades), 2) if grades else None
 
     @hybrid_property
-    def ocena_k(self):
-        """Ocena końcowa: 0.4E + 0.1S + 0.2U + 0.3Z."""
-        if self.oceny_koncowe is None:
+    def final_grade(self):
+        """Final grade: 0.4E + 0.1S + 0.2U + 0.3Z."""
+        if self.final_grades is None:
             return None
-        e = self.ocena_e
-        s = float(self.oceny_koncowe.ocena_sprawozdania) if self.oceny_koncowe.ocena_sprawozdania is not None else None
-        u = float(self.oceny_koncowe.ocena_uopz)         if self.oceny_koncowe.ocena_uopz         is not None else None
-        z = float(self.oceny_koncowe.ocena_zopz)         if self.oceny_koncowe.ocena_zopz         is not None else None
+        e = self.exam_grade
+        s = float(self.final_grades.report_grade)    if self.final_grades.report_grade    is not None else None
+        u = float(self.final_grades.supervisor_grade) if self.final_grades.supervisor_grade is not None else None
+        z = float(self.final_grades.workplace_grade)  if self.final_grades.workplace_grade  is not None else None
         if None in (e, s, u, z):
             return None
         return round(0.4 * e + 0.1 * s + 0.2 * u + 0.3 * z, 2)
 
+    # Legacy computed grade aliases
+    @hybrid_property
+    def ocena_e(self):
+        return self.exam_grade
 
-# ── Encje satelitarne zapisu ──────────────────────────────────────────────────
-
-class DaneMiejscaPraktyki(db.Model):
-    """Snapshot danych zakładu i ZOPZ kopiowany z formularza do dokumentów TeX."""
-    __tablename__ = 'dane_miejsca_praktyki'
-
-    id       = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    zapis_id = db.Column(UUID(as_uuid=True), db.ForeignKey('zapisy_praktyk.id', ondelete='CASCADE'), nullable=False, unique=True)
-
-    firma_nazwa                  = db.Column(db.String(255), nullable=True)
-    firma_adres                  = db.Column(db.String(255), nullable=True)
-    firma_miasto                 = db.Column(db.String(255), nullable=True)
-    firma_nip_krs                = db.Column(db.String(50),  nullable=True)
-    firma_upowazniony_osoba      = db.Column(db.String(255), nullable=True)
-    firma_upowazniony_stanowisko = db.Column(db.String(255), nullable=True)
-
-    zopz_imie_nazwisko = db.Column(db.String(255), nullable=True)
-    zopz_stanowisko    = db.Column(db.String(255), nullable=True)
-    zopz_telefon       = db.Column(db.String(50),  nullable=True)
-    zopz_email         = db.Column(db.String(255), nullable=True)
-
-    zapis = db.relationship('ZapisPraktyki', back_populates='dane_miejsca')
+    @hybrid_property
+    def ocena_k(self):
+        return self.final_grade
 
 
-class UzasadnienieSciezki(db.Model):
-    """Uzasadnienie wyboru ścieżki B lub C (opcjonalne)."""
-    __tablename__ = 'uzasadnienia_sciezki'
+# ── Satellite entities ────────────────────────────────────────────────────────
 
-    id           = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    zapis_id     = db.Column(UUID(as_uuid=True), db.ForeignKey('zapisy_praktyk.id', ondelete='CASCADE'), nullable=False, unique=True)
-    uzasadnienie = db.Column(db.Text, nullable=True)
-    zalaczniki   = db.Column(db.Text, nullable=True)
-
-    zapis = db.relationship('ZapisPraktyki', back_populates='uzasadnienie')
-
-
-class Sprawdzian(db.Model):
-    """Trzy pytania sprawdzające z ocenami (wystawiane przez UOPZ)."""
-    __tablename__ = 'sprawdziany'
-
-    id       = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    zapis_id = db.Column(UUID(as_uuid=True), db.ForeignKey('zapisy_praktyk.id', ondelete='CASCADE'), nullable=False, unique=True)
-
-    pytanie_1 = db.Column(db.Text,          nullable=True)
-    ocena_1   = db.Column(db.Numeric(3, 1), nullable=True)
-    pytanie_2 = db.Column(db.Text,          nullable=True)
-    ocena_2   = db.Column(db.Numeric(3, 1), nullable=True)
-    pytanie_3 = db.Column(db.Text,          nullable=True)
-    ocena_3   = db.Column(db.Numeric(3, 1), nullable=True)
-
-    zapis = db.relationship('ZapisPraktyki', back_populates='sprawdzian')
-
-
-class OcenyKoncowe(db.Model):
-    """Oceny składowe finalne praktyki."""
-    __tablename__ = 'oceny_koncowe'
-
-    id       = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    zapis_id = db.Column(UUID(as_uuid=True), db.ForeignKey('zapisy_praktyk.id', ondelete='CASCADE'), nullable=False, unique=True)
-
-    ocena_sprawozdania = db.Column(db.Numeric(3, 1), nullable=True)
-    ocena_uopz         = db.Column(db.Numeric(3, 1), nullable=True)
-    ocena_zopz         = db.Column(db.Numeric(3, 1), nullable=True)
-    ocena_opisowa_uopz = db.Column(db.Text,          nullable=True)
-    ocena_opisowa_zopz = db.Column(db.Text,          nullable=True)
-
-    zapis = db.relationship('ZapisPraktyki', back_populates='oceny_koncowe')
-
-
-class ZdarzenieProces(db.Model):
-    """Event log przepływu pracy: komentarze, decyzje komisji i dziekana."""
-    __tablename__ = 'zdarzenia_procesowe'
-
-    id       = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    zapis_id = db.Column(UUID(as_uuid=True), db.ForeignKey('zapisy_praktyk.id', ondelete='CASCADE'), nullable=False)
-    typ      = db.Column(
-        db.Enum(TypZdarzenia, name='typ_zdarzenia', values_callable=lambda e: [x.value for x in e]),
-        nullable=False,
-    )
-    decyzja           = db.Column(db.String(20), nullable=True)   # 'APPROVED' / 'REJECTED'
-    komentarz         = db.Column(db.Text,       nullable=True)
-    wykonane_przez_id = db.Column(UUID(as_uuid=True), db.ForeignKey('uzytkownicy.id', ondelete='SET NULL'), nullable=True)
-    wykonano_o        = db.Column(db.DateTime,   server_default=db.func.now())
-
-    zapis            = db.relationship('ZapisPraktyki',  back_populates='zdarzenia')
-    wykonane_przez   = db.relationship('Uzytkownik',     foreign_keys=[wykonane_przez_id], lazy='select')
-
-
-# ── Pozostałe modele ──────────────────────────────────────────────────────────
-
-class HarmonogramPraktyki(db.Model):
-    """Harmonogram realizacji efektów uczenia dla jednego zapisu."""
-    __tablename__ = 'harmonogram_praktyk'
-
-    id                = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    zapis_id          = db.Column(UUID(as_uuid=True), db.ForeignKey('zapisy_praktyk.id', ondelete='CASCADE'), nullable=False)
-    efekt_id          = db.Column(db.Integer, db.ForeignKey('efekty_uczenia.id'), nullable=False)
-    nazwa_dzialu      = db.Column(db.String(255), nullable=False)
-    przykladowe_prace = db.Column(db.Text,        nullable=False)
-    liczba_dni        = db.Column(db.Integer,     nullable=False, default=0)
-
-    efekt = db.relationship('EfektUczenia', lazy='select')
-
-    # Compat
-    @property
-    def enrollment_id(self):
-        return self.zapis_id
-
-    @enrollment_id.setter
-    def enrollment_id(self, v):
-        self.zapis_id = v
-
-    @property
-    def learning_outcome_id(self):
-        return self.efekt_id
-
-    @learning_outcome_id.setter
-    def learning_outcome_id(self, v):
-        self.efekt_id = v
-
-
-class Sprawozdanie(db.Model):
-    """Sprawozdanie studenta z odbytej praktyki."""
-    __tablename__ = 'sprawozdania'
-
-    id                      = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    zapis_id                = db.Column(UUID(as_uuid=True), db.ForeignKey('zapisy_praktyk.id', ondelete='CASCADE'), nullable=False, unique=True)
-    charakterystyka_miejsca = db.Column(db.Text,     nullable=True)
-    opis_i_analiza          = db.Column(db.Text,     nullable=True)
-    zaktualizowano          = db.Column(db.DateTime, server_default=db.func.now(), onupdate=db.func.now())
-
-    @property
-    def enrollment_id(self):
-        return self.zapis_id
-
-
-class IndywidualnyProgram(db.Model):
-    """Indywidualny program praktyki (opcjonalny)."""
-    __tablename__ = 'programy_indywidualne'
-
-    id                      = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    zapis_id                = db.Column(UUID(as_uuid=True), db.ForeignKey('zapisy_praktyk.id', ondelete='CASCADE'), nullable=False, unique=True)
-    status                  = db.Column(db.String(30), nullable=False, default='DRAFT')
-    zatwierdzony_przez_uopz = db.Column(db.Boolean,   default=False)
-    zatwierdzono_o          = db.Column(db.DateTime,   nullable=True)
-    komentarz_uopz          = db.Column(db.Text,       nullable=True)
-    utworzono               = db.Column(db.DateTime,   server_default=db.func.now())
-
-    zapis = db.relationship('ZapisPraktyki', backref=db.backref('indywidualny_program', passive_deletes=True))
-
-    @property
-    def enrollment_id(self):
-        return self.zapis_id
-
-
-class NumerPisma(db.Model):
-    """Kolejny numer pisma administracyjnego dla dokumentu."""
-    __tablename__ = 'numery_pism'
+class WorkplaceDetails(db.Model):
+    """Snapshot of workplace and mentor data copied from the enrollment form."""
+    __tablename__ = 'workplace_details'
 
     id            = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    zapis_id      = db.Column(UUID(as_uuid=True), db.ForeignKey('zapisy_praktyk.id', ondelete='CASCADE'), nullable=False)
-    typ_dokumentu = db.Column(db.String(50),  nullable=False)
-    numer         = db.Column(db.String(100), nullable=False)
-    wygenerowano  = db.Column(db.DateTime,    server_default=db.func.now())
+    enrollment_id = db.Column(UUID(as_uuid=True), db.ForeignKey('internship_enrollments.id', ondelete='CASCADE'), nullable=False, unique=True)
 
-    zapis = db.relationship('ZapisPraktyki')
+    company_name                = db.Column(db.String(255), nullable=True)
+    company_address             = db.Column(db.String(255), nullable=True)
+    company_city                = db.Column(db.String(255), nullable=True)
+    company_tax_id              = db.Column(db.String(50),  nullable=True)
+    authorized_person           = db.Column('company_authorized_person',   db.String(255), nullable=True)
+    authorized_person_position  = db.Column('company_authorized_position', db.String(255), nullable=True)
+
+    workplace_mentor_name     = db.Column('workplace_supervisor_name',     db.String(255), nullable=True)
+    workplace_mentor_position = db.Column('workplace_supervisor_position', db.String(255), nullable=True)
+    workplace_mentor_phone    = db.Column('workplace_supervisor_phone',    db.String(50),  nullable=True)
+    workplace_mentor_email    = db.Column('workplace_supervisor_email',    db.String(255), nullable=True)
+
+    enrollment = db.relationship('InternshipEnrollment', back_populates='workplace_details')
+
+    # Backward-compat shims
+    @property
+    def zapis_id(self):
+        return self.enrollment_id
 
     @property
-    def enrollment_id(self):
-        return self.zapis_id
+    def firma_nazwa(self):
+        return self.company_name
+
+    @firma_nazwa.setter
+    def firma_nazwa(self, v):
+        self.company_name = v
 
     @property
-    def document_type(self):
-        return self.typ_dokumentu
+    def firma_adres(self):
+        return self.company_address
+
+    @firma_adres.setter
+    def firma_adres(self, v):
+        self.company_address = v
+
+    @property
+    def firma_miasto(self):
+        return self.company_city
+
+    @firma_miasto.setter
+    def firma_miasto(self, v):
+        self.company_city = v
+
+    @property
+    def firma_nip_krs(self):
+        return self.company_tax_id
+
+    @firma_nip_krs.setter
+    def firma_nip_krs(self, v):
+        self.company_tax_id = v
+
+    @property
+    def firma_upowazniony_osoba(self):
+        return self.authorized_person
+
+    @firma_upowazniony_osoba.setter
+    def firma_upowazniony_osoba(self, v):
+        self.authorized_person = v
+
+    @property
+    def firma_upowazniony_stanowisko(self):
+        return self.authorized_person_position
+
+    @firma_upowazniony_stanowisko.setter
+    def firma_upowazniony_stanowisko(self, v):
+        self.authorized_person_position = v
+
+    @property
+    def zopz_imie_nazwisko(self):
+        return self.workplace_mentor_name
+
+    @zopz_imie_nazwisko.setter
+    def zopz_imie_nazwisko(self, v):
+        self.workplace_mentor_name = v
+
+    @property
+    def zopz_stanowisko(self):
+        return self.workplace_mentor_position
+
+    @zopz_stanowisko.setter
+    def zopz_stanowisko(self, v):
+        self.workplace_mentor_position = v
+
+    @property
+    def zopz_telefon(self):
+        return self.workplace_mentor_phone
+
+    @zopz_telefon.setter
+    def zopz_telefon(self, v):
+        self.workplace_mentor_phone = v
+
+    @property
+    def zopz_email(self):
+        return self.workplace_mentor_email
+
+    @zopz_email.setter
+    def zopz_email(self, v):
+        self.workplace_mentor_email = v
+
+
+class PathJustification(db.Model):
+    """Justification for choosing path B or C (optional)."""
+    __tablename__ = 'path_justifications'
+
+    id            = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    enrollment_id = db.Column(UUID(as_uuid=True), db.ForeignKey('internship_enrollments.id', ondelete='CASCADE'), nullable=False, unique=True)
+    justification = db.Column(db.Text, nullable=True)
+    attachments   = db.Column(db.Text, nullable=True)
+
+    enrollment = db.relationship('InternshipEnrollment', back_populates='path_justification')
+
+    # Backward-compat
+    @property
+    def zapis_id(self):
+        return self.enrollment_id
+
+    @property
+    def uzasadnienie(self):
+        return self.justification
+
+    @uzasadnienie.setter
+    def uzasadnienie(self, v):
+        self.justification = v
+
+    @property
+    def zalaczniki(self):
+        return self.attachments
+
+    @zalaczniki.setter
+    def zalaczniki(self, v):
+        self.attachments = v
+
+
+class Examination(db.Model):
+    """Three examination questions with grades (issued by supervisor)."""
+    __tablename__ = 'examinations'
+
+    id            = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    enrollment_id = db.Column(UUID(as_uuid=True), db.ForeignKey('internship_enrollments.id', ondelete='CASCADE'), nullable=False, unique=True)
+
+    question_1 = db.Column(db.Text,          nullable=True)
+    grade_1    = db.Column(db.Numeric(3, 1), nullable=True)
+    question_2 = db.Column(db.Text,          nullable=True)
+    grade_2    = db.Column(db.Numeric(3, 1), nullable=True)
+    question_3 = db.Column(db.Text,          nullable=True)
+    grade_3    = db.Column(db.Numeric(3, 1), nullable=True)
+
+    enrollment = db.relationship('InternshipEnrollment', back_populates='examination')
+
+    # Backward-compat
+    @property
+    def zapis_id(self):
+        return self.enrollment_id
+
+    @property
+    def pytanie_1(self):
+        return self.question_1
+
+    @property
+    def ocena_1(self):
+        return self.grade_1
+
+    @property
+    def pytanie_2(self):
+        return self.question_2
+
+    @property
+    def ocena_2(self):
+        return self.grade_2
+
+    @property
+    def pytanie_3(self):
+        return self.question_3
+
+    @property
+    def ocena_3(self):
+        return self.grade_3
+
+
+class FinalGrades(db.Model):
+    """Final component grades for an internship."""
+    __tablename__ = 'final_grades'
+
+    id            = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    enrollment_id = db.Column(UUID(as_uuid=True), db.ForeignKey('internship_enrollments.id', ondelete='CASCADE'), nullable=False, unique=True)
+
+    report_grade                  = db.Column(db.Numeric(3, 1), nullable=True)
+    supervisor_grade              = db.Column(db.Numeric(3, 1), nullable=True)
+    workplace_grade               = db.Column(db.Numeric(3, 1), nullable=True)
+    supervisor_grade_description  = db.Column(db.Text,          nullable=True)
+    workplace_grade_description   = db.Column(db.Text,          nullable=True)
+
+    enrollment = db.relationship('InternshipEnrollment', back_populates='final_grades')
+
+    # Backward-compat
+    @property
+    def zapis_id(self):
+        return self.enrollment_id
+
+    @property
+    def ocena_sprawozdania(self):
+        return self.report_grade
+
+    @property
+    def ocena_uopz(self):
+        return self.supervisor_grade
+
+    @property
+    def ocena_zopz(self):
+        return self.workplace_grade
+
+    @property
+    def ocena_opisowa_uopz(self):
+        return self.supervisor_grade_description
+
+    @property
+    def ocena_opisowa_zopz(self):
+        return self.workplace_grade_description
+
+
+class ProcessEvent(db.Model):
+    """Workflow event log: comments, committee and dean decisions."""
+    __tablename__ = 'process_events'
+
+    id            = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    enrollment_id = db.Column(UUID(as_uuid=True), db.ForeignKey('internship_enrollments.id', ondelete='CASCADE'), nullable=False)
+    event_type    = db.Column(
+        db.Enum(EventType, name='event_type', values_callable=lambda e: [x.value for x in e]),
+        nullable=False,
+    )
+    decision       = db.Column(db.String(20), nullable=True)   # 'APPROVED' / 'REJECTED'
+    comment        = db.Column(db.Text,       nullable=True)
+    executed_by_id = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
+    executed_at    = db.Column(db.DateTime,   server_default=db.func.now())
+
+    enrollment   = db.relationship('InternshipEnrollment', back_populates='process_events')
+    executed_by  = db.relationship('User', foreign_keys=[executed_by_id], lazy='select')
+
+    # Backward-compat
+    @property
+    def zapis_id(self):
+        return self.enrollment_id
+
+    @property
+    def typ(self):
+        return self.event_type
+
+    @property
+    def decyzja(self):
+        return self.decision
+
+    @property
+    def komentarz(self):
+        return self.comment
+
+    @property
+    def wykonane_przez_id(self):
+        return self.executed_by_id
+
+    @property
+    def wykonano_o(self):
+        return self.executed_at
+
+    @property
+    def wykonane_przez(self):
+        return self.executed_by
+
+
+class InternshipSchedule(db.Model):
+    """Schedule of learning outcome completion for one enrollment."""
+    __tablename__ = 'internship_schedules'
+
+    id                  = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    enrollment_id       = db.Column(UUID(as_uuid=True), db.ForeignKey('internship_enrollments.id', ondelete='CASCADE'), nullable=False)
+    learning_outcome_id = db.Column(db.Integer, db.ForeignKey('learning_outcomes.id'), nullable=False)
+    department_name     = db.Column(db.String(255), nullable=False)
+    example_tasks       = db.Column(db.Text,        nullable=False)
+    days_count          = db.Column(db.Integer,     nullable=False, default=0)
+
+    learning_outcome = db.relationship('LearningOutcome', lazy='select')
+
+    # Backward-compat
+    @property
+    def zapis_id(self):
+        return self.enrollment_id
+
+    @zapis_id.setter
+    def zapis_id(self, v):
+        self.enrollment_id = v
+
+    @property
+    def efekt_id(self):
+        return self.learning_outcome_id
+
+    @efekt_id.setter
+    def efekt_id(self, v):
+        self.learning_outcome_id = v
+
+    @property
+    def efekt(self):
+        return self.learning_outcome
+
+    @property
+    def nazwa_dzialu(self):
+        return self.department_name
+
+    @nazwa_dzialu.setter
+    def nazwa_dzialu(self, v):
+        self.department_name = v
+
+    @property
+    def przykladowe_prace(self):
+        return self.example_tasks
+
+    @przykladowe_prace.setter
+    def przykladowe_prace(self, v):
+        self.example_tasks = v
+
+    @property
+    def liczba_dni(self):
+        return self.days_count
+
+    @liczba_dni.setter
+    def liczba_dni(self, v):
+        self.days_count = v
+
+
+class InternshipReport(db.Model):
+    """Student's internship report."""
+    __tablename__ = 'internship_reports'
+
+    id                   = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    enrollment_id        = db.Column(UUID(as_uuid=True), db.ForeignKey('internship_enrollments.id', ondelete='CASCADE'), nullable=False, unique=True)
+    workplace_description = db.Column(db.Text,     nullable=True)
+    work_analysis        = db.Column(db.Text,      nullable=True)
+    updated_at           = db.Column(db.DateTime,  server_default=db.func.now(), onupdate=db.func.now())
+
+    # Backward-compat
+    @property
+    def zapis_id(self):
+        return self.enrollment_id
+
+    @property
+    def charakterystyka_miejsca(self):
+        return self.workplace_description
+
+    @charakterystyka_miejsca.setter
+    def charakterystyka_miejsca(self, v):
+        self.workplace_description = v
+
+    @property
+    def opis_i_analiza(self):
+        return self.work_analysis
+
+    @opis_i_analiza.setter
+    def opis_i_analiza(self, v):
+        self.work_analysis = v
+
+
+class IndividualProgram(db.Model):
+    """Individual internship program (optional)."""
+    __tablename__ = 'individual_programs'
+
+    id                       = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    enrollment_id            = db.Column(UUID(as_uuid=True), db.ForeignKey('internship_enrollments.id', ondelete='CASCADE'), nullable=False, unique=True)
+    status                   = db.Column(db.String(30), nullable=False, default='DRAFT')
+    approved_by_supervisor   = db.Column(db.Boolean,   default=False)
+    approved_at              = db.Column(db.DateTime,   nullable=True)
+    supervisor_comment       = db.Column(db.Text,       nullable=True)
+    created_at               = db.Column(db.DateTime,   server_default=db.func.now())
+
+    enrollment = db.relationship('InternshipEnrollment', backref=db.backref('individual_program', passive_deletes=True))
+
+    # Backward-compat
+    @property
+    def zapis_id(self):
+        return self.enrollment_id
+
+    @property
+    def zatwierdzony_przez_uopz(self):
+        return self.approved_by_supervisor
+
+    @property
+    def zatwierdzono_o(self):
+        return self.approved_at
+
+    @property
+    def komentarz_uopz(self):
+        return self.supervisor_comment
+
+
+class DocumentNumber(db.Model):
+    """Sequential administrative document number."""
+    __tablename__ = 'document_numbers'
+
+    id            = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    enrollment_id = db.Column(UUID(as_uuid=True), db.ForeignKey('internship_enrollments.id', ondelete='CASCADE'), nullable=False)
+    document_type = db.Column(db.String(50),  nullable=False)
+    number        = db.Column(db.String(100), nullable=False)
+    generated_at  = db.Column(db.DateTime,   server_default=db.func.now())
+
+    enrollment = db.relationship('InternshipEnrollment')
+
+    # Backward-compat
+    @property
+    def zapis_id(self):
+        return self.enrollment_id
+
+    @property
+    def typ_dokumentu(self):
+        return self.document_type
+
+    @property
+    def numer(self):
+        return self.number
+
+    @property
+    def wygenerowano(self):
+        return self.generated_at
+
+
+# Backward-compat class aliases (remove after all routes migrated)
+Praktyka              = Internship
+ZapisPraktyki         = InternshipEnrollment
+DaneMiejscaPraktyki   = WorkplaceDetails
+UzasadnienieSciezki   = PathJustification
+Sprawdzian            = Examination
+OcenyKoncowe          = FinalGrades
+ZdarzenieProces       = ProcessEvent
+HarmonogramPraktyki   = InternshipSchedule
+Sprawozdanie          = InternshipReport
+IndywidualnyProgram   = IndividualProgram
+NumerPisma            = DocumentNumber

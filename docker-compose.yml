@@ -46,9 +46,15 @@ services:
       - FLASK_ENV=${FLASK_ENV:-production}
       - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER:-ans_admin}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:-ans_praktyki}
       - SECRET_KEY=${SECRET_KEY:?Set SECRET_KEY in .env}
+      - FILE_ENCRYPTION_KEY=${FILE_ENCRYPTION_KEY:?Set FILE_ENCRYPTION_KEY in .env}
+      - FILESERVER_URL=${FILESERVER_URL:-http://fileserver:5003}
+      - FILESERVER_API_KEY=${FILESERVER_API_KEY:?Set FILESERVER_API_KEY in .env}
       - TEX_SERVICE_URL=http://tex-service:5002
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - AZURE_CLIENT_ID=${AZURE_CLIENT_ID:?Set AZURE_CLIENT_ID in .env}
+      - AZURE_CLIENT_SECRET=${AZURE_CLIENT_SECRET:?Set AZURE_CLIENT_SECRET in .env}
+      - AZURE_TENANT_ID=${AZURE_TENANT_ID:?Set AZURE_TENANT_ID in .env}
     ports:
       - "5000:5000"
     networks:
@@ -61,9 +67,10 @@ services:
         condition: service_started
       redis:
         condition: service_started
+      fileserver:
+        condition: service_healthy
     volumes:
       - pdf_data:/app/pdf_output
-      - uploads_data:/app/uploads
       - ./app_admin:/app/app_admin:ro
       - ./core:/app/core:ro
     read_only: true
@@ -90,9 +97,15 @@ services:
       - FLASK_ENV=${FLASK_ENV:-production}
       - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER:-ans_admin}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:-ans_praktyki}
       - SECRET_KEY=${SECRET_KEY:?Set SECRET_KEY in .env}
+      - FILE_ENCRYPTION_KEY=${FILE_ENCRYPTION_KEY:?Set FILE_ENCRYPTION_KEY in .env}
+      - FILESERVER_URL=${FILESERVER_URL:-http://fileserver:5003}
+      - FILESERVER_API_KEY=${FILESERVER_API_KEY:?Set FILESERVER_API_KEY in .env}
       - TEX_SERVICE_URL=http://tex-service:5002
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - AZURE_CLIENT_ID=${AZURE_CLIENT_ID:?Set AZURE_CLIENT_ID in .env}
+      - AZURE_CLIENT_SECRET=${AZURE_CLIENT_SECRET:?Set AZURE_CLIENT_SECRET in .env}
+      - AZURE_TENANT_ID=${AZURE_TENANT_ID:?Set AZURE_TENANT_ID in .env}
     ports:
       - "5001:5001"
     networks:
@@ -105,9 +118,10 @@ services:
         condition: service_started
       redis:
         condition: service_started
+      fileserver:
+        condition: service_healthy
     volumes:
       - pdf_data:/app/pdf_output
-      - uploads_data:/app/uploads
       - ./app_student:/app/app_student:ro
       - ./core:/app/core:ro
     read_only: true
@@ -133,6 +147,9 @@ services:
       - FLASK_ENV=${FLASK_ENV:-production}
       - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER:-ans_admin}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:-ans_praktyki}
       - SECRET_KEY=${SECRET_KEY:?Set SECRET_KEY in .env}
+      - FILE_ENCRYPTION_KEY=${FILE_ENCRYPTION_KEY:?Set FILE_ENCRYPTION_KEY in .env}
+      - FILESERVER_URL=${FILESERVER_URL:-http://fileserver:5003}
+      - FILESERVER_API_KEY=${FILESERVER_API_KEY:?Set FILESERVER_API_KEY in .env}
       - TEX_SERVICE_URL=http://tex-service:5002
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
@@ -148,7 +165,6 @@ services:
         condition: service_healthy
     volumes:
       - pdf_data:/app/pdf_output
-      - uploads_data:/app/uploads
       - ./app_admin:/app/app_admin:ro
       - ./core:/app/core:ro
     read_only: true
@@ -165,6 +181,66 @@ services:
           cpus: '1.0'
           memory: 512M
 
+  celery-beat:
+    build:
+      context: .
+      dockerfile: app_admin/Dockerfile
+    container_name: sop_celery_beat
+    restart: unless-stopped
+    environment:
+      - FLASK_ENV=${FLASK_ENV:-production}
+      - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER:-ans_admin}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:-ans_praktyki}
+      - SECRET_KEY=${SECRET_KEY:?Set SECRET_KEY in .env}
+      - FILE_ENCRYPTION_KEY=${FILE_ENCRYPTION_KEY:?Set FILE_ENCRYPTION_KEY in .env}
+      - FILESERVER_URL=${FILESERVER_URL:-http://fileserver:5003}
+      - FILESERVER_API_KEY=${FILESERVER_API_KEY:?Set FILESERVER_API_KEY in .env}
+      - TEX_SERVICE_URL=http://tex-service:5002
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - PDF_OUTPUT_DIR=/app/pdf_output
+    command: celery -A celery_app beat --loglevel=info --schedule=/tmp/celerybeat-schedule
+    networks:
+      - internal
+    depends_on:
+      redis:
+        condition: service_started
+      db:
+        condition: service_started
+    volumes:
+      - pdf_data:/app/pdf_output
+      - ./core:/app/core:ro
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+
+  fileserver:
+    build:
+      context: ./fileserver
+      dockerfile: Dockerfile
+    container_name: sop_fileserver
+    restart: unless-stopped
+    environment:
+      - FILESERVER_API_KEY=${FILESERVER_API_KEY:?Set FILESERVER_API_KEY in .env}
+    networks:
+      - internal
+    volumes:
+      - fileserver_data:/data/files
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5003/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
   tex-service:
     build:
       context: ./tex_service
@@ -173,6 +249,9 @@ services:
     restart: unless-stopped
     environment:
       - TZ=Europe/Warsaw
+      - TEXMFVAR=/tmp/texmf-var
+      - TEXMFCACHE=/tmp/texmf-var
+      - HOME=/tmp
     volumes:
       - ./tex_service/templates:/app/templates:ro
     expose:
@@ -188,6 +267,7 @@ services:
     read_only: true
     tmpfs:
       - /tmp:size=256m,mode=1777
+      - /root:size=128m,mode=0700
     security_opt:
       - no-new-privileges:true
     cap_drop:
@@ -211,5 +291,5 @@ networks:
 volumes:
   pgdata:
   pdf_data:
-  uploads_data:
+  fileserver_data:
   redis_data:

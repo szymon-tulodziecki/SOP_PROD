@@ -11,7 +11,8 @@ import httpx
 from flask import Blueprint, abort, send_file, jsonify, request, current_app, flash, redirect, url_for, make_response, render_template
 from flask_login import login_required, current_user
 from core.extensions import db
-from core.modele import ZapisPraktyki, StatusZapisu, HarmonogramPraktyki
+from core.modele import ZapisPraktyki, StatusZapisu, HarmonogramPraktyki, EfektUczenia
+from core.modele.dziennik import WpisDziennika
 
 logger = logging.getLogger(__name__)
 documents_bp = Blueprint('documents', __name__)
@@ -36,11 +37,9 @@ def moje_dokumenty():
     zapisy = db.session.query(ZapisPraktyki)\
         .filter_by(student_id=current_user.id)\
         .filter(ZapisPraktyki.status.in_([
+            StatusZapisu.AWAITING_APPROVAL,
             StatusZapisu.IN_PROGRESS,
             StatusZapisu.COMPLETED,
-            StatusZapisu.COMMISSION_REVIEW,
-            StatusZapisu.DEAN_APPROVAL,
-            StatusZapisu.AWAITING_APPROVAL,
         ]))\
         .order_by(ZapisPraktyki.enrolled_at.desc())\
         .all()
@@ -48,14 +47,14 @@ def moje_dokumenty():
     dokumenty_list = []
     for zapis in zapisy:
         sciezka = zapis.track_type.value if zapis.track_type else 'STANDARD'
-        w_trakcie = zapis.status in [StatusZapisu.IN_PROGRESS, StatusZapisu.COMMISSION_REVIEW, StatusZapisu.DEAN_APPROVAL]
+        w_trakcie  = zapis.status == StatusZapisu.IN_PROGRESS
         zakonczona = zapis.status == StatusZapisu.COMPLETED
         # Ocena wystawiona przez UOPZ (po egzaminie komisji)
         oceniona = zakonczona and zapis.ocena_uopz is not None
-        # Dziekan zatwierdził (dla ścieżki B/C)
-        dziekan_zatwierdził = zapis.decyzja_dziekana == 'APPROVED'
+        # Dla ścieżki B/C — dokumenty końcowe dostępne gdy praktyka w trakcie lub zakończona
+        dziekan_zatwierdził = w_trakcie or zakonczona
         harmonogram_count = db.session.query(HarmonogramPraktyki)\
-            .filter_by(zapis_id=zapis.id).count()
+            .filter_by(enrollment_id=zapis.id).count()
         firma_bez_umowy = not zapis.firma or not zapis.firma.has_standing_agreement
         firma_custom = not zapis.firma_id  # własna firma, nie z bazy
 
@@ -259,30 +258,27 @@ def _build_context(zapis, typ):
             'firma_miasto': firma_miasto,
         },
     }
-    # Dane harmonogramu dla ZAL_6
-    if typ in ('ZAL_2A',):
-        from core.modele import HarmonogramPraktyki, EfektUczenia
+    if typ == 'ZAL_2A':
         harmonogramy = db.session.query(HarmonogramPraktyki)\
-            .filter_by(zapis_id=zapis.id)\
+            .filter_by(enrollment_id=zapis.id)\
             .order_by(HarmonogramPraktyki.learning_outcome_id)\
             .all()
         ctx['harmonogram'] = [{
-            'efekt_kod': h.efekt.kod if h.efekt else str(h.learning_outcome_id),
+            'efekt_kod': h.efekt.kod if h.efekt else str(h.efekt_id).zfill(2),
             'efekt_opis': h.efekt.opis if h.efekt else '',
             'dzial': g(h, 'nazwa_dzialu', ''),
             'prace': g(h, 'przykladowe_prace', ''),
             'dni': g(h, 'liczba_dni', 0),
         } for h in harmonogramy]
-    if typ in ('ZAL_6',):
-        from core.modele import WpisDziennika
+    if typ == 'ZAL_6':
         wpisy = db.session.query(WpisDziennika)\
-            .filter_by(zapis_id=zapis.id)\
-            .order_by(WpisDziennika.data_wpisu)\
+            .filter_by(enrollment_id=zapis.id)\
+            .order_by(WpisDziennika.entry_date)\
             .all()
         ctx['wpisy'] = [{
-            'data':    _d(w.entry_date),
-            'opis':    g(w, 'description'),
-            'godziny': g(w, 'duration_hours', 0),
+            'data':    _d(w.data_wpisu),
+            'opis':    g(w, 'opis'),
+            'godziny': g(w, 'liczba_godzin', 0),
             'efekt_nr': ', '.join(f"{e.id:02d}" for e in w.efekty_uczenia) if w.efekty_uczenia else '--',
         } for w in wpisy]
     return ctx
@@ -399,25 +395,20 @@ def _serialize_context(doc_type: str, zapis: ZapisPraktyki) -> dict:
     }
 
     if doc_type == 'ZAL_6':
+        wpisy_sorted = sorted(zapis.wpisy_dziennika or [], key=lambda x: x.data_wpisu or date.min)
         context.update({
-            'zapis': {
-                'total_hours_logged': g(zapis, 'total_hours_logged', 0),
-                'praktyka': {
-                    'rok_uczelniany': g(p, 'rok_uczelniany'),
-                    'semestr':        g(p, 'semestr'),
-                },
-            },
             'sciezka':          _sciezka_label(getattr(zapis, 'track_type', 'STANDARD')),
-            'data_rozpoczecia': _d(getattr(zapis, 'termin_od', None)),
-            'data_zakonczenia': _d(getattr(zapis, 'termin_do', None)),
+            'data_rozpoczecia': _d(zapis.termin_od),
+            'data_zakonczenia': _d(zapis.termin_do),
+            'lacznie_godzin':   zapis.lacznie_godzin or 0,
             'wpisy': [
                 {
-                    'entry_date':     _d(w.entry_date),
-                    'duration_hours': g(w, 'duration_hours', 0),
-                    'description':    g(w, 'description'),
-                    'efekt': {'kod': ', '.join(f"{e.id:02d}" for e in w.efekty_uczenia) if w.efekty_uczenia else '--'},
+                    'data':    _d(w.data_wpisu),
+                    'opis':    g(w, 'opis'),
+                    'godziny': g(w, 'liczba_godzin', 0),
+                    'efekt_nr': ', '.join(f"{e.id:02d}" for e in w.efekty_uczenia) if w.efekty_uczenia else '--',
                 }
-                for w in sorted(getattr(zapis, 'wpisy_dziennika', []), key=lambda x: getattr(x, 'entry_date', date.min))
+                for w in wpisy_sorted
             ]
         })
     
@@ -431,15 +422,16 @@ def _serialize_context(doc_type: str, zapis: ZapisPraktyki) -> dict:
         
     elif doc_type == 'ZAL_4':
         context.update({
-            'lacznie_godzin': g(zapis, 'total_hours_logged', 0),
+            'lacznie_godzin': zapis.lacznie_godzin or 0,
             'oceny': [
                 {
-                    'learning_outcome_id': g(o, 'learning_outcome_id'),
-                    'grade':               o.result.value if getattr(o, 'result', None) else 'uzyskał/a',
+                    'efekt_id': o.efekt_id,
+                    'wynik':    o.wynik.value if o.wynik else 'uzyskał/a',
+                    'uwagi':    g(o, 'uwagi'),
                 }
-                for o in sorted(getattr(zapis, 'oceny_efektow', []), key=lambda x: g(x, 'learning_outcome_id', 0))
+                for o in sorted(zapis.oceny or [], key=lambda x: x.efekt_id)
             ],
-            'uwagi_uopz': g(zapis, 'ocena_opisowa_uopz'),
+            'uwagi_uopz': zapis.ocena_opisowa_uopz,
         })
 
     return context

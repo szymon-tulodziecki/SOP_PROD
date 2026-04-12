@@ -22,7 +22,7 @@ class FormularzStudenta(FlaskForm):
     kierunek     = StringField('Kierunek studiów', validators=[Optional(), Length(max=100)])
     specjalnosc  = StringField('Specjalność', validators=[Optional(), Length(max=100)])
     tryb_studiow = SelectField('Tryb studiów', choices=[('', '--- Wybierz ---'), ('stacjonarne', 'Stacjonarne'), ('niestacjonarne', 'Niestacjonarne')], validators=[Optional()])
-    uopz_id      = SelectField('Opiekun uczelniany (UOPZ)', choices=[], validators=[Optional()])
+    uopz_id      = SelectField('Opiekun uczelniany (UOPZ)', choices=[], validators=[DataRequired(message='Wybierz opiekuna UOPZ.')])
 
     def validate_email(self, pole):
         q = db.session.query(Uzytkownik).filter_by(email=pole.data.lower().strip()).first()
@@ -30,7 +30,7 @@ class FormularzStudenta(FlaskForm):
             raise ValidationError('Konto z tym e-mailem już istnieje.')
 
     def validate_numer_albumu(self, pole):
-        q = db.session.query(Student).filter_by(numer_albumu=pole.data.strip()).first()
+        q = db.session.query(Student).filter_by(album_number=pole.data.strip()).first()
         if q:
             raise ValidationError('Student z tym nr albumu już istnieje.')
 
@@ -46,7 +46,7 @@ class FormularzEdycjiStudenta(FormularzStudenta):
             raise ValidationError('Konto z tym e-mailem już istnieje.')
 
     def validate_numer_albumu(self, pole):
-        q = db.session.query(Student).filter_by(numer_albumu=pole.data.strip()).first()
+        q = db.session.query(Student).filter_by(album_number=pole.data.strip()).first()
         if q and str(q.id) != str(self._uid):
             raise ValidationError('Student z tym nr albumu już istnieje.')
 
@@ -67,10 +67,11 @@ class FormularzPracownika(FlaskForm):
 
 
 class FormularzImportuCSV(FlaskForm):
-    plik = FileField('Plik CSV', validators=[
+    plik    = FileField('Plik CSV', validators=[
         DataRequired(),
         FileAllowed(['csv'], 'Tylko pliki CSV.')
     ])
+    uopz_id = SelectField('Opiekun uczelniany (UOPZ)', choices=[], validators=[DataRequired(message='Wybierz opiekuna UOPZ.')])
 
 
 class FormularzFirmy(FlaskForm):

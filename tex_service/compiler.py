@@ -6,6 +6,7 @@ zwraca bajty PDF lub rzuca TexCompilationError.
 """
 
 import os
+import re
 import shutil
 import subprocess
 import tempfile

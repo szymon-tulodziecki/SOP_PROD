@@ -1,28 +1,29 @@
 -- ============================================================
 -- System Praktyk Zawodowych — ANS Elbląg
--- Schemat bazy danych (polskie nazwy tabel i kolumn)
+-- Database schema (English table and column names)
 -- ============================================================
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 -- ============================================================
--- 1. Typy wyliczeniowe
+-- 1. Enum types
 -- ============================================================
 
-CREATE TYPE rola_uzytkownika  AS ENUM ('STUDENT', 'UOPZ', 'ADMIN');
-CREATE TYPE status_praktyki   AS ENUM ('ACTIVE', 'INACTIVE');
-CREATE TYPE status_zapisu     AS ENUM (
+CREATE TYPE user_role        AS ENUM ('STUDENT', 'UOPZ', 'ADMIN');
+CREATE TYPE internship_status AS ENUM ('ACTIVE', 'INACTIVE');
+CREATE TYPE enrollment_status AS ENUM (
     'PENDING',
     'AWAITING_APPROVAL',
+    'REVISION_REQUIRED',
     'COMMISSION_REVIEW',
     'DEAN_APPROVAL',
     'IN_PROGRESS',
     'COMPLETED',
     'REJECTED'
 );
-CREATE TYPE wynik_oceny       AS ENUM ('ACHIEVED', 'PARTIALLY_ACHIEVED', 'NOT_ACHIEVED');
-CREATE TYPE sciezka_praktyki  AS ENUM ('STANDARD', 'EMPLOYMENT', 'OWN_BUSINESS');
-CREATE TYPE typ_zdarzenia     AS ENUM (
+CREATE TYPE assessment_result AS ENUM ('ACHIEVED', 'PARTIALLY_ACHIEVED', 'NOT_ACHIEVED');
+CREATE TYPE internship_path   AS ENUM ('STANDARD', 'EMPLOYMENT', 'OWN_BUSINESS');
+CREATE TYPE event_type        AS ENUM (
     'ADMIN_KOMENTARZ',
     'UOPZ_KOMENTARZ',
     'POWIADOMIENIE_STUDENTA',
@@ -31,78 +32,79 @@ CREATE TYPE typ_zdarzenia     AS ENUM (
 );
 
 -- ============================================================
--- 2. Użytkownicy — tabela wspólna (JTI base)
+-- 2. Users — shared base table (JTI)
 -- ============================================================
 
-CREATE TABLE uzytkownicy (
+CREATE TABLE users (
+    id                      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email                   VARCHAR(255) UNIQUE NOT NULL,
+    password_hash           VARCHAR(255) NOT NULL,
+    first_name              VARCHAR(100) NOT NULL,
+    last_name               VARCHAR(100) NOT NULL,
+    role                    user_role NOT NULL,
+    is_active               BOOLEAN DEFAULT TRUE,
+    require_password_change BOOLEAN DEFAULT TRUE,
+    created_at              TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ── JTI sub-tables ────────────────────────────────────────────
+
+CREATE TABLE students (
+    id             UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    album_number   VARCHAR(20),
+    gender         VARCHAR(1),       -- 'M' or 'F'
+    field_of_study VARCHAR(100),
+    specialization VARCHAR(100),
+    study_mode     VARCHAR(20),      -- 'full-time' / 'part-time'
+    supervisor_id  UUID REFERENCES users(id) ON DELETE SET NULL
+);
+
+CREATE TABLE administrators (
+    id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE university_mentors (
+    id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- ============================================================
+-- 3. Companies
+-- ============================================================
+
+CREATE TABLE companies (
     id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    email                 VARCHAR(255) UNIQUE NOT NULL,
-    hash_hasla            VARCHAR(255) NOT NULL,
-    imie                  VARCHAR(100) NOT NULL,
-    nazwisko              VARCHAR(100) NOT NULL,
-    rola                  rola_uzytkownika NOT NULL,
-    aktywny               BOOLEAN DEFAULT TRUE,
-    wymagana_zmiana_hasla BOOLEAN DEFAULT TRUE,
-    utworzono             TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- ── Podtabele JTI ────────────────────────────────────────────
-
-CREATE TABLE studenci (
-    id           UUID PRIMARY KEY REFERENCES uzytkownicy(id) ON DELETE CASCADE,
-    numer_albumu VARCHAR(20),
-    plec         VARCHAR(1),        -- 'M' lub 'K'
-    kierunek     VARCHAR(100),
-    specjalnosc  VARCHAR(100),
-    tryb_studiow VARCHAR(20)        -- 'stacjonarne' / 'niestacjonarne'
-);
-
-CREATE TABLE administratorzy (
-    id UUID PRIMARY KEY REFERENCES uzytkownicy(id) ON DELETE CASCADE
-);
-
-CREATE TABLE opiekunowie_uczelniani (
-    id UUID PRIMARY KEY REFERENCES uzytkownicy(id) ON DELETE CASCADE
+    name                  VARCHAR(255) NOT NULL,
+    address               VARCHAR(255),
+    city                  VARCHAR(100),
+    tax_id                VARCHAR(50),
+    has_standing_agreement BOOLEAN DEFAULT TRUE,
+    is_active             BOOLEAN DEFAULT TRUE,
+    created_at            TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- ============================================================
--- 3. Firmy
+-- 4. Internship editions (created by admin)
 -- ============================================================
 
-CREATE TABLE firmy (
+CREATE TABLE internships (
     id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    nazwa          VARCHAR(255) NOT NULL,
-    adres          VARCHAR(255),
-    miasto         VARCHAR(100),
-    nip_krs        VARCHAR(50),
-    ma_stala_umowe BOOLEAN DEFAULT TRUE,
-    aktywna        BOOLEAN DEFAULT TRUE,
-    utworzono      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    academic_year  VARCHAR(9)  NOT NULL,   -- e.g. '2024/2025'
+    semester       VARCHAR(10) NOT NULL,   -- 'winter' / 'summer'
+    required_hours INTEGER NOT NULL DEFAULT 160,
+    status         internship_status NOT NULL DEFAULT 'INACTIVE',
+    created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- ============================================================
--- 4. Edycje praktyk (szablony tworzone przez admina)
+-- 5. Learning outcomes dictionary
 -- ============================================================
 
-CREATE TABLE praktyki (
-    id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    rok_uczelniany VARCHAR(9)  NOT NULL,   -- np. '2024/2025'
-    semestr        VARCHAR(10) NOT NULL,   -- 'zimowy' / 'letni'
-    wymiar_godzin  INTEGER NOT NULL DEFAULT 160,
-    status         status_praktyki NOT NULL DEFAULT 'INACTIVE',
-    utworzono      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE learning_outcomes (
+    id          SERIAL PRIMARY KEY,
+    description TEXT NOT NULL
 );
 
--- ============================================================
--- 5. Słownik efektów uczenia się
--- ============================================================
-
-CREATE TABLE efekty_uczenia (
-    id   SERIAL PRIMARY KEY,
-    opis TEXT NOT NULL
-);
-
-INSERT INTO efekty_uczenia (opis) VALUES
+INSERT INTO learning_outcomes (description) VALUES
 ('01: Ma wiedzę na temat sposobu realizacji zadań inżynierskich dotyczących informatyki z zachowaniem standardów i norm technicznych'),
 ('02: Zna technologie, narzędzia, metody, techniki oraz sprzęt stosowane w informatyce'),
 ('03: Zna ekonomiczne, prawne skutki własnych działań podejmowanych w ramach praktyki oraz ograniczenia wynikające z prawa autorskiego i kodeksu pracy'),
@@ -118,268 +120,276 @@ INSERT INTO efekty_uczenia (opis) VALUES
 ('13: Dostrzega w praktyce tempo deaktualizacji wiedzy informatycznej oraz skutki działalności informatyków w szczególności ekonomiczne i społeczne');
 
 -- ============================================================
--- 6. Zapisy studentów — rdzeń (tylko dane niezmienne lub procesowe)
+-- 6. Student enrollment records — core (immutable + process data)
 -- ============================================================
 
-CREATE TABLE zapisy_praktyk (
-    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    praktyka_id UUID NOT NULL REFERENCES praktyki(id)    ON DELETE CASCADE,
-    student_id  UUID NOT NULL REFERENCES uzytkownicy(id) ON DELETE CASCADE,
-    uopz_id     UUID          REFERENCES uzytkownicy(id) ON DELETE SET NULL,
-    firma_id    UUID          REFERENCES firmy(id)       ON DELETE SET NULL,
-
-    status          status_zapisu    NOT NULL DEFAULT 'PENDING',
-    sciezka         sciezka_praktyki NOT NULL DEFAULT 'STANDARD',
-
-    termin_od        DATE,
-    termin_do        DATE,
-    specjalnosc      VARCHAR(255),
-    ubezpieczenie_nw BOOLEAN DEFAULT FALSE,
-
-    lacznie_godzin INTEGER   DEFAULT 0,
-    zapisano_o     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
-    UNIQUE (praktyka_id, student_id)
-);
-
--- ============================================================
--- 7. Dane miejsca praktyki (snapshot z formularza → dokumenty TeX)
--- ============================================================
-
-CREATE TABLE dane_miejsca_praktyki (
-    id       UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    zapis_id UUID NOT NULL REFERENCES zapisy_praktyk(id) ON DELETE CASCADE UNIQUE,
-
-    -- Dane zakładu
-    firma_nazwa                  VARCHAR(255),
-    firma_adres                  VARCHAR(255),
-    firma_miasto                 VARCHAR(255),
-    firma_nip_krs                VARCHAR(50),
-    firma_upowazniony_osoba      VARCHAR(255),
-    firma_upowazniony_stanowisko VARCHAR(255),
-
-    -- Dane zakładowego opiekuna praktyk (ZOPZ)
-    zopz_imie_nazwisko VARCHAR(255),
-    zopz_stanowisko    VARCHAR(255),
-    zopz_telefon       VARCHAR(50),
-    zopz_email         VARCHAR(255)
-);
-
--- ============================================================
--- 8. Uzasadnienie ścieżki B/C (wypełniane tylko dla ścieżek B i C)
--- ============================================================
-
-CREATE TABLE uzasadnienia_sciezki (
+CREATE TABLE internship_enrollments (
     id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    zapis_id      UUID NOT NULL REFERENCES zapisy_praktyk(id) ON DELETE CASCADE UNIQUE,
-    uzasadnienie  TEXT,
-    zalaczniki    TEXT     -- lista nazw/ścieżek plików (JSON lub newline-separated)
+    internship_id UUID NOT NULL REFERENCES internships(id)  ON DELETE CASCADE,
+    student_id    UUID NOT NULL REFERENCES users(id)        ON DELETE CASCADE,
+    supervisor_id UUID          REFERENCES users(id)        ON DELETE SET NULL,
+    company_id    UUID          REFERENCES companies(id)    ON DELETE SET NULL,
+
+    status         enrollment_status NOT NULL DEFAULT 'PENDING',
+    path_type      internship_path   NOT NULL DEFAULT 'STANDARD',
+
+    start_date         DATE,
+    end_date           DATE,
+    specialization     VARCHAR(255),
+    accident_insurance BOOLEAN DEFAULT FALSE,
+
+    total_hours_logged INTEGER   DEFAULT 0,
+    enrolled_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    UNIQUE (internship_id, student_id)
 );
 
 -- ============================================================
--- 9. Harmonogram praktyki studenta
+-- 7. Workplace details (form snapshot → TeX documents)
 -- ============================================================
 
-CREATE TABLE harmonogram_praktyk (
+CREATE TABLE workplace_details (
+    id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    enrollment_id UUID NOT NULL REFERENCES internship_enrollments(id) ON DELETE CASCADE UNIQUE,
+
+    -- Company data
+    company_name                  VARCHAR(255),
+    company_address               VARCHAR(255),
+    company_city                  VARCHAR(255),
+    company_tax_id                VARCHAR(50),
+    company_authorized_person     VARCHAR(255),
+    company_authorized_position   VARCHAR(255),
+
+    -- Workplace supervisor (ZOPZ) data
+    workplace_supervisor_name     VARCHAR(255),
+    workplace_supervisor_position VARCHAR(255),
+    workplace_supervisor_phone    VARCHAR(50),
+    workplace_supervisor_email    VARCHAR(255)
+);
+
+-- ============================================================
+-- 8. Path justification (B/C paths only)
+-- ============================================================
+
+CREATE TABLE path_justifications (
+    id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    enrollment_id UUID NOT NULL REFERENCES internship_enrollments(id) ON DELETE CASCADE UNIQUE,
+    justification TEXT,
+    attachments   TEXT     -- file names/paths (JSON or newline-separated)
+);
+
+-- ============================================================
+-- 9. Internship schedule
+-- ============================================================
+
+CREATE TABLE internship_schedules (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    enrollment_id   UUID    NOT NULL REFERENCES internship_enrollments(id) ON DELETE CASCADE,
+    outcome_id      INTEGER NOT NULL REFERENCES learning_outcomes(id),
+    department_name VARCHAR(255) NOT NULL,
+    example_tasks   TEXT        NOT NULL,
+    days_count      INTEGER     NOT NULL DEFAULT 0
+);
+
+-- ============================================================
+-- 10. Internship report (Załącznik 7)
+-- ============================================================
+
+CREATE TABLE internship_reports (
+    id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    enrollment_id        UUID NOT NULL REFERENCES internship_enrollments(id) ON DELETE CASCADE UNIQUE,
+    workplace_description TEXT,
+    analysis             TEXT,
+    updated_at           TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ============================================================
+-- 11. Journal entries
+-- ============================================================
+
+CREATE TABLE journal_entries (
+    id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    enrollment_id  UUID    NOT NULL REFERENCES internship_enrollments(id) ON DELETE CASCADE,
+    entry_date     DATE    NOT NULL,
+    duration_hours INTEGER NOT NULL CHECK (duration_hours > 0 AND duration_hours <= 8),
+    description    TEXT    NOT NULL,
+    UNIQUE (enrollment_id, entry_date)
+);
+
+-- Junction table: journal_entry ↔ learning_outcomes (many-to-many)
+CREATE TABLE entry_outcomes (
+    entry_id   UUID    NOT NULL REFERENCES journal_entries(id)   ON DELETE CASCADE,
+    outcome_id INTEGER NOT NULL REFERENCES learning_outcomes(id),
+    PRIMARY KEY (entry_id, outcome_id)
+);
+
+-- ============================================================
+-- 12. Outcome assessments (by UOPZ)
+-- ============================================================
+
+CREATE TABLE outcome_assessments (
+    id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    enrollment_id       UUID    NOT NULL REFERENCES internship_enrollments(id) ON DELETE CASCADE,
+    learning_outcome_id INTEGER NOT NULL REFERENCES learning_outcomes(id),
+    result              assessment_result NOT NULL,
+    notes               TEXT
+);
+
+-- ============================================================
+-- 13. Examination (3 questions graded by UOPZ)
+-- ============================================================
+
+CREATE TABLE examinations (
+    id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    enrollment_id UUID NOT NULL REFERENCES internship_enrollments(id) ON DELETE CASCADE UNIQUE,
+
+    question_1 TEXT,
+    grade_1    NUMERIC(3, 1),
+    question_2 TEXT,
+    grade_2    NUMERIC(3, 1),
+    question_3 TEXT,
+    grade_3    NUMERIC(3, 1)
+);
+
+-- ============================================================
+-- 14. Final grades
+-- ============================================================
+
+CREATE TABLE final_grades (
+    id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    enrollment_id UUID NOT NULL REFERENCES internship_enrollments(id) ON DELETE CASCADE UNIQUE,
+
+    report_grade      NUMERIC(3, 1),
+    supervisor_grade  NUMERIC(3, 1),
+    workplace_grade   NUMERIC(3, 1),
+    supervisor_notes  TEXT,
+    workplace_notes   TEXT
+);
+
+-- ============================================================
+-- 15. Process events — workflow log (commission, dean, comments)
+-- ============================================================
+
+CREATE TABLE process_events (
+    id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    enrollment_id UUID          NOT NULL REFERENCES internship_enrollments(id) ON DELETE CASCADE,
+    event_type    event_type    NOT NULL,
+    decision      VARCHAR(20),              -- 'APPROVED' / 'REJECTED' (nullable)
+    comment       TEXT,
+    executed_by_id UUID         REFERENCES users(id) ON DELETE SET NULL,
+    executed_at   TIMESTAMP     DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_process_events_enrollment ON process_events (enrollment_id);
+CREATE INDEX idx_process_events_type       ON process_events (enrollment_id, event_type);
+
+-- ============================================================
+-- 16. Document audit log
+-- ============================================================
+
+CREATE TABLE document_audit_logs (
+    id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id       UUID REFERENCES users(id)                   ON DELETE SET NULL,
+    enrollment_id UUID REFERENCES internship_enrollments(id)  ON DELETE SET NULL,
+    document_type VARCHAR(50)  NOT NULL,
+    action        VARCHAR(50)  NOT NULL,
+    details       TEXT,
+    created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ============================================================
+-- 17. Uploaded documents
+-- ============================================================
+
+CREATE TABLE uploaded_documents (
     id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    zapis_id          UUID    NOT NULL REFERENCES zapisy_praktyk(id) ON DELETE CASCADE,
-    efekt_id          INTEGER NOT NULL REFERENCES efekty_uczenia(id),
-    nazwa_dzialu      VARCHAR(255) NOT NULL,
-    przykladowe_prace TEXT        NOT NULL,
-    liczba_dni        INTEGER     NOT NULL DEFAULT 0
+    enrollment_id     UUID         REFERENCES internship_enrollments(id) ON DELETE SET NULL,
+    document_type     VARCHAR(50)  NOT NULL,
+    original_filename VARCHAR(255) NOT NULL,
+    stored_filename   VARCHAR(255) NOT NULL,
+    file_path         VARCHAR(500) NOT NULL,
+    file_size         INTEGER      NOT NULL,
+    mime_type         VARCHAR(100) NOT NULL,
+    uploaded_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    uploaded_by_id    UUID REFERENCES users(id) ON DELETE SET NULL,
+    is_deleted        BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 -- ============================================================
--- 10. Sprawozdanie z praktyki (Zał. 7)
+-- 18. Individual internship programs
 -- ============================================================
 
-CREATE TABLE sprawozdania (
-    id                      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    zapis_id                UUID NOT NULL REFERENCES zapisy_praktyk(id) ON DELETE CASCADE UNIQUE,
-    charakterystyka_miejsca TEXT,
-    opis_i_analiza          TEXT,
-    zaktualizowano          TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE individual_programs (
+    id                     UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    enrollment_id          UUID NOT NULL REFERENCES internship_enrollments(id) ON DELETE CASCADE UNIQUE,
+    status                 VARCHAR(30) NOT NULL DEFAULT 'DRAFT',
+    approved_by_supervisor BOOLEAN DEFAULT FALSE,
+    approved_at            TIMESTAMP,
+    supervisor_comment     TEXT,
+    created_at             TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- ============================================================
--- 11. Dziennik praktyk
+-- 19. Administrative document numbers
 -- ============================================================
 
-CREATE TABLE wpisy_dziennika (
+CREATE TABLE document_numbers (
     id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    zapis_id      UUID    NOT NULL REFERENCES zapisy_praktyk(id) ON DELETE CASCADE,
-    data_wpisu    DATE    NOT NULL,
-    liczba_godzin INTEGER NOT NULL CHECK (liczba_godzin > 0 AND liczba_godzin <= 8),
-    opis          TEXT    NOT NULL,
-    UNIQUE (zapis_id, data_wpisu)
-);
-
--- Tabela pośrednia: wpis dziennika ↔ efekty uczenia (wiele-do-wielu)
-CREATE TABLE wpisy_efekty (
-    wpis_id  UUID    NOT NULL REFERENCES wpisy_dziennika(id) ON DELETE CASCADE,
-    efekt_id INTEGER NOT NULL REFERENCES efekty_uczenia(id),
-    PRIMARY KEY (wpis_id, efekt_id)
+    enrollment_id UUID         NOT NULL REFERENCES internship_enrollments(id) ON DELETE CASCADE,
+    document_type VARCHAR(50)  NOT NULL,
+    number        VARCHAR(100) NOT NULL,
+    generated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- ============================================================
--- 12. Oceny efektów uczenia (przez UOPZ)
+-- TRIGGER: update total_hours_logged on journal entry changes
 -- ============================================================
 
-CREATE TABLE oceny_praktyk (
-    id       UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    zapis_id UUID    NOT NULL REFERENCES zapisy_praktyk(id) ON DELETE CASCADE,
-    efekt_id INTEGER NOT NULL REFERENCES efekty_uczenia(id),
-    wynik    wynik_oceny NOT NULL,
-    uwagi    TEXT
-);
-
--- ============================================================
--- 13. Sprawdzian zaliczeniowy (3 pytania oceniane przez UOPZ)
--- ============================================================
-
-CREATE TABLE sprawdziany (
-    id       UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    zapis_id UUID NOT NULL REFERENCES zapisy_praktyk(id) ON DELETE CASCADE UNIQUE,
-
-    pytanie_1 TEXT,
-    ocena_1   NUMERIC(3, 1),
-    pytanie_2 TEXT,
-    ocena_2   NUMERIC(3, 1),
-    pytanie_3 TEXT,
-    ocena_3   NUMERIC(3, 1)
-);
-
--- ============================================================
--- 14. Oceny końcowe praktyki
--- ============================================================
-
-CREATE TABLE oceny_koncowe (
-    id       UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    zapis_id UUID NOT NULL REFERENCES zapisy_praktyk(id) ON DELETE CASCADE UNIQUE,
-
-    ocena_sprawozdania NUMERIC(3, 1),
-    ocena_uopz         NUMERIC(3, 1),
-    ocena_zopz         NUMERIC(3, 1),
-    ocena_opisowa_uopz TEXT,
-    ocena_opisowa_zopz TEXT
-);
-
--- ============================================================
--- 15. Zdarzenia procesowe — log przepływu pracy (komisja, dziekan, komentarze)
--- ============================================================
-
-CREATE TABLE zdarzenia_procesowe (
-    id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    zapis_id      UUID             NOT NULL REFERENCES zapisy_praktyk(id) ON DELETE CASCADE,
-    typ           typ_zdarzenia    NOT NULL,
-    decyzja       VARCHAR(20),                -- 'APPROVED' / 'REJECTED' (nullable)
-    komentarz     TEXT,
-    wykonane_przez_id UUID         REFERENCES uzytkownicy(id) ON DELETE SET NULL,
-    wykonano_o    TIMESTAMP        DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE INDEX idx_zdarzenia_zapis  ON zdarzenia_procesowe (zapis_id);
-CREATE INDEX idx_zdarzenia_typ    ON zdarzenia_procesowe (zapis_id, typ);
-
--- ============================================================
--- 16. Log audytu dokumentów
--- ============================================================
-
-CREATE TABLE logi_audytu_dokumentow (
-    id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    uzytkownik_id UUID REFERENCES uzytkownicy(id)    ON DELETE SET NULL,
-    zapis_id      UUID REFERENCES zapisy_praktyk(id) ON DELETE SET NULL,
-    typ_dokumentu VARCHAR(50)  NOT NULL,
-    akcja         VARCHAR(50)  NOT NULL,
-    szczegoly     TEXT,
-    wykonano_o    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- ============================================================
--- 17. Dokumenty przesłane przez studenta
--- ============================================================
-
-CREATE TABLE dokumenty_przeslane (
-    id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    zapis_id           UUID         NOT NULL REFERENCES zapisy_praktyk(id) ON DELETE CASCADE,
-    typ_dokumentu      VARCHAR(50)  NOT NULL,
-    oryginalna_nazwa   VARCHAR(255) NOT NULL,
-    zapisana_nazwa     VARCHAR(255) NOT NULL,
-    sciezka_pliku      VARCHAR(500) NOT NULL,
-    rozmiar_pliku      INTEGER      NOT NULL,
-    typ_mime           VARCHAR(100) NOT NULL,
-    przeslano_o        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    przeslane_przez_id UUID REFERENCES uzytkownicy(id) ON DELETE SET NULL
-);
-
--- ============================================================
--- 18. Indywidualne programy praktyk
--- ============================================================
-
-CREATE TABLE programy_indywidualne (
-    id                      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    zapis_id                UUID NOT NULL REFERENCES zapisy_praktyk(id) ON DELETE CASCADE UNIQUE,
-    status                  VARCHAR(30) NOT NULL DEFAULT 'DRAFT',
-    zatwierdzony_przez_uopz BOOLEAN DEFAULT FALSE,
-    zatwierdzono_o          TIMESTAMP,
-    komentarz_uopz          TEXT,
-    utworzono               TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- ============================================================
--- 19. Numery pism administracyjnych
--- ============================================================
-
-CREATE TABLE numery_pism (
-    id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    zapis_id      UUID         NOT NULL REFERENCES zapisy_praktyk(id) ON DELETE CASCADE,
-    typ_dokumentu VARCHAR(50)  NOT NULL,
-    numer         VARCHAR(100) NOT NULL,
-    wygenerowano  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- ============================================================
--- TRIGGER: aktualizacja sumy godzin w zapisie
--- ============================================================
-
-CREATE OR REPLACE FUNCTION aktualizuj_lacznie_godzin()
+CREATE OR REPLACE FUNCTION update_total_hours()
 RETURNS TRIGGER AS $$
 BEGIN
     IF TG_OP = 'INSERT' THEN
-        UPDATE zapisy_praktyk
-        SET lacznie_godzin = lacznie_godzin + NEW.liczba_godzin
-        WHERE id = NEW.zapis_id;
+        UPDATE internship_enrollments
+        SET total_hours_logged = total_hours_logged + NEW.duration_hours
+        WHERE id = NEW.enrollment_id;
     ELSIF TG_OP = 'UPDATE' THEN
-        UPDATE zapisy_praktyk
-        SET lacznie_godzin = lacznie_godzin - OLD.liczba_godzin + NEW.liczba_godzin
-        WHERE id = NEW.zapis_id;
+        UPDATE internship_enrollments
+        SET total_hours_logged = total_hours_logged - OLD.duration_hours + NEW.duration_hours
+        WHERE id = NEW.enrollment_id;
     ELSIF TG_OP = 'DELETE' THEN
-        UPDATE zapisy_praktyk
-        SET lacznie_godzin = lacznie_godzin - OLD.liczba_godzin
-        WHERE id = OLD.zapis_id;
+        UPDATE internship_enrollments
+        SET total_hours_logged = total_hours_logged - OLD.duration_hours
+        WHERE id = OLD.enrollment_id;
     END IF;
     RETURN NULL;
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER trigger_aktualizuj_godziny
-AFTER INSERT OR UPDATE OR DELETE ON wpisy_dziennika
-FOR EACH ROW EXECUTE FUNCTION aktualizuj_lacznie_godzin();
+CREATE TRIGGER trigger_update_total_hours
+AFTER INSERT OR UPDATE OR DELETE ON journal_entries
+FOR EACH ROW EXECUTE FUNCTION update_total_hours();
 
 -- ============================================================
--- Domyślny administrator (hasło: admin123)
+-- Predefiniowane konta administratorów (logowanie przez Microsoft)
+-- password_hash = '' — konto MS nie używa hasła lokalnego
 -- ============================================================
 
-INSERT INTO uzytkownicy (email, hash_hasla, imie, nazwisko, rola, aktywny, wymagana_zmiana_hasla)
-VALUES (
-    'admin@ans-elblag.pl',
-    'scrypt:32768:8:1$AG9yKW4lzZpg7XXx$762ca3d9801b32fe2d05ed47de4abb5d1dbdb4312bfa1ef05312f4a8c567991ec25df6288d387fff62a85c148f0c42b20c5a0185b794cec80e7b1e909e10f4bf',
-    'System',
-    'Admin',
-    'ADMIN',
-    TRUE,
-    FALSE
-);
+INSERT INTO users (email, password_hash, first_name, last_name, role, is_active, require_password_change)
+VALUES
+    ('admin@tulodzieckiallgmail.onmicrosoft.com', '', 'Szymon',   'Tułodziecki', 'ADMIN',   TRUE, FALSE),
+    ('12345@tulodzieckiallgmail.onmicrosoft.com', '', 'Katarzyna','Kowalczyk',   'ADMIN',   TRUE, FALSE),
+    ('21312@tulodzieckiallgmail.onmicrosoft.com', '', 'Marek',    'Wiśniewski',  'STUDENT', TRUE, FALSE)
+ON CONFLICT (email) DO NOTHING;
 
-INSERT INTO administratorzy (id)
-SELECT id FROM uzytkownicy WHERE email = 'admin@ans-elblag.pl';
+INSERT INTO administrators (id)
+SELECT id FROM users
+WHERE email IN (
+    'admin@tulodzieckiallgmail.onmicrosoft.com',
+    '12345@tulodzieckiallgmail.onmicrosoft.com'
+)
+ON CONFLICT DO NOTHING;
+
+INSERT INTO students (id, album_number)
+SELECT id, '21312' FROM users
+WHERE email = '21312@tulodzieckiallgmail.onmicrosoft.com'
+ON CONFLICT DO NOTHING;

@@ -19,13 +19,13 @@ class SerwisPraktyk:
             last_name             = nazwisko.strip(),
             email                 = email.lower().strip(),
             album_number          = numer_albumu.strip(),
-            plec                  = plec or None,
-            kierunek              = kierunek or None,
-            specjalnosc           = specjalnosc or None,
-            tryb_studiow          = tryb_studiow or None,
+            gender                = plec or None,
+            field_of_study        = kierunek or None,
+            specialization        = specjalnosc or None,
+            study_mode            = tryb_studiow or None,
             role                  = RolaUzytkownika.STUDENT,
             password_hash         = generate_password_hash(numer_albumu.strip()),
-            wymagana_zmiana_hasla = True,
+            require_password_change = True,
             is_active             = True,
         )
         db.session.add(u)
@@ -39,7 +39,7 @@ class SerwisPraktyk:
             raise ValueError("Zapis nie istnieje.")
         zapis.status = StatusZapisu.IN_PROGRESS
         if current_user.role == RolaUzytkownika.UOPZ:
-            zapis.uopz_id = current_user.id
+            zapis.supervisor_id = current_user.id
         db.session.commit()
         return zapis
 
@@ -48,7 +48,7 @@ class SerwisPraktyk:
         zapis = db.session.get(ZapisPraktyki, enrollment_id)
         if not zapis:
             raise ValueError("Zapis nie istnieje.")
-        zapis.uopz_id = supervisor_id
+        zapis.supervisor_id = supervisor_id
         zapis.status  = StatusZapisu.AWAITING_APPROVAL
         db.session.commit()
         return zapis

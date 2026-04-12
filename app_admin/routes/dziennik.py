@@ -40,10 +40,13 @@ def lista_dziennikow():
     szukaj = request.args.get('szukaj', '').strip()
     strona = request.args.get('strona', 1, type=int)
 
-    q = db.session.query(ZapisPraktyki).filter(ZapisPraktyki.status == StatusZapisu.IN_PROGRESS)
+    from sqlalchemy.orm import selectinload
+    q = db.session.query(ZapisPraktyki)\
+          .options(selectinload(ZapisPraktyki.student))\
+          .filter(ZapisPraktyki.status == StatusZapisu.IN_PROGRESS)
 
     if current_user.role == RolaUzytkownika.UOPZ:
-        q = q.filter_by(uopz_id=current_user.id)
+        q = q.filter_by(supervisor_id=current_user.id)
 
     if szukaj:
         wzorzec = f'%{szukaj}%'
@@ -55,8 +58,8 @@ def lista_dziennikow():
 
     dane = []
     for z in zapisy.items:
-        ostatni = db.session.query(func.max(WpisDziennika.data_wpisu)).filter_by(zapis_id=z.id).scalar()
-        liczba_wpisow = db.session.query(func.count(WpisDziennika.id)).filter_by(zapis_id=z.id).scalar()
+        ostatni = db.session.query(func.max(WpisDziennika.entry_date)).filter_by(enrollment_id=z.id).scalar()
+        liczba_wpisow = db.session.query(func.count(WpisDziennika.id)).filter_by(enrollment_id=z.id).scalar()
 
         alert = False
         if ostatni:
@@ -79,8 +82,8 @@ def lista_dziennikow():
 def dziennik_zapisu(id):
     zapis = db.session.get(ZapisPraktyki, id) or abort(404)
     wpisy = db.session.query(WpisDziennika)\
-              .filter_by(zapis_id=id)\
-              .order_by(WpisDziennika.data_wpisu.desc())\
+              .filter_by(enrollment_id=id)\
+              .order_by(WpisDziennika.entry_date.desc())\
               .all()
     przerwy     = _wykryj_przerwy(wpisy)
     suma_godzin = sum(w.duration_hours for w in wpisy)
@@ -93,8 +96,8 @@ def dziennik_zapisu(id):
 def pdf_dziennik(id):
     zapis = db.session.get(ZapisPraktyki, id) or abort(404)
     wpisy = db.session.query(WpisDziennika)\
-              .filter_by(zapis_id=id)\
-              .order_by(WpisDziennika.data_wpisu)\
+              .filter_by(enrollment_id=id)\
+              .order_by(WpisDziennika.entry_date)\
               .all()
     try:
         from tex_service.pdf_service import pdf_service

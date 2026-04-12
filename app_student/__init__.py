@@ -84,22 +84,24 @@ def create_app():
         wymaga_uwagi = False
         try:
             if current_user.is_authenticated:
-                from sqlalchemy import exists
                 from core.modele import ZapisPraktyki, StatusZapisu, ZdarzenieProces, TypZdarzenia
-                ma_komentarz = exists().where(
-                    (ZdarzenieProces.zapis_id == ZapisPraktyki.id) &
-                    (ZdarzenieProces.typ == TypZdarzenia.UOPZ_KOMENTARZ) &
-                    ZdarzenieProces.komentarz.isnot(None),
-                )
-                z = db.session.query(ZapisPraktyki).filter(
+                # Pobierz wszystkie zapisy studenta w statusach wymagających uwagi
+                zapisy_do_sprawdzenia = db.session.query(ZapisPraktyki).filter(
                     ZapisPraktyki.student_id == current_user.id,
-                    ZapisPraktyki.status == StatusZapisu.AWAITING_APPROVAL,
-                    ma_komentarz,
-                ).first()
-                if z:
-                    wymaga_uwagi = True
-        except Exception:
-            pass
+                    ZapisPraktyki.status.in_([
+                        StatusZapisu.OCZEKUJACY,
+                        StatusZapisu.OCZEKUJE_NA_AKCEPT,
+                    ])
+                ).all()
+                for z in zapisy_do_sprawdzenia:
+                    if z.status == StatusZapisu.OCZEKUJACY and (z.komentarze_admina or z.komentarze_uopz):
+                        wymaga_uwagi = True
+                        break
+                    if z.status == StatusZapisu.OCZEKUJE_NA_AKCEPT and z.komentarze_uopz:
+                        wymaga_uwagi = True
+                        break
+        except Exception as e:
+            import traceback; traceback.print_exc()
         return {'aktywny_zapis_info': info, 'nav_wymaga_uwagi': wymaga_uwagi}
 
     # Dodaj funkcje pomocnicze do szablonów
@@ -128,10 +130,6 @@ def create_app():
         if getattr(current_user.role, 'value', current_user.role) != 'STUDENT':
             abort(403)
 
-        if (getattr(current_user, 'wymagana_zmiana_hasla', False)
-            and request.endpoint not in ('auth.zmien_haslo', 'auth.wylogowanie', 'static')
-            and not (request.endpoint and request.endpoint.endswith('.static'))):
-            return redirect(url_for('auth.zmien_haslo'))
 
     return app
 

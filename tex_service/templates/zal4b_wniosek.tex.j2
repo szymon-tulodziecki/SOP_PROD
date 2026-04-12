@@ -19,9 +19,8 @@ Elbląg dnia \dots\dots\dots\dots\dots
 \noindent
 \begin{minipage}[t]{0.4\textwidth}
 Kierunek studiów: Informatyka \\
-Student / ka: \textbf{<< student.imie|s >> << student.nazwisko|s >>} \\
+<<% if student.plec == 'K' %>>Studentka:<<% else %>>Student:<<% endif %>> \textbf{<< student.imie|s >> << student.nazwisko|s >>} \\
 Nr albumu \textbf{<< student.nr_albumu|s >>} \\
-Kierunek studiów: Informatyka \\
 Specjalność: \textbf{<< specjalnosc|s >>}
 \end{minipage}
 \hfill
@@ -37,13 +36,19 @@ dla kierunku studiów informatyka
 \vspace{3em}
 
 \begin{center}
-\textbf{\large WNIOSEK O UBIEGANIE SIĘ ZALICZENIA EFEKTÓW UCZENIA SIĘ PRZEWIDZIANYCH DLA PRAKTYKI ZAWODOWEJ NA PODSTAWIE PRACY ZAWODOWEJ/STAŻU/ DZIAŁALNOŚCI GOSPODARCZEJ*}
+<<% if zapis.sciezka.value == 'OWN_BUSINESS' %>>
+\textbf{\large WNIOSEK O UBIEGANIE SIĘ ZALICZENIA EFEKTÓW UCZENIA SIĘ PRZEWIDZIANYCH DLA PRAKTYKI ZAWODOWEJ NA PODSTAWIE DZIAŁALNOŚCI GOSPODARCZEJ}
+<<% else %>>
+\textbf{\large WNIOSEK O UBIEGANIE SIĘ ZALICZENIA EFEKTÓW UCZENIA SIĘ PRZEWIDZIANYCH DLA PRAKTYKI ZAWODOWEJ NA PODSTAWIE PRACY ZAWODOWEJ/STAŻU}
+<<% endif %>>
 \end{center}
 
 \vspace{1em}
 
 \noindent \textbf{Wniosek} \\[0.5em]
-Na podstawie \S 4, ustęp 1 i 2 Regulaminu praktyk zawodowych w Instytucie Informatyki Stosowanej im. Krzysztofa Brzeskiego ANS w Elblągu proszę o uznanie efektów uczenia się przewidzianych dla praktyki zawodowej na podstawie pracy zawodowej/stażu/działalności gospodarczej*.
+Na podstawie \S 4, ustęp 1 i 2 Regulaminu praktyk zawodowych w Instytucie Informatyki Stosowanej im.
+Krzysztofa Brzeskiego ANS w Elblągu proszę o uznanie efektów uczenia się przewidzianych dla praktyki
+zawodowej na podstawie <<% if zapis.sciezka.value == 'OWN_BUSINESS' %>>działalności gospodarczej.<<% else %>>pracy zawodowej/stażu.<<% endif %>>
 
 \vspace{1em}
 
@@ -54,10 +59,17 @@ Na podstawie \S 4, ustęp 1 i 2 Regulaminu praktyk zawodowych w Instytucie Infor
 
 \noindent Dla potwierdzenia uzyskania zakładanych dla praktyki zawodowej efektów uczenia się załączam n/w dokumenty potwierdzające zakres realizowanych czynności zawodowych oraz czas ich realizacji w tym w szczególności:
 \begin{itemize}
+<<% if zapis.sciezka.value == 'EMPLOYMENT' %>>
+    \item[$\boxtimes$] Umowę o pracę, zaświadczenie o odbyciu stażu lub wolontariatu
+    \item[$\boxtimes$] Opis zajmowanego stanowiska pracy/kartę stanowiskową
+    \item[$\boxtimes$] Zakres obowiązków realizowany w ramach stażu/wolontariatu
+    \item[$\square$] Zaświadczenie z CEIDG lub KRS
+<<% else %>>
     \item[$\square$] Umowę o pracę, zaświadczenie o odbyciu stażu lub wolontariatu
     \item[$\square$] Opis zajmowanego stanowiska pracy/kartę stanowiskową
     \item[$\square$] Zakres obowiązków realizowany w ramach stażu/wolontariatu
-    \item[$\square$] Zaświadczenie z CEIDG lub KRS
+    \item[$\boxtimes$] Zaświadczenie z CEIDG lub KRS
+<<% endif %>>
     \item[$\square$] Inne dokumenty potwierdzające uzyskanie efektów uczenia się przewidzianych dla praktyki zawodowej
 \end{itemize}
 
@@ -66,7 +78,7 @@ Na podstawie \S 4, ustęp 1 i 2 Regulaminu praktyk zawodowych w Instytucie Infor
 \begin{minipage}[t]{0.45\textwidth}
 \centering
 \dotfill \\
-\small Data i podpis studenta/ki
+\small Data i podpis <<% if student.plec == 'K' %>>studentki<<% else %>>studenta<<% endif %>>
 \end{minipage}
 
 \newpage
@@ -87,8 +99,8 @@ Na podstawie \S 4, ustęp 1 i 2 Regulaminu praktyk zawodowych w Instytucie Infor
 \vspace{2em}
 \noindent \textbf{Decyzja Dyrektora Instytutu Informatyki Stosowanej im. Krzysztofa Brzeskiego:}
 \begin{itemize}
-    \item[$\square$] Wyrażam zgodę na uznanie efektów uczenia się przewidzianych dla praktyki zawodowej*
-    \item[$\square$] Wyrażam zgodę na częściowe zaliczenie efektów uczenia się przewidzianych dla praktyki zawodowej i wskazuję na konieczność dodatkowego zaliczenia n/w efektów uczenia się*
+    \item[$\square$] Wyrażam zgodę na uznanie efektów uczenia się przewidzianych dla praktyki zawodowej
+    \item[$\square$] Wyrażam zgodę na częściowe zaliczenie efektów uczenia się przewidzianych dla praktyki zawodowej i wskazuję na konieczność dodatkowego zaliczenia n/w efektów uczenia się
 \end{itemize}
 \vspace{-0.5em}
 \dotfill \\
@@ -105,8 +117,5 @@ Na podstawie \S 4, ustęp 1 i 2 Regulaminu praktyk zawodowych w Instytucie Infor
 \dotfill \\
 \small data i podpis Dyrektora IIS im. K. Brzeskiego
 \end{minipage}
-
-\vspace{1em}
-\noindent \footnotesize{* niepotrzebne skreślić}
 
 \end{document}

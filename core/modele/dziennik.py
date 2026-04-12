@@ -1,6 +1,6 @@
 """core/modele/dziennik.py
 
-Modele domenowe: Dziennik praktyki, Efekty uczenia, Oceny.
+Domain models: Internship journal, learning outcomes, assessments.
 """
 import uuid
 import enum
@@ -9,114 +9,125 @@ from sqlalchemy.dialects.postgresql import UUID
 from core.extensions import db
 
 
-class WynikOceny(enum.Enum):
-    OSIAGNIETO     = 'ACHIEVED'
-    CZESCIOWO      = 'PARTIALLY_ACHIEVED'
-    NIE_OSIAGNIETO = 'NOT_ACHIEVED'
+class AssessmentResult(enum.Enum):
+    ACHIEVED            = 'ACHIEVED'
+    PARTIALLY_ACHIEVED  = 'PARTIALLY_ACHIEVED'
+    NOT_ACHIEVED        = 'NOT_ACHIEVED'
 
 
-class EfektUczenia(db.Model):
-    """Efekty uczenia się — słownik (tabela referencyjna)."""
-    __tablename__ = 'efekty_uczenia'
+class LearningOutcome(db.Model):
+    """Learning outcomes — reference dictionary table."""
+    __tablename__ = 'learning_outcomes'
 
-    id   = db.Column(db.Integer, primary_key=True)
-    opis = db.Column('opis', db.Text, nullable=False)
-
-    # Compat
-    @property
-    def description(self):
-        return self.opis
+    id          = db.Column(db.Integer, primary_key=True)
+    description = db.Column(db.String(500), nullable=False)
 
     @property
     def kod(self) -> str:
         return str(self.id).zfill(2)
 
+    # Backward-compat
+    @property
+    def opis(self):
+        return self.description
 
-# Tabela asocjacyjna: wpis ↔ efekty
-wpisy_efekty = db.Table(
-    'wpisy_efekty',
+
+# Junction table: journal_entry ↔ learning_outcomes
+entry_outcomes = db.Table(
+    'entry_outcomes',
     db.Column(
-        'wpis_id',
+        'entry_id',
         UUID(as_uuid=True),
-        db.ForeignKey('wpisy_dziennika.id', ondelete='CASCADE'),
+        db.ForeignKey('journal_entries.id', ondelete='CASCADE'),
         primary_key=True,
     ),
     db.Column(
-        'efekt_id',
+        'outcome_id',
         db.Integer,
-        db.ForeignKey('efekty_uczenia.id'),
+        db.ForeignKey('learning_outcomes.id'),
         primary_key=True,
     ),
 )
 
 
-class WpisDziennika(db.Model):
-    """Pojedynczy wpis w dzienniku praktyki studenta."""
-    __tablename__ = 'wpisy_dziennika'
+class JournalEntry(db.Model):
+    """A single journal entry for a student's internship."""
+    __tablename__ = 'journal_entries'
 
-    id            = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    zapis_id      = db.Column('zapis_id', UUID(as_uuid=True), db.ForeignKey('zapisy_praktyk.id', ondelete='CASCADE'), nullable=False)
-    data_wpisu    = db.Column('data_wpisu', db.Date, nullable=False)
-    liczba_godzin = db.Column('liczba_godzin', db.Integer, nullable=False)
-    opis          = db.Column('opis', db.Text, nullable=False)
+    id             = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    enrollment_id  = db.Column(UUID(as_uuid=True), db.ForeignKey('internship_enrollments.id', ondelete='CASCADE'), nullable=False)
+    entry_date     = db.Column(db.Date,    nullable=False)
+    duration_hours = db.Column(db.Integer, nullable=False)
+    description    = db.Column(db.Text,    nullable=False)
 
-    efekty_uczenia = db.relationship('EfektUczenia', secondary=wpisy_efekty, lazy='subquery')
+    learning_outcomes = db.relationship('LearningOutcome', secondary=entry_outcomes, lazy='subquery')
 
-    # Compat
+    # Backward-compat shims
     @property
-    def enrollment_id(self):
-        return self.zapis_id
-
-    @property
-    def entry_date(self):
-        return self.data_wpisu
+    def zapis_id(self):
+        return self.enrollment_id
 
     @property
-    def duration_hours(self):
-        return self.liczba_godzin
+    def data_wpisu(self):
+        return self.entry_date
 
     @property
-    def description(self):
-        return self.opis
+    def liczba_godzin(self):
+        return self.duration_hours
+
+    @property
+    def opis(self):
+        return self.description
+
+    @property
+    def efekty_uczenia(self):
+        return self.learning_outcomes
 
 
-class OcenaPraktyki(db.Model):
-    """Ocena osiągnięcia efektu uczenia dla jednego zapisu."""
-    __tablename__ = 'oceny_praktyk'
+class OutcomeAssessment(db.Model):
+    """Assessment of a single learning outcome for one enrollment."""
+    __tablename__ = 'outcome_assessments'
 
-    id       = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    zapis_id = db.Column('zapis_id', UUID(as_uuid=True), db.ForeignKey('zapisy_praktyk.id', ondelete='CASCADE'), nullable=False)
-    efekt_id = db.Column('efekt_id', db.Integer, db.ForeignKey('efekty_uczenia.id'), nullable=False)
-    wynik    = db.Column(
-        'wynik',
-        db.Enum(WynikOceny, name='wynik_oceny', values_callable=lambda e: [x.value for x in e]),
+    id                 = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    enrollment_id      = db.Column(UUID(as_uuid=True), db.ForeignKey('internship_enrollments.id', ondelete='CASCADE'), nullable=False)
+    learning_outcome_id = db.Column(db.Integer, db.ForeignKey('learning_outcomes.id'), nullable=False)
+    result             = db.Column(
+        db.Enum(AssessmentResult, name='assessment_result', values_callable=lambda e: [x.value for x in e]),
         nullable=False,
     )
-    uwagi = db.Column('uwagi', db.Text, nullable=True)
+    notes = db.Column(db.Text, nullable=True)
 
-    efekt = db.relationship('EfektUczenia', lazy='select')
+    learning_outcome = db.relationship('LearningOutcome', lazy='select')
 
-    # Compat
+    # Backward-compat shims
     @property
-    def enrollment_id(self):
-        return self.zapis_id
-
-    @property
-    def learning_outcome_id(self):
-        return self.efekt_id
+    def zapis_id(self):
+        return self.enrollment_id
 
     @property
-    def result(self):
-        return self.wynik
-
-    @result.setter
-    def result(self, v):
-        self.wynik = v
+    def efekt_id(self):
+        return self.learning_outcome_id
 
     @property
-    def evaluator_notes(self):
-        return self.uwagi
+    def wynik(self):
+        return self.result
 
-    @evaluator_notes.setter
-    def evaluator_notes(self, v):
-        self.uwagi = v
+    @wynik.setter
+    def wynik(self, v):
+        self.result = v
+
+    @property
+    def uwagi(self):
+        return self.notes
+
+    @property
+    def efekt(self):
+        return self.learning_outcome
+
+
+# Backward-compat aliases
+WynikOceny    = AssessmentResult
+EfektUczenia  = LearningOutcome
+WpisDziennika = JournalEntry
+OcenaPraktyki = OutcomeAssessment
+wpisy_efekty  = entry_outcomes

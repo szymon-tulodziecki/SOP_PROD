@@ -1,0 +1,130 @@
+{% extends "layouts/base_panel.html" %}
+{% block tytul %}Dokumenty – {{ student.first_name }} {{ student.last_name }}{% endblock %}
+{% block naglowek %}Dokumenty studenta{% endblock %}
+
+{% block naglowek_akcje %}
+<a href="{{ url_for('zarzadzanie.dokumenty_studentow') }}" class="przycisk przycisk--drugorzedny">
+  ← Powrót do listy
+</a>
+{% endblock %}
+
+{% block tresc %}
+<div style="max-width: 900px; margin: 0 auto;">
+
+  {# ── Info o studencie ─────────────────────────────────────────────────── #}
+  <div class="karta" style="margin-bottom: 1.5rem;">
+    <div class="karta__tresc">
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <div style="width: 3rem; height: 3rem; border-radius: 50%; background: var(--kolor-glowny);
+                    display: flex; align-items: center; justify-content: center;
+                    font-weight: 700; font-size: 1rem; color: #fff; flex-shrink: 0;">
+          {{ (student.first_name or '?')[0] }}{{ (student.last_name or '?')[0] }}
+        </div>
+        <div>
+          <div style="font-size: 1.1rem; font-weight: 600;">{{ student.first_name }} {{ student.last_name }}</div>
+          <div style="font-size: 0.85rem; color: var(--kolor-tekst-drugor); margin-top: 0.2rem;">
+            Nr albumu: <strong>{{ student.album_number or '—' }}</strong>
+            {% if student.kierunek %} · {{ student.kierunek }}{% endif %}
+            {% if student.tryb_studiow %} ({{ student.tryb_studiow }}){% endif %}
+            {% if uopz %} · Opiekun: {{ uopz.first_name }} {{ uopz.last_name }}{% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# ── Brak praktyk ──────────────────────────────────────────────────────── #}
+  {% if not dokumenty_list %}
+  <div class="karta">
+    <div class="karta__tresc" style="text-align: center; padding: 3rem 2rem;">
+      <svg viewBox="0 0 24 24" style="width: 3rem; height: 3rem; fill: none; stroke: currentColor; stroke-width: 2; opacity: 0.3; margin: 0 auto 1rem;">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+      </svg>
+      <div style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem;">Brak dostępnych dokumentów</div>
+      <div style="color: var(--kolor-tekst-drugor);">Student nie ma aktywnych ani zakończonych praktyk.</div>
+    </div>
+  </div>
+  {% endif %}
+
+  {# ── Dokumenty per zapis ───────────────────────────────────────────────── #}
+  {% for wpis in dokumenty_list %}
+  {% set zapis = wpis.zapis %}
+  <div class="karta" style="margin-bottom: 1.5rem;">
+    <div class="karta__naglowek">
+      <div>
+        <div style="font-weight: 600;">
+          {{ zapis.praktyka.rok_uczelniany if zapis.praktyka else '—' }}
+          {% if zapis.praktyka %} · Semestr {{ zapis.praktyka.semestr }}{% endif %}
+        </div>
+        <div style="font-size: 0.82rem; color: var(--kolor-tekst-drugor); margin-top: 0.2rem;">
+          {% if zapis.firma %}{{ zapis.firma.nazwa }}
+          {% elif zapis.firma_nazwa %}{{ zapis.firma_nazwa }}{% endif %}
+          · Ścieżka:
+          {% if wpis.sciezka == 'STANDARD' %}Standardowa
+          {% elif wpis.sciezka == 'EMPLOYMENT' %}Praca etatowa
+          {% elif wpis.sciezka == 'OWN_BUSINESS' %}Działalność gospodarcza
+          {% else %}{{ wpis.sciezka }}{% endif %}
+        </div>
+      </div>
+      <span class="status
+        {% if zapis.status.value == 'COMPLETED' %}status--zakonczona
+        {% elif zapis.status.value == 'IN_PROGRESS' %}status--aktywna
+        {% else %}status--oczekuje{% endif %}">
+        {% if zapis.status.value == 'COMPLETED' %}Zakończona
+        {% elif zapis.status.value == 'IN_PROGRESS' %}W trakcie
+        {% elif zapis.status.value == 'AWAITING_APPROVAL' %}Oczekuje na akceptację
+        {% elif zapis.status.value == 'COMMISSION_REVIEW' %}Komisja
+        {% elif zapis.status.value == 'DEAN_APPROVAL' %}Dziekan
+        {% else %}{{ zapis.status.value }}{% endif %}
+      </span>
+    </div>
+
+    <div class="karta__tresc">
+      <div style="display: grid; gap: 0.5rem;">
+        {% for doc in wpis.docs %}
+        {% if doc.separator is defined and doc.separator %}
+        <div style="display: flex; align-items: center; gap: 0.75rem; margin: 0.4rem 0;">
+          <hr style="flex: 1; border: none; border-top: 1px dashed #d1d5db;">
+          <span style="font-size: 0.78rem; color: var(--kolor-tekst-drugor); white-space: nowrap; font-weight: 500;">{{ doc.nazwa }}</span>
+          <hr style="flex: 1; border: none; border-top: 1px dashed #d1d5db;">
+        </div>
+        {% else %}
+        <div style="display: flex; justify-content: space-between; align-items: center;
+             padding: 0.7rem 1rem;
+             background: {% if doc.dostepny %}#f8fafc{% else %}#f3f4f6{% endif %};
+             border: 1px solid {% if doc.dostepny %}#e2e8f0{% else %}#d1d5db{% endif %};
+             border-radius: 0.5rem;">
+          <div>
+            <div style="font-weight: 500; font-size: 0.9rem; {% if not doc.dostepny %}color: var(--kolor-tekst-drugor);{% endif %}">
+              {{ doc.nazwa }}
+            </div>
+            {% if doc.opis %}
+            <div style="font-size: 0.78rem; color: var(--kolor-tekst-drugor);">{{ doc.opis }}</div>
+            {% endif %}
+            {% if not doc.dostepny and doc.powod %}
+            <div style="font-size: 0.78rem; color: #d97706; margin-top: 0.15rem;">{{ doc.powod }}</div>
+            {% endif %}
+          </div>
+
+          {% if doc.dostepny %}
+            {% if doc.staly is defined and doc.staly %}
+            <a href="{{ url_for('zarzadzanie.dokumenty_pobierz_staly', klucz=doc.klucz_staly) }}"
+               class="przycisk przycisk--drugorzedny przycisk--maly">Pobierz PDF</a>
+            {% elif doc.dynamiczny is defined and doc.dynamiczny %}
+            <a href="{{ url_for('zarzadzanie.dokumenty_pobierz', zapis_id=doc.zapis_id, typ=doc.typ) }}"
+               class="przycisk przycisk--drugorzedny przycisk--maly">Pobierz PDF</a>
+            {% endif %}
+          {% else %}
+          <span style="font-size: 0.78rem; color: var(--kolor-tekst-drugor); padding: 0.3rem 0.625rem; white-space: nowrap;">Niedostępny</span>
+          {% endif %}
+        </div>
+        {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+
+</div>
+{% endblock %}

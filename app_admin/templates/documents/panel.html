@@ -15,13 +15,11 @@
     <div class="karta">
       <div class="karta__naglowek" style="background: var(--kolor-tlo); display: flex; justify-content: space-between; align-items: center;">
         <h2 class="karta__tytul">Dostępne szablony (LaTeX)</h2>
-        <button onclick="triggerAuto('ZIP')" id="btn-auto-ZIP" class="przycisk przycisk--glowny przycisk--maly" style="background: #27ae60; border-color: #27ae60;">📦 Generuj Komplet (ZIP)</button>
       </div>
       <div class="karta__tresc">
         <p style="font-size: 0.85rem; color: var(--kolor-tekst-drugor); margin-bottom: 0.5rem;">
           Wybierz dokument, który chcesz wygenerować ze stałych szablonów. Kliknij "Tryb ręczny" aby edytować surowy szablon TeX przed kompilacją.
         </p>
-        <div id="status-ZIP" style="text-align: right; margin-bottom: 1rem; font-size: 0.85rem; font-weight: 600;"></div>
 
         <div style="display: flex; flex-direction: column; gap: 1rem;">
           {% for doc_key, doc_info in docs.items() %}
@@ -82,11 +80,7 @@ async function triggerAuto(docType) {
     statusBox.innerHTML = '<span style="color: var(--kolor-glowny);">Uruchamianie...</span>';
 
     try {
-        let url = `/dokumenty/zapis/{{ zapis.id }}/generuj_auto/${docType}`;
-        if (docType === 'ZIP') {
-            url = `/dokumenty/zapis/{{ zapis.id }}/generuj_zip`;
-        }
-
+        const url = `/dokumenty/zapis/{{ zapis.id }}/generuj_auto/${docType}`;
         const res = await fetch(url, {
             method: 'POST',
             headers: {'X-Requested-With': 'XMLHttpRequest'}

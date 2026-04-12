@@ -12,14 +12,14 @@ def index():
     q = db.session.query(ZapisPraktyki)
 
     if current_user.role == RolaUzytkownika.UOPZ:
-        q = q.filter(db.or_(ZapisPraktyki.uopz_id == current_user.id, ZapisPraktyki.status == StatusZapisu.PENDING))
+        q = q.filter(db.or_(ZapisPraktyki.supervisor_id == current_user.id, ZapisPraktyki.status == StatusZapisu.PENDING))
 
     statystyki = {
         'praktyki_aktywne': q.filter(ZapisPraktyki.status == StatusZapisu.IN_PROGRESS).count(),
         'oczekujace_oceny': q.filter(ZapisPraktyki.status == StatusZapisu.COMPLETED).count(),
-        'zakonczone':       db.session.query(Praktyka).filter_by(status=StatusPraktyki.NIEAKTYWNA).count(),
+        'zakonczone':       db.session.query(Praktyka).filter_by(status=StatusPraktyki.INACTIVE).count(),
         'liczba_studentow': db.session.query(Uzytkownik).filter_by(
-            rola=RolaUzytkownika.STUDENT, aktywny=True).count(),
+            role=RolaUzytkownika.STUDENT, is_active=True).count(),
     }
 
     ostatnie_zapisy = (q
@@ -33,7 +33,7 @@ def index():
 
         completed_q = db.session.query(ZapisPraktyki).filter(
             ZapisPraktyki.status == StatusZapisu.COMPLETED,
-            ZapisPraktyki.uopz_id == current_user.id
+            ZapisPraktyki.supervisor_id == current_user.id
         )
 
         for zapis in completed_q.all():

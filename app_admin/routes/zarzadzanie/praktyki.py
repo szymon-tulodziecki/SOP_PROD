@@ -28,7 +28,7 @@ from .formularze import *
 def lista_praktyk():
     strona = request.args.get('strona', 1, type=int)
     praktyki = db.session.query(Praktyka)\
-                 .order_by(Praktyka.rok_uczelniany.desc(), Praktyka.semestr)\
+                 .order_by(Praktyka.academic_year.desc(), Praktyka.semester)\
                  .paginate(page=strona, per_page=25, error_out=False)
     csrf_form = FlaskForm()
     return render_template('zarzadzanie/praktyki.html', praktyki=praktyki, csrf_form=csrf_form)
@@ -47,9 +47,9 @@ def nowa_praktyka():
             return render_template('zarzadzanie/formularz_praktyki.html', form=form)
         p = Praktyka(
             id             = uuid.uuid4(),
-            rok_uczelniany = rok,
-            semestr        = form.semestr.data,
-            wymiar_godzin  = wymiar,
+            academic_year  = rok,
+            semester       = form.semestr.data,
+            required_hours = wymiar,
             status         = StatusPraktyki.INACTIVE,
         )
         db.session.add(p)
@@ -82,13 +82,20 @@ def lista_zgloszen():
     strona        = request.args.get('page', 1, type=int)
     status_filter = request.args.get('status', '').strip()
 
-    q = db.session.query(ZapisPraktyki).join(Uzytkownik, ZapisPraktyki.student_id == Uzytkownik.id)
-    q = q.filter(ZapisPraktyki.sciezka == 'STANDARD')
+    from sqlalchemy.orm import selectinload
+    q = db.session.query(ZapisPraktyki)\
+          .options(
+              selectinload(ZapisPraktyki.student),
+              selectinload(ZapisPraktyki.firma),
+              selectinload(ZapisPraktyki.internship),
+          )\
+          .join(Uzytkownik, ZapisPraktyki.student_id == Uzytkownik.id)
+    q = q.filter(ZapisPraktyki.path_type == 'STANDARD')
 
     if status_filter:
         try:
-            q = q.filter(ZapisPraktyki.status == StatusZapisu[status_filter])
-        except KeyError:
+            q = q.filter(ZapisPraktyki.status == StatusZapisu(status_filter))
+        except ValueError:
             flash(f'Nieznany status: {status_filter}', 'warning')
 
     zgloszenia = q.order_by(ZapisPraktyki.enrolled_at.desc()).paginate(page=strona, per_page=25, error_out=False)
@@ -101,13 +108,13 @@ def lista_zgloszen():
 def przypisz_uopz(id):
     zapis     = db.session.get(ZapisPraktyki, id) or abort(404)
     form      = FormularzPrzypiszUOPZ()
-    uopz_list = db.session.query(Uzytkownik).filter_by(rola=RolaUzytkownika.UOPZ, aktywny=True)\
-                  .order_by(Uzytkownik.nazwisko, Uzytkownik.imie).all()
+    uopz_list = db.session.query(Uzytkownik).filter_by(role=RolaUzytkownika.UOPZ, is_active=True)\
+                  .order_by(Uzytkownik.last_name, Uzytkownik.first_name).all()
     form.uopz_id.choices = [('', '--- brak ---')] + [(str(u.id), f"{u.first_name} {u.last_name}") for u in uopz_list]
 
     if form.validate_on_submit():
         if form.uopz_id.data:
-            zapis.uopz_id = form.uopz_id.data
+            zapis.supervisor_id = form.uopz_id.data
             zapis.status  = StatusZapisu.AWAITING_APPROVAL
             db.session.commit()
             flash('Opiekun UOPZ przypisany, zgłoszenie przekazane do zatwierdzenia.', 'success')
@@ -116,7 +123,7 @@ def przypisz_uopz(id):
         return redirect(url_for('zarzadzanie.lista_zgloszen'))
 
     if request.method == 'GET':
-        form.uopz_id.data = str(zapis.uopz_id) if zapis.uopz_id else ''
+        form.uopz_id.data = str(zapis.supervisor_id) if zapis.supervisor_id else ''
 
     return render_template('zarzadzanie/enrollments/przypisz_uopz.html', form=form, zapis=zapis)
 
@@ -126,10 +133,10 @@ def przypisz_uopz(id):
 def szczegoly_zgloszenia(id):
     zapis = db.session.get(ZapisPraktyki, id) or abort(404)
 
-    if current_user.role == RolaUzytkownika.UOPZ and zapis.uopz_id != current_user.id:
+    if current_user.role == RolaUzytkownika.UOPZ and zapis.supervisor_id != current_user.id:
         abort(403)
 
-    harmonogram      = db.session.query(HarmonogramPraktyki).filter_by(zapis_id=id).all()
+    harmonogram      = db.session.query(HarmonogramPraktyki).filter_by(enrollment_id=id).all()
     harmonogram_dict = {h.learning_outcome_id: h for h in harmonogram}
     efekty           = db.session.query(EfektUczenia).order_by(EfektUczenia.id).all()
 
@@ -146,38 +153,42 @@ def szczegoly_zgloszenia(id):
     if form.validate_on_submit():
         from core.modele import ZdarzenieProces, TypZdarzenia
         from datetime import datetime
+        from core.uslugi.workflow import ZapisFSM, IllegalTransitionError
 
-        if form.zatwierdz.data:
-            if form.komentarz.data:
-                db.session.add(ZdarzenieProces(
-                    zapis_id=zapis.id,
-                    typ=TypZdarzenia.ADMIN_KOMENTARZ if current_user.role == RolaUzytkownika.ADMIN else TypZdarzenia.UOPZ_KOMENTARZ,
-                    komentarz=form.komentarz.data,
-                    wykonane_przez_id=current_user.id, wykonano_o=datetime.utcnow(),
-                ))
-            zapis.status = StatusZapisu.IN_PROGRESS
-            flash('Zgłoszenie zostało zatwierdzone!', 'success')
-        elif form.odrzuc.data:
-            db.session.add(ZdarzenieProces(
-                zapis_id=zapis.id,
-                typ=TypZdarzenia.ADMIN_KOMENTARZ if current_user.role == RolaUzytkownika.ADMIN else TypZdarzenia.UOPZ_KOMENTARZ,
-                komentarz=form.komentarz.data,
-                wykonane_przez_id=current_user.id, wykonano_o=datetime.utcnow(),
-            ))
-            db.session.add(ZdarzenieProces(
-                zapis_id=zapis.id, typ=TypZdarzenia.POWIADOMIENIE_STUDENTA,
-                wykonane_przez_id=current_user.id, wykonano_o=datetime.utcnow(),
-            ))
-            zapis.status = StatusZapisu.PENDING
-            flash('Wysłano prośbę o poprawki do studenta.', 'info')
-
-        db.session.commit()
+        try:
+            with ZapisFSM.lock(id) as fsm:
+                if form.zatwierdz.data:
+                    if form.komentarz.data:
+                        db.session.add(ZdarzenieProces(
+                            enrollment_id=fsm.zapis.id,
+                            event_type=TypZdarzenia.ADMIN_KOMENTARZ if current_user.role == RolaUzytkownika.ADMIN else TypZdarzenia.UOPZ_KOMENTARZ,
+                            comment=form.komentarz.data,
+                            executed_by_id=current_user.id, executed_at=datetime.utcnow(),
+                        ))
+                    fsm.zatwierdz_przez_uopz()
+                    flash('Zgłoszenie zostało zatwierdzone!', 'success')
+                elif form.odrzuc.data:
+                    db.session.add(ZdarzenieProces(
+                        enrollment_id=fsm.zapis.id,
+                        event_type=TypZdarzenia.ADMIN_KOMENTARZ if current_user.role == RolaUzytkownika.ADMIN else TypZdarzenia.UOPZ_KOMENTARZ,
+                        comment=form.komentarz.data,
+                        executed_by_id=current_user.id, executed_at=datetime.utcnow(),
+                    ))
+                    db.session.add(ZdarzenieProces(
+                        enrollment_id=fsm.zapis.id, event_type=TypZdarzenia.POWIADOMIENIE_STUDENTA,
+                        executed_by_id=current_user.id, executed_at=datetime.utcnow(),
+                    ))
+                    fsm.odrzuc()
+                    flash('Wysłano prośbę o poprawki do studenta.', 'info')
+                db.session.commit()
+        except IllegalTransitionError as e:
+            flash(str(e), 'danger')
         return redirect(url_for('zarzadzanie.lista_zgloszen') if current_user.role == RolaUzytkownika.ADMIN
                         else url_for('zarzadzanie.moje_zgloszenia'))
 
     uploaded_docs = db.session.query(UploadedDocument)\
-        .filter_by(zapis_id=id)\
-        .order_by(UploadedDocument.przeslano_o.desc())\
+        .filter_by(enrollment_id=id, uploaded_by_id=zapis.student_id)\
+        .order_by(UploadedDocument.uploaded_at.desc())\
         .all()
 
     return render_template('zarzadzanie/enrollments/szczegoly.html',
@@ -188,22 +199,30 @@ def szczegoly_zgloszenia(id):
 @zarzadzanie_bp.route('/zgloszenia/<uuid:id>/zatwierdz-zaklad', methods=['POST'])
 @wymaga_roli(RolaUzytkownika.UOPZ, RolaUzytkownika.ADMIN)
 def zatwierdz_zaklad(id):
-    zapis = db.session.get(ZapisPraktyki, id) or abort(404)
-    zapis.status = StatusZapisu.IN_PROGRESS
-    db.session.commit()
-    flash('Zakład zatwierdzony. Praktyka rozpoczęła się.', 'success')
+    from core.uslugi.workflow import ZapisFSM, IllegalTransitionError
+    try:
+        with ZapisFSM.lock(id) as fsm:
+            fsm.zatwierdz_przez_uopz()
+            db.session.commit()
+        flash('Zakład zatwierdzony. Praktyka rozpoczęła się.', 'success')
+    except IllegalTransitionError as e:
+        flash(str(e), 'danger')
     return redirect(url_for('zarzadzanie.lista_zgloszen'))
 
 
 @zarzadzanie_bp.route('/zgloszenia/<uuid:id>/potwierdz', methods=['POST'])
 @wymaga_roli(RolaUzytkownika.ADMIN, RolaUzytkownika.UOPZ)
 def potwierdz_zapis(id):
-    zapis = db.session.get(ZapisPraktyki, id) or abort(404)
-    zapis.status = StatusZapisu.IN_PROGRESS
-    if current_user.role == RolaUzytkownika.UOPZ:
-        zapis.uopz_id = current_user.id
-    db.session.commit()
-    flash('Zapis studenta na praktykę został potwierdzony. Zostałeś/aś przypisany/a jako opiekun.', 'success')
+    from core.uslugi.workflow import ZapisFSM, IllegalTransitionError
+    try:
+        with ZapisFSM.lock(id) as fsm:
+            fsm.zatwierdz_przez_uopz()
+            if current_user.role == RolaUzytkownika.UOPZ:
+                fsm.zapis.supervisor_id = current_user.id
+            db.session.commit()
+        flash('Zapis studenta na praktykę został potwierdzony. Zostałeś/aś przypisany/a jako opiekun.', 'success')
+    except IllegalTransitionError as e:
+        flash(str(e), 'danger')
     return redirect(request.referrer or url_for('dashboard.index'))
 
 
@@ -216,15 +235,15 @@ def moje_zgloszenia():
     strona        = request.args.get('page', 1, type=int)
     status_filter = request.args.get('status', '').strip()
 
-    q = db.session.query(ZapisPraktyki).filter(ZapisPraktyki.uopz_id == current_user.id)
+    q = db.session.query(ZapisPraktyki).filter(ZapisPraktyki.supervisor_id == current_user.id)
 
     if status_filter:
         try:
-            q = q.filter(ZapisPraktyki.status == StatusZapisu[status_filter])
-        except KeyError:
+            q = q.filter(ZapisPraktyki.status == StatusZapisu(status_filter))
+        except ValueError:
             flash(f'Nieznany status: {status_filter}', 'warning')
 
-    base_query = db.session.query(ZapisPraktyki).filter(ZapisPraktyki.uopz_id == current_user.id)
+    base_query = db.session.query(ZapisPraktyki).filter(ZapisPraktyki.supervisor_id == current_user.id)
     liczniki = {
         'wszystkie':   base_query.count(),
         'oczekujace':  base_query.filter(ZapisPraktyki.status == StatusZapisu.AWAITING_APPROVAL).count(),
@@ -246,9 +265,9 @@ def usun_praktyke(id):
     opis = f'{p.rok_uczelniany} ({p.semestr})'
     from sqlalchemy import text as _text
     db.session.execute(_text("""
-        DELETE FROM dokumenty_przeslane
-        WHERE zapis_id IN (
-            SELECT id FROM zapisy_praktyk WHERE praktyka_id = :pid
+        DELETE FROM uploaded_documents
+        WHERE enrollment_id IN (
+            SELECT id FROM internship_enrollments WHERE internship_id = :pid
         )
     """), {'pid': str(id)})
     db.session.delete(p)

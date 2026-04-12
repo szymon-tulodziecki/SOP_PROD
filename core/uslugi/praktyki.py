@@ -1,6 +1,6 @@
 """core/uslugi/praktyki.py
 
-Usługa zarządzania praktykami i zapisami studentów.
+Internship and enrollment management service.
 """
 from __future__ import annotations
 
@@ -10,20 +10,20 @@ from typing import Optional
 
 from core.extensions import db
 from core.modele.praktyki import (
-    Praktyka,
-    StatusPraktyki,
-    ZapisPraktyki,
-    StatusZapisu,
-    SciezkaPraktyki,
-    TypZdarzenia,
-    ZdarzenieProces,
-    Sprawozdanie,
+    Internship,
+    InternshipStatus,
+    InternshipEnrollment,
+    EnrollmentStatus,
+    InternshipPath,
+    EventType,
+    ProcessEvent,
+    InternshipReport,
 )
 from core.repozytoria.praktyki import RepozytoriumPraktyk, RepozytoriumZapisow
 
 
 class UslugaPraktyk:
-    """Logika biznesowa edycji praktyk i procesowania zapisów."""
+    """Business logic for internship editions and enrollment processing."""
 
     def __init__(
         self,
@@ -33,42 +33,42 @@ class UslugaPraktyk:
         self._praktyki = repo_praktyk or RepozytoriumPraktyk()
         self._zapisy   = repo_zapisow  or RepozytoriumZapisow()
 
-    # ── Edycje praktyk ────────────────────────────────────────────────────────
+    # ── Internship editions ───────────────────────────────────────────────────
 
-    def utworz_edycje(self, rok_uczelniany: str, semestr: str, wymiar_godzin: int = 160) -> Praktyka:
-        praktyka = Praktyka(
-            rok_uczelniany=rok_uczelniany,
-            semestr=semestr,
-            wymiar_godzin=wymiar_godzin,
-            status=StatusPraktyki.NIEAKTYWNA,
+    def utworz_edycje(self, rok_uczelniany: str, semestr: str, wymiar_godzin: int = 160) -> Internship:
+        praktyka = Internship(
+            academic_year=rok_uczelniany,
+            semester=semestr,
+            required_hours=wymiar_godzin,
+            status=InternshipStatus.INACTIVE,
         )
         self._praktyki.zapisz(praktyka)
         db.session.commit()
         return praktyka
 
-    def aktywuj_edycje(self, praktyka: Praktyka) -> None:
-        praktyka.status = StatusPraktyki.AKTYWNA
+    def aktywuj_edycje(self, praktyka: Internship) -> None:
+        praktyka.status = InternshipStatus.ACTIVE
         db.session.commit()
 
-    def dezaktywuj_edycje(self, praktyka: Praktyka) -> None:
-        praktyka.status = StatusPraktyki.NIEAKTYWNA
+    def dezaktywuj_edycje(self, praktyka: Internship) -> None:
+        praktyka.status = InternshipStatus.INACTIVE
         db.session.commit()
 
-    # ── Zapisy studentów ──────────────────────────────────────────────────────
+    # ── Student enrollments ───────────────────────────────────────────────────
 
     def zapisz_studenta(
         self,
         student_id: uuid.UUID,
         praktyka_id: uuid.UUID,
-        sciezka: SciezkaPraktyki = SciezkaPraktyki.STANDARDOWA,
-    ) -> ZapisPraktyki:
+        sciezka: InternshipPath = InternshipPath.STANDARD,
+    ) -> InternshipEnrollment:
         if self._zapisy.student_ma_aktywny_zapis(student_id, praktyka_id):
             raise ValueError('Student ma już aktywne zgłoszenie do tej edycji praktyk.')
-        zapis = ZapisPraktyki(
+        zapis = InternshipEnrollment(
             student_id=student_id,
-            praktyka_id=praktyka_id,
-            sciezka=sciezka,
-            status=StatusZapisu.OCZEKUJACY,
+            internship_id=praktyka_id,
+            path_type=sciezka,
+            status=EnrollmentStatus.PENDING,
         )
         self._zapisy.zapisz(zapis)
         db.session.commit()
@@ -76,108 +76,108 @@ class UslugaPraktyk:
 
     def zmien_status(
         self,
-        zapis: ZapisPraktyki,
-        nowy_status: StatusZapisu,
+        zapis: InternshipEnrollment,
+        nowy_status: EnrollmentStatus,
         komentarz: Optional[str] = None,
         wykonane_przez_id: Optional[uuid.UUID] = None,
     ) -> None:
-        """Zmienia status zapisu i opcjonalnie dodaje zdarzenie do logu."""
+        """Changes enrollment status and optionally adds a process event."""
         zapis.status = nowy_status
 
         if komentarz is not None:
-            if nowy_status in (StatusZapisu.ODRZUCONA, StatusZapisu.OCZEKUJE_NA_AKCEPT):
-                typ = TypZdarzenia.ADMIN_KOMENTARZ
-            elif nowy_status == StatusZapisu.WERYFIKACJA_KOMISJI:
-                typ = TypZdarzenia.UOPZ_KOMENTARZ
+            if nowy_status in (EnrollmentStatus.REJECTED, EnrollmentStatus.AWAITING_APPROVAL):
+                typ = EventType.ADMIN_COMMENT
+            elif nowy_status == EnrollmentStatus.COMMISSION_REVIEW:
+                typ = EventType.SUPERVISOR_COMMENT
             else:
-                typ = TypZdarzenia.ADMIN_KOMENTARZ
+                typ = EventType.ADMIN_COMMENT
             self._dodaj_zdarzenie(zapis, typ, komentarz=komentarz, wykonane_przez_id=wykonane_przez_id)
 
         db.session.commit()
 
-    def przypisz_opiekuna(self, zapis: ZapisPraktyki, uopz_id: uuid.UUID) -> None:
-        zapis.uopz_id = uopz_id
+    def przypisz_opiekuna(self, zapis: InternshipEnrollment, uopz_id: uuid.UUID) -> None:
+        zapis.supervisor_id = uopz_id
         db.session.commit()
 
     def zatwierdz_przez_komisje(
         self,
-        zapis: ZapisPraktyki,
+        zapis: InternshipEnrollment,
         decyzja: str,
         komentarz: Optional[str] = None,
         wykonane_przez_id: Optional[uuid.UUID] = None,
     ) -> None:
         self._dodaj_zdarzenie(
-            zapis, TypZdarzenia.KOMISJA_DECYZJA,
+            zapis, EventType.COMMITTEE_DECISION,
             decyzja=decyzja, komentarz=komentarz,
             wykonane_przez_id=wykonane_przez_id,
         )
-        zapis.status = StatusZapisu.AKCEPTACJA_DZIEKANA if decyzja == 'APPROVED' else StatusZapisu.ODRZUCONA
+        zapis.status = EnrollmentStatus.DEAN_APPROVAL if decyzja == 'APPROVED' else EnrollmentStatus.REJECTED
         db.session.commit()
 
     def zatwierdz_przez_dziekana(
         self,
-        zapis: ZapisPraktyki,
+        zapis: InternshipEnrollment,
         decyzja: str,
         komentarz: Optional[str] = None,
         wykonane_przez_id: Optional[uuid.UUID] = None,
     ) -> None:
         self._dodaj_zdarzenie(
-            zapis, TypZdarzenia.DZIEKAN_DECYZJA,
+            zapis, EventType.DEAN_DECISION,
             decyzja=decyzja, komentarz=komentarz,
             wykonane_przez_id=wykonane_przez_id,
         )
-        zapis.status = StatusZapisu.W_REALIZACJI if decyzja == 'APPROVED' else StatusZapisu.ODRZUCONA
+        zapis.status = EnrollmentStatus.IN_PROGRESS if decyzja == 'APPROVED' else EnrollmentStatus.REJECTED
         db.session.commit()
 
     def powiadom_studenta(
         self,
-        zapis: ZapisPraktyki,
+        zapis: InternshipEnrollment,
         komentarz: Optional[str] = None,
         wykonane_przez_id: Optional[uuid.UUID] = None,
     ) -> None:
         self._dodaj_zdarzenie(
-            zapis, TypZdarzenia.POWIADOMIENIE_STUDENTA,
+            zapis, EventType.STUDENT_NOTIFICATION,
             komentarz=komentarz,
             wykonane_przez_id=wykonane_przez_id,
         )
         db.session.commit()
 
-    def zakoncz(self, zapis: ZapisPraktyki) -> None:
-        zapis.status = StatusZapisu.ZAKONCZONA
+    def zakoncz(self, zapis: InternshipEnrollment) -> None:
+        zapis.status = EnrollmentStatus.COMPLETED
         db.session.commit()
 
-    # ── Sprawozdania ──────────────────────────────────────────────────────────
+    # ── Reports ───────────────────────────────────────────────────────────────
 
-    def pobierz_lub_utworz_sprawozdanie(self, zapis: ZapisPraktyki) -> Sprawozdanie:
-        if zapis.sprawozdanie is None:
-            sprawozdanie = Sprawozdanie(zapis_id=zapis.id)
-            db.session.add(sprawozdanie)
+    def pobierz_lub_utworz_sprawozdanie(self, zapis: InternshipEnrollment) -> InternshipReport:
+        if zapis.report is None:
+            report = InternshipReport(enrollment_id=zapis.id)
+            db.session.add(report)
             db.session.flush()
-            return sprawozdanie
-        return zapis.sprawozdanie
+            return report
+        return zapis.report
 
     # ── Helpers ───────────────────────────────────────────────────────────────
 
     def _dodaj_zdarzenie(
         self,
-        zapis: ZapisPraktyki,
-        typ: TypZdarzenia,
+        zapis: InternshipEnrollment,
+        typ: EventType,
         decyzja: Optional[str] = None,
         komentarz: Optional[str] = None,
         wykonane_przez_id: Optional[uuid.UUID] = None,
-    ) -> ZdarzenieProces:
-        zdarzenie = ZdarzenieProces(
-            zapis_id=zapis.id,
-            typ=typ,
-            decyzja=decyzja,
-            komentarz=komentarz,
-            wykonane_przez_id=wykonane_przez_id,
-            wykonano_o=datetime.utcnow(),
+    ) -> ProcessEvent:
+        zdarzenie = ProcessEvent(
+            enrollment_id=zapis.id,
+            event_type=typ,
+            decision=decyzja,
+            comment=komentarz,
+            executed_by_id=wykonane_przez_id,
+            executed_at=datetime.utcnow(),
         )
         db.session.add(zdarzenie)
         return zdarzenie
 
-    # ── Dostęp do repozytoriów ────────────────────────────────────────────────
+    # ── Repository access ─────────────────────────────────────────────────────
 
     @property
     def praktyki(self) -> RepozytoriumPraktyk:

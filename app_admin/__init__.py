@@ -100,26 +100,15 @@ def create_app():
     @app.context_processor
     def inject_tlumacz():
         return dict(tlumacz_status=lambda val: {
-            'PENDING': 'Oczekuje',
-            'IN_PROGRESS': 'W trakcie',
-            'COMPLETED': 'Zakończona',
-            'ACTIVE': 'Aktywna',
-            'INACTIVE': 'Nieaktywna',
+            'PENDING':           'Oczekuje',
             'AWAITING_APPROVAL': 'Oczekuje na akceptację',
-            'COMMISSION_REVIEW': 'Weryfikacja komisji',
-            'DEAN_APPROVAL': 'Oczekuje na dziekana',
-            'REJECTED': 'Odrzucony'
+            'IN_PROGRESS':       'W trakcie',
+            'COMPLETED':         'Zakończona',
+            'REJECTED':          'Odrzucony',
+            'ACTIVE':            'Aktywna',
+            'INACTIVE':          'Nieaktywna',
         }.get(val, val))
 
-    @app.before_request
-    def sprawdz_zmiane_hasla():
-        from flask import request, redirect, url_for
-        from flask_login import current_user
-        if (current_user.is_authenticated
-                and getattr(current_user, 'wymagana_zmiana_hasla', False)
-                and request.endpoint not in ('auth.zmien_haslo', 'auth.wylogowanie', 'static')
-                and not (request.endpoint and request.endpoint.endswith('.static'))):
-            return redirect(url_for('auth.zmien_haslo'))
 
     return app
 

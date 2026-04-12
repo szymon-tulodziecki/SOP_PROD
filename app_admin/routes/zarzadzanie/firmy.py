@@ -65,19 +65,19 @@ def lista_firm():
 
     q = db.session.query(Firma)
     if status == 'aktywne':
-        q = q.filter_by(aktywna=True)
+        q = q.filter_by(is_active=True)
     elif status == 'nieaktywne':
-        q = q.filter_by(aktywna=False)
+        q = q.filter_by(is_active=False)
 
     if szukaj:
         q = q.filter(db.or_(
-            Firma.nazwa.ilike(f'%{szukaj}%'),
-            Firma.adres.ilike(f'%{szukaj}%'),
-            Firma.miasto.ilike(f'%{szukaj}%'),
-            Firma.nip_krs.ilike(f'%{szukaj}%'),
+            Firma.name.ilike(f'%{szukaj}%'),
+            Firma.address.ilike(f'%{szukaj}%'),
+            Firma.city.ilike(f'%{szukaj}%'),
+            Firma.tax_id.ilike(f'%{szukaj}%'),
         ))
 
-    firmy     = q.order_by(Firma.nazwa).paginate(page=strona, per_page=25, error_out=False)
+    firmy     = q.order_by(Firma.name).paginate(page=strona, per_page=25, error_out=False)
     csrf_form = FlaskForm()
     return render_template('zarzadzanie/firmy/lista.html', firmy=firmy, csrf_form=csrf_form)
 
@@ -87,23 +87,23 @@ def lista_firm():
 def dodaj_firme():
     form = FormularzFirmy()
     if form.validate_on_submit():
-        istniejaca = db.session.query(Firma).filter_by(nazwa=form.nazwa.data.strip(), aktywna=True).first()
+        istniejaca = db.session.query(Firma).filter_by(name=form.nazwa.data.strip(), is_active=True).first()
         if istniejaca:
             flash('Firma o tej nazwie już istnieje w systemie.', 'error')
             return render_template('zarzadzanie/firmy/formularz.html', form=form, tryb='dodaj')
 
         if form.nip_krs.data and form.nip_krs.data.strip():
-            istniejaca_nip = db.session.query(Firma).filter_by(nip_krs=form.nip_krs.data.strip(), aktywna=True).first()
+            istniejaca_nip = db.session.query(Firma).filter_by(tax_id=form.nip_krs.data.strip(), is_active=True).first()
             if istniejaca_nip:
-                flash(f'Firma z numerem NIP/KRS "{form.nip_krs.data.strip()}" już istnieje ({istniejaca_nip.nazwa}).', 'error')
+                flash(f'Firma z numerem NIP/KRS "{form.nip_krs.data.strip()}" już istnieje ({istniejaca_nip.name}).', 'error')
                 return render_template('zarzadzanie/firmy/formularz.html', form=form, tryb='dodaj')
 
         firma = Firma(
             id      = uuid.uuid4(),
-            nazwa   = form.nazwa.data.strip(),
-            adres   = form.adres.data.strip()   if form.adres.data   else None,
-            miasto  = form.miasto.data.strip()  if form.miasto.data  else None,
-            nip_krs = form.nip_krs.data.strip() if form.nip_krs.data else None,
+            name    = form.nazwa.data.strip(),
+            address = form.adres.data.strip()   if form.adres.data   else None,
+            city    = form.miasto.data.strip()  if form.miasto.data  else None,
+            tax_id  = form.nip_krs.data.strip() if form.nip_krs.data else None,
         )
         db.session.add(firma)
         db.session.commit()
@@ -121,22 +121,22 @@ def edytuj_firme(id):
 
     if form.validate_on_submit():
         istniejaca = db.session.query(Firma)\
-            .filter(Firma.nazwa == form.nazwa.data.strip(), Firma.id != firma.id, Firma.aktywna == True).first()
+            .filter(Firma.name == form.nazwa.data.strip(), Firma.id != firma.id, Firma.is_active == True).first()
         if istniejaca:
             flash('Firma o tej nazwie już istnieje w systemie.', 'error')
             return render_template('zarzadzanie/firmy/formularz.html', form=form, tryb='edytuj', firma=firma)
 
         if form.nip_krs.data and form.nip_krs.data.strip():
             istniejaca_nip = db.session.query(Firma)\
-                .filter(Firma.nip_krs == form.nip_krs.data.strip(), Firma.id != firma.id, Firma.aktywna == True).first()
+                .filter(Firma.tax_id == form.nip_krs.data.strip(), Firma.id != firma.id, Firma.is_active == True).first()
             if istniejaca_nip:
-                flash(f'Firma z NIP/KRS "{form.nip_krs.data.strip()}" już istnieje ({istniejaca_nip.nazwa}).', 'error')
+                flash(f'Firma z NIP/KRS "{form.nip_krs.data.strip()}" już istnieje ({istniejaca_nip.name}).', 'error')
                 return render_template('zarzadzanie/firmy/formularz.html', form=form, tryb='edytuj', firma=firma)
 
-        firma.nazwa   = form.nazwa.data.strip()
-        firma.adres   = form.adres.data.strip()   if form.adres.data   else None
-        firma.miasto  = form.miasto.data.strip()  if form.miasto.data  else None
-        firma.nip_krs = form.nip_krs.data.strip() if form.nip_krs.data else None
+        firma.name    = form.nazwa.data.strip()
+        firma.address = form.adres.data.strip()   if form.adres.data   else None
+        firma.city    = form.miasto.data.strip()  if form.miasto.data  else None
+        firma.tax_id  = form.nip_krs.data.strip() if form.nip_krs.data else None
         db.session.commit()
         flash('Dane firmy zostały zaktualizowane.', 'success')
         return redirect(url_for('zarzadzanie.lista_firm'))
@@ -148,11 +148,11 @@ def edytuj_firme(id):
 @wymaga_roli(RolaUzytkownika.ADMIN)
 def usun_firme(id):
     firma             = db.session.get(Firma, id) or abort(404)
-    wszystkie_praktyki = db.session.query(ZapisPraktyki).filter_by(firma_id=firma.id).count()
+    wszystkie_praktyki = db.session.query(ZapisPraktyki).filter_by(company_id=firma.id).count()
     if wszystkie_praktyki > 0:
         flash(f'Nie można usunąć firmy - ma {wszystkie_praktyki} praktyk w historii.', 'error')
         return redirect(url_for('zarzadzanie.lista_firm'))
-    nazwa_firmy = firma.nazwa
+    nazwa_firmy = firma.name
     db.session.delete(firma)
     db.session.commit()
     flash(f'Firma "{nazwa_firmy}" została trwale usunięta z systemu.', 'success')
@@ -166,7 +166,7 @@ def przelacz_aktywnosc_firmy(id):
 
     if firma.is_active:
         aktywne_praktyki = db.session.query(ZapisPraktyki)\
-            .filter_by(firma_id=firma.id)\
+            .filter_by(company_id=firma.id)\
             .filter(ZapisPraktyki.status.in_([
                 StatusZapisu.AWAITING_APPROVAL, StatusZapisu.IN_PROGRESS,
                 StatusZapisu.COMMISSION_REVIEW, StatusZapisu.DEAN_APPROVAL,

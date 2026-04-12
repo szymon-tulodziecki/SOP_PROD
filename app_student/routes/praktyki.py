@@ -100,7 +100,7 @@ def kreator_sciezka(id):
         return redirect(url_for('praktyki.lista'))
 
     istniejacy = db.session.query(ZapisPraktyki).filter_by(
-        praktyka_id=id, student_id=current_user.id
+        internship_id=id, student_id=current_user.id
     ).filter(ZapisPraktyki.status == StatusZapisu.PENDING).first()
 
     form = FormularzSciezka()
@@ -109,8 +109,9 @@ def kreator_sciezka(id):
         if istniejacy:
             zapis = istniejacy
         else:
-            zapis = ZapisPraktyki(id=uuid.uuid4(), praktyka_id=id,
-                                   student_id=current_user.id, status=StatusZapisu.PENDING)
+            zapis = ZapisPraktyki(id=uuid.uuid4(), internship_id=id,
+                                   student_id=current_user.id, status=StatusZapisu.PENDING,
+                                   uopz_id=getattr(current_user, 'uopz_id', None))
             db.session.add(zapis)
 
         zapis.track_type = SciezkaPraktyki(form.track_type.data)
@@ -136,7 +137,7 @@ def kreator_firma(zapis_id):
         abort(404)
 
     form = FormularzDaneFirmy()
-    firmy_list = db.session.query(Firma).filter_by(aktywna=True).order_by(Firma.nazwa).all()
+    firmy_list = db.session.query(Firma).filter_by(is_active=True).order_by(Firma.name).all()
     form.firma_id.choices = [('', '--- Wybierz firmę ---')] + [(str(f.id), f.nazwa) for f in firmy_list]
 
     if form.validate_on_submit():
@@ -150,7 +151,7 @@ def kreator_firma(zapis_id):
         zapis.specjalnosc      = getattr(current_user, 'specjalnosc', '') or ''
 
         from core.modele import DaneMiejscaPraktyki
-        dm = zapis.dane_miejsca or DaneMiejscaPraktyki(zapis_id=zapis.id)
+        dm = zapis.dane_miejsca or DaneMiejscaPraktyki(enrollment_id=zapis.id)
         if dm not in db.session:
             db.session.add(dm)
 
@@ -183,7 +184,8 @@ def kreator_firma(zapis_id):
         dm.zopz_email         = form.zopz_email.data
         db.session.commit()
         if zapis.status == StatusZapisu.AWAITING_APPROVAL:
-            zapis.status = StatusZapisu.COMMISSION_REVIEW
+            from core.uslugi.workflow import ZapisFSM
+            ZapisFSM(zapis).wyslij_do_komisji()
             db.session.commit()
             flash('Dane zaktualizowane i zgłoszenie odesłane do komisji.', 'success')
             return redirect(url_for('praktyki.szczegoly_zgloszenia', id=zapis.id))
@@ -224,7 +226,7 @@ def kreator_wniosek(zapis_id):
 
     if form.validate_on_submit():
         from core.modele import DaneMiejscaPraktyki, UzasadnienieSciezki
-        dm = zapis.dane_miejsca or DaneMiejscaPraktyki(zapis_id=zapis.id)
+        dm = zapis.dane_miejsca or DaneMiejscaPraktyki(enrollment_id=zapis.id)
         if dm not in db.session:
             db.session.add(dm)
         dm.firma_nazwa   = form.pracodawca_nazwa.data
@@ -232,16 +234,20 @@ def kreator_wniosek(zapis_id):
         dm.firma_miasto  = form.pracodawca_miasto.data
         dm.zopz_stanowisko = form.stanowisko.data
 
-        uz = zapis.uzasadnienie or UzasadnienieSciezki(zapis_id=zapis.id)
+        uz = zapis.uzasadnienie or UzasadnienieSciezki(enrollment_id=zapis.id)
         if uz not in db.session:
             db.session.add(uz)
         uz.uzasadnienie = form.uzasadnienie.data
 
         byl_awaiting = zapis.status == StatusZapisu.AWAITING_APPROVAL
-        zapis.status = StatusZapisu.COMMISSION_REVIEW
         db.session.commit()
-        flash('Dane zaktualizowane i wniosek odesłany do komisji.' if byl_awaiting else 'Wniosek złożony. Oczekujesz na decyzję komisji.', 'success')
-        return redirect(url_for('praktyki.szczegoly_zgloszenia', id=zapis.id))
+        if byl_awaiting:
+            from core.uslugi.workflow import ZapisFSM
+            ZapisFSM(zapis).wyslij_do_komisji()
+            db.session.commit()
+            flash('Dane zaktualizowane i wniosek odesłany do komisji.', 'success')
+            return redirect(url_for('praktyki.szczegoly_zgloszenia', id=zapis.id))
+        return redirect(url_for('praktyki.potwierdz_wyslanie', id=zapis.id))
 
     if request.method == 'GET':
         dm = zapis.dane_miejsca
@@ -262,22 +268,35 @@ def kreator_wniosek(zapis_id):
 def lista():
     dostepne = db.session.query(Praktyka)\
                  .filter_by(status=StatusPraktyki.ACTIVE)\
-                 .order_by(Praktyka.rok_uczelniany.desc())\
+                 .order_by(Praktyka.academic_year.desc())\
                  .all()
 
-    zapisy_data = {
-        str(z.praktyka_id): {
-            'id': str(z.id),
-            'status': z.status.value,
-            'sciezka': z.sciezka.value if z.sciezka else None,
+    zapisy_data = {}
+    for z in db.session.query(ZapisPraktyki).filter_by(student_id=current_user.id).all():
+        komentarz_admina = z.komentarze_admina
+        komentarz_uopz   = z.komentarze_uopz
+        sciezka = z.sciezka.value if z.sciezka else None
+        # Ścieżka A: admin zwraca do PENDING z komentarzem
+        zwrocone_a = (z.status == StatusZapisu.OCZEKUJACY and bool(komentarz_admina or komentarz_uopz))
+        # Ścieżka B/C: komisja zwraca do AWAITING_APPROVAL z komentarzem UOPZ
+        zwrocone_bc = (
+            z.status == StatusZapisu.OCZEKUJE_NA_AKCEPT
+            and bool(komentarz_uopz)
+            and sciezka in ('EMPLOYMENT', 'OWN_BUSINESS')
+        )
+        zwrocone = zwrocone_a or zwrocone_bc
+        zapisy_data[str(z.praktyka_id)] = {
+            'id':       str(z.id),
+            'status':   z.status.value,
+            'sciezka':  sciezka,
+            'zwrocone': zwrocone,
+            'komentarz_zwrotny': komentarz_admina or komentarz_uopz or '',
             'wymaga_uwagi': (
                 z.status == StatusZapisu.AWAITING_APPROVAL
-                and bool(z.komentarze_uopz)
+                and bool(komentarz_uopz)
+                and sciezka == 'STANDARD'
             ),
         }
-        for z in db.session.query(ZapisPraktyki)\
-                   .filter_by(student_id=current_user.id).all()
-    }
 
     csrf_form = FlaskForm()
     return render_template('praktyki/lista.html', dostepne=dostepne, zapisy_data=zapisy_data, csrf_form=csrf_form)
@@ -292,7 +311,8 @@ def zakoncz_praktyke(id):
     if zapis.status != StatusZapisu.IN_PROGRESS:
         flash('Praktykę można zakończyć tylko gdy jest w trakcie realizacji.', 'warning')
         return redirect(url_for('praktyki.lista'))
-    zapis.status = StatusZapisu.COMPLETED
+    from core.uslugi.workflow import ZapisFSM
+    ZapisFSM(zapis).zakoncz()
     db.session.commit()
     flash('Praktyka została oznaczona jako zakończona. Dokumenty końcowe są teraz dostępne w zakładce Moje Dokumenty.', 'success')
     return redirect(url_for('praktyki.lista'))
@@ -317,7 +337,7 @@ def zapisz_krok2(id):
         
     if request.method == 'POST':
         # Czyszczenie starego jeśli student wraca z jakiegoś powodu
-        db.session.query(HarmonogramPraktyki).filter_by(zapis_id=zapis.id).delete()
+        db.session.query(HarmonogramPraktyki).filter_by(enrollment_id=zapis.id).delete()
         
         suma_dni = 0
         nowe_wiersze = []
@@ -348,7 +368,7 @@ def zapisz_krok2(id):
     else:
         # GET request - pobranie istniejących danych harmonogramu
         istniejace_harmonogramy = {}
-        harmonogramy = db.session.query(HarmonogramPraktyki).filter_by(zapis_id=zapis.id).all()
+        harmonogramy = db.session.query(HarmonogramPraktyki).filter_by(enrollment_id=zapis.id).all()
         for h in harmonogramy:
             istniejace_harmonogramy[str(h.learning_outcome_id)] = {
                 'dzial': h.nazwa_dzialu,
@@ -387,7 +407,13 @@ def wyslij_do_zatwierdzenia(id):
     if zapis.status != StatusZapisu.PENDING:
         flash('Zgłoszenie zostało już wysłane.', 'info')
         return redirect(url_for('praktyki.szczegoly_zgloszenia', id=id))
-    zapis.status = StatusZapisu.AWAITING_APPROVAL
+    # Ścieżka A → czeka na UOPZ; B/C → od razu do komisji
+    from core.uslugi.workflow import ZapisFSM
+    fsm = ZapisFSM(zapis)
+    if zapis.sciezka and zapis.sciezka.value in ('EMPLOYMENT', 'OWN_BUSINESS'):
+        fsm.wyslij_do_komisji()
+    else:
+        fsm.wyslij_do_akceptacji()
     db.session.commit()
     flash('Zgłoszenie zostało przesłane do zatwierdzenia.', 'success')
     return redirect(url_for('praktyki.szczegoly_zgloszenia', id=id))
@@ -403,16 +429,16 @@ def szczegoly_zgloszenia(id):
 
     rows = (
         db.session.query(DokumentPrzeslany)
-        .filter_by(zapis_id=id)
-        .order_by(DokumentPrzeslany.przeslano_o.desc())
+        .filter_by(enrollment_id=id, uploaded_by_id=current_user.id)
+        .order_by(DokumentPrzeslany.uploaded_at.desc())
         .all()
     )
     uploaded_docs = [
         {
             'id': str(d.id),
-            'original_filename': d.oryginalna_nazwa,
-            'document_type': d.typ_dokumentu,
-            'uploaded_at': d.przeslano_o,
+            'original_filename': d.original_filename,
+            'document_type': d.document_type,
+            'uploaded_at': d.uploaded_at,
         }
         for d in rows
     ]
@@ -432,7 +458,8 @@ def resubmit_zgloszenia(id):
     if zapis.status != StatusZapisu.AWAITING_APPROVAL:
         flash('Zgłoszenie nie może być ponownie wysłane w tym statusie.', 'warning')
         return redirect(url_for('praktyki.szczegoly_zgloszenia', id=id))
-    zapis.status = StatusZapisu.COMMISSION_REVIEW
+    from core.uslugi.workflow import ZapisFSM
+    ZapisFSM(zapis).wyslij_do_komisji()
     db.session.commit()
     flash('Zgłoszenie zostało ponownie wysłane do weryfikacji komisji.', 'success')
     return redirect(url_for('praktyki.szczegoly_zgloszenia', id=id))

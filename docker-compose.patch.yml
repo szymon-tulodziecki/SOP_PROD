@@ -12,9 +12,9 @@ services:
     volumes:
       - ./tex_engine/templates:/app/templates:ro
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:5002/health"]
       interval: 10s
       timeout: 5s
       retries: 3
     expose:
-      - "5001"
+      - "5002"

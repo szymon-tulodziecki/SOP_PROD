@@ -1,8 +1,8 @@
 """core/modele/uzytkownicy.py
 
-Modele domenowe: Użytkownicy systemu.
-Joined Table Inheritance (JTI): wspólna tabela uzytkownicy,
-rozszerzona przez Studenta, Administratora i OpikunaUczelnianego.
+Domain models: System users.
+Joined Table Inheritance (JTI): shared `users` table extended by
+Student, Administrator, and UniversityMentor subclasses.
 """
 import uuid
 import enum
@@ -13,139 +13,133 @@ from sqlalchemy.dialects.postgresql import UUID
 from core.extensions import db
 
 
-# ── Enumy dziedziny użytkowników ─────────────────────────────────────────────
+# ── Enums ─────────────────────────────────────────────────────────────────────
 
-class RolaUzytkownika(enum.Enum):
-    STUDENT      = 'STUDENT'
-    UOPZ         = 'UOPZ'
-    ADMIN        = 'ADMIN'
+class UserRole(enum.Enum):
+    STUDENT = 'STUDENT'
+    UOPZ    = 'UOPZ'
+    ADMIN   = 'ADMIN'
 
 
-# ── Klasa bazowa ─────────────────────────────────────────────────────────────
+# ── Base model ────────────────────────────────────────────────────────────────
 
-class Uzytkownik(UserMixin, db.Model):
-    """Wspólna tabela wszystkich kont w systemie.
+class User(UserMixin, db.Model):
+    """Shared table for all system accounts.
 
-    Discriminator: kolumna `rola` — SQLAlchemy automatycznie
-    zwraca właściwą podklasę przy zapytaniu przez klasę bazową.
+    Discriminator: `role` column — SQLAlchemy automatically returns
+    the correct subclass when querying through the base class.
     """
-    __tablename__ = 'uzytkownicy'
+    __tablename__ = 'users'
     __mapper_args__ = {
-        'polymorphic_on':       'rola',
+        'polymorphic_on':       'role',
         'polymorphic_identity': None,
     }
 
-    id                    = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    email                 = db.Column(db.String(255), unique=True, nullable=False)
-    hash_hasla            = db.Column('hash_hasla', db.String(255), nullable=False)
-    imie                  = db.Column('imie', db.String(100), nullable=False)
-    nazwisko              = db.Column('nazwisko', db.String(100), nullable=False)
-    rola                  = db.Column(
-        'rola',
-        db.Enum(RolaUzytkownika, name='rola_uzytkownika', values_callable=lambda e: [x.value for x in e]),
+    id                       = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    email                    = db.Column(db.String(255), unique=True, nullable=False)
+    password_hash            = db.Column(db.String(255), nullable=False)
+    first_name               = db.Column(db.String(100), nullable=False)
+    last_name                = db.Column(db.String(100), nullable=False)
+    role                     = db.Column(
+        db.Enum(UserRole, name='user_role', values_callable=lambda e: [x.value for x in e]),
         nullable=False,
     )
-    aktywny               = db.Column('aktywny', db.Boolean, default=True)
-    wymagana_zmiana_hasla = db.Column(db.Boolean, default=True)
-    utworzono             = db.Column('utworzono', db.DateTime, server_default=db.func.now())
-
-    # ── Compat z istniejącym kodem (Flask-Login, szablony) ───────────────────
-
-    @property
-    def password_hash(self):
-        return self.hash_hasla
-
-    @password_hash.setter
-    def password_hash(self, v):
-        self.hash_hasla = v
-
-    @property
-    def first_name(self):
-        return self.imie
-
-    @first_name.setter
-    def first_name(self, v):
-        self.imie = v
-
-    @property
-    def last_name(self):
-        return self.nazwisko
-
-    @last_name.setter
-    def last_name(self, v):
-        self.nazwisko = v
-
-    @property
-    def role(self):
-        return self.rola
-
-    @role.setter
-    def role(self, v):
-        self.rola = v
-
-    @property
-    def is_active(self):
-        return self.aktywny
-
-    @is_active.setter
-    def is_active(self, v):
-        self.aktywny = v
-
-    @property
-    def created_at(self):
-        return self.utworzono
+    is_active                = db.Column(db.Boolean, default=True)
+    require_password_change  = db.Column(db.Boolean, default=True)
+    created_at               = db.Column(db.DateTime, server_default=db.func.now())
 
     def get_id(self) -> str:
         return str(self.id)
 
-    def __repr__(self) -> str:
-        return f'<Uzytkownik {self.email} ({self.rola})>'
+    # Flask-Login requires `is_active` as a property — already a column, works fine.
 
-
-# ── Podklasy per rola — JTI ──────────────────────────────────────────────────
-
-class Student(Uzytkownik):
-    """Dane specyficzne dla studenta — tabela studenci."""
-    __tablename__ = 'studenci'
-    __mapper_args__ = {'polymorphic_identity': RolaUzytkownika.STUDENT}
-
-    id           = db.Column(UUID(as_uuid=True), db.ForeignKey('uzytkownicy.id', ondelete='CASCADE'), primary_key=True)
-    numer_albumu = db.Column('numer_albumu', db.String(20),  nullable=True)
-    plec         = db.Column('plec',         db.String(1),   nullable=True)   # 'M' lub 'K'
-    kierunek     = db.Column('kierunek',     db.String(100), nullable=True)
-    specjalnosc  = db.Column('specjalnosc',  db.String(100), nullable=True)
-    tryb_studiow = db.Column('tryb_studiow', db.String(20),  nullable=True)   # 'stacjonarne'/'niestacjonarne'
-
-    # Compat
     @property
-    def album_number(self):
-        return self.numer_albumu
+    def imie(self):
+        return self.first_name
 
-    @album_number.setter
-    def album_number(self, v):
-        self.numer_albumu = v
+    @property
+    def nazwisko(self):
+        return self.last_name
+
+    @property
+    def rola(self):
+        return self.role
 
     def __repr__(self) -> str:
-        return f'<Student {self.email} nr={self.numer_albumu}>'
+        return f'<User {self.email} ({self.role})>'
 
 
-class Administrator(Uzytkownik):
-    """Konto administratora systemu."""
-    __tablename__ = 'administratorzy'
-    __mapper_args__ = {'polymorphic_identity': RolaUzytkownika.ADMIN}
+# ── JTI subclasses ────────────────────────────────────────────────────────────
 
-    id = db.Column(UUID(as_uuid=True), db.ForeignKey('uzytkownicy.id', ondelete='CASCADE'), primary_key=True)
+class Student(User):
+    """Student-specific data — `students` table."""
+    __tablename__ = 'students'
+
+    id             = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id', ondelete='CASCADE'), primary_key=True)
+    album_number   = db.Column(db.String(20),  nullable=True)
+    gender         = db.Column(db.String(1),   nullable=True)   # 'M' or 'F'
+    field_of_study = db.Column(db.String(100), nullable=True)
+    specialization = db.Column(db.String(100), nullable=True)
+    study_mode     = db.Column(db.String(20),  nullable=True)   # 'full-time'/'part-time'
+    supervisor_id  = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
+
+    __mapper_args__ = {
+        'polymorphic_identity': UserRole.STUDENT,
+        'inherit_condition': id == User.__table__.c.id,
+    }
+
+    # Backward-compat shims used in routes/templates that haven't been updated yet
+    @property
+    def numer_albumu(self):
+        return self.album_number
+
+    @property
+    def plec(self):
+        return self.gender
+
+    @property
+    def kierunek(self):
+        return self.field_of_study
+
+    @property
+    def specjalnosc(self):
+        return self.specialization
+
+    @property
+    def tryb_studiow(self):
+        return self.study_mode
+
+    @property
+    def uopz_id(self):
+        return self.supervisor_id
+
+    def __repr__(self) -> str:
+        return f'<Student {self.email} album={self.album_number}>'
+
+
+class Administrator(User):
+    """Administrator account."""
+    __tablename__ = 'administrators'
+    __mapper_args__ = {'polymorphic_identity': UserRole.ADMIN}
+
+    id = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id', ondelete='CASCADE'), primary_key=True)
 
     def __repr__(self) -> str:
         return f'<Administrator {self.email}>'
 
 
-class OpikunUczelniany(Uzytkownik):
-    """Uczelniany Opiekun Praktyk Zawodowych (UOPZ)."""
-    __tablename__ = 'opiekunowie_uczelniani'
-    __mapper_args__ = {'polymorphic_identity': RolaUzytkownika.UOPZ}
+class UniversityMentor(User):
+    """University Internship Supervisor (UOPZ)."""
+    __tablename__ = 'university_mentors'
+    __mapper_args__ = {'polymorphic_identity': UserRole.UOPZ}
 
-    id = db.Column(UUID(as_uuid=True), db.ForeignKey('uzytkownicy.id', ondelete='CASCADE'), primary_key=True)
+    id = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id', ondelete='CASCADE'), primary_key=True)
 
     def __repr__(self) -> str:
-        return f'<OpikunUczelniany {self.email}>'
+        return f'<UniversityMentor {self.email}>'
+
+
+# ── Backward-compat aliases (remove after all routes migrated) ────────────────
+Uzytkownik        = User
+RolaUzytkownika   = UserRole
+OpikunUczelniany  = UniversityMentor
