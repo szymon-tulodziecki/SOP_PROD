@@ -7,11 +7,13 @@ Flask-WTF==1.2.1
 psycopg2-binary==2.9.9
 Werkzeug==3.0.1
 gunicorn==21.2.0
+gevent==24.2.1
 python-dotenv==1.0.1
 
 # Celery + Redis
 celery==5.3.6
 redis==5.0.3
+flask-limiter[redis]==3.8.0
 
 # TeX engine
 Jinja2==3.1.3

@@ -6,7 +6,10 @@ from wtforms import TextAreaField
 from wtforms.validators import DataRequired, Optional
 
 from core.extensions import db
-from core.modele import ZapisPraktyki, Sprawozdanie, StatusZapisu, SciezkaPraktyki
+from core.modele import InternshipEnrollment, InternshipReport, EnrollmentStatus, InternshipPath
+from core.repozytoria import RepozytoriumZapisow
+
+_repo_zapisow = RepozytoriumZapisow()
 
 sprawozdania_bp = Blueprint('sprawozdania', __name__)
 
@@ -28,24 +31,18 @@ class FormularzSprawozdaniaPracaZawodowa(FlaskForm):
 @sprawozdania_bp.route('/', methods=['GET', 'POST'])
 @login_required
 def index():
-    zapis = db.session.query(ZapisPraktyki).filter(
-        ZapisPraktyki.student_id == current_user.id,
-        ZapisPraktyki.status.in_([
-            StatusZapisu.IN_PROGRESS,
-            StatusZapisu.COMMISSION_REVIEW,
-            StatusZapisu.DEAN_APPROVAL,
-            StatusZapisu.COMPLETED,
-            StatusZapisu.AWAITING_APPROVAL,
-        ])
-    ).first()
+    zapis = _repo_zapisow.aktywny_dla_studenta(current_user.id, [
+        EnrollmentStatus.IN_PROGRESS, EnrollmentStatus.COMMISSION_REVIEW,
+        EnrollmentStatus.DEAN_APPROVAL, EnrollmentStatus.COMPLETED, EnrollmentStatus.AWAITING_APPROVAL,
+    ])
 
     if not zapis:
-        ma_zapis = db.session.query(ZapisPraktyki).filter_by(student_id=current_user.id).first()
+        ma_zapis = _repo_zapisow.pierwszy_dla_studenta(current_user.id)
         return render_template('sprawozdania/index.html', zapis=None, ma_zapis=ma_zapis)
 
     # Utwórz sprawozdanie jeśli nie istnieje
     if not zapis.sprawozdanie:
-        nowe_spr = Sprawozdanie(
+        nowe_spr = InternshipReport(
             id=uuid.uuid4(),
             enrollment_id=zapis.id,
             charakterystyka_miejsca='',
@@ -53,7 +50,7 @@ def index():
         )
         db.session.add(nowe_spr)
         db.session.commit()
-        zapis = db.session.get(ZapisPraktyki, zapis.id)
+        zapis = db.session.get(InternshipEnrollment, zapis.id)
 
     # Wybierz formularz i szablon wg ścieżki
     sciezka = zapis.track_type.value if zapis.track_type else 'STANDARD'
@@ -66,7 +63,7 @@ def index():
         zapis.sprawozdanie.charakterystyka_miejsca = form.charakterystyka.data
         zapis.sprawozdanie.opis_i_analiza = form.opis.data
         db.session.commit()
-        flash('Sprawozdanie zostało zapisane.', 'success')
+        flash('InternshipReport zostało zapisane.', 'success')
         return redirect(url_for('sprawozdania.index'))
     elif request.method == 'GET':
         form.charakterystyka.data = zapis.sprawozdanie.charakterystyka_miejsca

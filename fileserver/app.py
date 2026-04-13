@@ -31,10 +31,18 @@ def health():
     return jsonify({'ok': True})
 
 
+def _safe_dest(filename: str) -> Path:
+    """Zwraca bezpieczną ścieżkę lub przerywa z HTTP 400 (Path Traversal)."""
+    dest = (STORAGE / filename).resolve()
+    if not dest.is_relative_to(STORAGE.resolve()):
+        abort(400)
+    return dest
+
+
 @app.route('/files/<path:filename>', methods=['PUT'])
 def upload(filename):
     _auth()
-    dest = STORAGE / filename
+    dest = _safe_dest(filename)
     dest.write_bytes(request.get_data())
     return jsonify({'ok': True}), 201
 
@@ -42,7 +50,7 @@ def upload(filename):
 @app.route('/files/<path:filename>', methods=['GET'])
 def download(filename):
     _auth()
-    dest = STORAGE / filename
+    dest = _safe_dest(filename)
     if not dest.exists():
         abort(404)
     return Response(dest.read_bytes(), mimetype='application/octet-stream')
@@ -51,7 +59,7 @@ def download(filename):
 @app.route('/files/<path:filename>', methods=['DELETE'])
 def delete(filename):
     _auth()
-    dest = STORAGE / filename
+    dest = _safe_dest(filename)
     if dest.exists():
         dest.unlink()
     return jsonify({'ok': True})

@@ -24,6 +24,9 @@ class Config:
     AZURE_CLIENT_SECRET = _require('AZURE_CLIENT_SECRET')
     AZURE_TENANT_ID     = _require('AZURE_TENANT_ID')
 
+    # Rate limiting (flask-limiter + Redis)
+    RATELIMIT_STORAGE_URI = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/0')
+
 
 class DevelopmentConfig(Config):
     DEBUG = True
@@ -33,8 +36,9 @@ class DevelopmentConfig(Config):
 class ProductionConfig(Config):
     DEBUG = False
     ENV = 'production'
-    # Na produkcji wymusimy silniejsze zabezpieczenia ciasteczek (tylko HTTPS)
-    SESSION_COOKIE_SECURE = True
+    SESSION_COOKIE_SECURE   = True
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'Lax'
 
 
 # Słownik ułatwiający Fabryce Aplikacji wybór odpowiedniej klasy

@@ -1,13 +1,25 @@
 import uuid
 import json
 import time
+
+try:
+    # Przy gevent workerze monkeypatching jest aktywny — używamy gevent.sleep,
+    # które oddaje procesor innym greenletom zamiast blokować wątek OS.
+    # Przy sync workerze (testy, dev) fallback na time.sleep.
+    from gevent import sleep as _sleep
+except ImportError:
+    from time import sleep as _sleep
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, abort, send_file, current_app, Response
 from flask_login import login_required, current_user
 from pathlib import Path
 
-from core.modele import ZapisPraktyki, DocumentAuditLog, RolaUzytkownika
-from core.extensions import db
+from core.modele import InternshipEnrollment, DocumentAuditLog, UserRole
+from core.extensions import db, limiter
 from core.autoryzacja import wymaga_roli
+from core.repozytoria import RepozytoriumZapisow, RepozytoriumLogow
+
+_repo_zapisow = RepozytoriumZapisow()
+_repo_logow   = RepozytoriumLogow()
 
 import logging
 logger = logging.getLogger(__name__)
@@ -40,92 +52,36 @@ def log_audit(zapis_id, doc_type, action, details=""):
     db.session.commit()
 
 @documents_bp.route('/zapis/<uuid:id>')
-@wymaga_roli(RolaUzytkownika.ADMIN, RolaUzytkownika.UOPZ)
+@wymaga_roli(UserRole.ADMIN, UserRole.UOPZ)
 def panel(id):
-    zapis = db.session.get(ZapisPraktyki, id) or abort(404)
-    logs = db.session.query(DocumentAuditLog).filter_by(enrollment_id=id).order_by(DocumentAuditLog.created_at.desc()).limit(20).all()
+    zapis = _repo_zapisow.znajdz_po_id(id) or abort(404)
+    logs  = _repo_logow.ostatnie_dla_zapisu(id)
     return render_template('documents/panel.html', zapis=zapis, docs=DOCUMENTS, logs=logs)
 
-@documents_bp.route('/zapis/<uuid:id>/edytuj/<doc_type>', methods=['GET'])
-@wymaga_roli(RolaUzytkownika.ADMIN, RolaUzytkownika.UOPZ)
-def edytuj(id, doc_type):
-    zapis = db.session.get(ZapisPraktyki, id) or abort(404)
-    if doc_type not in DOCUMENTS: abort(404)
-
-    template_name, doc_title = DOCUMENTS[doc_type]
-
-    from tex_service.compiler import render_tex
-    from tex_service.pdf_service import pdf_service
-
-    context = {}
-    if doc_type == 'ZAL_6':
-        context = pdf_service.build_context_dziennik(zapis)
-    elif doc_type == 'ZAL_4':
-        context = pdf_service.build_context_efekty(zapis)
-    elif doc_type == 'ZAL_7':
-        tresc = {'charakterystyka_miejsca': zapis.sprawozdanie.charakterystyka_miejsca if zapis.sprawozdanie else '',
-                 'opis_prac': zapis.sprawozdanie.opis_i_analiza if zapis.sprawozdanie else '',
-                 'efekty_opisy': ['' for _ in range(13)]}
-        context = pdf_service.build_context_sprawozdanie(zapis, tresc)
-    else:
-        context = {'student': zapis.student, 'firma': zapis.dane_miejsca, 'zapis': zapis}
-
-    try:
-        raw_tex = render_tex(template_name, context)
-    except Exception as e:
-        raw_tex = f"% BŁĄD RENDEROWANIA SZABLONU: {str(e)}\n\n% Edytuj dokument od zera jeśli wymagane.\n"
-
-    log_audit(zapis.id, doc_type, 'VIEWED_MANUAL', 'Otwarto edytor ręczny LaTeX')
-    return render_template('documents/edytor.html', zapis=zapis, raw_tex=raw_tex, doc_type=doc_type, doc_title=doc_title)
-
 @documents_bp.route('/zapis/<uuid:id>/generuj_auto/<doc_type>', methods=['POST'])
-@wymaga_roli(RolaUzytkownika.ADMIN, RolaUzytkownika.UOPZ)
+@wymaga_roli(UserRole.ADMIN, UserRole.UOPZ)
+@limiter.limit("60 per hour")
 def generuj_auto(id, doc_type):
-    from tex_service.compiler import render_tex
-    from tex_service.pdf_service import pdf_service
-    from celery_app import compile_raw_tex_task
-    zapis = db.session.get(ZapisPraktyki, id) or abort(404)
-    if doc_type not in DOCUMENTS: abort(404)
+    zapis = _repo_zapisow.znajdz_po_id(id) or abort(404)
+    if doc_type not in DOCUMENTS:
+        abort(404)
 
-    template_name, doc_title = DOCUMENTS[doc_type]
+    template_name, _ = DOCUMENTS[doc_type]
 
-    context = {}
-    if doc_type == 'ZAL_6':
-        context = pdf_service.build_context_dziennik(zapis)
-    elif doc_type == 'ZAL_4':
-        context = pdf_service.build_context_efekty(zapis)
-    elif doc_type == 'ZAL_7':
-        tresc = {'charakterystyka_miejsca': zapis.sprawozdanie.charakterystyka_miejsca if zapis.sprawozdanie else '',
-                 'opis_prac': zapis.sprawozdanie.opis_i_analiza if zapis.sprawozdanie else '',
-                 'efekty_opisy': ['' for _ in range(13)]}
-        context = pdf_service.build_context_sprawozdanie(zapis, tresc)
-    else:
-        context = {'student': zapis.student, 'firma': zapis.dane_miejsca, 'zapis': zapis}
+    from core.uslugi.dokumenty import buduj_kontekst
+    from celery_app import generuj_pdf_z_szablonu
+
+    context = buduj_kontekst(zapis, doc_type)
 
     try:
-        raw_tex = render_tex(template_name, context)
-        task = compile_raw_tex_task.delay(raw_tex, doc_type.lower())
+        task = generuj_pdf_z_szablonu.delay(template_name, context, doc_type.lower())
         log_audit(zapis.id, doc_type, 'GENERATED_AUTO', f'Wygenerowano {doc_type}')
         return jsonify({'task_id': task.id, 'status': 'PENDING'})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-
-@documents_bp.route('/zapis/<uuid:id>/kompiluj/<doc_type>', methods=['POST'])
-@wymaga_roli(RolaUzytkownika.ADMIN)
-def kompiluj_recznie(id, doc_type):
-    tex_source = request.form.get('tex_source')
-    if not tex_source: abort(400)
-    log_audit(id, doc_type, 'COMPILED_MANUAL', f'Rozpoczęto kompilację ręczną {doc_type}')
-    try:
-        from celery_app import compile_raw_tex_task
-        task = compile_raw_tex_task.delay(tex_source, doc_type.lower())
-        return jsonify({'task_id': task.id, 'status': 'PENDING'})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
 @documents_bp.route('/status/<task_id>')
-@wymaga_roli(RolaUzytkownika.ADMIN, RolaUzytkownika.UOPZ)
+@wymaga_roli(UserRole.ADMIN, UserRole.UOPZ)
 def status_pdf(task_id):
     """Legacy polling endpoint — zachowany dla kompatybilności wstecznej."""
     try:
@@ -146,7 +102,7 @@ def status_pdf(task_id):
 _SSE_MAX_SECONDS = 120   # po tym czasie strumień jest zamykany niezależnie od stanu
 
 @documents_bp.route('/stream/<task_id>')
-@wymaga_roli(RolaUzytkownika.ADMIN, RolaUzytkownika.UOPZ)
+@wymaga_roli(UserRole.ADMIN, UserRole.UOPZ)
 def stream_status(task_id):
     """Server-Sent Events — status generowania PDF.
 
@@ -182,7 +138,7 @@ def stream_status(task_id):
                     logger.error("SSE stream error for task %s: %s", task_id, exc)
                     yield f"data: {json.dumps({'status': 'FAILURE', 'error': str(exc)})}\n\n"
                     return
-                time.sleep(1)
+                _sleep(1)
         finally:
             # Wysyłamy zamknięcie — klient może zareagować komunikatem timeout
             yield f"data: {json.dumps({'status': 'TIMEOUT'})}\n\n"
@@ -191,7 +147,7 @@ def stream_status(task_id):
                     headers={'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no'})
 
 @documents_bp.route('/pobierz/<task_id>')
-@wymaga_roli(RolaUzytkownika.ADMIN, RolaUzytkownika.UOPZ)
+@wymaga_roli(UserRole.ADMIN, UserRole.UOPZ)
 def pobierz_pdf(task_id):
     try:
         from celery_app import celery

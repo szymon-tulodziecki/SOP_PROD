@@ -1,27 +1,31 @@
 """celery_app.py
 Konfiguracja Celery i taski generowania PDF.
 
-WZORZEC: minimalna aplikacja Flask dla workera.
+WZORZEC: minimalna aplikacja Flask dla workera z QueuePool + dispose po fork().
 
-Różnica względem naiwnego podejścia (ContextTask + pełny create_app):
-- Worker NIE ładuje blueprintów, szablonów ani rozszerzeń bezpieczeństwa.
-- SQLAlchemy używa NullPool: po każdym zadaniu gniazdo TCP jest zamykane,
-  co eliminuje problem "server has gone away" w środowisku wieloprocesowym.
-- Kontekst aplikacji jest tworzony JEDNORAZOWO przy starcie workera i
-  pozostaje aktywny przez cały czas życia procesu (nie per-task).
+Zamiast NullPool (które otwiera nowe TCP przy każdym zapytaniu) stosujemy:
+1. Standardowy QueuePool w procesie macierzystym.
+2. Sygnał worker_process_init: db.engine.dispose(close=False) — porzuca
+   odziedziczone deskryptory bez wysyłania QUIT do bazy, więc każdy
+   podproces workera buduje własną, czystą pulę od pierwszego zapytania.
+3. Sygnał worker_process_shutdown: db.session.remove() + db.engine.dispose()
+   — czyste zamknięcie po zatrzymaniu procesu.
+
+Parametry puli (pool_size=2, max_overflow=3, pool_timeout=10) dobrane pod
+typowe obciążenie Celery: 2 równoległe zapytania na worker + krótki overflow
+dla spiętrzonych tasków.
 """
 import os
 import logging
 
 from celery import Celery, signals
 from flask import Flask
-from sqlalchemy.pool import NullPool
 
 logger = logging.getLogger(__name__)
 
-BROKER_URL    = os.environ['CELERY_BROKER_URL']
-RESULT_URL    = os.environ['CELERY_RESULT_BACKEND']
-PDF_OUTPUT_DIR = os.environ.get('PDF_OUTPUT_DIR', '/app/pdf_output')
+BROKER_URL      = os.environ['CELERY_BROKER_URL']
+RESULT_URL      = os.environ['CELERY_RESULT_BACKEND']
+PDF_OUTPUT_DIR  = os.environ.get('PDF_OUTPUT_DIR', '/app/pdf_output')
 TEX_SERVICE_URL = os.environ.get('TEX_SERVICE_URL', 'http://tex-service:5002')
 
 # ── 1. Celery — konfiguracja ──────────────────────────────────────────────────
@@ -53,20 +57,22 @@ celery.conf.update(
 # ── 2. Minimalna aplikacja Flask dla workera ──────────────────────────────────
 def _create_worker_app() -> Flask:
     """
-    Tworzy odchudzoną aplikację Flask bez żadnych blueprintów ani rozszerzeń
-    webowych. Jedynym celem jest dostarczenie kontekstu aplikacji i puli
-    połączeń SQLAlchemy z NullPool (bezpiecznej w środowisku wieloprocesowym).
+    Tworzy odchudzoną aplikację Flask bez blueprintów ani rozszerzeń webowych.
+    Używa QueuePool (domyślna pula SQLAlchemy) z parametrami dopasowanymi do
+    środowiska Celery. Właściwa izolacja połączeń po fork() realizowana jest
+    przez sygnał worker_process_init.
     """
     app = Flask(__name__)
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
-        'DATABASE_URL',
-        'postgresql+psycopg2://ans_admin:secure_password_123@localhost:5432/ans_praktyki',
-    )
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    # NullPool: każde zapytanie otwiera i natychmiast zamyka gniazdo TCP.
-    # Eliminuje błędy "server has gone away" po fork() i zakleszczenia puli.
-    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {'poolclass': NullPool}
-    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'worker-only')
+    # QueuePool: pula utrzymywana per-proces, odbudowywana po fork() via dispose.
+    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+        'pool_size':     2,      # stałe połączenia na worker
+        'max_overflow':  3,      # dodatkowe przy spiętrzeniu tasków
+        'pool_timeout':  10,     # sekund oczekiwania na wolne połączenie
+        'pool_pre_ping': True,   # wykrywa martwe połączenia przed użyciem
+    }
+    app.config['SECRET_KEY'] = os.environ['SECRET_KEY']
     app.config['TEX_SERVICE_URL'] = TEX_SERVICE_URL
 
     from core.extensions import db
@@ -80,12 +86,23 @@ _worker_app: Flask | None = None
 
 @signals.worker_process_init.connect
 def _init_worker(**_kwargs):
-    """Inicjuje aplikację Flask i pushuje kontekst przy starcie procesu workera."""
+    """
+    Wywoływany w każdym nowo sforkowanym podprocesie workera.
+
+    db.engine.dispose(close=False) porzuca odziedziczone po procesie
+    macierzystym deskryptory socketów TCP bez wysyłania komendy zamykającej
+    do PostgreSQL. Pierwsze zapytanie w tym podprocesie otworzy świeże,
+    wyłącznie mu przynależące połączenia — bez ryzyka kolizji protokołu.
+    """
     global _worker_app
     _worker_app = _create_worker_app()
     ctx = _worker_app.app_context()
     ctx.push()
-    logger.info("Worker process initialized (NullPool, no web blueprints)")
+
+    from core.extensions import db
+    db.engine.dispose(close=False)
+
+    logger.info("Worker process initialized (QueuePool, dispose after fork)")
 
 
 @signals.worker_process_shutdown.connect
@@ -106,6 +123,8 @@ def _get_app() -> Flask:
     if _worker_app is None:
         _worker_app = _create_worker_app()
         _worker_app.app_context().push()
+        from core.extensions import db
+        db.engine.dispose(close=False)
     return _worker_app
 
 
@@ -124,43 +143,14 @@ def generate_pdf_dziennik(self, enrollment_id: str) -> dict:
     import httpx
 
     from core.extensions import db
-    from core.modele import ZapisPraktyki
-    from core.modele.dziennik import WpisDziennika
+    from core.modele import InternshipEnrollment
+    from core.uslugi.dokumenty import buduj_kontekst
 
-    zapis = db.session.get(ZapisPraktyki, uuid.UUID(enrollment_id))
+    zapis = db.session.get(InternshipEnrollment, uuid.UUID(enrollment_id))
     if not zapis:
         raise ZapisNieIstnieje(f'Zapis {enrollment_id} nie istnieje')
 
-    wpisy = (
-        db.session.query(WpisDziennika)
-        .filter_by(enrollment_id=zapis.id)
-        .order_by(WpisDziennika.entry_date)
-        .all()
-    )
-
-    context = {
-        'student': {
-            'first_name':   zapis.student.first_name,
-            'last_name':    zapis.student.last_name,
-            'album_number': zapis.student.album_number,
-        },
-        'zapis': {
-            'total_hours_logged': zapis.total_hours_logged,
-            'praktyka': {
-                'rok_uczelniany': zapis.internship.academic_year if zapis.internship else '',
-                'semestr':        zapis.internship.semester      if zapis.internship else '',
-            },
-        },
-        'wpisy': [
-            {
-                'data':     w.entry_date.isoformat() if w.entry_date else '',
-                'godziny':  w.duration_hours,
-                'opis':     w.description,
-                'efekt_nr': ', '.join(f"{e.id:02d}" for e in w.learning_outcomes) if w.learning_outcomes else '--',
-            }
-            for w in wpisy
-        ],
-    }
+    context = buduj_kontekst(zapis, 'ZAL_6')
 
     tex_url = _get_app().config.get('TEX_SERVICE_URL', TEX_SERVICE_URL)
     try:
@@ -213,15 +203,27 @@ def cleanup_old_pdfs(max_age_hours: int = 24) -> dict:
     return {'deleted': deleted, 'errors': errors}
 
 
-@celery.task(bind=True, name='compile_raw_tex_task',
+@celery.task(bind=True, name='generuj_pdf_z_szablonu',
              max_retries=3, default_retry_delay=10)
-def compile_raw_tex_task(self, tex_source: str, filename_prefix: str) -> dict:
+def generuj_pdf_z_szablonu(self, template_name: str, context: dict,
+                            filename_prefix: str) -> dict:
+    """Kompiluje PDF z nazwanego szablonu Jinja2 i słownika danych.
+
+    Jedyna dozwolona ścieżka asynchronicznej kompilacji — nie przyjmuje
+    surowego kodu TeX, eliminując wektor Command Injection.
+
+    Args:
+        template_name:   nazwa pliku szablonu z katalogu templates/
+                         (np. 'zal6_dziennik.tex.j2')
+        context:         słownik danych domenowych (JSON-serializowalny)
+        filename_prefix: prefiks nazwy pliku wynikowego
+    """
     import uuid
     from pathlib import Path
 
     try:
-        from tex_service.compiler import compile_raw_tex
-        pdf_bytes = compile_raw_tex(tex_source)
+        from tex_service.compiler import compile_pdf
+        pdf_bytes = compile_pdf(template_name, context)
     except Exception as exc:
         logger.warning("LaTeX compile error (retry %d/%d): %s",
                        self.request.retries, self.max_retries, exc)

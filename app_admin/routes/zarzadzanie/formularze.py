@@ -7,8 +7,10 @@ from flask_wtf.file import FileField, FileAllowed
 from wtforms import StringField, SelectField
 from wtforms.validators import DataRequired, Email, Length, Optional, ValidationError
 
-from core.modele import Uzytkownik, Student
-from core.extensions import db
+from core.modele import User, Student
+from core.repozytoria import RepozytoriumUzytkownikow
+
+_repo_uzytk = RepozytoriumUzytkownikow()
 
 
 # ── Formularze ────────────────────────────────────────────────────────────────
@@ -25,13 +27,13 @@ class FormularzStudenta(FlaskForm):
     uopz_id      = SelectField('Opiekun uczelniany (UOPZ)', choices=[], validators=[DataRequired(message='Wybierz opiekuna UOPZ.')])
 
     def validate_email(self, pole):
-        q = db.session.query(Uzytkownik).filter_by(email=pole.data.lower().strip()).first()
-        if q:
+        u = _repo_uzytk.znajdz_po_emailu(pole.data.lower().strip())
+        if u:
             raise ValidationError('Konto z tym e-mailem już istnieje.')
 
     def validate_numer_albumu(self, pole):
-        q = db.session.query(Student).filter_by(album_number=pole.data.strip()).first()
-        if q:
+        s = _repo_uzytk.znajdz_studenta_po_albumie(pole.data.strip())
+        if s:
             raise ValidationError('Student z tym nr albumu już istnieje.')
 
 
@@ -41,13 +43,13 @@ class FormularzEdycjiStudenta(FormularzStudenta):
         self._uid = uzytkownik_id
 
     def validate_email(self, pole):
-        q = db.session.query(Uzytkownik).filter_by(email=pole.data.lower().strip()).first()
-        if q and str(q.id) != str(self._uid):
+        u = _repo_uzytk.znajdz_po_emailu(pole.data.lower().strip())
+        if u and str(u.id) != str(self._uid):
             raise ValidationError('Konto z tym e-mailem już istnieje.')
 
     def validate_numer_albumu(self, pole):
-        q = db.session.query(Student).filter_by(album_number=pole.data.strip()).first()
-        if q and str(q.id) != str(self._uid):
+        s = _repo_uzytk.znajdz_studenta_po_albumie(pole.data.strip())
+        if s and str(s.id) != str(self._uid):
             raise ValidationError('Student z tym nr albumu już istnieje.')
 
 
@@ -61,8 +63,8 @@ class FormularzPracownika(FlaskForm):
     ], validators=[DataRequired()])
 
     def validate_email(self, pole):
-        q = db.session.query(Uzytkownik).filter_by(email=pole.data.lower().strip()).first()
-        if q:
+        u = _repo_uzytk.znajdz_po_emailu(pole.data.lower().strip())
+        if u:
             raise ValidationError('Konto z tym e-mailem już istnieje.')
 
 

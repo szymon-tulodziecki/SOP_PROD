@@ -2,12 +2,12 @@ version: '3.8'
 
 services:
   db:
-    image: postgres:15-alpine
+    image: postgres:16-alpine
     container_name: ans_postgres
     environment:
-      POSTGRES_USER: ans_admin
-      POSTGRES_PASSWORD: secure_password_123 
-      POSTGRES_DB: ans_praktyki
+      POSTGRES_USER: ${POSTGRES_USER:-ans_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-ans_praktyki}
     ports:
       - "5432:5432"
     volumes:
@@ -28,11 +28,11 @@ services:
       dockerfile: Dockerfile.worker
     container_name: ans_celery_worker
     environment:
-      DATABASE_URL: postgresql+psycopg2://ans_admin:secure_password_123@db:5432/ans_praktyki
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-ans_admin}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:-ans_praktyki}
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0
       FLASK_ENV: development
-      SECRET_KEY: super-tajny-klucz-tylko-na-dev-xd
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
     volumes:
       - pdf_output:/app/pdf_output
     depends_on:

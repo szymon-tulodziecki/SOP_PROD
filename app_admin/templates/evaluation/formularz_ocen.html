@@ -24,6 +24,7 @@
   </div>
 
   <form method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <!-- 13 Efektów uczenia się -->
     <section class="karta" style="margin-bottom: 2rem;">
       <header class="karta__naglowek">

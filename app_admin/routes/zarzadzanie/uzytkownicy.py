@@ -10,12 +10,15 @@ from flask_wtf.file import FileField, FileAllowed
 from wtforms import StringField, SelectField
 from wtforms.validators import DataRequired, Email, Length, Optional, ValidationError
 
-from core.modele import (Uzytkownik, Student, Praktyka, ZapisPraktyki, HarmonogramPraktyki, EfektUczenia,
-                    RolaUzytkownika, StatusPraktyki, StatusZapisu, UploadedDocument, Firma)
+from core.modele import (User, Student, Internship, InternshipEnrollment, InternshipSchedule, LearningOutcome,
+                    UserRole, InternshipStatus, EnrollmentStatus, UploadedDocument, Company)
 from core.extensions import db
 from core.uslugi import UslugaUzytkownikow as _UslugaUzytkownikow
 _serwis_uzytkownikow = _UslugaUzytkownikow()
 from core.autoryzacja import wymaga_roli
+from core.repozytoria import RepozytoriumUzytkownikow
+
+_repo_uzytk = RepozytoriumUzytkownikow()
 
 from . import zarzadzanie_bp
 from .formularze import *
@@ -29,26 +32,7 @@ def lista_uzytkownikow():
     szukaj     = request.args.get('szukaj', '').strip()
     filtr_rola = request.args.get('rola', '').strip()
 
-    q = db.session.query(Uzytkownik)
-    if szukaj:
-        studenci_ids = db.session.query(Student.id).filter(
-            Student.album_number.ilike(f'%{szukaj}%')
-        ).subquery()
-        q = q.filter(db.or_(
-            Uzytkownik.first_name.ilike(f'%{szukaj}%'),
-            Uzytkownik.last_name.ilike(f'%{szukaj}%'),
-            Uzytkownik.email.ilike(f'%{szukaj}%'),
-            Uzytkownik.id.in_(studenci_ids),
-        ))
-
-    if filtr_rola:
-        try:
-            q = q.filter(Uzytkownik.role == RolaUzytkownika[filtr_rola])
-        except KeyError:
-            pass
-
-    uzytkownicy = q.order_by(Uzytkownik.last_name, Uzytkownik.first_name)\
-                   .paginate(page=strona, per_page=25, error_out=False)
+    uzytkownicy = _repo_uzytk.szukaj_strona(szukaj=szukaj, filtr_rola=filtr_rola, strona=strona)
     csrf_form = FlaskForm()
     return render_template('zarzadzanie/uzytkownicy.html',
                            uzytkownicy=uzytkownicy,
@@ -56,11 +40,10 @@ def lista_uzytkownikow():
 
 
 @zarzadzanie_bp.route('/uzytkownicy/nowy-student', methods=['GET', 'POST'])
-@wymaga_roli(RolaUzytkownika.ADMIN)
+@wymaga_roli(UserRole.ADMIN)
 def nowy_student():
     form = FormularzStudenta()
-    uopz_list = db.session.query(Uzytkownik).filter_by(role=RolaUzytkownika.UOPZ, is_active=True)\
-                  .order_by(Uzytkownik.last_name, Uzytkownik.first_name).all()
+    uopz_list = _repo_uzytk.aktywni_uopz()
     form.uopz_id.choices = [(str(u.id), f"{u.first_name} {u.last_name}") for u in uopz_list]
     if form.validate_on_submit():
         u = _serwis_uzytkownikow.utworz_studenta(
@@ -86,12 +69,11 @@ def nowy_student():
 
 
 @zarzadzanie_bp.route('/uzytkownicy/<uuid:id>/edytuj-student', methods=['GET', 'POST'])
-@wymaga_roli(RolaUzytkownika.ADMIN)
+@wymaga_roli(UserRole.ADMIN)
 def edytuj_studenta(id):
-    u    = db.session.get(Uzytkownik, id) or abort(404)
+    u    = db.session.get(User, id) or abort(404)
     form = FormularzEdycjiStudenta(uzytkownik_id=id, obj=u)
-    uopz_list = db.session.query(Uzytkownik).filter_by(role=RolaUzytkownika.UOPZ, is_active=True)\
-                  .order_by(Uzytkownik.last_name, Uzytkownik.first_name).all()
+    uopz_list = _repo_uzytk.aktywni_uopz()
     form.uopz_id.choices = [(str(x.id), f"{x.first_name} {x.last_name}") for x in uopz_list]
 
     if request.method == 'GET':
@@ -118,16 +100,16 @@ def edytuj_studenta(id):
 
 
 @zarzadzanie_bp.route('/uzytkownicy/nowy-pracownik', methods=['GET', 'POST'])
-@wymaga_roli(RolaUzytkownika.ADMIN)
+@wymaga_roli(UserRole.ADMIN)
 def nowy_pracownik():
     form = FormularzPracownika()
     if form.validate_on_submit():
-        u = Uzytkownik(
+        u = User(
             id                      = uuid.uuid4(),
             first_name              = form.imie.data.strip(),
             last_name               = form.nazwisko.data.strip(),
             email                   = form.email.data.lower().strip(),
-            role                    = RolaUzytkownika[form.rola.data],
+            role                    = UserRole[form.rola.data],
             password_hash           = '',
             require_password_change = False,
             is_active               = True,
@@ -144,11 +126,10 @@ def nowy_pracownik():
 
 
 @zarzadzanie_bp.route('/uzytkownicy/import-csv', methods=['GET', 'POST'])
-@wymaga_roli(RolaUzytkownika.ADMIN)
+@wymaga_roli(UserRole.ADMIN)
 def import_csv():
     form      = FormularzImportuCSV()
-    uopz_list = db.session.query(Uzytkownik).filter_by(role=RolaUzytkownika.UOPZ, is_active=True)\
-                  .order_by(Uzytkownik.last_name, Uzytkownik.first_name).all()
+    uopz_list = _repo_uzytk.aktywni_uopz()
     form.uopz_id.choices = [('', '— wybierz —')] + [(str(u.id), f"{u.first_name} {u.last_name}") for u in uopz_list]
     wyniki = None
 
@@ -187,14 +168,9 @@ def import_csv():
             all_emails = [w['email'] for w in wiersze_csv]
             all_albums = [w['nr_albumu'] for w in wiersze_csv]
 
-            existing = db.session.query(
-                Uzytkownik.email, Student.album_number
-            ).outerjoin(Student, Uzytkownik.id == Student.id).filter(
-                db.or_(
-                    Uzytkownik.email.in_(all_emails),
-                    Student.album_number.in_(all_albums)
-                )
-            ).all()
+            existing = _repo_uzytk.znajdz_istniejace_po_email_lub_albumie(
+                all_emails, all_albums
+            )
 
             existing_emails = {row.email for row in existing}
             existing_albums = {row.album_number for row in existing if row.album_number}
@@ -235,9 +211,9 @@ def import_csv():
 
 
 @zarzadzanie_bp.route('/uzytkownicy/<uuid:id>/aktywnosc', methods=['POST'])
-@wymaga_roli(RolaUzytkownika.ADMIN)
+@wymaga_roli(UserRole.ADMIN)
 def przelacz_aktywnosc(id):
-    u = db.session.get(Uzytkownik, id) or abort(404)
+    u = db.session.get(User, id) or abort(404)
     if str(u.id) == str(current_user.id):
         flash('Nie możesz dezaktywować własnego konta.', 'danger')
         return redirect(url_for('zarzadzanie.lista_uzytkownikow'))
@@ -249,9 +225,9 @@ def przelacz_aktywnosc(id):
 
 
 @zarzadzanie_bp.route('/uzytkownicy/<uuid:id>/usun', methods=['POST'])
-@wymaga_roli(RolaUzytkownika.ADMIN)
+@wymaga_roli(UserRole.ADMIN)
 def usun_uzytkownika(id):
-    u = db.session.get(Uzytkownik, id) or abort(404)
+    u = db.session.get(User, id) or abort(404)
     if str(u.id) == str(current_user.id):
         flash('Nie możesz usunąć własnego konta.', 'danger')
         return redirect(url_for('zarzadzanie.lista_uzytkownikow'))

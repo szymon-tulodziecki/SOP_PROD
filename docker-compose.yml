@@ -7,8 +7,6 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-ans_admin}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
       POSTGRES_DB: ${POSTGRES_DB:-ans_praktyki}
-    ports:
-      - "5432:5432"
     networks:
       - internal
     volumes:
@@ -24,8 +22,6 @@ services:
     image: redis:7-alpine
     container_name: sop_redis
     restart: unless-stopped
-    ports:
-      - "6379:6379"
     networks:
       - internal
     volumes:

@@ -81,9 +81,10 @@ async function triggerAuto(docType) {
 
     try {
         const url = `/dokumenty/zapis/{{ zapis.id }}/generuj_auto/${docType}`;
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
         const res = await fetch(url, {
             method: 'POST',
-            headers: {'X-Requested-With': 'XMLHttpRequest'}
+            headers: {'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': csrfToken}
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Błąd serwera');

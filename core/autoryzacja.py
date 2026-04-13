@@ -23,7 +23,7 @@ from wtforms.validators import DataRequired, Length, EqualTo
 from sqlalchemy.exc import SQLAlchemyError
 
 from core.modele import User, UserRole
-from core.extensions import db
+from core.extensions import db, limiter
 
 
 # ── Formularz zmiany hasła (zachowany dla kont technicznych) ─────────────────
@@ -92,6 +92,7 @@ def stworz_blueprint_auth(
     # ── Krok 1: przekieruj do Microsoft ──────────────────────────────────────
 
     @auth_bp.route('/ms-login')
+    @limiter.limit("20 per minute")
     def ms_login():
         if current_user.is_authenticated:
             return redirect(url_for('dashboard.index'))
@@ -119,6 +120,7 @@ def stworz_blueprint_auth(
     # ── Krok 2: callback z Microsoft ─────────────────────────────────────────
 
     @auth_bp.route('/ms-callback')
+    @limiter.limit("20 per minute")
     def ms_callback():
         # Weryfikacja stanu CSRF
         expected_state = session.pop('oauth_state', None)

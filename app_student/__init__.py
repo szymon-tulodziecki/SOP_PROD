@@ -1,6 +1,6 @@
 from flask import Flask
 from jinja2 import select_autoescape
-from core.extensions import db, login_manager
+from core.extensions import db, login_manager, csrf, limiter
 from core.error_handlers import register_error_handlers
 from app_student.config import config_dict
 
@@ -27,6 +27,8 @@ def create_app():
 
     db.init_app(app)
     login_manager.init_app(app)
+    csrf.init_app(app)
+    limiter.init_app(app)
     register_error_handlers(app)
 
     login_manager.login_view = 'auth.logowanie'
@@ -35,7 +37,7 @@ def create_app():
     with app.app_context():
         from core.autoryzacja  import stworz_blueprint_auth
         from core.pliki import stworz_blueprint_pliki
-        from core.modele import RolaUzytkownika
+        from core.modele import UserRole
         from app_student.routes.pulpit       import dashboard_bp
         from app_student.routes.praktyki     import praktyki_bp
         from app_student.routes.dziennik     import dziennik_bp
@@ -43,7 +45,7 @@ def create_app():
         from app_student.routes.dokumenty    import documents_bp
 
         auth_bp    = stworz_blueprint_auth(
-            dozwolone_role=[RolaUzytkownika.STUDENT],
+            dozwolone_role=[UserRole.STUDENT],
             template_logowania='auth/logowanie.html',
             template_zmiany_hasla='auth/zmien_haslo.html',
         )
@@ -61,47 +63,37 @@ def create_app():
     @app.context_processor
     def inject_aktywny_zapis():
         from flask_login import current_user
-        from core.modele import ZapisPraktyki, StatusZapisu
+        from core.modele import EnrollmentStatus
+        from core.repozytoria import RepozytoriumZapisow
         info = {'ma_aktywny': False, 'sciezka': None, 'status': None}
+        wymaga_uwagi = False
         try:
             if current_user.is_authenticated:
-                z = db.session.query(ZapisPraktyki).filter(
-                    ZapisPraktyki.student_id == current_user.id,
-                    ZapisPraktyki.status.in_([
-                        StatusZapisu.IN_PROGRESS, StatusZapisu.COMPLETED,
-                        StatusZapisu.COMMISSION_REVIEW, StatusZapisu.DEAN_APPROVAL,
-                        StatusZapisu.AWAITING_APPROVAL,
-                    ])
-                ).first()
+                _repo = RepozytoriumZapisow()
+                z = _repo.aktywny_dla_studenta(current_user.id, [
+                    EnrollmentStatus.IN_PROGRESS, EnrollmentStatus.COMPLETED,
+                    EnrollmentStatus.COMMISSION_REVIEW, EnrollmentStatus.DEAN_APPROVAL,
+                    EnrollmentStatus.AWAITING_APPROVAL,
+                ])
                 if z:
                     info = {
                         'ma_aktywny': True,
                         'sciezka': z.track_type.value if z.track_type else 'STANDARD',
                         'status': z.status.value,
                     }
+                zapisy_do_sprawdzenia = _repo.aktywne_dla_studenta(current_user.id, [
+                    EnrollmentStatus.PENDING,
+                    EnrollmentStatus.AWAITING_APPROVAL,
+                ])
+                for z in zapisy_do_sprawdzenia:
+                    if z.status == EnrollmentStatus.PENDING and (z.admin_comments or z.supervisor_comments):
+                        wymaga_uwagi = True
+                        break
+                    if z.status == EnrollmentStatus.AWAITING_APPROVAL and z.supervisor_comments:
+                        wymaga_uwagi = True
+                        break
         except Exception:
             pass
-        wymaga_uwagi = False
-        try:
-            if current_user.is_authenticated:
-                from core.modele import ZapisPraktyki, StatusZapisu, ZdarzenieProces, TypZdarzenia
-                # Pobierz wszystkie zapisy studenta w statusach wymagających uwagi
-                zapisy_do_sprawdzenia = db.session.query(ZapisPraktyki).filter(
-                    ZapisPraktyki.student_id == current_user.id,
-                    ZapisPraktyki.status.in_([
-                        StatusZapisu.OCZEKUJACY,
-                        StatusZapisu.OCZEKUJE_NA_AKCEPT,
-                    ])
-                ).all()
-                for z in zapisy_do_sprawdzenia:
-                    if z.status == StatusZapisu.OCZEKUJACY and (z.komentarze_admina or z.komentarze_uopz):
-                        wymaga_uwagi = True
-                        break
-                    if z.status == StatusZapisu.OCZEKUJE_NA_AKCEPT and z.komentarze_uopz:
-                        wymaga_uwagi = True
-                        break
-        except Exception as e:
-            import traceback; traceback.print_exc()
         return {'aktywny_zapis_info': info, 'nav_wymaga_uwagi': wymaga_uwagi}
 
     # Dodaj funkcje pomocnicze do szablonów
@@ -122,7 +114,7 @@ def create_app():
     def sprawdz_studenta():
         from flask import request, redirect, url_for, abort
         from flask_login import current_user
-        from core.modele import RolaUzytkownika
+        from core.modele import UserRole
 
         if not current_user.is_authenticated:
             return
@@ -136,5 +128,5 @@ def create_app():
 
 @login_manager.user_loader
 def wczytaj_uzytkownika(user_id):
-    from core.modele import Uzytkownik
-    return db.session.get(Uzytkownik, user_id)
+    from core.modele import User
+    return db.session.get(User, user_id)

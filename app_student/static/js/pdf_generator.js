@@ -14,7 +14,8 @@ async function generujDokument(btnElement, urlGeneruj, isForced = false) {
     }
 
     try {
-        const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+        const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+        const csrfToken = csrfMeta ? csrfMeta.content : (document.querySelector('input[name="csrf_token"]')?.value || '');
 
         // Jeśli to wymuszone generowanie, dodajemy parametr do URL
         const finalUrl = isForced ? `${urlGeneruj}?force=true` : urlGeneruj;

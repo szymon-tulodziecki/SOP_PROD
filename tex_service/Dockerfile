@@ -20,7 +20,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY sanitizer.py compiler.py app.py pdf_service.py ./
+COPY sanitizer.py compiler.py app.py check_lualatex_version.py ./
 COPY templates/ ./templates/
 
 # Konfiguracja bezpieczeństwa TeX: openin_any=p, openout_any=p, shell_escape=f
@@ -31,13 +31,7 @@ RUN update-updmap --quiet 2>/dev/null || true && \
 
 # Weryfikacja wersji LuaLaTeX — wymagana >= 1.17.0 (naprawa CVE-2023-32700).
 # Jeśli wersja jest za stara, build się nie powiedzie.
-RUN lualatex --version | head -1 && \
-    python3 -c " \
-import subprocess, re, sys; \
-out = subprocess.check_output(['lualatex','--version'], text=True); \
-m = re.search(r'Version (\d+\.\d+)', out); \
-ver = tuple(int(x) for x in m.group(1).split('.')) if m else (0,0); \
-sys.exit(0) if ver >= (1, 17) else sys.exit(f'LuaLaTeX {m.group(1) if m else \"?\"}  < 1.17.0 — CVE-2023-32700')"
+RUN lualatex --version | head -1 && python3 check_lualatex_version.py
 
 # Bezpieczeństwo: dedykowany nieuprzywilejowany użytkownik (nie root).
 # LuaLaTeX potrzebuje /tmp do plików pomocniczych — tmpfs montowany

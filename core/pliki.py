@@ -17,11 +17,11 @@ import uuid
 import httpx
 from pathlib import Path
 from werkzeug.utils import secure_filename
-from flask import Blueprint, request, jsonify, Response, abort
+from flask import Blueprint, request, jsonify, Response, abort, url_for
 from flask_login import login_required, current_user
 
 from core.modele import InternshipEnrollment, UserRole, UploadedDocument
-from core.extensions import db
+from core.extensions import db, limiter
 from core.szyfrowanie import zaszyfruj, odszyfruj_strumieniowo
 
 
@@ -101,20 +101,35 @@ def _dozwolony_plik(filename: str, content_type: str) -> bool:
     return ext in ALLOWED_EXTENSIONS and content_type in ALLOWED_MIME_TYPES
 
 
+class MagicBytesError(RuntimeError):
+    """Rzucany gdy weryfikacja magic bytes jest niemożliwa do przeprowadzenia."""
+
+
 def _weryfikuj_magic_bytes(raw_bytes: bytes) -> bool:
     """Warstwa 2: weryfikacja rzeczywistego formatu przez analizę magic bytes.
 
     Używa python-magic (libmagic), która analizuje sygnaturę binarną pliku
     niezależnie od rozszerzenia i nagłówka HTTP — odporna na spoofing.
-    Przy braku libmagic w środowisku zwraca True (degradacja łagodna).
+
+    Fail-Closed: jeśli libmagic jest niedostępna lub rzuci błąd, funkcja
+    propaguje wyjątek zamiast przepuszczać plik. Upload jest wtedy odrzucany
+    z HTTP 500, co zapobiega przemycaniu plików przez awarię walidatora.
     """
     try:
         import magic
+    except ImportError as exc:
+        raise MagicBytesError(
+            "python-magic (libmagic) jest niedostępna — weryfikacja binarna niemożliwa."
+        ) from exc
+
+    try:
         detected = magic.from_buffer(raw_bytes[:4096], mime=True)
-        return detected in _MAGIC_ALLOWED
-    except Exception:
-        # libmagic niedostępna (np. środowisko testowe bez biblioteki C)
-        return True
+    except Exception as exc:
+        raise MagicBytesError(
+            f"Błąd analizy magic bytes: {exc}"
+        ) from exc
+
+    return detected in _MAGIC_ALLOWED
 
 
 def _sprawdz_dostep_do_zapisu(zapis: InternshipEnrollment) -> bool:
@@ -141,6 +156,7 @@ def stworz_blueprint_pliki(
 
     @uploads_bp.route('/enrollment/<uuid:enrollment_id>/upload', methods=['POST'])
     @login_required
+    @limiter.limit("30 per hour")
     def upload_document(enrollment_id):
         zapis = db.session.get(InternshipEnrollment, enrollment_id)
         if not zapis or not _sprawdz(zapis):
@@ -180,7 +196,14 @@ def stworz_blueprint_pliki(
             raw_bytes = file.read()
 
             # ── Warstwa 2: magic bytes (niefałszowalna weryfikacja formatu) ──
-            if not _weryfikuj_magic_bytes(raw_bytes):
+            # Fail-Closed: MagicBytesError (błąd biblioteki) → 503, nie 200.
+            try:
+                magic_ok = _weryfikuj_magic_bytes(raw_bytes)
+            except MagicBytesError as exc:
+                import logging
+                logging.getLogger(__name__).error("Magic bytes check failed: %s", exc)
+                return jsonify({'error': 'Weryfikacja formatu pliku chwilowo niedostępna.'}), 503
+            if not magic_ok:
                 return jsonify({'error': 'Niedozwolony format pliku (weryfikacja binarna)'}), 400
 
             encrypted_bytes = zaszyfruj(raw_bytes)
@@ -220,25 +243,19 @@ def stworz_blueprint_pliki(
         if not zapis or not _sprawdz(zapis):
             abort(403)
 
-        # Streaming: otwieramy połączenie do fileservera i deszyfrujemy chunk
-        # po chunku — nigdy cały plik nie trafia do RAM kontenera naraz.
+        # Streaming: pobieramy cały zaszyfrowany plik z fileservera i deszyfrujemy
+        # w pamięci — eliminuje wyciek kontekstu przy strumieniowaniu przez generator.
         try:
-            stream_ctx = _fs_get_stream(doc.file_path)
-            response   = stream_ctx.__enter__()
-            response.raise_for_status()
+            encrypted = _fs_get(doc.file_path)
         except httpx.HTTPStatusError as e:
             abort(404 if e.response.status_code == 404 else 500)
         except Exception:
             abort(500)
 
-        def _generate():
-            try:
-                yield from odszyfruj_strumieniowo(response.iter_bytes(chunk_size=8192))
-            finally:
-                stream_ctx.__exit__(None, None, None)
+        plain = b''.join(odszyfruj_strumieniowo(iter([encrypted])))
 
         return Response(
-            _generate(),
+            plain,
             mimetype=doc.mime_type,
             headers={
                 'Content-Disposition': f'attachment; filename="{doc.original_filename}"',
@@ -253,9 +270,13 @@ def stworz_blueprint_pliki(
         if not doc:
             return jsonify({'error': 'Nie znaleziono dokumentu'}), 404
 
+        zapis = doc.enrollment
+        if not zapis or not _sprawdz(zapis):
+            abort(403)
+
         try:
             _fs_delete(doc.file_path)
-            db.session.delete(doc)
+            doc.is_deleted = True
             db.session.commit()
             return jsonify({'success': True})
         except Exception as e:
@@ -269,10 +290,13 @@ def stworz_blueprint_pliki(
         if not zapis or not _sprawdz(zapis):
             abort(403)
 
-        docs = db.session.query(UploadedDocument)\
-                 .filter_by(enrollment_id=enrollment_id)\
-                 .order_by(UploadedDocument.uploaded_at.desc())\
-                 .all()
+        docs = (
+            db.session.execute(
+                db.select(UploadedDocument)
+                .filter_by(enrollment_id=enrollment_id)
+                .order_by(UploadedDocument.uploaded_at.desc())
+            ).scalars().all()
+        )
 
         return jsonify([{
             'id':                str(d.id),

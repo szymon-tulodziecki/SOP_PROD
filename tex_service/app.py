@@ -68,13 +68,10 @@ def generuj():
         pdf_bytes = compile_pdf(template_name, context)
     except TexCompilationError as e:
         logger.error("Błąd kompilacji LaTeX dla %s: %s\nLOG:\n%s", template_name, e, e.log)
-        return jsonify({
-            "error": str(e),
-            "log": e.log[-3000:],
-        }), 500
-    except Exception as e:
+        return jsonify({"error": "Błąd kompilacji dokumentu PDF."}), 500
+    except Exception:
         logger.exception("Nieoczekiwany błąd dla %s", template_name)
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Wewnętrzny błąd serwera."}), 500
 
     return send_file(
         io.BytesIO(pdf_bytes),

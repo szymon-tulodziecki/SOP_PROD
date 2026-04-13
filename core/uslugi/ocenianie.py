@@ -12,7 +12,7 @@ from datetime import date, timedelta
 from typing import Optional
 
 from core.extensions import db
-from core.modele import ZapisPraktyki, StatusZapisu
+from core.modele import InternshipEnrollment, EnrollmentStatus
 
 log = logging.getLogger(__name__)
 
@@ -54,7 +54,7 @@ class SerwisOceniania:
     # ── Zapis ocen ────────────────────────────────────────────────────────────
 
     @staticmethod
-    def zapisz_oceny(zapis: ZapisPraktyki, dane: GradeFormData) -> GradeResult:
+    def zapisz_oceny(zapis: InternshipEnrollment, dane: GradeFormData) -> GradeResult:
         """Zapisuje oceny końcowe i sprawdzian dla zapisu praktyki.
 
         Jeśli dane.finalize=True, weryfikuje kompletność przed zamknięciem.
@@ -112,7 +112,7 @@ class SerwisOceniania:
     @staticmethod
     def get_pilne_oceny(uopz_id=None) -> list[dict]:
         """Zwraca listę praktyk z pilnymi ocenami (termin ≤ 3 dni)."""
-        q = db.session.query(ZapisPraktyki).filter_by(status=StatusZapisu.COMPLETED)
+        q = db.session.query(InternshipEnrollment).filter_by(status=EnrollmentStatus.COMPLETED)
         if uopz_id:
             q = q.filter_by(supervisor_id=uopz_id)
 
@@ -143,9 +143,9 @@ class SerwisOceniania:
             dict z kluczami 'completed' (zamknięte) i 'skipped' (pominięte
             z powodu niewystarczających godzin).
         """
-        kandydaci = db.session.query(ZapisPraktyki).filter(
-            ZapisPraktyki.status == StatusZapisu.IN_PROGRESS,
-            ZapisPraktyki.end_date < date.today(),
+        kandydaci = db.session.query(InternshipEnrollment).filter(
+            InternshipEnrollment.status == EnrollmentStatus.IN_PROGRESS,
+            InternshipEnrollment.end_date < date.today(),
         ).all()
 
         completed = skipped = 0

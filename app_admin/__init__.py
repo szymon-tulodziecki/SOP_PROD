@@ -2,7 +2,7 @@ import os
 
 from flask import Flask
 from jinja2 import select_autoescape
-from core.extensions import db, login_manager
+from core.extensions import db, login_manager, csrf, limiter
 from core.error_handlers import register_error_handlers
 import logging
 from logging.handlers import RotatingFileHandler
@@ -46,6 +46,8 @@ def create_app():
 
     db.init_app(app)
     login_manager.init_app(app)
+    csrf.init_app(app)
+    limiter.init_app(app)
     register_error_handlers(app)
 
     login_manager.login_view = 'auth.logowanie'
@@ -55,7 +57,7 @@ def create_app():
     with app.app_context():
         from core.autoryzacja  import stworz_blueprint_auth, wymaga_roli
         from core.pliki import stworz_blueprint_pliki
-        from core.modele import RolaUzytkownika
+        from core.modele import UserRole
         from app_admin.routes.pulpit      import dashboard_bp
         from app_admin.routes.zarzadzanie import zarzadzanie_bp
         from app_admin.routes.ocenianie   import evaluation_bp
@@ -63,7 +65,7 @@ def create_app():
         from app_admin.routes.dokumenty   import documents_bp
 
         auth_bp    = stworz_blueprint_auth(
-            dozwolone_role=[RolaUzytkownika.ADMIN, RolaUzytkownika.UOPZ],
+            dozwolone_role=[UserRole.ADMIN, UserRole.UOPZ],
             template_logowania='auth/logowanie.html',
             template_zmiany_hasla='auth/zmien_haslo.html',
         )
@@ -83,16 +85,11 @@ def create_app():
         try:
             from flask_login import current_user
             if current_user.is_authenticated:
-                from core.modele import ZapisPraktyki, StatusZapisu
-                counts['nav_oczekujace'] = db.session.query(ZapisPraktyki).filter(
-                    ZapisPraktyki.status == StatusZapisu.AWAITING_APPROVAL
-                ).count()
-                counts['nav_komisja'] = db.session.query(ZapisPraktyki).filter(
-                    ZapisPraktyki.status == StatusZapisu.COMMISSION_REVIEW
-                ).count()
-                counts['nav_dziekan'] = db.session.query(ZapisPraktyki).filter(
-                    ZapisPraktyki.status == StatusZapisu.DEAN_APPROVAL
-                ).count()
+                from core.repozytoria import RepozytoriumZapisow
+                row = RepozytoriumZapisow().liczniki_nav()
+                counts['nav_oczekujace'] = row['oczekujace']
+                counts['nav_komisja']    = row['komisja']
+                counts['nav_dziekan']    = row['dziekan']
         except Exception:
             pass
         return counts
@@ -114,5 +111,5 @@ def create_app():
 
 @login_manager.user_loader
 def wczytaj_uzytkownika(user_id):
-    from core.modele import Uzytkownik
-    return db.session.get(Uzytkownik, user_id)
+    from core.modele import User
+    return db.session.get(User, user_id)

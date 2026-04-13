@@ -45,11 +45,10 @@ def _get_key() -> bytes:
                 return key[:32]
         except Exception:
             pass
-    log.warning(
-        'FILE_ENCRYPTION_KEY nie jest ustawiony lub nieprawidłowy. '
-        'Używam tymczasowego klucza — pliki będą niedostępne po restarcie.'
+    raise RuntimeError(
+        'FILE_ENCRYPTION_KEY nie jest ustawiony lub ma nieprawidłową wartość. '
+        'Ustaw zmienną środowiskową z kluczem base64url (32 bajty).'
     )
-    return os.urandom(32)
 
 
 _KEY: bytes | None = None

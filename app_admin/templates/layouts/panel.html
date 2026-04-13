@@ -72,6 +72,7 @@
 
     <div class="sidebar__stopka">
       <form method="POST" action="{{ url_for('auth.wylogowanie') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button type="submit" class="sidebar__wylogowanie">
           <span aria-hidden="true">↩</span> Wyloguj się
         </button>

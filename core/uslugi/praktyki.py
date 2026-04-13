@@ -5,7 +5,7 @@ Internship and enrollment management service.
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 from core.extensions import db
@@ -81,8 +81,21 @@ class UslugaPraktyk:
         komentarz: Optional[str] = None,
         wykonane_przez_id: Optional[uuid.UUID] = None,
     ) -> None:
-        """Changes enrollment status and optionally adds a process event."""
-        zapis.status = nowy_status
+        """Changes enrollment status via FSM public methods."""
+        from core.uslugi.workflow import ZapisFSM, IllegalTransitionError
+        fsm = ZapisFSM(zapis)
+        _dispatch = {
+            EnrollmentStatus.AWAITING_APPROVAL: fsm.wyslij_do_akceptacji,
+            EnrollmentStatus.COMMISSION_REVIEW: fsm.wyslij_do_komisji,
+            EnrollmentStatus.IN_PROGRESS:       fsm.zatwierdz_przez_uopz,
+            EnrollmentStatus.DEAN_APPROVAL:     fsm.zatwierdz_przez_komisje,
+            EnrollmentStatus.COMPLETED:         fsm.zakoncz,
+            EnrollmentStatus.REJECTED:          fsm.odrzuc,
+        }
+        method = _dispatch.get(nowy_status)
+        if method is None:
+            raise ValueError(f'Nieobsługiwany status docelowy: {nowy_status!r}')
+        method()
 
         if komentarz is not None:
             if nowy_status in (EnrollmentStatus.REJECTED, EnrollmentStatus.AWAITING_APPROVAL):
@@ -106,12 +119,17 @@ class UslugaPraktyk:
         komentarz: Optional[str] = None,
         wykonane_przez_id: Optional[uuid.UUID] = None,
     ) -> None:
+        from core.uslugi.workflow import ZapisFSM
         self._dodaj_zdarzenie(
             zapis, EventType.COMMITTEE_DECISION,
             decyzja=decyzja, komentarz=komentarz,
             wykonane_przez_id=wykonane_przez_id,
         )
-        zapis.status = EnrollmentStatus.DEAN_APPROVAL if decyzja == 'APPROVED' else EnrollmentStatus.REJECTED
+        fsm = ZapisFSM(zapis)
+        if decyzja == 'APPROVED':
+            fsm.zatwierdz_przez_komisje()
+        else:
+            fsm.odrzuc()
         db.session.commit()
 
     def zatwierdz_przez_dziekana(
@@ -121,12 +139,17 @@ class UslugaPraktyk:
         komentarz: Optional[str] = None,
         wykonane_przez_id: Optional[uuid.UUID] = None,
     ) -> None:
+        from core.uslugi.workflow import ZapisFSM
         self._dodaj_zdarzenie(
             zapis, EventType.DEAN_DECISION,
             decyzja=decyzja, komentarz=komentarz,
             wykonane_przez_id=wykonane_przez_id,
         )
-        zapis.status = EnrollmentStatus.IN_PROGRESS if decyzja == 'APPROVED' else EnrollmentStatus.REJECTED
+        fsm = ZapisFSM(zapis)
+        if decyzja == 'APPROVED':
+            fsm.zatwierdz_przez_dziekana()
+        else:
+            fsm.odrzuc()
         db.session.commit()
 
     def powiadom_studenta(
@@ -143,7 +166,8 @@ class UslugaPraktyk:
         db.session.commit()
 
     def zakoncz(self, zapis: InternshipEnrollment) -> None:
-        zapis.status = EnrollmentStatus.COMPLETED
+        from core.uslugi.workflow import ZapisFSM
+        ZapisFSM(zapis).zakoncz()
         db.session.commit()
 
     # ── Reports ───────────────────────────────────────────────────────────────
@@ -172,7 +196,7 @@ class UslugaPraktyk:
             decision=decyzja,
             comment=komentarz,
             executed_by_id=wykonane_przez_id,
-            executed_at=datetime.utcnow(),
+            executed_at=datetime.now(timezone.utc),
         )
         db.session.add(zdarzenie)
         return zdarzenie

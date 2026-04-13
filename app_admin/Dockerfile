@@ -25,4 +25,6 @@ USER appuser
 
 EXPOSE 5000
 
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "app_admin:create_app()"]
+# gevent worker: współdzieli greenlets w pętli zdarzeń I/O — eliminuje blokadę
+# wątku przez time.sleep w endpointach SSE przy zachowaniu --workers 2.
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--worker-class", "gevent", "--worker-connections", "100", "app_admin:create_app()"]

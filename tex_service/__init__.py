@@ -1,12 +1,13 @@
 """
 tex_service — pakiet kompilacji LaTeX do PDF.
 
-Eksportuje:
+Publiczne API:
   - compile_pdf(template_name, context) -> bytes
+      Jedyna dozwolona ścieżka kompilacji: szablon Jinja2 + dane domenowe.
+      Surowy TeX generowany jest wewnętrznie — nigdy nie pochodzi od użytkownika.
   - render_tex(template_name, context)  -> str
-  - compile_raw_tex(tex_source)         -> bytes
+      Renderuje szablon → tekst TeX (używane przez testy).
   - TexCompilationError
-  - pdf_service  (instancja PDFService)
 """
 
 import sys
@@ -21,15 +22,11 @@ if _pkg_dir not in sys.path:
 from compiler import (          # noqa: E402
     TexCompilationError,
     render_tex,
-    compile_raw_tex,
     compile_pdf,
 )
-from pdf_service import pdf_service  # noqa: E402
 
 __all__ = [
     "TexCompilationError",
     "render_tex",
-    "compile_raw_tex",
     "compile_pdf",
-    "pdf_service",
 ]

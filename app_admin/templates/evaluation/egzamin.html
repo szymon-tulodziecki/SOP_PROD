@@ -41,6 +41,7 @@
   </div>
 
   <form method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="karta" style="margin-bottom: 2rem;">
       <div class="karta__naglowek">
         <h3 class="karta__tytul">Oceny składowe</h3>

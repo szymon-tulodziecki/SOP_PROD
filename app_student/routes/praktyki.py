@@ -8,7 +8,19 @@ import re
 from flask_login import login_required, current_user
 from core.extensions import db
 import httpx
-from core.modele import Praktyka, ZapisPraktyki, StatusPraktyki, StatusZapisu, SciezkaPraktyki, EfektUczenia, HarmonogramPraktyki, Firma, IndywidualnyProgram, StatusDokumentu, DokumentPrzeslany
+from core.modele import (Internship, InternshipEnrollment, InternshipStatus, EnrollmentStatus,
+                         InternshipPath, LearningOutcome, InternshipSchedule, Company,
+                         IndividualProgram, DocumentStatus, UploadedDocument,
+                         WorkplaceDetails, PathJustification)
+from core.repozytoria import (RepozytoriumPraktyk, RepozytoriumZapisow,
+                               RepozytoriumEfektow, RepozytoriumFirm,
+                               RepozytoriumDokumentowStudenta)
+
+_repo_praktyk = RepozytoriumPraktyk()
+_repo_zapisow = RepozytoriumZapisow()
+_repo_efektow = RepozytoriumEfektow()
+_repo_firm    = RepozytoriumFirm()
+_repo_docs    = RepozytoriumDokumentowStudenta()
 
 praktyki_bp = Blueprint('praktyki', __name__)
 
@@ -94,14 +106,12 @@ class FormularzWniosek(FlaskForm):
 @login_required
 def kreator_sciezka(id):
     """Krok 1: Wybór ścieżki."""
-    praktyka = db.session.get(Praktyka, id)
+    praktyka = db.session.get(Internship, id)
     if not praktyka:
         flash('Praktyka niedostępna.', 'danger')
         return redirect(url_for('praktyki.lista'))
 
-    istniejacy = db.session.query(ZapisPraktyki).filter_by(
-        internship_id=id, student_id=current_user.id
-    ).filter(ZapisPraktyki.status == StatusZapisu.PENDING).first()
+    istniejacy = _repo_zapisow.pending_dla_studenta_i_praktyki(current_user.id, id)
 
     form = FormularzSciezka()
 
@@ -109,12 +119,12 @@ def kreator_sciezka(id):
         if istniejacy:
             zapis = istniejacy
         else:
-            zapis = ZapisPraktyki(id=uuid.uuid4(), internship_id=id,
-                                   student_id=current_user.id, status=StatusZapisu.PENDING,
-                                   uopz_id=getattr(current_user, 'uopz_id', None))
+            zapis = InternshipEnrollment(id=uuid.uuid4(), internship_id=id,
+                                   student_id=current_user.id, status=EnrollmentStatus.PENDING,
+                                   supervisor_id=getattr(current_user, 'supervisor_id', None))
             db.session.add(zapis)
 
-        zapis.track_type = SciezkaPraktyki(form.track_type.data)
+        zapis.track_type = InternshipPath(form.track_type.data)
         db.session.commit()
 
         if form.track_type.data == 'STANDARD':
@@ -132,26 +142,25 @@ def kreator_sciezka(id):
 @login_required
 def kreator_firma(zapis_id):
     """Krok 2A: Dane zakładu + ZOPZ (ścieżka A)."""
-    zapis = db.session.get(ZapisPraktyki, zapis_id)
-    if not zapis or zapis.student_id != current_user.id or zapis.track_type != SciezkaPraktyki.STANDARD:
+    zapis = db.session.get(InternshipEnrollment, zapis_id)
+    if not zapis or zapis.student_id != current_user.id or zapis.track_type != InternshipPath.STANDARD:
         abort(404)
 
     form = FormularzDaneFirmy()
-    firmy_list = db.session.query(Firma).filter_by(is_active=True).order_by(Firma.name).all()
-    form.firma_id.choices = [('', '--- Wybierz firmę ---')] + [(str(f.id), f.nazwa) for f in firmy_list]
+    firmy_list = _repo_firm.aktywne()
+    form.firma_id.choices = [('', '--- Wybierz firmę ---')] + [(str(f.id), f.name) for f in firmy_list]
 
     if form.validate_on_submit():
         if not form.ubezpieczenie_nw.data:
             flash('Ubezpieczenie NW jest wymagane.', 'danger')
             return render_template('kreator/krok2a_firma.html', form=form, zapis=zapis, firmy_list=firmy_list)
 
-        zapis.termin_od        = form.termin_od.data
-        zapis.termin_do        = form.termin_do.data
-        zapis.ubezpieczenie_nw = True
-        zapis.specjalnosc      = getattr(current_user, 'specjalnosc', '') or ''
+        zapis.start_date         = form.termin_od.data
+        zapis.end_date           = form.termin_do.data
+        zapis.accident_insurance = True
+        zapis.specialization     = getattr(current_user, 'specialization', '') or ''
 
-        from core.modele import DaneMiejscaPraktyki
-        dm = zapis.dane_miejsca or DaneMiejscaPraktyki(enrollment_id=zapis.id)
+        dm = zapis.workplace_details or WorkplaceDetails(enrollment_id=zapis.id)
         if dm not in db.session:
             db.session.add(dm)
 
@@ -159,31 +168,31 @@ def kreator_firma(zapis_id):
             if not form.firma_id.data:
                 flash('Wybierz firmę z listy.', 'danger')
                 return render_template('kreator/krok2a_firma.html', form=form, zapis=zapis, firmy_list=firmy_list)
-            zapis.firma_id = form.firma_id.data
-            dm.firma_nazwa = dm.firma_adres = dm.firma_miasto = None
-            dm.firma_nip_krs = dm.firma_upowazniony_osoba = dm.firma_upowazniony_stanowisko = None
+            zapis.company_id = form.firma_id.data
+            dm.company_name = dm.company_address = dm.company_city = None
+            dm.company_tax_id = dm.authorized_person = dm.authorized_person_position = None
         else:
             if not form.firma_nazwa.data or not form.firma_adres.data or not form.firma_miasto.data:
                 flash('Podaj nazwę, adres i miasto firmy.', 'danger')
                 return render_template('kreator/krok2a_firma.html', form=form, zapis=zapis, firmy_list=firmy_list)
-            zapis.firma_id = None
-            dm.firma_nazwa                  = form.firma_nazwa.data
-            dm.firma_adres                  = form.firma_adres.data
-            dm.firma_miasto                 = form.firma_miasto.data
-            dm.firma_nip_krs                = form.firma_nip_krs.data
-            dm.firma_upowazniony_osoba      = form.firma_upowazniony_osoba.data
-            dm.firma_upowazniony_stanowisko = form.firma_upowazniony_stanowisko.data
+            zapis.company_id = None
+            dm.company_name                  = form.firma_nazwa.data
+            dm.company_address               = form.firma_adres.data
+            dm.company_city                  = form.firma_miasto.data
+            dm.company_tax_id                = form.firma_nip_krs.data
+            dm.authorized_person             = form.firma_upowazniony_osoba.data
+            dm.authorized_person_position    = form.firma_upowazniony_stanowisko.data
 
         if not form.zopz_imie_nazwisko.data or not form.zopz_email.data:
             flash('Podaj imię/nazwisko i email opiekuna zakładowego (ZOPZ).', 'danger')
             return render_template('kreator/krok2a_firma.html', form=form, zapis=zapis, firmy_list=firmy_list)
 
-        dm.zopz_imie_nazwisko = form.zopz_imie_nazwisko.data
-        dm.zopz_stanowisko    = form.zopz_stanowisko.data
-        dm.zopz_telefon       = form.zopz_telefon.data
-        dm.zopz_email         = form.zopz_email.data
+        dm.workplace_mentor_name     = form.zopz_imie_nazwisko.data
+        dm.workplace_mentor_position = form.zopz_stanowisko.data
+        dm.workplace_mentor_phone    = form.zopz_telefon.data
+        dm.workplace_mentor_email    = form.zopz_email.data
         db.session.commit()
-        if zapis.status == StatusZapisu.AWAITING_APPROVAL:
+        if zapis.status == EnrollmentStatus.AWAITING_APPROVAL:
             from core.uslugi.workflow import ZapisFSM
             ZapisFSM(zapis).wyslij_do_komisji()
             db.session.commit()
@@ -192,22 +201,22 @@ def kreator_firma(zapis_id):
         return redirect(url_for('praktyki.zapisz_krok2', id=zapis.id))
 
     if request.method == 'GET':
-        dm = zapis.dane_miejsca
-        form.termin_od.data        = zapis.termin_od
-        form.termin_do.data        = zapis.termin_do
-        form.ubezpieczenie_nw.data = zapis.ubezpieczenie_nw
-        form.firma_typ.data = 'database' if zapis.firma_id else 'custom'
-        form.firma_id.data  = str(zapis.firma_id) if zapis.firma_id else ''
-        form.firma_nazwa.data                  = dm.firma_nazwa                  if dm else None
-        form.firma_adres.data                  = dm.firma_adres                  if dm else None
-        form.firma_miasto.data                 = dm.firma_miasto                 if dm else None
-        form.firma_nip_krs.data                = dm.firma_nip_krs                if dm else None
-        form.firma_upowazniony_osoba.data      = dm.firma_upowazniony_osoba      if dm else None
-        form.firma_upowazniony_stanowisko.data = dm.firma_upowazniony_stanowisko if dm else None
-        form.zopz_imie_nazwisko.data = dm.zopz_imie_nazwisko if dm else None
-        form.zopz_stanowisko.data    = dm.zopz_stanowisko    if dm else None
-        form.zopz_telefon.data       = dm.zopz_telefon       if dm else None
-        form.zopz_email.data         = dm.zopz_email         if dm else None
+        dm = zapis.workplace_details
+        form.termin_od.data        = zapis.start_date
+        form.termin_do.data        = zapis.end_date
+        form.ubezpieczenie_nw.data = zapis.accident_insurance
+        form.firma_typ.data = 'database' if zapis.company_id else 'custom'
+        form.firma_id.data  = str(zapis.company_id) if zapis.company_id else ''
+        form.firma_nazwa.data                  = dm.company_name                  if dm else None
+        form.firma_adres.data                  = dm.company_address               if dm else None
+        form.firma_miasto.data                 = dm.company_city                  if dm else None
+        form.firma_nip_krs.data                = dm.company_tax_id                if dm else None
+        form.firma_upowazniony_osoba.data      = dm.authorized_person             if dm else None
+        form.firma_upowazniony_stanowisko.data = dm.authorized_person_position    if dm else None
+        form.zopz_imie_nazwisko.data = dm.workplace_mentor_name     if dm else None
+        form.zopz_stanowisko.data    = dm.workplace_mentor_position  if dm else None
+        form.zopz_telefon.data       = dm.workplace_mentor_phone     if dm else None
+        form.zopz_email.data         = dm.workplace_mentor_email     if dm else None
 
     return render_template('kreator/krok2a_firma.html', form=form, zapis=zapis, firmy_list=firmy_list)
 
@@ -216,30 +225,29 @@ def kreator_firma(zapis_id):
 @login_required
 def kreator_wniosek(zapis_id):
     """Krok 2B/C: Wniosek dla ścieżek B i C."""
-    zapis = db.session.get(ZapisPraktyki, zapis_id)
+    zapis = db.session.get(InternshipEnrollment, zapis_id)
     if not zapis or zapis.student_id != current_user.id:
         abort(404)
-    if zapis.track_type == SciezkaPraktyki.STANDARD:
+    if zapis.track_type == InternshipPath.STANDARD:
         return redirect(url_for('praktyki.kreator_firma', zapis_id=zapis_id))
 
     form = FormularzWniosek()
 
     if form.validate_on_submit():
-        from core.modele import DaneMiejscaPraktyki, UzasadnienieSciezki
-        dm = zapis.dane_miejsca or DaneMiejscaPraktyki(enrollment_id=zapis.id)
+        dm = zapis.workplace_details or WorkplaceDetails(enrollment_id=zapis.id)
         if dm not in db.session:
             db.session.add(dm)
-        dm.firma_nazwa   = form.pracodawca_nazwa.data
-        dm.firma_adres   = form.pracodawca_adres.data
-        dm.firma_miasto  = form.pracodawca_miasto.data
-        dm.zopz_stanowisko = form.stanowisko.data
+        dm.company_name              = form.pracodawca_nazwa.data
+        dm.company_address           = form.pracodawca_adres.data
+        dm.company_city              = form.pracodawca_miasto.data
+        dm.workplace_mentor_position = form.stanowisko.data
 
-        uz = zapis.uzasadnienie or UzasadnienieSciezki(enrollment_id=zapis.id)
+        uz = zapis.path_justification or PathJustification(enrollment_id=zapis.id)
         if uz not in db.session:
             db.session.add(uz)
-        uz.uzasadnienie = form.uzasadnienie.data
+        uz.justification = form.uzasadnienie.data
 
-        byl_awaiting = zapis.status == StatusZapisu.AWAITING_APPROVAL
+        byl_awaiting = zapis.status == EnrollmentStatus.AWAITING_APPROVAL
         db.session.commit()
         if byl_awaiting:
             from core.uslugi.workflow import ZapisFSM
@@ -250,13 +258,13 @@ def kreator_wniosek(zapis_id):
         return redirect(url_for('praktyki.potwierdz_wyslanie', id=zapis.id))
 
     if request.method == 'GET':
-        dm = zapis.dane_miejsca
-        uz = zapis.uzasadnienie
-        form.pracodawca_nazwa.data  = dm.firma_nazwa      if dm else None
-        form.pracodawca_adres.data  = dm.firma_adres      if dm else None
-        form.pracodawca_miasto.data = dm.firma_miasto     if dm else None
-        form.stanowisko.data        = dm.zopz_stanowisko  if dm else None
-        form.uzasadnienie.data      = uz.uzasadnienie     if uz else None
+        dm = zapis.workplace_details
+        uz = zapis.path_justification
+        form.pracodawca_nazwa.data  = dm.company_name              if dm else None
+        form.pracodawca_adres.data  = dm.company_address           if dm else None
+        form.pracodawca_miasto.data = dm.company_city              if dm else None
+        form.stanowisko.data        = dm.workplace_mentor_position if dm else None
+        form.uzasadnienie.data      = uz.justification             if uz else None
 
     return render_template('kreator/krok2bc_wniosek.html', form=form, zapis=zapis)
 
@@ -266,33 +274,30 @@ def kreator_wniosek(zapis_id):
 @praktyki_bp.route('/')
 @login_required
 def lista():
-    dostepne = db.session.query(Praktyka)\
-                 .filter_by(status=StatusPraktyki.ACTIVE)\
-                 .order_by(Praktyka.academic_year.desc())\
-                 .all()
+    dostepne = _repo_praktyk.aktywne()
 
     zapisy_data = {}
-    for z in db.session.query(ZapisPraktyki).filter_by(student_id=current_user.id).all():
-        komentarz_admina = z.komentarze_admina
-        komentarz_uopz   = z.komentarze_uopz
-        sciezka = z.sciezka.value if z.sciezka else None
+    for z in _repo_zapisow.dla_studenta(current_user.id):
+        komentarz_admina = z.admin_comments
+        komentarz_uopz   = z.supervisor_comments
+        sciezka = z.path_type.value if z.path_type else None
         # Ścieżka A: admin zwraca do PENDING z komentarzem
-        zwrocone_a = (z.status == StatusZapisu.OCZEKUJACY and bool(komentarz_admina or komentarz_uopz))
+        zwrocone_a = (z.status == EnrollmentStatus.PENDING and bool(komentarz_admina or komentarz_uopz))
         # Ścieżka B/C: komisja zwraca do AWAITING_APPROVAL z komentarzem UOPZ
         zwrocone_bc = (
-            z.status == StatusZapisu.OCZEKUJE_NA_AKCEPT
+            z.status == EnrollmentStatus.AWAITING_APPROVAL
             and bool(komentarz_uopz)
             and sciezka in ('EMPLOYMENT', 'OWN_BUSINESS')
         )
         zwrocone = zwrocone_a or zwrocone_bc
-        zapisy_data[str(z.praktyka_id)] = {
+        zapisy_data[str(z.internship_id)] = {
             'id':       str(z.id),
             'status':   z.status.value,
             'sciezka':  sciezka,
             'zwrocone': zwrocone,
             'komentarz_zwrotny': komentarz_admina or komentarz_uopz or '',
             'wymaga_uwagi': (
-                z.status == StatusZapisu.AWAITING_APPROVAL
+                z.status == EnrollmentStatus.AWAITING_APPROVAL
                 and bool(komentarz_uopz)
                 and sciezka == 'STANDARD'
             ),
@@ -305,16 +310,16 @@ def lista():
 @praktyki_bp.route('/zgloszenie/<uuid:id>/zakoncz', methods=['POST'])
 @login_required
 def zakoncz_praktyke(id):
-    zapis = db.session.get(ZapisPraktyki, id)
+    zapis = db.session.get(InternshipEnrollment, id)
     if not zapis or zapis.student_id != current_user.id:
         abort(404)
-    if zapis.status != StatusZapisu.IN_PROGRESS:
+    if zapis.status != EnrollmentStatus.IN_PROGRESS:
         flash('Praktykę można zakończyć tylko gdy jest w trakcie realizacji.', 'warning')
         return redirect(url_for('praktyki.lista'))
     from core.uslugi.workflow import ZapisFSM
     ZapisFSM(zapis).zakoncz()
     db.session.commit()
-    flash('Praktyka została oznaczona jako zakończona. Dokumenty końcowe są teraz dostępne w zakładce Moje Dokumenty.', 'success')
+    flash('Internship została oznaczona jako zakończona. Dokumenty końcowe są teraz dostępne w zakładce Moje Dokumenty.', 'success')
     return redirect(url_for('praktyki.lista'))
 
 
@@ -329,15 +334,15 @@ def zapisz_krok1(id):
 @praktyki_bp.route('/zgloszenie/<uuid:id>/krok2', methods=['GET', 'POST'])
 @login_required
 def zapisz_krok2(id):
-    zapis = db.session.get(ZapisPraktyki, id)
+    zapis = db.session.get(InternshipEnrollment, id)
     if not zapis or zapis.student_id != current_user.id:
         abort(404)
         
-    efekty = db.session.query(EfektUczenia).order_by(EfektUczenia.id).all()
-        
+    efekty = _repo_efektow.wszystkie()
+
     if request.method == 'POST':
         # Czyszczenie starego jeśli student wraca z jakiegoś powodu
-        db.session.query(HarmonogramPraktyki).filter_by(enrollment_id=zapis.id).delete()
+        _repo_zapisow.usun_harmonogram(zapis.id)
         
         suma_dni = 0
         nowe_wiersze = []
@@ -351,13 +356,13 @@ def zapisz_krok2(id):
                 dni = 0
                 
             if dz.strip() and pr.strip():
-                nowe_wiersze.append(HarmonogramPraktyki(
+                nowe_wiersze.append(InternshipSchedule(
                     id=uuid.uuid4(),
                     enrollment_id=zapis.id,
                     learning_outcome_id=e.id,
-                    nazwa_dzialu=dz,
-                    przykladowe_prace=pr,
-                    liczba_dni=dni
+                    department_name=dz,
+                    example_tasks=pr,
+                    days_count=dni
                 ))
                 suma_dni += dni
                 
@@ -368,12 +373,12 @@ def zapisz_krok2(id):
     else:
         # GET request - pobranie istniejących danych harmonogramu
         istniejace_harmonogramy = {}
-        harmonogramy = db.session.query(HarmonogramPraktyki).filter_by(enrollment_id=zapis.id).all()
+        harmonogramy = _repo_zapisow.harmonogram_dla_zapisu(zapis.id)
         for h in harmonogramy:
             istniejace_harmonogramy[str(h.learning_outcome_id)] = {
-                'dzial': h.nazwa_dzialu,
-                'prace': h.przykladowe_prace,
-                'dni': h.liczba_dni
+                'dzial': h.department_name,
+                'prace': h.example_tasks,
+                'dni': h.days_count
             }
 
     csrf_form = FlaskForm()
@@ -388,10 +393,10 @@ def zapisz_krok2(id):
 @praktyki_bp.route('/zgloszenie/<uuid:id>/potwierdz-wyslanie')
 @login_required
 def potwierdz_wyslanie(id):
-    zapis = db.session.get(ZapisPraktyki, id)
+    zapis = db.session.get(InternshipEnrollment, id)
     if not zapis or zapis.student_id != current_user.id:
         abort(404)
-    if zapis.status != StatusZapisu.PENDING:
+    if zapis.status != EnrollmentStatus.PENDING:
         return redirect(url_for('praktyki.szczegoly_zgloszenia', id=id))
     from flask_wtf import FlaskForm
     csrf_form = FlaskForm()
@@ -401,16 +406,16 @@ def potwierdz_wyslanie(id):
 @praktyki_bp.route('/zgloszenie/<uuid:id>/wyslij', methods=['POST'])
 @login_required
 def wyslij_do_zatwierdzenia(id):
-    zapis = db.session.get(ZapisPraktyki, id)
+    zapis = db.session.get(InternshipEnrollment, id)
     if not zapis or zapis.student_id != current_user.id:
         abort(404)
-    if zapis.status != StatusZapisu.PENDING:
+    if zapis.status != EnrollmentStatus.PENDING:
         flash('Zgłoszenie zostało już wysłane.', 'info')
         return redirect(url_for('praktyki.szczegoly_zgloszenia', id=id))
     # Ścieżka A → czeka na UOPZ; B/C → od razu do komisji
     from core.uslugi.workflow import ZapisFSM
     fsm = ZapisFSM(zapis)
-    if zapis.sciezka and zapis.sciezka.value in ('EMPLOYMENT', 'OWN_BUSINESS'):
+    if zapis.path_type and zapis.path_type.value in ('EMPLOYMENT', 'OWN_BUSINESS'):
         fsm.wyslij_do_komisji()
     else:
         fsm.wyslij_do_akceptacji()
@@ -423,16 +428,11 @@ def wyslij_do_zatwierdzenia(id):
 @login_required
 def szczegoly_zgloszenia(id):
     """Szczegóły zgłoszenia studenta wraz z komentarzami UOPZ"""
-    zapis = db.session.get(ZapisPraktyki, id)
+    zapis = db.session.get(InternshipEnrollment, id)
     if not zapis or zapis.student_id != current_user.id:
         abort(404)
 
-    rows = (
-        db.session.query(DokumentPrzeslany)
-        .filter_by(enrollment_id=id, uploaded_by_id=current_user.id)
-        .order_by(DokumentPrzeslany.uploaded_at.desc())
-        .all()
-    )
+    rows = _repo_docs.dla_zapisu_studenta(id, current_user.id)
     uploaded_docs = [
         {
             'id': str(d.id),
@@ -452,10 +452,10 @@ def szczegoly_zgloszenia(id):
 @login_required
 def resubmit_zgloszenia(id):
     """Student ponownie wysyła zgłoszenie po poprawkach."""
-    zapis = db.session.get(ZapisPraktyki, id)
+    zapis = db.session.get(InternshipEnrollment, id)
     if not zapis or zapis.student_id != current_user.id:
         abort(404)
-    if zapis.status != StatusZapisu.AWAITING_APPROVAL:
+    if zapis.status != EnrollmentStatus.AWAITING_APPROVAL:
         flash('Zgłoszenie nie może być ponownie wysłane w tym statusie.', 'warning')
         return redirect(url_for('praktyki.szczegoly_zgloszenia', id=id))
     from core.uslugi.workflow import ZapisFSM

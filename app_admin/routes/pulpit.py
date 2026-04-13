@@ -1,51 +1,43 @@
 from flask import Blueprint, render_template
 from flask_login import login_required, current_user
-from core.modele import Praktyka, ZapisPraktyki, Uzytkownik, RolaUzytkownika, StatusPraktyki, StatusZapisu
-from core.extensions import db
+from core.modele import UserRole, EnrollmentStatus
+from core.repozytoria import RepozytoriumZapisow, RepozytoriumPraktyk, RepozytoriumUzytkownikow
 from flask_wtf import FlaskForm
 
 dashboard_bp = Blueprint('dashboard', __name__)
 
+_repo_zapisow    = RepozytoriumZapisow()
+_repo_praktyk    = RepozytoriumPraktyk()
+_repo_uzytk      = RepozytoriumUzytkownikow()
+
+
 @dashboard_bp.route('/')
 @login_required
 def index():
-    q = db.session.query(ZapisPraktyki)
+    uopz_id = current_user.id if current_user.role == UserRole.UOPZ else None
 
-    if current_user.role == RolaUzytkownika.UOPZ:
-        q = q.filter(db.or_(ZapisPraktyki.supervisor_id == current_user.id, ZapisPraktyki.status == StatusZapisu.PENDING))
-
+    stats_zapisow = _repo_zapisow.statystyki_pulpit(supervisor_id=uopz_id)
     statystyki = {
-        'praktyki_aktywne': q.filter(ZapisPraktyki.status == StatusZapisu.IN_PROGRESS).count(),
-        'oczekujace_oceny': q.filter(ZapisPraktyki.status == StatusZapisu.COMPLETED).count(),
-        'zakonczone':       db.session.query(Praktyka).filter_by(status=StatusPraktyki.INACTIVE).count(),
-        'liczba_studentow': db.session.query(Uzytkownik).filter_by(
-            role=RolaUzytkownika.STUDENT, is_active=True).count(),
+        **stats_zapisow,
+        'zakonczone':       _repo_praktyk.liczba_nieaktywnych(),
+        'liczba_studentow': _repo_uzytk.liczba_aktywnych_studentow(),
     }
 
-    ostatnie_zapisy = (q
-        .order_by(ZapisPraktyki.enrolled_at.desc())
-        .limit(8).all())
+    ostatnie_zapisy = _repo_zapisow.ostatnie(supervisor_id=uopz_id, limit=8)
 
-    # Dodaj ostrzeżenia o przekroczonych deadline'ach dla UOPZ
     pilne_oceny = []
-    if current_user.role == RolaUzytkownika.UOPZ:
+    if current_user.role == UserRole.UOPZ:
         from datetime import date, timedelta
-
-        completed_q = db.session.query(ZapisPraktyki).filter(
-            ZapisPraktyki.status == StatusZapisu.COMPLETED,
-            ZapisPraktyki.supervisor_id == current_user.id
-        )
-
-        for zapis in completed_q.all():
+        for zapis in _repo_zapisow.zakonczone_dla_uopz(current_user.id):
             if zapis.termin_do:
-                deadline = zapis.termin_do + timedelta(days=7)
+                deadline        = zapis.termin_do + timedelta(days=7)
                 dni_do_deadline = (deadline - date.today()).days
                 if dni_do_deadline <= 2:
                     pilne_oceny.append({
-                        'zapis': zapis,
-                        'deadline': deadline,
+                        'zapis':           zapis,
+                        'deadline':        deadline,
                         'dni_do_deadline': dni_do_deadline,
-                        'przekroczony': dni_do_deadline < 0
+                        'przekroczony':    dni_do_deadline < 0,
                     })
 
     csrf_form = FlaskForm()
