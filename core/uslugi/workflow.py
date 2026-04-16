@@ -166,6 +166,21 @@ class ZapisFSM:
             raise IllegalTransitionError(obecny, cel, reason)
         self._zapis.status = cel
 
+    def _dodaj_zdarzenie(self, event_type, actor_id=None, comment: str = '',
+                         decision: str = '') -> None:
+        """Tworzy ProcessEvent i dodaje do sesji (bez commit)."""
+        from datetime import datetime, timezone as _tz
+        from core.modele.praktyki import ProcessEvent, EventType
+        from core.extensions import db
+        db.session.add(ProcessEvent(
+            enrollment_id=self._zapis.id,
+            event_type=event_type,
+            comment=comment or None,
+            decision=decision or None,
+            executed_by_id=actor_id,
+            executed_at=datetime.now(_tz.utc),
+        ))
+
     # ── Publiczne przejścia ───────────────────────────────────────────────
 
     def wyslij_do_akceptacji(self) -> None:
@@ -176,26 +191,47 @@ class ZapisFSM:
         """PENDING / AWAITING_APPROVAL → COMMISSION_REVIEW (ścieżki B/C)."""
         self._przejdz(S.COMMISSION_REVIEW)
 
-    def zatwierdz_przez_uopz(self) -> None:
-        """AWAITING_APPROVAL → IN_PROGRESS."""
+    def zatwierdz_przez_uopz(self, actor_id=None, comment: str = '') -> None:
+        """AWAITING_APPROVAL → IN_PROGRESS. Opcjonalnie zapisuje komentarz UOPZ."""
+        from core.modele.praktyki import EventType
         self._przejdz(S.IN_PROGRESS, 'decyzja UOPZ')
+        if comment:
+            self._dodaj_zdarzenie(EventType.SUPERVISOR_COMMENT, actor_id=actor_id,
+                                  comment=comment)
 
-    def zatwierdz_przez_komisje(self) -> None:
+    def zatwierdz_przez_komisje(self, actor_id=None, comment: str = '') -> None:
         """COMMISSION_REVIEW / REVISION_REQUIRED → DEAN_APPROVAL."""
+        from core.modele.praktyki import EventType
         self._przejdz(S.DEAN_APPROVAL, 'decyzja komisji')
+        self._dodaj_zdarzenie(EventType.COMMITTEE_DECISION, actor_id=actor_id,
+                              comment=comment, decision='APPROVED')
 
-    def zadaj_poprawki(self) -> None:
+    def zadaj_poprawki(self, actor_id=None, comment: str = '') -> None:
         """COMMISSION_REVIEW / REVISION_REQUIRED → REVISION_REQUIRED."""
+        from core.modele.praktyki import EventType
         self._przejdz(S.REVISION_REQUIRED, 'komisja: wymaga uzupełnień')
+        self._dodaj_zdarzenie(EventType.COMMITTEE_DECISION, actor_id=actor_id,
+                              comment=comment, decision='PARTIALLY_APPROVED')
+        if comment:
+            self._dodaj_zdarzenie(EventType.SUPERVISOR_COMMENT, actor_id=actor_id,
+                                  comment=f"Komisja: {comment}")
 
-    def zatwierdz_przez_dziekana(self) -> None:
+    def zatwierdz_przez_dziekana(self, actor_id=None, comment: str = '') -> None:
         """DEAN_APPROVAL → IN_PROGRESS."""
+        from core.modele.praktyki import EventType
         self._przejdz(S.IN_PROGRESS, 'decyzja dziekana')
+        self._dodaj_zdarzenie(EventType.DEAN_DECISION, actor_id=actor_id,
+                              comment=comment, decision='APPROVED')
+
+    def odrzuc(self, actor_id=None, comment: str = '',
+               event_type=None) -> None:
+        """Dowolny aktywny stan → REJECTED."""
+        from core.modele.praktyki import EventType
+        self._przejdz(S.REJECTED)
+        et = event_type or EventType.SUPERVISOR_COMMENT
+        self._dodaj_zdarzenie(et, actor_id=actor_id,
+                              comment=comment, decision='REJECTED')
 
     def zakoncz(self) -> None:
         """IN_PROGRESS → COMPLETED."""
         self._przejdz(S.COMPLETED)
-
-    def odrzuc(self) -> None:
-        """Dowolny aktywny stan → REJECTED."""
-        self._przejdz(S.REJECTED)

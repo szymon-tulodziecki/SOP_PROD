@@ -98,14 +98,17 @@ def pobierz_dynamiczny(zapis_id, typ):
         )
         if response.status_code == 200:
             import unicodedata
-            safe = (
-                unicodedata.normalize('NFKD', zapis.student.last_name or '')
-                .encode('ascii', 'ignore').decode('ascii') or 'student'
-            )
+            from urllib.parse import quote
             pdf_name = template_name.replace('.tex.j2', '')
+            full = f"{pdf_name}_{zapis.student.last_name or 'student'}.pdf"
+            ascii_fb = (unicodedata.normalize('NFKD', full)
+                        .encode('ascii', 'ignore').decode('ascii').strip() or 'dokument.pdf')
+            utf8_enc = quote(full, safe='')
             pdf_response = make_response(response.content)
             pdf_response.headers['Content-Type'] = 'application/pdf'
-            pdf_response.headers['Content-Disposition'] = f'attachment; filename="{pdf_name}_{safe}.pdf"'
+            pdf_response.headers['Content-Disposition'] = (
+                f"attachment; filename=\"{ascii_fb}\"; filename*=UTF-8''{utf8_enc}"
+            )
             return pdf_response
         flash(f'Błąd generowania dokumentu: {response.text[:200]}', 'error')
     except Exception as e:

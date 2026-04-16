@@ -60,8 +60,6 @@ def dziekan_decyzja(id):
     form = FormularzDziekana()
 
     if form.validate_on_submit():
-        from core.modele import ProcessEvent, EventType
-        from datetime import datetime, timezone as _tz
         from core.uslugi.workflow import ZapisFSM, IllegalTransitionError
 
         try:
@@ -70,23 +68,17 @@ def dziekan_decyzja(id):
                     flash('Wniosek zmienił status podczas przetwarzania — spróbuj ponownie.', 'warning')
                     return redirect(url_for('zarzadzanie.dziekan_lista'))
 
+                komentarz = form.komentarz.data or ''
                 if form.decyzja.data == 'APPROVED':
-                    fsm.zatwierdz_przez_dziekana()
+                    fsm.zatwierdz_przez_dziekana(actor_id=current_user.id, comment=komentarz)
                     flash('Wniosek zatwierdzony przez dziekana. Student może kontynuować praktykę.', 'success')
                 else:
-                    fsm.odrzuc()
-                    db.session.add(ProcessEvent(
-                        enrollment_id=fsm.zapis.id, event_type=EventType.SUPERVISOR_COMMENT,
-                        comment=f"Dziekan nie wyraził zgody: {form.komentarz.data}",
-                        executed_by_id=current_user.id, executed_at=datetime.now(_tz.utc),
-                    ))
+                    from core.modele.praktyki import EventType
+                    fsm.odrzuc(actor_id=current_user.id,
+                               comment=f"Dziekan nie wyraził zgody: {komentarz}",
+                               event_type=EventType.DEAN_DECISION)
                     flash('Wniosek odrzucony przez dziekana.', 'warning')
 
-                db.session.add(ProcessEvent(
-                    enrollment_id=fsm.zapis.id, event_type=EventType.DEAN_DECISION,
-                    decision=form.decyzja.data, comment=form.komentarz.data,
-                    executed_by_id=current_user.id, executed_at=datetime.now(_tz.utc),
-                ))
                 db.session.commit()
         except IllegalTransitionError as e:
             flash(str(e), 'danger')

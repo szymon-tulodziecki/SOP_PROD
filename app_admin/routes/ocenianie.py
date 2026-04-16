@@ -226,10 +226,17 @@ def generuj_protokol(id):
                        json={'template': 'zal8_protokol.tex.j2', 'context': ctx, 'filename': 'zal8_protokol.pdf'},
                        timeout=60)
         if r.status_code == 200:
-            safe = unicodedata.normalize('NFKD', s.last_name).encode('ascii', 'ignore').decode('ascii') or 'student'
+            import unicodedata
+            from urllib.parse import quote
+            full_name = f"zal8_protokol_{s.last_name}.pdf"
+            ascii_fb = (unicodedata.normalize('NFKD', full_name)
+                        .encode('ascii', 'ignore').decode('ascii').strip() or 'zal8_protokol.pdf')
+            utf8_enc = quote(full_name, safe='')
             resp = make_response(r.content)
             resp.headers['Content-Type'] = 'application/pdf'
-            resp.headers['Content-Disposition'] = f'attachment; filename="zal8_protokol_{safe}.pdf"'
+            resp.headers['Content-Disposition'] = (
+                f"attachment; filename=\"{ascii_fb}\"; filename*=UTF-8''{utf8_enc}"
+            )
             return resp
         flash(f'Błąd generowania protokołu: {r.text[:200]}', 'danger')
     except Exception as e:

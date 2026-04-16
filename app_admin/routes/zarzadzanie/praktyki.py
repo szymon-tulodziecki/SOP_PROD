@@ -151,34 +151,19 @@ def szczegoly_zgloszenia(id):
     form = FormularzKomentarza()
 
     if form.validate_on_submit():
-        from core.modele import ProcessEvent, EventType
-        from datetime import datetime, timezone as _tz
         from core.uslugi.workflow import ZapisFSM, IllegalTransitionError
 
         try:
             with ZapisFSM.lock(id) as fsm:
+                komentarz = form.komentarz.data or ''
                 if form.zatwierdz.data:
-                    if form.komentarz.data:
-                        db.session.add(ProcessEvent(
-                            enrollment_id=fsm.zapis.id,
-                            event_type=EventType.ADMIN_COMMENT if current_user.role == UserRole.ADMIN else EventType.SUPERVISOR_COMMENT,
-                            comment=form.komentarz.data,
-                            executed_by_id=current_user.id, executed_at=datetime.now(_tz.utc),
-                        ))
-                    fsm.zatwierdz_przez_uopz()
+                    fsm.zatwierdz_przez_uopz(actor_id=current_user.id, comment=komentarz)
                     flash('Zgłoszenie zostało zatwierdzone!', 'success')
                 elif form.odrzuc.data:
-                    db.session.add(ProcessEvent(
-                        enrollment_id=fsm.zapis.id,
-                        event_type=EventType.ADMIN_COMMENT if current_user.role == UserRole.ADMIN else EventType.SUPERVISOR_COMMENT,
-                        comment=form.komentarz.data,
-                        executed_by_id=current_user.id, executed_at=datetime.now(_tz.utc),
-                    ))
-                    db.session.add(ProcessEvent(
-                        enrollment_id=fsm.zapis.id, event_type=EventType.STUDENT_NOTIFICATION,
-                        executed_by_id=current_user.id, executed_at=datetime.now(_tz.utc),
-                    ))
-                    fsm.odrzuc()
+                    from core.modele.praktyki import EventType
+                    fsm.odrzuc(actor_id=current_user.id, comment=komentarz,
+                               event_type=EventType.ADMIN_COMMENT if current_user.role == UserRole.ADMIN
+                               else EventType.SUPERVISOR_COMMENT)
                     flash('Wysłano prośbę o poprawki do studenta.', 'info')
                 db.session.commit()
         except IllegalTransitionError as e:

@@ -761,7 +761,7 @@ class InternshipSchedule(db.Model):
 
     id                  = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     enrollment_id       = db.Column(UUID(as_uuid=True), db.ForeignKey('internship_enrollments.id', ondelete='CASCADE'), nullable=False)
-    learning_outcome_id = db.Column(db.Integer, db.ForeignKey('learning_outcomes.id'), nullable=False)
+    learning_outcome_id = db.Column('outcome_id', db.Integer, db.ForeignKey('learning_outcomes.id'), nullable=False)
     department_name     = db.Column(db.String(255), nullable=False)
     example_tasks       = db.Column(db.Text,        nullable=False)
     days_count          = db.Column(db.Integer,     nullable=False, default=0)
@@ -821,10 +821,10 @@ class InternshipReport(db.Model):
     id                   = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     enrollment_id        = db.Column(UUID(as_uuid=True), db.ForeignKey('internship_enrollments.id', ondelete='CASCADE'), nullable=False, unique=True)
     workplace_description = db.Column(db.Text,     nullable=True)
-    work_analysis        = db.Column(db.Text,      nullable=True)
+    analysis             = db.Column(db.Text,      nullable=True)
+    skills               = db.Column(db.Text,      nullable=True)
     updated_at           = db.Column(db.DateTime,  server_default=db.func.now(), onupdate=db.func.now())
 
-    # Backward-compat
     @property
     def zapis_id(self):
         return self.enrollment_id
@@ -839,11 +839,19 @@ class InternshipReport(db.Model):
 
     @property
     def opis_i_analiza(self):
-        return self.work_analysis
+        return self.analysis
 
     @opis_i_analiza.setter
     def opis_i_analiza(self, v):
-        self.work_analysis = v
+        self.analysis = v
+
+    @property
+    def wiedza(self):
+        return self.skills
+
+    @wiedza.setter
+    def wiedza(self, v):
+        self.skills = v
 
 
 class IndividualProgram(db.Model):

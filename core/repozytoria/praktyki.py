@@ -184,9 +184,15 @@ class RepozytoriumZapisow:
 
     def aktywne_i_zakonczone(self, supervisor_id=None) -> list[InternshipEnrollment]:
         """Zapisy IN_PROGRESS i COMPLETED, opcjonalnie filtrowane do jednego UOPZ."""
+        from sqlalchemy.orm import selectinload
         from core.modele.uzytkownicy import User
         q = (
             db.session.query(InternshipEnrollment)
+            .options(
+                selectinload(InternshipEnrollment.student),
+                selectinload(InternshipEnrollment.firma),
+                selectinload(InternshipEnrollment.final_grades),
+            )
             .filter(InternshipEnrollment.status.in_(
                 [EnrollmentStatus.IN_PROGRESS, EnrollmentStatus.COMPLETED]
             ))
@@ -199,8 +205,13 @@ class RepozytoriumZapisow:
         ).all()
 
     def zakonczone_dla_uopz(self, supervisor_id) -> list[InternshipEnrollment]:
+        from sqlalchemy.orm import selectinload
         return (
             db.session.query(InternshipEnrollment)
+            .options(
+                selectinload(InternshipEnrollment.student),
+                selectinload(InternshipEnrollment.firma),
+            )
             .filter(InternshipEnrollment.status == EnrollmentStatus.COMPLETED,
                     InternshipEnrollment.supervisor_id == supervisor_id)
             .all()
@@ -254,9 +265,14 @@ class RepozytoriumZapisow:
 
     def wnioski_dziekana_strona(self, strona: int = 1, na_strone: int = 25):
         """Paginowana lista wniosków oczekujących na decyzję dziekana."""
+        from sqlalchemy.orm import selectinload
         from core.modele.uzytkownicy import User
         q = (
             db.session.query(InternshipEnrollment)
+            .options(
+                selectinload(InternshipEnrollment.student),
+                selectinload(InternshipEnrollment.firma),
+            )
             .join(User, InternshipEnrollment.student_id == User.id)
             .filter(InternshipEnrollment.status == EnrollmentStatus.DEAN_APPROVAL)
             .filter(InternshipEnrollment.path_type.in_(['EMPLOYMENT', 'OWN_BUSINESS']))
@@ -268,8 +284,14 @@ class RepozytoriumZapisow:
     def dla_uopz_strona(self, supervisor_id, status_filter: str = '',
                          strona: int = 1, na_strone: int = 25):
         """Paginowana lista zgłoszeń przypisanych do UOPZ."""
-        q = db.session.query(InternshipEnrollment).filter(
-            InternshipEnrollment.supervisor_id == supervisor_id
+        from sqlalchemy.orm import selectinload
+        q = (
+            db.session.query(InternshipEnrollment)
+            .options(
+                selectinload(InternshipEnrollment.student),
+                selectinload(InternshipEnrollment.firma),
+            )
+            .filter(InternshipEnrollment.supervisor_id == supervisor_id)
         )
         if status_filter:
             q = q.filter(InternshipEnrollment.status == EnrollmentStatus(status_filter))
@@ -353,7 +375,14 @@ class RepozytoriumZapisow:
 
     def ostatnie(self, supervisor_id=None, limit: int = 8) -> list[InternshipEnrollment]:
         """Ostatnie zapisy (dla widżetu na pulpicie)."""
-        q = db.session.query(InternshipEnrollment)
+        from sqlalchemy.orm import selectinload
+        q = (
+            db.session.query(InternshipEnrollment)
+            .options(
+                selectinload(InternshipEnrollment.student),
+                selectinload(InternshipEnrollment.firma),
+            )
+        )
         if supervisor_id is not None:
             q = q.filter(db.or_(
                 InternshipEnrollment.supervisor_id == supervisor_id,

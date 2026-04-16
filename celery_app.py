@@ -180,7 +180,12 @@ def generate_pdf_dziennik(self, enrollment_id: str) -> dict:
 
 @celery.task(name='cleanup_old_pdfs')
 def cleanup_old_pdfs(max_age_hours: int = 24) -> dict:
-    """Usuwa pliki PDF starsze niż max_age_hours z katalogu PDF_OUTPUT_DIR."""
+    """Usuwa pliki PDF starsze niż max_age_hours z katalogu PDF_OUTPUT_DIR.
+
+    Przeszukuje rekursywnie całe drzewo katalogów (łącznie z podkatalogami
+    wg schematu rok/miesiąc/dzień generowanymi przez generuj_pdf_z_szablonu).
+    Puste podkatalogi są usuwane po wyczyszczeniu plików.
+    """
     import time
     from pathlib import Path
 
@@ -190,7 +195,8 @@ def cleanup_old_pdfs(max_age_hours: int = 24) -> dict:
 
     cutoff = time.time() - max_age_hours * 3600
     deleted = errors = 0
-    for f in output_dir.glob('*.pdf'):
+
+    for f in output_dir.rglob('*.pdf'):
         try:
             if f.stat().st_mtime < cutoff:
                 f.unlink()
@@ -198,6 +204,14 @@ def cleanup_old_pdfs(max_age_hours: int = 24) -> dict:
         except Exception as exc:
             logger.warning("Nie udało się usunąć %s: %s", f, exc)
             errors += 1
+
+    # Usuń puste podkatalogi (od najgłębszych w górę)
+    for d in sorted(output_dir.rglob('*'), key=lambda p: len(p.parts), reverse=True):
+        if d.is_dir() and d != output_dir:
+            try:
+                d.rmdir()  # rmdir usuwa tylko puste katalogi — bezpieczne
+            except OSError:
+                pass  # katalog nie jest pusty — ignoruj
 
     logger.info("Czyszczenie PDF: usunięto %d, błędy %d (próg: %dh)", deleted, errors, max_age_hours)
     return {'deleted': deleted, 'errors': errors}
@@ -219,6 +233,7 @@ def generuj_pdf_z_szablonu(self, template_name: str, context: dict,
         filename_prefix: prefiks nazwy pliku wynikowego
     """
     import uuid
+    from datetime import date
     from pathlib import Path
 
     try:
@@ -229,7 +244,8 @@ def generuj_pdf_z_szablonu(self, template_name: str, context: dict,
                        self.request.retries, self.max_retries, exc)
         raise self.retry(exc=exc, countdown=10 * (self.request.retries + 1))
 
-    output_dir = Path(PDF_OUTPUT_DIR)
+    today = date.today()
+    output_dir = Path(PDF_OUTPUT_DIR) / str(today.year) / f"{today.month:02d}" / f"{today.day:02d}"
     output_dir.mkdir(parents=True, exist_ok=True)
     filename    = f"{filename_prefix}_{uuid.uuid4().hex[:8]}.pdf"
     output_path = output_dir / filename

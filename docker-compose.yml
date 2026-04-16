@@ -136,7 +136,7 @@ services:
   celery-worker:
     build:
       context: .
-      dockerfile: app_admin/Dockerfile
+      dockerfile: celery_worker/Dockerfile
     container_name: sop_celery_worker
     restart: unless-stopped
     environment:
@@ -161,12 +161,10 @@ services:
         condition: service_healthy
     volumes:
       - pdf_data:/app/pdf_output
-      - ./app_admin:/app/app_admin:ro
       - ./core:/app/core:ro
     read_only: true
     tmpfs:
       - /tmp
-      - /app/app_admin/logs
     security_opt:
       - no-new-privileges:true
     cap_drop:
@@ -180,7 +178,7 @@ services:
   celery-beat:
     build:
       context: .
-      dockerfile: app_admin/Dockerfile
+      dockerfile: celery_worker/Dockerfile
     container_name: sop_celery_beat
     restart: unless-stopped
     environment:

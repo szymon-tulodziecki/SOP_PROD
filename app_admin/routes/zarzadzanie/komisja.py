@@ -62,8 +62,6 @@ def komisja_weryfikuj(id):
     form = FormularzKomisji()
 
     if form.validate_on_submit():
-        from core.modele import ProcessEvent, EventType
-        from datetime import datetime, timezone as _tz
         from core.uslugi.workflow import ZapisFSM, IllegalTransitionError
 
         try:
@@ -72,34 +70,20 @@ def komisja_weryfikuj(id):
                     flash('Wniosek zmienił status podczas przetwarzania — spróbuj ponownie.', 'warning')
                     return redirect(url_for('zarzadzanie.komisja_lista'))
 
+                komentarz = form.komentarz.data or ''
                 if form.decyzja.data == 'APPROVED':
-                    decyzja_db = 'APPROVED'
-                    fsm.zatwierdz_przez_komisje()
+                    fsm.zatwierdz_przez_komisje(actor_id=current_user.id, comment=komentarz)
                     flash('Wniosek zatwierdzony i przekazany do dziekana.', 'success')
                 elif form.decyzja.data == 'PARTIALLY_APPROVED':
-                    decyzja_db = 'PARTIALLY_APPROVED'
-                    fsm.zadaj_poprawki()
-                    db.session.add(ProcessEvent(
-                        enrollment_id=fsm.zapis.id, event_type=EventType.SUPERVISOR_COMMENT,
-                        comment=f"Komisja: {form.komentarz.data}",
-                        executed_by_id=current_user.id, executed_at=datetime.now(_tz.utc),
-                    ))
+                    fsm.zadaj_poprawki(actor_id=current_user.id, comment=komentarz)
                     flash('Wniosek wymaga uzupełnień - student zostanie powiadomiony.', 'info')
                 else:
-                    decyzja_db = 'REJECTED'
-                    fsm.odrzuc()
-                    db.session.add(ProcessEvent(
-                        enrollment_id=fsm.zapis.id, event_type=EventType.SUPERVISOR_COMMENT,
-                        comment=f"Wniosek odrzucony przez komisję: {form.komentarz.data}",
-                        executed_by_id=current_user.id, executed_at=datetime.now(_tz.utc),
-                    ))
+                    from core.modele.praktyki import EventType
+                    fsm.odrzuc(actor_id=current_user.id,
+                               comment=f"Wniosek odrzucony przez komisję: {komentarz}",
+                               event_type=EventType.COMMITTEE_DECISION)
                     flash('Wniosek został odrzucony.', 'warning')
 
-                db.session.add(ProcessEvent(
-                    enrollment_id=fsm.zapis.id, event_type=EventType.COMMITTEE_DECISION,
-                    decision=decyzja_db, comment=form.komentarz.data,
-                    executed_by_id=current_user.id, executed_at=datetime.now(_tz.utc),
-                ))
                 db.session.commit()
         except IllegalTransitionError as e:
             flash(str(e), 'danger')

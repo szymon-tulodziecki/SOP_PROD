@@ -5,6 +5,7 @@ Lista dokumentów studentów – widok dla ADMIN i UOPZ.
 
 import logging
 import unicodedata
+from urllib.parse import quote
 
 import httpx
 from flask import render_template, request, abort, make_response, current_app
@@ -30,6 +31,23 @@ def _get_tex_url() -> str:
 
 def _sciezka(zapis) -> str:
     return zapis.track_type.value if zapis.track_type else 'STANDARD'
+
+
+def _pdf_content_disposition(base_name: str, last_name: str) -> str:
+    """Buduje nagłówek Content-Disposition zgodny z RFC 6266 + RFC 5987.
+
+    Zawiera dwa tokeny filename:
+    - ``filename=`` — ASCII fallback (znaki spoza ASCII pominięte, nigdy puste)
+    - ``filename*=`` — pełna nazwa zakodowana UTF-8 dla przeglądarek obsługujących RFC 5987
+    """
+    full = f"{base_name}_{last_name}.pdf"
+    ascii_fallback = (
+        unicodedata.normalize('NFKD', full)
+        .encode('ascii', 'ignore').decode('ascii')
+        .strip() or 'dokument.pdf'
+    )
+    utf8_encoded = quote(full, safe='')
+    return f"attachment; filename=\"{ascii_fallback}\"; filename*=UTF-8''{utf8_encoded}"
 
 
 # ── Lista studentów ───────────────────────────────────────────────────────────
@@ -132,14 +150,12 @@ def dokumenty_pobierz(zapis_id, typ):
         )
         if response.status_code != 200:
             abort(500)
-        safe_name = (
-            unicodedata.normalize('NFKD', zapis.student.last_name or '')
-            .encode('ascii', 'ignore').decode('ascii') or 'student'
-        )
         pdf_name = template_name.replace('.tex.j2', '')
         resp = make_response(response.content)
         resp.headers['Content-Type'] = 'application/pdf'
-        resp.headers['Content-Disposition'] = f'attachment; filename="{pdf_name}_{safe_name}.pdf"'
+        resp.headers['Content-Disposition'] = _pdf_content_disposition(
+            pdf_name, zapis.student.last_name or 'student'
+        )
         return resp
     except Exception:
         logger.exception("Błąd generowania %s dla %s", typ, zapis_id)
