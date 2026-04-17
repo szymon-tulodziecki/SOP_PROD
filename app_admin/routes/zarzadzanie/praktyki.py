@@ -109,15 +109,9 @@ def przypisz_uopz(id):
 
     if form.validate_on_submit():
         if form.uopz_id.data:
-            from core.uslugi.workflow import ZapisFSM, IllegalTransitionError
-            try:
-                with ZapisFSM.lock(id) as fsm:
-                    fsm.zapis.supervisor_id = form.uopz_id.data
-                    fsm.wyslij_do_akceptacji()
-                    db.session.commit()
-                flash('Opiekun UOPZ przypisany, zgłoszenie przekazane do zatwierdzenia.', 'success')
-            except IllegalTransitionError as e:
-                flash(str(e), 'danger')
+            zapis.supervisor_id = form.uopz_id.data
+            db.session.commit()
+            flash('Opiekun UOPZ przypisany.', 'success')
         else:
             flash('Nie wybrano opiekuna.', 'warning')
         return redirect(url_for('zarzadzanie.lista_zgloszen'))
@@ -160,11 +154,8 @@ def szczegoly_zgloszenia(id):
                     fsm.zatwierdz_przez_uopz(actor_id=current_user.id, comment=komentarz)
                     flash('Zgłoszenie zostało zatwierdzone!', 'success')
                 elif form.odrzuc.data:
-                    from core.modele.praktyki import EventType
-                    fsm.odrzuc(actor_id=current_user.id, comment=komentarz,
-                               event_type=EventType.ADMIN_COMMENT if current_user.role == UserRole.ADMIN
-                               else EventType.SUPERVISOR_COMMENT)
-                    flash('Wysłano prośbę o poprawki do studenta.', 'info')
+                    fsm.zwroc_do_poprawek(actor_id=current_user.id, comment=komentarz)
+                    flash('Zgłoszenie zwrócone do studenta z prośbą o poprawki.', 'info')
                 db.session.commit()
         except IllegalTransitionError as e:
             flash(str(e), 'danger')

@@ -54,7 +54,8 @@ class FormularzDaneFirmy(FlaskForm):
 
     firma_nazwa                  = StringField('Nazwa zakładu pracy', validators=[Optional(), Length(max=255)])
     firma_adres                  = StringField('Adres (ulica, nr)', validators=[Optional(), Length(max=255)])
-    firma_miasto                 = StringField('Miasto i kod pocztowy', validators=[Optional(), Length(max=100)])
+    firma_kod_pocztowy           = StringField('Kod pocztowy', validators=[Optional(), Length(max=10)])
+    firma_miasto                 = StringField('Miasto', validators=[Optional(), Length(max=100)])
     firma_nip_krs                = StringField('NIP / KRS', validators=[Optional(), Length(max=50)])
     firma_upowazniony_osoba      = StringField('Osoba upoważniona do podpisania porozumienia', validators=[Optional(), Length(max=255)])
     firma_upowazniony_stanowisko = StringField('Stanowisko osoby upoważnionej', validators=[Optional(), Length(max=255)])
@@ -64,11 +65,11 @@ class FormularzDaneFirmy(FlaskForm):
     zopz_telefon       = StringField('Telefon ZOPZ', validators=[Optional(), Length(max=50)])
     zopz_email         = StringField('E-mail ZOPZ', validators=[Optional(), Email(message='Nieprawidłowy email.')])
 
-    def validate_firma_miasto(self, field):
+    def validate_firma_kod_pocztowy(self, field):
         if not field.data:
             return
-        if re.fullmatch(r'\d{2}-\d{3}', field.data.strip()):
-            raise ValidationError('Podaj nazwę miasta, nie kod pocztowy. Kod pocztowy możesz dołączyć do adresu.')
+        if not re.fullmatch(r'\d{2}-\d{3}', field.data.strip()):
+            raise ValidationError('Kod pocztowy musi mieć format XX-XXX (np. 82-300).')
 
     def validate_zopz_imie_nazwisko(self, field):
         if not field.data:
@@ -176,9 +177,11 @@ def kreator_firma(zapis_id):
                 flash('Podaj nazwę, adres i miasto firmy.', 'danger')
                 return render_template('kreator/krok2a_firma.html', form=form, zapis=zapis, firmy_list=firmy_list)
             zapis.company_id = None
-            dm.company_name                  = form.firma_nazwa.data
-            dm.company_address               = form.firma_adres.data
-            dm.company_city                  = form.firma_miasto.data
+            dm.company_name    = form.firma_nazwa.data
+            dm.company_address = form.firma_adres.data
+            kod = (form.firma_kod_pocztowy.data or '').strip()
+            mia = (form.firma_miasto.data or '').strip()
+            dm.company_city = f"{kod} {mia}".strip() if kod else mia
             dm.company_tax_id                = form.firma_nip_krs.data
             dm.authorized_person             = form.firma_upowazniony_osoba.data
             dm.authorized_person_position    = form.firma_upowazniony_stanowisko.data
@@ -207,9 +210,16 @@ def kreator_firma(zapis_id):
         form.ubezpieczenie_nw.data = zapis.accident_insurance
         form.firma_typ.data = 'database' if zapis.company_id else 'custom'
         form.firma_id.data  = str(zapis.company_id) if zapis.company_id else ''
-        form.firma_nazwa.data                  = dm.company_name                  if dm else None
-        form.firma_adres.data                  = dm.company_address               if dm else None
-        form.firma_miasto.data                 = dm.company_city                  if dm else None
+        form.firma_nazwa.data  = dm.company_name    if dm else None
+        form.firma_adres.data  = dm.company_address if dm else None
+        raw_city = dm.company_city if dm else None
+        m = re.match(r'^(\d{2}-\d{3})\s+(.*)', raw_city or '')
+        if m:
+            form.firma_kod_pocztowy.data = m.group(1)
+            form.firma_miasto.data       = m.group(2)
+        else:
+            form.firma_kod_pocztowy.data = None
+            form.firma_miasto.data       = raw_city
         form.firma_nip_krs.data                = dm.company_tax_id                if dm else None
         form.firma_upowazniony_osoba.data      = dm.authorized_person             if dm else None
         form.firma_upowazniony_stanowisko.data = dm.authorized_person_position    if dm else None

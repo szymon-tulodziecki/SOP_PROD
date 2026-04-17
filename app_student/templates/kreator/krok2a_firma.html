@@ -73,10 +73,15 @@
             {{ form.firma_nazwa.label(class="pole-formularza__etykieta") }}
             {{ form.firma_nazwa(class="pole-formularza__input") }}
           </div>
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
-            <div class="pole-formularza">
-              {{ form.firma_adres.label(class="pole-formularza__etykieta") }}
-              {{ form.firma_adres(class="pole-formularza__input", placeholder="ul. Przykładowa 1") }}
+          <div class="pole-formularza">
+            {{ form.firma_adres.label(class="pole-formularza__etykieta") }}
+            {{ form.firma_adres(class="pole-formularza__input", placeholder="ul. Przykładowa 1") }}
+          </div>
+          <div style="display:grid; grid-template-columns:140px 1fr; gap:1rem;">
+            <div class="pole-formularza {% if form.firma_kod_pocztowy.errors %}pole-formularza--blad{% endif %}">
+              {{ form.firma_kod_pocztowy.label(class="pole-formularza__etykieta") }}
+              {{ form.firma_kod_pocztowy(class="pole-formularza__input", placeholder="82-300") }}
+              {% for e in form.firma_kod_pocztowy.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
             </div>
             <div class="pole-formularza {% if form.firma_miasto.errors %}pole-formularza--blad{% endif %}">
               {{ form.firma_miasto.label(class="pole-formularza__etykieta") }}

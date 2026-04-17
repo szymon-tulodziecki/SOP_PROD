@@ -234,6 +234,8 @@ class RepozytoriumZapisow:
         )
         if status_filter:
             q = q.filter(InternshipEnrollment.status == EnrollmentStatus(status_filter))
+        else:
+            q = q.filter(InternshipEnrollment.status != EnrollmentStatus.REJECTED)
         return q.order_by(InternshipEnrollment.enrolled_at.desc()).paginate(
             page=strona, per_page=na_strone, error_out=False
         )

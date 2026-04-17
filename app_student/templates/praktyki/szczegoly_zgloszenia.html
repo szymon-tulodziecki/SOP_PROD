@@ -11,8 +11,19 @@
 {% block tresc %}
 <div style="max-width: 800px; margin: 0 auto;">
 
-  <!-- Szkic: tylko przycisk powrotu do edycji -->
+  <!-- Szkic / zwrot do poprawek -->
   {% if zapis.status.value == 'PENDING' %}
+  {% if zapis.komentarze_uopz %}
+  <div style="background:#fffbeb; border:1px solid #f59e0b; border-left:4px solid #d97706; border-radius:0.5rem; padding:1rem 1.25rem; margin-bottom:1.5rem;">
+    <div style="font-weight:600; color:#92400e; margin-bottom:0.25rem;">Zgłoszenie zwrócone — wymagane poprawki</div>
+    <div style="font-size:0.85rem; color:#92400e; margin-bottom:1rem;">{{ zapis.komentarze_uopz }}</div>
+    {% if zapis.track_type.value == 'STANDARD' %}
+    <a href="{{ url_for('praktyki.kreator_firma', zapis_id=zapis.id) }}" class="przycisk przycisk--glowny przycisk--maly">Edytuj i wyślij ponownie →</a>
+    {% else %}
+    <a href="{{ url_for('praktyki.kreator_wniosek', zapis_id=zapis.id) }}" class="przycisk przycisk--glowny przycisk--maly">Edytuj i wyślij ponownie →</a>
+    {% endif %}
+  </div>
+  {% else %}
   <div class="karta" style="text-align:center; padding:3rem 2rem;">
     <div style="font-size:1.1rem; font-weight:600; margin-bottom:0.5rem;">Zgłoszenie nie zostało jeszcze wysłane</div>
     <div style="color:var(--kolor-tekst-drugor); margin-bottom:1.5rem;">Wróć do edycji, aby uzupełnić dane i przesłać zgłoszenie.</div>
@@ -22,6 +33,7 @@
     <a href="{{ url_for('praktyki.kreator_wniosek', zapis_id=zapis.id) }}" class="przycisk przycisk--glowny">← Powróć do edycji</a>
     {% endif %}
   </div>
+  {% endif %}
 
   {% else %}
 

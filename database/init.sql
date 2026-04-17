@@ -376,9 +376,11 @@ FOR EACH ROW EXECUTE FUNCTION update_total_hours();
 
 INSERT INTO users (email, password_hash, first_name, last_name, role, is_active, require_password_change)
 VALUES
-    ('admin@tulodzieckiallgmail.onmicrosoft.com', '', 'Szymon',   'Tułodziecki', 'ADMIN',   TRUE, FALSE),
-    ('12345@tulodzieckiallgmail.onmicrosoft.com', '', 'Katarzyna','Kowalczyk',   'ADMIN',   TRUE, FALSE),
-    ('21312@tulodzieckiallgmail.onmicrosoft.com', '', 'Marek',    'Wiśniewski',  'STUDENT', TRUE, FALSE)
+    ('admin@tulodzieckiallgmail.onmicrosoft.com', '', 'Szymon',    'Tułodziecki', 'ADMIN',   TRUE, FALSE),
+    ('12345@tulodzieckiallgmail.onmicrosoft.com', '', 'Katarzyna', 'Kowalczyk',   'ADMIN',   TRUE, FALSE),
+    ('uopz@tulodzieckiallgmail.onmicrosoft.com',  '', 'Piotr',     'Nowak',       'UOPZ',    TRUE, FALSE),
+    ('21312@tulodzieckiallgmail.onmicrosoft.com', '', 'Marek',     'Wiśniewski',  'STUDENT', TRUE, FALSE),
+    ('21313@tulodzieckiallgmail.onmicrosoft.com', '', 'Anna',      'Kowalska',    'STUDENT', TRUE, FALSE)
 ON CONFLICT (email) DO NOTHING;
 
 INSERT INTO administrators (id)
@@ -389,7 +391,16 @@ WHERE email IN (
 )
 ON CONFLICT DO NOTHING;
 
-INSERT INTO students (id, album_number)
-SELECT id, '21312' FROM users
-WHERE email = '21312@tulodzieckiallgmail.onmicrosoft.com'
+INSERT INTO university_mentors (id)
+SELECT id FROM users WHERE email = 'uopz@tulodzieckiallgmail.onmicrosoft.com'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO students (id, album_number, gender, field_of_study, specialization, study_mode)
+SELECT id, '21312', 'M', 'Informatyka', 'Aplikacje sieciowe i mobilne', 'full-time'
+FROM users WHERE email = '21312@tulodzieckiallgmail.onmicrosoft.com'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO students (id, album_number, gender, field_of_study, specialization, study_mode)
+SELECT id, '21313', 'F', 'Informatyka', 'Systemy informatyczne', 'full-time'
+FROM users WHERE email = '21313@tulodzieckiallgmail.onmicrosoft.com'
 ON CONFLICT DO NOTHING;
