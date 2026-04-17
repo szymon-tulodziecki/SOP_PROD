@@ -29,6 +29,10 @@ app_admin/logs/
 app_student/logs/
 database/*.sqlite3
 database/*.db
+pdf_output/
+documents_tex/*.pdf
+documents_tex/*.aux
+documents_tex/*.log
 
 # Pliki środowiskowe (NIGDY nie komituj haseł i kluczy!)
 .env
@@ -52,6 +56,14 @@ yarn-debug.log*
 yarn-error.log*
 package-lock.json
 yarn.lock
+
+# Playwright / testy e2e
+tests/node_modules/
+tests/test-results/
+tests/playwright-report/
+tests/blob-report/
+playwright/.cache/
+test-results/
 
 # Docker cache i volumes
 .docker/
