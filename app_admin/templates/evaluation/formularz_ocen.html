@@ -1,73 +1,97 @@
 {% extends "layouts/base_panel.html" %}
 
-{% block tytul %}Ocena praktyki{% endblock %}
-{% block naglowek %}Karta oceny efektów uczenia się{% endblock %}
+{% block tytul %}Ocena efektów uczenia się{% endblock %}
+{% block naglowek %}Karta oceny efektów uczenia się (Zał. 4 / 4a){% endblock %}
 
 {% block naglowek_akcje %}
-<a href="{{ url_for('evaluation.lista_ocen') }}" class="przycisk przycisk--drugorzedny">Anuluj</a>
+<a href="{{ url_for('evaluation.lista_ocen') }}" class="przycisk przycisk--drugorzedny">Powrót do listy</a>
 {% endblock %}
 
 {% block tresc %}
-<div class="formularz-ocen-kontener" style="max-width: 1000px; margin: 0 auto;">
-  
-  <!-- Info o studentie -->
+{% set is_bc = zapis.path_type.value in ['EMPLOYMENT', 'OWN_BUSINESS'] %}
+
+<div style="max-width: 1000px; margin: 0 auto;">
+
   <div class="karta" style="margin-bottom: 2rem; border-left: 4px solid var(--kolor-glowny);">
     <div class="karta__tresc" style="display: flex; justify-content: space-between; align-items: center;">
       <div>
-        <h2 style="font-size: 1.1rem; margin-bottom: 0.25rem;">{{ praktyka.student.imie }} {{ praktyka.student.nazwisko }}</h2>
-        <p style="color: var(--kolor-tekst-drugor); font-size: 0.9rem;">Zakład: {{ praktyka.zaklad.nazwa }} | Ścieżka: {{ praktyka.typ_sciezki.value }}</p>
+        <h2 style="font-size: 1.1rem; margin-bottom: 0.25rem;">{{ zapis.student.last_name }} {{ zapis.student.first_name }}</h2>
+        <p style="color: var(--kolor-tekst-drugor); font-size: 0.9rem;">
+          Firma: {{ zapis.firma_nazwa or '—' }}
+          &nbsp;·&nbsp;
+          Ścieżka:
+          {% if zapis.path_type.value == 'STANDARD' %}Standardowa
+          {% elif zapis.path_type.value == 'EMPLOYMENT' %}Zatrudnienie
+          {% else %}Własna działalność{% endif %}
+        </p>
       </div>
-      <div style="text-align: right;">
-        <span class="status status--oczekuje">Oczekiwanie na ocenę</span>
-      </div>
+      <span class="status status--{{ zapis.status.value|lower|replace('_', '-') }}">{{ tlumacz_status(zapis.status.value) }}</span>
     </div>
   </div>
 
+  {% if is_bc %}
+  <div class="karta" style="margin-bottom: 1.5rem; border-left: 4px solid #f59e0b; background: #fffbeb;">
+    <div class="karta__tresc">
+      <strong>Ścieżka B/C — trzystopniowa skala oceny efektów.</strong><br>
+      <span style="font-size: 0.85rem; color: var(--kolor-tekst-drugor);">
+        Dla każdego efektu możesz wybrać: <em>Uzyskał/a</em>, <em>Uzyskał/a częściowo</em> (wymaga uwag) lub <em>Nie uzyskał/a</em>.
+      </span>
+    </div>
+  </div>
+  {% endif %}
+
   <form method="POST">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <!-- 13 Efektów uczenia się -->
+
     <section class="karta" style="margin-bottom: 2rem;">
       <header class="karta__naglowek">
-        <h3 class="karta__tytul">Ocena 13 efektów uczenia się (Załącznik 4/4a)</h3>
+        <h3 class="karta__tytul">Ocena 13 efektów uczenia się</h3>
       </header>
       <div class="karta__tresc" style="padding: 0;">
         <div class="tabela-wrapper">
           <table class="tabela">
             <thead>
               <tr>
-                <th scope="col" style="width: 60px;">Kod</th>
-                <th scope="col">Opis efektu</th>
-                <th scope="col" style="width: 280px;">Wynik</th>
+                <th style="width: 60px;">Kod</th>
+                <th>Opis efektu</th>
+                <th style="width: {% if is_bc %}320px{% else %}240px{% endif %};">Wynik</th>
               </tr>
             </thead>
             <tbody>
               {% for efekt in efekty %}
               {% set ocena = istniejace.get(efekt.id|string) %}
               <tr>
-                <td><strong>{{ efekt.kod }}</strong></td>
-                <td style="font-size: 0.85rem; line-height: 1.4;">{{ efekt.opis }}</td>
+                <td><strong>{{ efekt.description.split(':')[0] if ':' in efekt.description else efekt.id }}</strong></td>
+                <td style="font-size: 0.85rem; line-height: 1.4;">
+                  {{ efekt.description.split(':', 1)[1].strip() if ':' in efekt.description else efekt.description }}
+                </td>
                 <td>
-                  <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                  <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
                     <label class="radio-ocena">
-                      <input type="radio" name="wynik_{{ efekt.id }}" value="OSIAGNIETO" {% if ocena and ocena.wynik.name == 'OSIAGNIETO' %}checked{% endif %} required>
-                      <span>Osiągnięto</span>
+                      <input type="radio" name="wynik_{{ efekt.id }}" value="ACHIEVED"
+                             {% if ocena and ocena.result.name == 'ACHIEVED' %}checked{% endif %} required>
+                      <span>Uzyskał/a</span>
                     </label>
-                    
-                    {% if praktyka.typ_sciezki.value in ['ZATRUDNIENIE', 'DZIALALNOSC'] %}
-                    <label class="radio-ocena">
-                      <input type="radio" name="wynik_{{ efekt.id }}" value="CZESCIOWO" {% if ocena and ocena.wynik.name == 'CZESCIOWO' %}checked{% endif %}>
+
+                    {% if is_bc %}
+                    <label class="radio-ocena radio-ocena--czesc">
+                      <input type="radio" name="wynik_{{ efekt.id }}" value="PARTIALLY_ACHIEVED"
+                             {% if ocena and ocena.result.name == 'PARTIALLY_ACHIEVED' %}checked{% endif %}>
                       <span>Częściowo</span>
                     </label>
                     {% endif %}
 
-                    <label class="radio-ocena">
-                      <input type="radio" name="wynik_{{ efekt.id }}" value="NIE_OSIAGNIETO" {% if ocena and ocena.wynik.name == 'NIE_OSIAGNIETO' %}checked{% endif %}>
-                      <span>Nie osiągnięto</span>
+                    <label class="radio-ocena radio-ocena--nie">
+                      <input type="radio" name="wynik_{{ efekt.id }}" value="NOT_ACHIEVED"
+                             {% if ocena and ocena.result.name == 'NOT_ACHIEVED' %}checked{% endif %}>
+                      <span>Nie uzyskał/a</span>
                     </label>
                   </div>
-                  {% if praktyka.typ_sciezki.value in ['ZATRUDNIENIE', 'DZIALALNOSC'] %}
-                  <input type="text" name="uwagi_{{ efekt.id }}" value="{{ ocena.uwagi_oceniajacego if ocena else '' }}" 
-                         placeholder="Uwagi (wymagane przy częściowym)" 
+
+                  {% if is_bc %}
+                  <input type="text" name="uwagi_{{ efekt.id }}"
+                         value="{{ ocena.notes if ocena else '' }}"
+                         placeholder="Uwagi (wymagane przy częściowym)"
                          style="width: 100%; margin-top: 0.5rem; padding: 0.4rem; font-size: 0.8rem; border: 1px solid var(--kolor-ramka); border-radius: 4px;">
                   {% endif %}
                 </td>
@@ -79,80 +103,26 @@
       </div>
     </section>
 
-    <!-- Oceny ogólne i opisowa -->
-    <div class="uklad-dashboardu" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
-      
-      <section class="karta">
-        <header class="karta__naglowek">
-          <h3 class="karta__tytul">Oceny parametryczne</h3>
-        </header>
-        <div class="karta__tresc" style="display: flex; flex-direction: column; gap: 1.5rem;">
-          <div class="pole-formularza">
-            <label class="pole-formularza__etykieta">Ocena sprawozdania (S)</label>
-            <select name="ocena_sprawozdania" class="filtr-select" style="width: 100%;">
-              <option value="">Wybierz...</option>
-              {% for stopien in [2.0, 3.0, 3.5, 4.0, 4.5, 5.0] %}
-              <option value="{{ stopien }}" {% if praktyka.ocena_sprawozdania == stopien %}selected{% endif %}>{{ stopien }}</option>
-              {% endfor %}
-            </select>
-          </div>
-          <div class="pole-formularza">
-            <label class="pole-formularza__etykieta">Ocena Opiekuna Uczelnianego (U)</label>
-            <select name="ocena_uopz" class="filtr-select" style="width: 100%;">
-              <option value="">Wybierz...</option>
-              {% for stopien in [2.0, 3.0, 3.5, 4.0, 4.5, 5.0] %}
-              <option value="{{ stopien }}" {% if praktyka.ocena_uopz == stopien %}selected{% endif %}>{{ stopien }}</option>
-              {% endfor %}
-            </select>
-          </div>
-        </div>
-      </section>
-
-      <section class="karta">
-        <header class="karta__naglowek">
-          <h3 class="karta__tytul">Opinia opisowa UOPZ</h3>
-        </header>
-        <div class="karta__tresc">
-          <div class="pole-formularza">
-            <label for="ocena_opisowa_uopz" class="pole-formularza__etykieta">Uzasadnienie oceny i uwagi</label>
-            <textarea id="ocena_opisowa_uopz" name="ocena_opisowa_uopz" class="pole-formularza__input" style="min-height: 120px; resize: vertical;">{{ praktyka.ocena_opisowa_uopz or '' }}</textarea>
-          </div>
-        </div>
-      </section>
-
-    </div>
-
-    <div style="margin-top: 2rem; display: flex; justify-content: center; padding-bottom: 4rem;">
-      <button type="submit" class="przycisk przycisk--glowny" style="padding: 1rem 3rem; font-size: 1.1rem; box-shadow: 0 4px 14px rgba(26, 58, 92, 0.3);">
+    <div style="display: flex; justify-content: center; padding-bottom: 3rem;">
+      <button type="submit" class="przycisk przycisk--glowny" style="padding: 1rem 3rem; font-size: 1.1rem;">
         Zapisz arkusz oceny
       </button>
     </div>
-
   </form>
 </div>
 
 <style>
   .radio-ocena {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    font-size: 0.85rem;
-    cursor: pointer;
-    background: var(--kolor-tlo);
-    padding: 0.3rem 0.6rem;
-    border-radius: 4px;
-    border: 1px solid var(--kolor-ramka);
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    font-size: 0.85rem; cursor: pointer;
+    background: var(--kolor-tlo); padding: 0.3rem 0.6rem;
+    border-radius: 4px; border: 1px solid var(--kolor-ramka);
     transition: all 0.2s;
   }
-  .radio-ocena:hover {
-    border-color: var(--kolor-glowny-jasny);
-  }
-  .radio-ocena input:checked + span {
-    font-weight: 600;
-    color: var(--kolor-glowny);
-  }
-  .radio-ocena input {
-    accent-color: var(--kolor-glowny);
-  }
+  .radio-ocena:hover { border-color: var(--kolor-glowny-jasny); }
+  .radio-ocena input:checked + span { font-weight: 600; color: var(--kolor-glowny); }
+  .radio-ocena--czesc input:checked + span { color: #d97706; }
+  .radio-ocena--nie input:checked + span { color: var(--kolor-blad); }
+  .radio-ocena input { accent-color: var(--kolor-glowny); }
 </style>
 {% endblock %}

@@ -1,7 +1,6 @@
 """
 app_admin/routes/dziennik.py
 Monitor dzienników praktyk — podgląd wpisów, wykrywanie przerw, generowanie PDF.
-Przemianowano z journal.py.
 """
 import io
 from datetime import date, timedelta

@@ -53,7 +53,7 @@ def index():
         zapis = db.session.get(InternshipEnrollment, zapis.id)
 
     # Wybierz formularz i szablon wg ścieżki
-    sciezka = zapis.track_type.value if zapis.track_type else 'STANDARD'
+    sciezka = zapis.path_type.value if zapis.path_type else 'STANDARD'
     is_standard = sciezka == 'STANDARD'
 
     FormClass = FormularzSprawozdaniaStandard if is_standard else FormularzSprawozdaniaPracaZawodowa
