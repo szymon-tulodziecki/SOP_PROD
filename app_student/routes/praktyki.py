@@ -195,12 +195,9 @@ def kreator_firma(zapis_id):
         dm.workplace_mentor_phone    = form.zopz_telefon.data
         dm.workplace_mentor_email    = form.zopz_email.data
         db.session.commit()
-        if zapis.status == EnrollmentStatus.AWAITING_APPROVAL:
-            from core.uslugi.workflow import ZapisFSM
-            ZapisFSM(zapis).wyslij_do_komisji()
-            db.session.commit()
-            flash('Dane zaktualizowane i zgłoszenie odesłane do komisji.', 'success')
-            return redirect(url_for('praktyki.szczegoly_zgloszenia', id=zapis.id))
+        # Zwrócone do poprawek — pomiń harmonogram, idź do potwierdzenia
+        if zapis.zwrocono_do_poprawek:
+            return redirect(url_for('praktyki.potwierdz_wyslanie', id=zapis.id))
         return redirect(url_for('praktyki.zapisz_krok2', id=zapis.id))
 
     if request.method == 'GET':
@@ -291,8 +288,9 @@ def lista():
         komentarz_admina = z.admin_comments
         komentarz_uopz   = z.supervisor_comments
         sciezka = z.path_type.value if z.path_type else None
-        # Ścieżka A: admin zwraca do PENDING z komentarzem
-        zwrocone_a = (z.status == EnrollmentStatus.PENDING and bool(komentarz_admina or komentarz_uopz))
+        # Ścieżka A: admin zwraca do PENDING (z komentarzem lub bez)
+        zwrocone_a = (z.status == EnrollmentStatus.PENDING
+                      and (bool(komentarz_admina or komentarz_uopz) or z.zwrocono_do_poprawek))
         # Ścieżka B/C: komisja zwraca do AWAITING_APPROVAL z komentarzem UOPZ
         zwrocone_bc = (
             z.status == EnrollmentStatus.AWAITING_APPROVAL
@@ -310,6 +308,7 @@ def lista():
                 z.status == EnrollmentStatus.AWAITING_APPROVAL
                 and bool(komentarz_uopz)
                 and sciezka == 'STANDARD'
+                and not z.zwrocono_do_poprawek
             ),
         }
 
@@ -326,6 +325,10 @@ def zakoncz_praktyke(id):
     if zapis.status != EnrollmentStatus.IN_PROGRESS:
         flash('Praktykę można zakończyć tylko gdy jest w trakcie realizacji.', 'warning')
         return redirect(url_for('praktyki.lista'))
+    wymagane = zapis.praktyka.wymiar_godzin if zapis.praktyka else 0
+    if zapis.total_hours_logged < wymagane:
+        flash(f'Nie można zakończyć praktyki — uzupełnij dziennik do wymaganej liczby godzin ({zapis.total_hours_logged} / {wymagane} h).', 'danger')
+        return redirect(url_for('dziennik.index'))
     from core.uslugi.workflow import ZapisFSM
     ZapisFSM(zapis).zakoncz()
     db.session.commit()
@@ -428,6 +431,10 @@ def wyslij_do_zatwierdzenia(id):
     if zapis.path_type and zapis.path_type.value in ('EMPLOYMENT', 'OWN_BUSINESS'):
         fsm.wyslij_do_komisji()
     else:
+        if not zapis.supervisor_id:
+            uopz = _repo_zapisow.uopz_z_najmniejsza_liczba_zapisow()
+            if uopz:
+                zapis.supervisor_id = uopz.id
         fsm.wyslij_do_akceptacji()
     db.session.commit()
     flash('Zgłoszenie zostało przesłane do zatwierdzenia.', 'success')
@@ -441,6 +448,9 @@ def szczegoly_zgloszenia(id):
     zapis = db.session.get(InternshipEnrollment, id)
     if not zapis or zapis.student_id != current_user.id:
         abort(404)
+
+    if zapis.status == EnrollmentStatus.PENDING and zapis.zwrocono_do_poprawek:
+        return redirect(url_for('praktyki.lista'))
 
     rows = _repo_docs.dla_zapisu_studenta(id, current_user.id)
     uploaded_docs = [

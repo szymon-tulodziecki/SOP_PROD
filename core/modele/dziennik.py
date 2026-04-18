@@ -83,6 +83,10 @@ class JournalEntry(db.Model):
     def efekty_uczenia(self):
         return self.learning_outcomes
 
+    @efekty_uczenia.setter
+    def efekty_uczenia(self, value):
+        self.learning_outcomes = value
+
 
 class OutcomeAssessment(db.Model):
     """Assessment of a single learning outcome for one enrollment."""

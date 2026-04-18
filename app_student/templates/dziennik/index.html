@@ -63,46 +63,34 @@
 
   <div class="karta">
     <div class="karta__naglowek"><h2 class="karta__tytul">Wpisy dziennika</h2></div>
-    <div class="tabela-wrapper">
-      <table class="tabela">
-        <thead>
-          <tr>
-            <th>Data</th>
-            <th>Godz.</th>
-            <th>Opis czynności</th>
-            <th>Efekty</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for w in wpisy %}
-          <tr>
-            <td style="white-space: nowrap;"><strong>{{ w.entry_date.strftime('%d.%m.%Y') }}</strong></td>
-            <td style="white-space: nowrap;">{{ w.duration_hours }} h</td>
-            <td style="font-size: 0.85rem; line-height: 1.5;">{{ w.description }}</td>
-            <td style="white-space: nowrap;">
-              {% if w.efekty_uczenia %}
-                {% for e in w.efekty_uczenia %}
-                  <span style="font-size:0.75rem; background:var(--kolor-tlo); padding:0.2rem 0.4rem; border-radius:4px; font-weight:600; display:inline-block; margin:1px;">{{ e.kod }}</span>
-                {% endfor %}
-              {% else %}—{% endif %}
-            </td>
-            <td style="white-space: nowrap;">
-              <a href="{{ url_for('dziennik.edytuj_wpis', wpis_id=w.id) }}" class="przycisk przycisk--maly przycisk--drugorzedny">Edytuj</a>
-              <form method="POST" action="{{ url_for('dziennik.usun_wpis', wpis_id=w.id) }}" style="display:inline;">
-                {{ csrf_form.hidden_tag() }}
-                <button type="submit" class="przycisk przycisk--maly przycisk--niebezpieczny"
-                        onclick="return confirm('Usunąć ten wpis?')">Usuń</button>
-              </form>
-            </td>
-          </tr>
-          {% else %}
-          <tr><td colspan="5" class="tabela--pusta">Brak wpisów. Dodaj pierwszy wpis.</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
+    <div class="karta__tresc" style="padding:0;">
+      {% for w in wpisy %}
+      <details style="border-bottom:1px solid var(--kolor-ramka);">
+        <summary style="cursor:pointer; list-style:none; padding:0.75rem 1.25rem; display:flex; justify-content:space-between; align-items:center; gap:1rem;">
+          <div style="display:flex; align-items:center; gap:1rem; min-width:0; flex:1;">
+            <strong style="white-space:nowrap;">{{ w.entry_date.strftime('%d.%m.%Y') }}</strong>
+            <span style="color:var(--kolor-tekst-drugor); white-space:nowrap;">{{ w.duration_hours }} h</span>
+            <span style="font-size:0.85rem; color:var(--kolor-tekst-drugor); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ w.description[:80] }}{% if w.description|length > 80 %}…{% endif %}</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:0.5rem; flex-shrink:0;">
+            {% if w.efekty_uczenia %}{% for e in w.efekty_uczenia %}<span style="font-size:0.75rem; background:var(--kolor-tlo); padding:0.2rem 0.4rem; border-radius:4px; font-weight:600;">{{ e.kod }}</span>{% endfor %}{% endif %}
+            <a href="{{ url_for('dziennik.edytuj_wpis', wpis_id=w.id) }}" class="przycisk przycisk--maly przycisk--drugorzedny" onclick="event.stopPropagation();">Edytuj</a>
+            <form method="POST" action="{{ url_for('dziennik.usun_wpis', wpis_id=w.id) }}" style="display:inline;" onclick="event.stopPropagation();">
+              {{ csrf_form.hidden_tag() }}
+              <button type="submit" class="przycisk przycisk--maly przycisk--niebezpieczny" onclick="return confirm('Usunąć ten wpis?')">Usuń</button>
+            </form>
+          </div>
+        </summary>
+        <div style="padding:0.75rem 1.25rem 1rem; background:var(--kolor-tlo-drugor, #f8fafc); border-top:1px solid var(--kolor-ramka);">
+          <p style="font-size:0.875rem; line-height:1.6; white-space:pre-wrap; margin:0;">{{ w.description }}</p>
+        </div>
+      </details>
+      {% else %}
+      <p style="padding:2rem; text-align:center; color:var(--kolor-tekst-drugor);">Brak wpisów. Dodaj pierwszy wpis.</p>
+      {% endfor %}
     </div>
   </div>
 
 {% endif %}
+
 {% endblock %}

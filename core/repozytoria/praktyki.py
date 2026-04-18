@@ -235,7 +235,10 @@ class RepozytoriumZapisow:
         if status_filter:
             q = q.filter(InternshipEnrollment.status == EnrollmentStatus(status_filter))
         else:
-            q = q.filter(InternshipEnrollment.status != EnrollmentStatus.REJECTED)
+            q = q.filter(InternshipEnrollment.status.notin_([
+                EnrollmentStatus.PENDING,
+                EnrollmentStatus.REJECTED,
+            ]))
         return q.order_by(InternshipEnrollment.enrolled_at.desc()).paginate(
             page=strona, per_page=na_strone, error_out=False
         )
@@ -343,6 +346,33 @@ class RepozytoriumZapisow:
             'nav_komisja':    row.komisja,
             'nav_dziekan':    row.dziekan,
         }
+
+    def uopz_z_najmniejsza_liczba_zapisow(self):
+        """Zwraca aktywnego UOPZ z najmniejszą liczbą aktywnych zapisów (round-robin po obciążeniu)."""
+        from core.modele.uzytkownicy import User, UserRole
+        aktywne = [
+            EnrollmentStatus.AWAITING_APPROVAL,
+            EnrollmentStatus.IN_PROGRESS,
+            EnrollmentStatus.COMMISSION_REVIEW,
+            EnrollmentStatus.DEAN_APPROVAL,
+        ]
+        subq = (
+            db.session.query(
+                InternshipEnrollment.supervisor_id,
+                func.count(InternshipEnrollment.id).label('cnt'),
+            )
+            .filter(InternshipEnrollment.status.in_(aktywne))
+            .group_by(InternshipEnrollment.supervisor_id)
+            .subquery()
+        )
+        row = (
+            db.session.query(User, func.coalesce(subq.c.cnt, 0).label('obciazenie'))
+            .outerjoin(subq, User.id == subq.c.supervisor_id)
+            .filter(User.role == UserRole.UOPZ, User.is_active == True)
+            .order_by(func.coalesce(subq.c.cnt, 0), User.last_name)
+            .first()
+        )
+        return row[0] if row else None
 
     def liczba_aktywnych_dla_studentow(self, student_ids: list,
                                         aktywne_statusy: list) -> dict:
