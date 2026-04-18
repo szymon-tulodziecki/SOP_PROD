@@ -99,6 +99,13 @@
                     Szczegóły
                   </a>
 
+                  {% if not z.uopz and current_user.role.value == 'ADMIN' and z.track_type.value == 'STANDARD' %}
+                  <a href="{{ url_for('zarzadzanie.przypisz_uopz', id=z.id) }}"
+                     class="przycisk przycisk--maly"
+                     style="min-width: 80px;">
+                    Przypisz UOPZ
+                  </a>
+                  {% endif %}
                 </div>
               </td>
             </tr>

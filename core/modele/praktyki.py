@@ -406,12 +406,6 @@ class InternshipEnrollment(db.Model):
         e = self._last_event(EventType.SUPERVISOR_COMMENT)
         return e.comment if e else None
 
-    @property
-    def zwrocono_do_poprawek(self):
-        """True jeśli ostatnie zdarzenie UOPZ_KOMENTARZ ma decision='REVISION_REQUIRED'."""
-        e = self._last_event(EventType.SUPERVISOR_COMMENT)
-        return e is not None and e.decision == 'REVISION_REQUIRED'
-
     # Backward-compat event property names
     @property
     def komentarze_admina(self):

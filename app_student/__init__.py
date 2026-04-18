@@ -86,10 +86,10 @@ def create_app():
                     EnrollmentStatus.AWAITING_APPROVAL,
                 ])
                 for z in zapisy_do_sprawdzenia:
-                    if z.status == EnrollmentStatus.PENDING and (z.admin_comments or z.supervisor_comments or z.zwrocono_do_poprawek):
+                    if z.status == EnrollmentStatus.PENDING and (z.admin_comments or z.supervisor_comments):
                         wymaga_uwagi = True
                         break
-                    if z.status == EnrollmentStatus.AWAITING_APPROVAL and z.supervisor_comments and not z.zwrocono_do_poprawek:
+                    if z.status == EnrollmentStatus.AWAITING_APPROVAL and z.supervisor_comments:
                         wymaga_uwagi = True
                         break
         except Exception:

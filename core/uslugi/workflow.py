@@ -64,7 +64,6 @@ _ALLOWED: dict[S, set[S]] = {
     S.AWAITING_APPROVAL: {
         S.IN_PROGRESS,
         S.COMMISSION_REVIEW,
-        S.PENDING,       # zwrot do studenta z prośbą o poprawki
         S.REJECTED,
     },
     S.COMMISSION_REVIEW: {
@@ -199,13 +198,6 @@ class ZapisFSM:
         if comment:
             self._dodaj_zdarzenie(EventType.SUPERVISOR_COMMENT, actor_id=actor_id,
                                   comment=comment)
-
-    def zwroc_do_poprawek(self, actor_id=None, comment: str = '') -> None:
-        """AWAITING_APPROVAL → PENDING (ścieżka A: UOPZ zwraca do studenta)."""
-        from core.modele.praktyki import EventType
-        self._przejdz(S.PENDING, 'UOPZ: wymaga poprawek')
-        self._dodaj_zdarzenie(EventType.SUPERVISOR_COMMENT, actor_id=actor_id,
-                              comment=comment, decision='REVISION_REQUIRED')
 
     def zatwierdz_przez_komisje(self, actor_id=None, comment: str = '') -> None:
         """COMMISSION_REVIEW / REVISION_REQUIRED → DEAN_APPROVAL."""

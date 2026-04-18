@@ -11,19 +11,8 @@
 {% block tresc %}
 <div style="max-width: 800px; margin: 0 auto;">
 
-  <!-- Szkic / zwrot do poprawek -->
+  <!-- Szkic: tylko przycisk powrotu do edycji -->
   {% if zapis.status.value == 'PENDING' %}
-  {% if zapis.zwrocono_do_poprawek or zapis.komentarze_uopz %}
-  <div style="background:#fffbeb; border:1px solid #f59e0b; border-left:4px solid #d97706; border-radius:0.5rem; padding:1rem 1.25rem; margin-bottom:1.5rem;">
-    <div style="font-weight:600; color:#92400e; margin-bottom:0.25rem;">Zgłoszenie zwrócone — wymagane poprawki</div>
-    <div style="font-size:0.85rem; color:#92400e; margin-bottom:1rem;">{{ zapis.komentarze_uopz }}</div>
-    {% if zapis.track_type.value == 'STANDARD' %}
-    <a href="{{ url_for('praktyki.kreator_firma', zapis_id=zapis.id) }}" class="przycisk przycisk--glowny przycisk--maly">Edytuj i wyślij ponownie →</a>
-    {% else %}
-    <a href="{{ url_for('praktyki.kreator_wniosek', zapis_id=zapis.id) }}" class="przycisk przycisk--glowny przycisk--maly">Edytuj i wyślij ponownie →</a>
-    {% endif %}
-  </div>
-  {% else %}
   <div class="karta" style="text-align:center; padding:3rem 2rem;">
     <div style="font-size:1.1rem; font-weight:600; margin-bottom:0.5rem;">Zgłoszenie nie zostało jeszcze wysłane</div>
     <div style="color:var(--kolor-tekst-drugor); margin-bottom:1.5rem;">Wróć do edycji, aby uzupełnić dane i przesłać zgłoszenie.</div>
@@ -33,25 +22,29 @@
     <a href="{{ url_for('praktyki.kreator_wniosek', zapis_id=zapis.id) }}" class="przycisk przycisk--glowny">← Powróć do edycji</a>
     {% endif %}
   </div>
-  {% endif %}
 
   {% else %}
 
   <!-- Baner akcji — wymaga uzupełnienia -->
-  {% if zapis.status.value == 'AWAITING_APPROVAL' and zapis.komentarze_uopz and not zapis.zwrocono_do_poprawek %}
-  <div style="background:#fef2f2; border:1px solid #fecaca; border-left:4px solid #dc2626; border-radius:0.5rem; padding:1rem 1.25rem; margin-bottom:1.5rem; display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;">
+  {% if zapis.status.value == 'AWAITING_APPROVAL' and zapis.komentarze_uopz %}
+  <div style="background:#fffbeb; border:1px solid #f59e0b; border-left:4px solid #d97706; border-radius:0.5rem; padding:1rem 1.25rem; margin-bottom:1.5rem; display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;">
     <div>
-      <div style="font-weight:600; color:#991b1b; margin-bottom:0.25rem;">Zgłoszenie wymaga uzupełnienia</div>
-      <div style="font-size:0.85rem; color:#dc2626; white-space:pre-wrap;">{{ zapis.komentarze_uopz }}</div>
+      <div style="font-weight:600; color:#92400e; margin-bottom:0.25rem;">Zgłoszenie wymaga uzupełnienia</div>
+      <div style="font-size:0.85rem; color:#92400e;">{{ zapis.komentarze_uopz }}</div>
     </div>
-    <div style="flex-shrink:0;">
+    <div style="display:flex; gap:0.5rem; flex-shrink:0; flex-wrap:wrap;">
       {% if zapis.track_type.value == 'STANDARD' %}
       <a href="{{ url_for('praktyki.kreator_firma', zapis_id=zapis.id) }}" class="przycisk przycisk--glowny przycisk--maly">Edytuj i odeślij →</a>
       {% else %}
       <a href="{{ url_for('praktyki.kreator_wniosek', zapis_id=zapis.id) }}" class="przycisk przycisk--glowny przycisk--maly">Edytuj i odeślij →</a>
       {% endif %}
+      <form method="POST" action="{{ url_for('praktyki.resubmit_zgloszenia', id=zapis.id) }}" style="margin:0;">
+        <input type="hidden" name="csrf_token" id="resubmit-csrf">
+        <button type="submit" class="przycisk przycisk--drugorzedny przycisk--maly">Odeślij bez zmian</button>
+      </form>
     </div>
   </div>
+  <script>document.getElementById('resubmit-csrf').value = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')||'';</script>
   {% endif %}
 
   <!-- Status zgłoszenia -->

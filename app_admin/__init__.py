@@ -86,7 +86,10 @@ def create_app():
             from flask_login import current_user
             if current_user.is_authenticated:
                 from core.repozytoria import RepozytoriumZapisow
-                counts.update(RepozytoriumZapisow().liczniki_nav())
+                row = RepozytoriumZapisow().liczniki_nav()
+                counts['nav_oczekujace'] = row['oczekujace']
+                counts['nav_komisja']    = row['komisja']
+                counts['nav_dziekan']    = row['dziekan']
         except Exception:
             pass
         return counts
@@ -94,16 +97,13 @@ def create_app():
     @app.context_processor
     def inject_tlumacz():
         return dict(tlumacz_status=lambda val: {
-            'PENDING':            'Oczekuje na wysłanie',
-            'AWAITING_APPROVAL':  'Oczekuje na zatwierdzenie',
-            'COMMISSION_REVIEW':  'Weryfikacja komisji',
-            'REVISION_REQUIRED':  'Wymaga uzupełnień',
-            'DEAN_APPROVAL':      'Oczekuje na dziekana',
-            'IN_PROGRESS':        'W trakcie',
-            'COMPLETED':          'Zakończona',
-            'REJECTED':           'Odrzucone',
-            'ACTIVE':             'Aktywna',
-            'INACTIVE':           'Nieaktywna',
+            'PENDING':           'Oczekuje',
+            'AWAITING_APPROVAL': 'Oczekuje na akceptację',
+            'IN_PROGRESS':       'W trakcie',
+            'COMPLETED':         'Zakończona',
+            'REJECTED':          'Odrzucony',
+            'ACTIVE':            'Aktywna',
+            'INACTIVE':          'Nieaktywna',
         }.get(val, val))
 
 
