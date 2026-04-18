@@ -418,13 +418,6 @@
       </div>
       {% endif %}
 
-      {# Blok przypisania UOPZ #}
-      {% if not zapis.uopz and current_user.role.value == 'ADMIN' and zapis.track_type.value == 'STANDARD' %}
-      <div style="padding: 1rem; border: 1px dashed var(--kolor-ramka); border-radius: var(--promien); text-align: center;">
-        <div style="font-size: 0.8rem; color: var(--kolor-tekst-trzeciorzed); margin-bottom: 0.75rem;">Brak przypisanego opiekuna uczelnianego</div>
-        <a href="{{ url_for('zarzadzanie.przypisz_uopz', id=zapis.id) }}" class="przycisk przycisk--maly" style="width: 100%;">Przypisz UOPZ</a>
-      </div>
-      {% endif %}
 
     </div>
 
