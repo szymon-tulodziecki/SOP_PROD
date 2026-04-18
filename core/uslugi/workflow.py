@@ -184,11 +184,42 @@ class ZapisFSM:
     # ── Publiczne przejścia ───────────────────────────────────────────────
 
     def wyslij_do_akceptacji(self) -> None:
-        """PENDING → AWAITING_APPROVAL (ścieżka standardowa A)."""
+        """PENDING → AWAITING_APPROVAL. Auto-przypisuje UOPZ jeśli brak."""
+        if not self.zapis.supervisor_id:
+            self._auto_przypisz_uopz()
         self._przejdz(S.AWAITING_APPROVAL)
+
+    def _auto_przypisz_uopz(self) -> None:
+        """Przypisuje opiekuna uczelnianego z najmniejszą liczbą aktywnych zapisów."""
+        from core.extensions import db
+        from core.modele.uzytkownicy import UniversityMentor
+        from core.modele.praktyki import InternshipEnrollment
+        from sqlalchemy import func
+        aktywne = (S.AWAITING_APPROVAL, S.IN_PROGRESS, S.COMMISSION_REVIEW,
+                   S.REVISION_REQUIRED, S.DEAN_APPROVAL)
+        subq = (
+            db.session.query(
+                InternshipEnrollment.supervisor_id,
+                func.count().label('cnt'),
+            )
+            .filter(InternshipEnrollment.status.in_(aktywne))
+            .group_by(InternshipEnrollment.supervisor_id)
+            .subquery()
+        )
+        mentor = (
+            db.session.query(UniversityMentor)
+            .outerjoin(subq, UniversityMentor.id == subq.c.supervisor_id)
+            .filter(UniversityMentor.is_active == True)
+            .order_by(func.coalesce(subq.c.cnt, 0), UniversityMentor.last_name)
+            .first()
+        )
+        if mentor:
+            self.zapis.supervisor_id = mentor.id
 
     def wyslij_do_komisji(self) -> None:
         """PENDING / AWAITING_APPROVAL → COMMISSION_REVIEW (ścieżki B/C)."""
+        if not self.zapis.supervisor_id:
+            self._auto_przypisz_uopz()
         self._przejdz(S.COMMISSION_REVIEW)
 
     def zatwierdz_przez_uopz(self, actor_id=None, comment: str = '') -> None:
