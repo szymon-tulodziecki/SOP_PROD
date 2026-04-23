@@ -259,7 +259,11 @@ CREATE TABLE examinations (
     question_2 TEXT,
     grade_2    NUMERIC(3, 1),
     question_3 TEXT,
-    grade_3    NUMERIC(3, 1)
+    grade_3    NUMERIC(3, 1),
+
+    commission_chair    VARCHAR(200),
+    commission_member_2 VARCHAR(200),
+    commission_member_3 VARCHAR(200)
 );
 
 -- ============================================================

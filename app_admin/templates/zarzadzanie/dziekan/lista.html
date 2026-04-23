@@ -32,13 +32,8 @@
                 {% endif %}
               </td>
               <td>
-                <span class="status
-                  {%- if wniosek.track_type.value == 'EMPLOYMENT' %} status--w-trakcie
-                  {%- elif wniosek.track_type.value == 'OWN_BUSINESS' %} status--szkic
-                  {%- endif %}">
-                  {% if wniosek.track_type.value == 'EMPLOYMENT' %}Praca zawodowa
-                  {% elif wniosek.track_type.value == 'OWN_BUSINESS' %}Działalność gospodarcza
-                  {% endif %}
+                <span class="status status--w-trakcie">
+                  B — Uznanie efektów
                 </span>
               </td>
               <td>

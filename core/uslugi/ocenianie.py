@@ -33,6 +33,9 @@ class GradeFormData:
     exam_grade_2:                  Optional[float]
     exam_question_3:               Optional[str]
     exam_grade_3:                  Optional[float]
+    commission_chair:              Optional[str] = None
+    commission_member_2:           Optional[str] = None
+    commission_member_3:           Optional[str] = None
     finalize: bool = False         # True → zmień status na COMPLETED
 
 
@@ -87,13 +90,20 @@ class SerwisOceniania:
         sp.question_3 = dane.exam_question_3
         sp.grade_3    = dane.exam_grade_3
 
+        sp.commission_chair    = (dane.commission_chair    or '').strip() or None
+        sp.commission_member_2 = (dane.commission_member_2 or '').strip() or None
+        sp.commission_member_3 = (dane.commission_member_3 or '').strip() or None
+
         if dane.finalize:
             missing = SerwisOceniania._waliduj_kompletnosc(ok, sp)
             if missing:
                 db.session.rollback()
                 return GradeResult(success=False, missing_fields=missing)
-            from core.uslugi.workflow import ZapisFSM
-            ZapisFSM(zapis).zakoncz()
+            from core.uslugi.workflow import ZapisFSM, IllegalTransitionError
+            try:
+                ZapisFSM(zapis).zakoncz()
+            except IllegalTransitionError:
+                pass
 
         return GradeResult(success=True, missing_fields=[])
 
@@ -104,8 +114,8 @@ class SerwisOceniania:
         if ok.report_grade    is None: missing.append('ocena sprawozdania')
         if ok.supervisor_grade is None: missing.append('ocena UOPZ')
         if ok.workplace_grade  is None: missing.append('ocena ZOPZ')
-        if None in (sp.grade_1, sp.grade_2, sp.grade_3):
-            missing.append('oceny ze sprawdzianu (wszystkie 3 pytania)')
+        if sp.grade_1 is None and sp.grade_2 is None and sp.grade_3 is None:
+            missing.append('co najmniej jedna ocena ze sprawdzianu')
         return missing
 
 

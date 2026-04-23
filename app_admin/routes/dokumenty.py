@@ -99,7 +99,7 @@ def status_pdf(task_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-_SSE_MAX_SECONDS = 120   # po tym czasie strumień jest zamykany niezależnie od stanu
+_SSE_MAX_SECONDS = 30    # po tym czasie klient powinien przełączyć się na polling
 
 @documents_bp.route('/stream/<task_id>')
 @wymaga_roli(UserRole.ADMIN, UserRole.UOPZ)

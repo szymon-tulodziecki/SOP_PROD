@@ -59,7 +59,7 @@
             {% if z.enrollment and z.enrollment.student %}
               {{ z.enrollment.student.imie }} {{ z.enrollment.student.nazwisko }}
               <div style="font-size:0.75rem; color:var(--kolor-tekst-trzeciorzed);">
-                <a href="{{ url_for('zarzadzanie.szczegoly_zgloszenia', enrollment_id=z.enrollment_id) }}" style="color:inherit;">
+                <a href="{{ url_for('zarzadzanie.szczegoly_zgloszenia', id=z.enrollment_id) }}" style="color:inherit;">
                   szczegóły →
                 </a>
               </div>

@@ -63,10 +63,21 @@ def index():
         # Zwracamy puste wpisy, żeby szablon się nie wysypał
         return render_template('dziennik/index.html', zapis=None, wpisy=[], jakikolwiek=jakikolwiek, csrf_form=FlaskForm())
 
-    # Jeśli jest aktywny zapis, normalnie ładujemy wpisy
-    wpisy = _repo_wpisow.dla_zapisu(zapis.id)
+    def _parse_date(key):
+        val = request.args.get(key, '').strip()
+        try:
+            return date.fromisoformat(val) if val else None
+        except ValueError:
+            return None
+
+    data_od = _parse_date('od')
+    data_do = _parse_date('do')
+
+    wpisy = _repo_wpisow.dla_zapisu(zapis.id, data_od=data_od, data_do=data_do)
     csrf_form = FlaskForm()
-    return render_template('dziennik/index.html', zapis=zapis, wpisy=wpisy, jakikolwiek=zapis, csrf_form=csrf_form)
+    return render_template('dziennik/index.html', zapis=zapis, wpisy=wpisy,
+                           jakikolwiek=zapis, csrf_form=csrf_form,
+                           data_od=data_od, data_do=data_do)
 
 
 @dziennik_bp.route('/nowy', methods=['GET', 'POST'])
@@ -78,9 +89,10 @@ def nowy_wpis():
         return redirect(url_for('dziennik.index'))
 
     efekty = _repo_efektow.wszystkie()
+    efekty_opisy = {str(e.id): f'{e.kod}: {e.description}' for e in efekty}
     form = FormularzWpisu()
     form.efekty_ids.choices = [
-        (str(e.id), f'{e.kod}: {e.description[:80]}...' if len(e.description) > 80 else f'{e.kod}: {e.description}')
+        (str(e.id), e.description)
         for e in efekty
     ]
 
@@ -89,7 +101,7 @@ def nowy_wpis():
         duplikat = _repo_wpisow.znajdz_duplikat(zapis.id, data)
         if duplikat:
             flash('Wpis na ten dzień już istnieje. Możesz go edytować.', 'danger')
-            return render_template('dziennik/nowy_wpis.html', form=form, zapis=zapis)
+            return render_template('dziennik/nowy_wpis.html', form=form, zapis=zapis, efekty_opisy=efekty_opisy)
 
         godziny = int(form.liczba_godzin.data)
         wymagane = zapis.praktyka.required_hours
@@ -100,7 +112,7 @@ def nowy_wpis():
                 flash(f'Osiągnięto wymagany limit {wymagane} h. Nie można dodać więcej wpisów.', 'danger')
             else:
                 flash(f'Możesz dodać maksymalnie {pozostalo} h (limit: {wymagane} h). Zmniejsz liczbę godzin.', 'danger')
-            return render_template('dziennik/nowy_wpis.html', form=form, zapis=zapis)
+            return render_template('dziennik/nowy_wpis.html', form=form, zapis=zapis, efekty_opisy=efekty_opisy)
         wybrane_efekty = _repo_efektow.po_ids([int(i) for i in form.efekty_ids.data])
         wpis = JournalEntry(
             id               = uuid.uuid4(),
@@ -118,7 +130,7 @@ def nowy_wpis():
     if request.method == 'GET':
         form.data_wpisu.data = date.today().isoformat()
 
-    return render_template('dziennik/nowy_wpis.html', form=form, zapis=zapis)
+    return render_template('dziennik/nowy_wpis.html', form=form, zapis=zapis, efekty_opisy=efekty_opisy)
 
 
 @dziennik_bp.route('/edytuj/<uuid:wpis_id>', methods=['GET', 'POST'])
@@ -135,9 +147,10 @@ def edytuj_wpis(wpis_id):
         abort(403)
 
     efekty = _repo_efektow.wszystkie()
+    efekty_opisy = {str(e.id): f'{e.kod}: {e.description}' for e in efekty}
     form = FormularzWpisu()
     form.efekty_ids.choices = [
-        (str(e.id), f'{e.kod}: {e.description[:80]}...' if len(e.description) > 80 else f'{e.kod}: {e.description}')
+        (str(e.id), e.description)
         for e in efekty
     ]
 
@@ -145,7 +158,7 @@ def edytuj_wpis(wpis_id):
         wpis.entry_date     = date.fromisoformat(form.data_wpisu.data)
         wpis.duration_hours = int(form.liczba_godzin.data)
         wpis.description    = form.opis.data.strip()
-        wpis.efekty_uczenia = _repo_efektow.po_ids([int(i) for i in form.efekty_ids.data])
+        wpis.learning_outcomes = _repo_efektow.po_ids([int(i) for i in form.efekty_ids.data])
         db.session.commit()
         flash('Wpis został zaktualizowany.', 'success')
         return redirect(url_for('dziennik.index'))
@@ -156,7 +169,7 @@ def edytuj_wpis(wpis_id):
         form.opis.data          = wpis.description
         form.efekty_ids.data    = [str(e.id) for e in wpis.efekty_uczenia]
 
-    return render_template('dziennik/nowy_wpis.html', form=form, zapis=zapis, edycja=True, wpis=wpis)
+    return render_template('dziennik/nowy_wpis.html', form=form, zapis=zapis, edycja=True, wpis=wpis, efekty_opisy=efekty_opisy)
 
 
 @dziennik_bp.route('/usun/<uuid:wpis_id>', methods=['POST'])

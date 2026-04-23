@@ -73,7 +73,59 @@
 </div>
 {% endmacro %}
 
-{{ tabela_studentow(zakonczone, 'Gotowi do oceny (zakończone praktyki)', '#dc2626') }}
+{{ tabela_studentow(do_oceny, 'Gotowi do oceny (zakończone praktyki)', '#dc2626') }}
+
+<div class="karta" style="margin-bottom: 1.5rem;">
+  <div class="karta__naglowek" style="border-left: 4px solid #16a34a;">
+    <h2 class="karta__tytul">Oceny wystawione <span style="font-size:0.85rem; font-weight:400; color:var(--kolor-tekst-drugor);">({{ ocenione|length }})</span></h2>
+  </div>
+  <div class="karta__tresc">
+    {% if ocenione %}
+    <div class="tabela-wrapper">
+      <table class="tabela">
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Zakład pracy</th>
+            <th>S</th>
+            <th>U</th>
+            <th>Z</th>
+            <th>E</th>
+            <th>Ocena K</th>
+            <th>Akcje</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in ocenione %}
+          {% set p = item.zapis %}
+          <tr>
+            <td>
+              <div style="font-weight:600;">{{ p.student.last_name }} {{ p.student.first_name }}</div>
+              <div style="font-size:0.8rem; color:var(--kolor-tekst-drugor);">Nr alb.: {{ p.student.album_number or '-' }}</div>
+            </td>
+            <td style="font-size:0.85rem;">{{ (p.firma.nazwa if p.firma else p.firma_nazwa) or '-' }}</td>
+            <td>{{ p.ocena_sprawozdania or '—' }}</td>
+            <td>{{ p.ocena_uopz or '—' }}</td>
+            <td>{{ p.ocena_zopz or '—' }}</td>
+            <td>{{ p.exam_grade or '—' }}</td>
+            <td>
+              <strong style="font-size:1.1rem; color:{% if p.final_grade >= 3.0 %}var(--kolor-sukces){% else %}var(--kolor-blad){% endif %};">
+                {{ p.final_grade }}
+              </strong>
+            </td>
+            <td>
+              <a href="{{ url_for('evaluation.ocen_praktyke', id=p.id) }}" class="przycisk przycisk--maly przycisk--drugorzedny">Edytuj</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align:center; padding:2rem; color:var(--kolor-tekst-drugor);">Brak wystawionych ocen.</div>
+    {% endif %}
+  </div>
+</div>
 
 </div>
 {% endblock %}

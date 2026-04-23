@@ -68,12 +68,25 @@ def lista_dziennikow():
 @journal_bp.route('/zapis/<uuid:id>')
 @login_required
 def dziennik_zapisu(id):
-    zapis       = _repo_zapisow.znajdz_po_id(id) or abort(404)
-    wpisy       = _repo_wpisow.dla_zapisu(id, malejaco=True)
+    from datetime import date as _date
+    zapis = _repo_zapisow.znajdz_po_id(id) or abort(404)
+
+    def _parse_date(key):
+        val = request.args.get(key, '').strip()
+        try:
+            return _date.fromisoformat(val) if val else None
+        except ValueError:
+            return None
+
+    data_od = _parse_date('od')
+    data_do = _parse_date('do')
+
+    wpisy       = _repo_wpisow.dla_zapisu(id, malejaco=True, data_od=data_od, data_do=data_do)
     przerwy     = _wykryj_przerwy(wpisy)
     suma_godzin = sum(w.duration_hours for w in wpisy)
     return render_template('journal/dziennik.html', zapis=zapis, wpisy=wpisy,
-                           przerwy=przerwy, suma_godzin=suma_godzin)
+                           przerwy=przerwy, suma_godzin=suma_godzin,
+                           data_od=data_od, data_do=data_do)
 
 
 @journal_bp.route('/zapis/<uuid:id>/pdf')

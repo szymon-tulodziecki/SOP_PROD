@@ -45,6 +45,7 @@ class UslugaUzytkownikow:
         imie: str,
         nazwisko: str,
         numer_albumu: Optional[str] = None,
+        commit: bool = True,
         **dane_studenta,
     ) -> Student:
         if self._repo.istnieje_email(email):
@@ -59,7 +60,8 @@ class UslugaUzytkownikow:
             **dane_studenta,
         )
         self._repo.zapisz(student)
-        db.session.commit()
+        if commit:
+            db.session.commit()
         return student
 
     def utworz_administratora(self, email: str, haslo: str, imie: str, nazwisko: str) -> Administrator:

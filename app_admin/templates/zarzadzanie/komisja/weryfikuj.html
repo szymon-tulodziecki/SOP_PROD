@@ -60,9 +60,8 @@
         <div>
           <div style="font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--kolor-tekst-trzeciorzed); margin-bottom: 0.35rem;">Ścieżka</div>
           <div style="font-weight: 600; color: var(--kolor-tekst);">
-            {% if zapis.track_type.value == 'EMPLOYMENT' %}Na podst. zatrudnienia
-            {% elif zapis.track_type.value == 'OWN_BUSINESS' %}Własna działalność
-            {% else %}Standardowa{% endif %}
+            {% if zapis.track_type.value == 'STANDARD' %}A — Standardowa
+            {% else %}B — Uznanie efektów{% endif %}
           </div>
         </div>
         <div>
@@ -100,9 +99,8 @@
             <div class="pole-info">
               <div class="pole-info__etykieta">Ścieżka praktyki</div>
               <div class="pole-info__wartosc">
-                {% if zapis.track_type.value == 'EMPLOYMENT' %}Na podstawie zatrudnienia
-                {% elif zapis.track_type.value == 'OWN_BUSINESS' %}Własna działalność gospodarcza
-                {% else %}Standardowa{% endif %}
+                {% if zapis.track_type.value == 'STANDARD' %}A — Standardowa
+                {% else %}B — Uznanie efektów{% endif %}
               </div>
             </div>
             <div class="pole-info">

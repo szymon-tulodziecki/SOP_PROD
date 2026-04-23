@@ -218,7 +218,8 @@ class RepozytoriumZapisow:
         )
 
     def lista_zgloszen_strona(self, status_filter: str = '',
-                               strona: int = 1, na_strone: int = 25):
+                               strona: int = 1, na_strone: int = 25,
+                               supervisor_id=None):
         """Paginowana lista zgłoszeń ścieżki STANDARD z opcjonalnym filtrem statusu."""
         from sqlalchemy.orm import selectinload
         from core.modele.uzytkownicy import User
@@ -232,6 +233,8 @@ class RepozytoriumZapisow:
             .join(User, InternshipEnrollment.student_id == User.id)
             .filter(InternshipEnrollment.path_type == 'STANDARD')
         )
+        if supervisor_id:
+            q = q.filter(InternshipEnrollment.supervisor_id == supervisor_id)
         if status_filter:
             q = q.filter(InternshipEnrollment.status == EnrollmentStatus(status_filter))
         return q.order_by(InternshipEnrollment.enrolled_at.desc()).paginate(
@@ -320,25 +323,25 @@ class RepozytoriumZapisow:
             'zatwierdzone': row.zatwierdzone,
         }
 
-    def liczniki_nav(self) -> dict:
+    def liczniki_nav(self, supervisor_id=None) -> dict:
         """Liczniki statusów dla paska nawigacji (inject_nav_counts) — jedno zapytanie."""
-        row = (
-            db.session.query(
-                func.count(case(
-                    (InternshipEnrollment.status == EnrollmentStatus.AWAITING_APPROVAL, 1)
-                )).label('oczekujace'),
-                func.count(case(
-                    (InternshipEnrollment.status == EnrollmentStatus.COMMISSION_REVIEW, 1)
-                )).label('komisja'),
-                func.count(case(
-                    (InternshipEnrollment.status == EnrollmentStatus.DIRECTOR_APPROVAL, 1)
-                )).label('dziekan'),
-                func.count(case(
-                    (InternshipEnrollment.status == EnrollmentStatus.COMPLETED, 1)
-                )).label('do_oceny'),
-            )
-            .one()
+        q = db.session.query(
+            func.count(case(
+                (InternshipEnrollment.status == EnrollmentStatus.AWAITING_APPROVAL, 1)
+            )).label('oczekujace'),
+            func.count(case(
+                (InternshipEnrollment.status == EnrollmentStatus.COMMISSION_REVIEW, 1)
+            )).label('komisja'),
+            func.count(case(
+                (InternshipEnrollment.status == EnrollmentStatus.DIRECTOR_APPROVAL, 1)
+            )).label('dziekan'),
+            func.count(case(
+                (InternshipEnrollment.status == EnrollmentStatus.COMPLETED, 1)
+            )).label('do_oceny'),
         )
+        if supervisor_id:
+            q = q.filter(InternshipEnrollment.supervisor_id == supervisor_id)
+        row = q.one()
         return {
             'nav_oczekujace': row.oczekujace,
             'nav_komisja':    row.komisja,

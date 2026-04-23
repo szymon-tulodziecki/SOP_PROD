@@ -636,6 +636,10 @@ class Examination(db.Model):
     question_3 = db.Column(db.Text,          nullable=True)
     grade_3    = db.Column(db.Numeric(3, 1), nullable=True)
 
+    commission_chair    = db.Column(db.String(200), nullable=True)  # Przewodniczący Komisji
+    commission_member_2 = db.Column(db.String(200), nullable=True)  # Członek 2
+    commission_member_3 = db.Column(db.String(200), nullable=True)  # Członek 3
+
     enrollment = db.relationship('InternshipEnrollment', back_populates='examination')
 
     # Backward-compat

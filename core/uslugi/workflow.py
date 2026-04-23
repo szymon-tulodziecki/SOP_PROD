@@ -225,6 +225,18 @@ class ZapisFSM:
             self._auto_przypisz_uopz()
         self._przejdz(S.COMMISSION_REVIEW)
 
+    def wyslij_ponownie_po_poprawkach(self) -> None:
+        """REVISION_REQUIRED → AWAITING_APPROVAL (ścieżka A) lub COMMISSION_REVIEW (B/C).
+
+        Rozróżnia ścieżkę na podstawie path_type zapisu — student po poprawkach
+        wraca do recenzenta, który zadał poprawki, a nie zawsze do komisji.
+        """
+        from core.modele.praktyki import InternshipPath
+        if self.zapis.path_type == InternshipPath.STANDARD:
+            self._przejdz(S.AWAITING_APPROVAL)
+        else:
+            self._przejdz(S.COMMISSION_REVIEW)
+
     def zatwierdz_przez_uopz(self, actor_id=None, comment: str = '') -> None:
         """AWAITING_APPROVAL → IN_PROGRESS. Opcjonalnie zapisuje komentarz UOPZ."""
         from core.modele.praktyki import EventType

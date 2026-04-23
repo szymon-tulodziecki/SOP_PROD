@@ -88,9 +88,11 @@ def create_app():
             from flask_login import current_user
             if current_user.is_authenticated:
                 from core.repozytoria import RepozytoriumZapisow
-                counts.update(RepozytoriumZapisow().liczniki_nav())
-        except Exception:
-            pass
+                from core.modele import UserRole
+                uopz_id = current_user.id if current_user.role == UserRole.UOPZ else None
+                counts.update(RepozytoriumZapisow().liczniki_nav(supervisor_id=uopz_id))
+        except Exception as exc:
+            app.logger.warning("inject_nav_counts error: %s", exc)
         return counts
 
     @app.context_processor

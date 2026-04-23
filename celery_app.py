@@ -112,8 +112,8 @@ def _shutdown_worker(**_kwargs):
     try:
         db.session.remove()
         db.engine.dispose()
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning("Worker shutdown cleanup error: %s", exc)
     logger.info("Worker process shut down cleanly")
 
 

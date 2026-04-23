@@ -90,11 +90,11 @@ Ocena Z (opiekun zakładowy) =
 
 \vspace{0.5em}
 
-\noindent 1. \dotfill \quad --- Przewodniczący Komisji
+\noindent 1. <<% if zapis.komisja_przewodniczacy %>>\textbf{<< zapis.komisja_przewodniczacy|s >>}<<% else %>>\dotfill<<% endif %>> \quad --- Przewodniczący Komisji
 
-\noindent 2. <<% if uopz.first_name %>>\textbf{<< uopz.first_name|s >> << uopz.last_name|s >>}<<% else %>>\dotfill<<% endif %>> \quad --- Uczelniany opiekun praktyki
+\noindent 2. <<% if zapis.komisja_czlonek_2 %>>\textbf{<< zapis.komisja_czlonek_2|s >>}<<% elif zapis.uopz %>>\textbf{<< zapis.uopz.first_name|s >> << zapis.uopz.last_name|s >>}<<% else %>>\dotfill<<% endif %>> \quad --- Uczelniany opiekun praktyki
 
-\noindent 3. \dotfill
+\noindent 3. <<% if zapis.komisja_czlonek_3 %>>\textbf{<< zapis.komisja_czlonek_3|s >>}<<% else %>>\dotfill<<% endif %>>
 
 \vspace{2em}
 

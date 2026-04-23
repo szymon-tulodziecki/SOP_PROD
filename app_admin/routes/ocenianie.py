@@ -70,10 +70,13 @@ def lista_ocen():
     w_trakcie = [z for z in zapisy_z_deadlinami if z['w_trakcie']]
     zakonczone = [z for z in zapisy_z_deadlinami if z['zakonczona']]
 
+    do_oceny = [z for z in zakonczone if z['zapis'].final_grade is None]
+    ocenione = [z for z in zakonczone if z['zapis'].final_grade is not None]
+
     return render_template('evaluation/lista_ocen.html',
-                           zapisy_z_deadlinami=zapisy_z_deadlinami,
                            w_trakcie=w_trakcie,
-                           zakonczone=zakonczone)
+                           do_oceny=do_oceny,
+                           ocenione=ocenione)
 
 @evaluation_bp.route('/zapis/<uuid:id>/karta_ocen', methods=['GET', 'POST'])
 @wymaga_roli(UserRole.ADMIN, UserRole.UOPZ)
@@ -95,6 +98,9 @@ def ocen_praktyke(id):
             exam_grade_2                 = _parse_grade(request.form.get('sprawdzian_ocena_2', '')),
             exam_question_3              = request.form.get('sprawdzian_pytanie_3'),
             exam_grade_3                 = _parse_grade(request.form.get('sprawdzian_ocena_3', '')),
+            commission_chair             = request.form.get('komisja_przewodniczacy'),
+            commission_member_2          = request.form.get('komisja_czlonek_2'),
+            commission_member_3          = request.form.get('komisja_czlonek_3'),
             finalize                     = bool(request.form.get('zakoncz')),
         )
 
@@ -105,12 +111,23 @@ def ocen_praktyke(id):
             return redirect(url_for('evaluation.ocen_praktyke', id=zapis.id))
 
         db.session.commit()
+        if dane.finalize:
+            flash('Oceny zostały zatwierdzone.', 'success')
+            return redirect(url_for('evaluation.lista_ocen'))
         flash('Oceny zostały zapisane.', 'success')
         return redirect(url_for('evaluation.ocen_praktyke', id=zapis.id))
 
     from flask_wtf import FlaskForm
+    from core.modele.uzytkownicy import UniversityMentor, Administrator
+    pracownicy = db.session.execute(
+        db.select(UniversityMentor).filter_by(is_active=True).order_by(
+            UniversityMentor.last_name, UniversityMentor.first_name)
+    ).scalars().all()
     csrf_form = FlaskForm()
-    return render_template('evaluation/karta_ocen.html', practically=zapis, zapis=zapis, csrf_form=csrf_form)
+    return render_template('evaluation/karta_ocen.html',
+                           zapis=zapis, practically=zapis,
+                           pracownicy=pracownicy,
+                           csrf_form=csrf_form)
 
 @evaluation_bp.route('/zapis/<uuid:id>/sprawozdanie')
 @wymaga_roli(UserRole.ADMIN, UserRole.UOPZ)
@@ -206,6 +223,9 @@ def generuj_protokol(id):
             'sprawdzian_pytanie_3': sp.question_3 if sp else None,
             'sprawdzian_ocena_3':   _f(sp.grade_3 if sp else None),
             'uopz': {'first_name': zapis.uopz.first_name, 'last_name': zapis.uopz.last_name} if zapis.uopz else None,
+            'komisja_przewodniczacy': sp.commission_chair    if sp else None,
+            'komisja_czlonek_2':      sp.commission_member_2 if sp else None,
+            'komisja_czlonek_3':      sp.commission_member_3 if sp else None,
         },
         'student': {
             'imie': s.first_name, 'nazwisko': s.last_name,

@@ -85,16 +85,17 @@ class FormularzPrzypiszUOPZ(FlaskForm):
 
 
 @zarzadzanie_bp.route('/zgloszenia')
-@wymaga_roli(UserRole.ADMIN, UserRole.KOMISJA, UserRole.DYREKTOR)
+@wymaga_roli(UserRole.ADMIN, UserRole.KOMISJA, UserRole.DYREKTOR, UserRole.UOPZ)
 def lista_zgloszen():
     strona        = request.args.get('page', 1, type=int)
     status_filter = request.args.get('status', '').strip()
 
+    uopz_id = current_user.id if current_user.role == UserRole.UOPZ else None
     try:
-        zgloszenia = _repo_zapisow.lista_zgloszen_strona(status_filter=status_filter, strona=strona)
+        zgloszenia = _repo_zapisow.lista_zgloszen_strona(status_filter=status_filter, strona=strona, supervisor_id=uopz_id)
     except ValueError:
         flash(f'Nieznany status: {status_filter}', 'warning')
-        zgloszenia = _repo_zapisow.lista_zgloszen_strona(strona=strona)
+        zgloszenia = _repo_zapisow.lista_zgloszen_strona(strona=strona, supervisor_id=uopz_id)
     csrf_form = FlaskForm()
     return render_template('zarzadzanie/enrollments/list.html', zgloszenia=zgloszenia, csrf_form=csrf_form)
 
@@ -166,8 +167,7 @@ def szczegoly_zgloszenia(id):
                 db.session.commit()
         except IllegalTransitionError as e:
             flash(str(e), 'danger')
-        return redirect(url_for('zarzadzanie.lista_zgloszen') if current_user.role == UserRole.ADMIN
-                        else url_for('zarzadzanie.moje_zgloszenia'))
+        return redirect(url_for('zarzadzanie.lista_zgloszen'))
 
     uploaded_docs = _repo_docs.dla_zapisu_studenta(id, zapis.student_id)
 
@@ -234,15 +234,24 @@ def moje_zgloszenia():
 @zarzadzanie_bp.route('/praktyki/<uuid:id>/usun', methods=['POST'])
 @wymaga_roli(UserRole.ADMIN)
 def usun_praktyke(id):
-    p   = db.session.get(Internship, id) or abort(404)
+    p    = db.session.get(Internship, id) or abort(404)
     opis = f'{p.academic_year} ({p.semester})'
-    from sqlalchemy import text as _text
-    db.session.execute(_text("""
-        DELETE FROM uploaded_documents
-        WHERE enrollment_id IN (
-            SELECT id FROM internship_enrollments WHERE internship_id = :pid
-        )
-    """), {'pid': str(id)})
+
+    from core.pliki import _fs_delete
+    import logging
+    _log = logging.getLogger(__name__)
+
+    for zapis in p.enrollments:
+        docs = db.session.execute(
+            db.select(UploadedDocument).filter_by(enrollment_id=zapis.id)
+        ).scalars().all()
+        for doc in docs:
+            try:
+                _fs_delete(doc.file_path)
+            except Exception as exc:
+                _log.warning("Nie udało się usunąć pliku %s z fileservera: %s", doc.file_path, exc)
+            db.session.delete(doc)
+
     db.session.delete(p)
     db.session.commit()
     flash(f'Internship {opis} została usunięta.', 'success')

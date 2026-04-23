@@ -1,7 +1,7 @@
 {% extends "layouts/base_panel.html" %}
 
 {% block tytul %}Karta Ocen Praktyki{% endblock %}
-{% block naglowek %}Karta Ocen (Zał. 3 / Zał. 8){% endblock %}
+{% block naglowek %}Ocena praktyki — {{ zapis.student.imie }} {{ zapis.student.nazwisko }}{% endblock %}
 
 {% block naglowek_akcje %}
 <a href="{{ url_for('evaluation.lista_ocen') }}" class="przycisk przycisk--drugorzedny">Powrót do listy</a>
@@ -31,7 +31,7 @@
     <!-- Karta Ocen (Zał. 3) -->
     <div class="karta" style="margin-bottom: 2rem;">
       <div class="karta__naglowek" style="background: var(--kolor-tlo);">
-        <h3 class="karta__tytul">Karta oceny praktyki (Zał. 3)</h3>
+        <h3 class="karta__tytul">Karta oceny praktyki (Zał. 3c)</h3>
       </div>
       <div class="karta__tresc">
         <p style="font-size: 0.85rem; color: var(--kolor-tekst-drugor); margin-bottom: 1rem;">
@@ -54,13 +54,13 @@
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
-          <div class="pole-formularza">
-            <label class="pole-formularza__etykieta">Opinia opisowa Uczelnianego Opiekuna Praktyk Zawodowych (UOPZ)</label>
-            <textarea name="ocena_opisowa_uopz" class="pole-formularza__input" rows="4" placeholder="Wpisz treść opinii...">{{ zapis.ocena_opisowa_uopz or '' }}</textarea>
+          <div class="pole-formularza" style="margin:0; display:flex; flex-direction:column;">
+            <label class="pole-formularza__etykieta" style="min-height:3rem;">Opinia opisowa Uczelnianego Opiekuna Praktyk Zawodowych (UOPZ)</label>
+            <textarea name="ocena_opisowa_uopz" class="pole-formularza__input" rows="4" style="flex:1; width:100%; box-sizing:border-box;" placeholder="Wpisz treść opinii...">{{ zapis.ocena_opisowa_uopz or '' }}</textarea>
           </div>
-          <div class="pole-formularza">
-            <label class="pole-formularza__etykieta">Opinia opisowa z dostarczonej karty ZOPZ (opcjonalnie)</label>
-            <textarea name="ocena_opisowa_zopz" class="pole-formularza__input" rows="4" placeholder="Przepisz jeśli obecna...">{{ zapis.ocena_opisowa_zopz or '' }}</textarea>
+          <div class="pole-formularza" style="margin:0; display:flex; flex-direction:column;">
+            <label class="pole-formularza__etykieta" style="min-height:3rem;">Opinia opisowa z dostarczonej karty ZOPZ (opcjonalnie)</label>
+            <textarea name="ocena_opisowa_zopz" class="pole-formularza__input" rows="4" style="flex:1; width:100%; box-sizing:border-box;" placeholder="Przepisz jeśli obecna...">{{ zapis.ocena_opisowa_zopz or '' }}</textarea>
           </div>
         </div>
       </div>
@@ -72,6 +72,33 @@
         <h3 class="karta__tytul">Protokół Egzaminacyjny (Zał. 8)</h3>
       </div>
       <div class="karta__tresc">
+
+        <!-- Skład Komisji -->
+        <p style="font-weight:600; margin-bottom:0.75rem;">Skład Komisji</p>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+          <div class="pole-formularza">
+            <label class="pole-formularza__etykieta">Przewodniczący Komisji</label>
+            <input type="text" name="komisja_przewodniczacy" class="pole-formularza__input"
+                   value="{{ zapis.sprawdzian.commission_chair if zapis.sprawdzian and zapis.sprawdzian.commission_chair else '' }}"
+                   placeholder="Imię i nazwisko">
+          </div>
+          <div class="pole-formularza">
+            <label class="pole-formularza__etykieta">Członek Komisji 2</label>
+            <input type="text" name="komisja_czlonek_2" class="pole-formularza__input"
+                   value="{{ zapis.sprawdzian.commission_member_2 if zapis.sprawdzian and zapis.sprawdzian.commission_member_2 else (zapis.uopz.first_name ~ ' ' ~ zapis.uopz.last_name if zapis.uopz else '') }}"
+                   placeholder="Imię i nazwisko (często UOPZ)">
+          </div>
+          <div class="pole-formularza">
+            <label class="pole-formularza__etykieta">Członek Komisji 3</label>
+            <input type="text" name="komisja_czlonek_3" class="pole-formularza__input"
+                   value="{{ zapis.sprawdzian.commission_member_3 if zapis.sprawdzian and zapis.sprawdzian.commission_member_3 else '' }}"
+                   placeholder="Imię i nazwisko">
+          </div>
+        </div>
+
+        <hr style="margin-bottom:1.5rem; border-color:var(--kolor-ramka);">
+
         <p style="font-size: 0.85rem; color: var(--kolor-tekst-drugor); margin-bottom: 1.5rem;">
           Wprowadź 3 pytania zadane studentowi oraz ocenę (od 2.0 do 5.0) za każdą odpowiedź. Ocena E jest automatyczną średnią z poniższych.
         </p>
@@ -138,18 +165,16 @@
     </div>
 
     <!-- Akcje -->
-    <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 3rem;">
-      <span style="font-size: 0.85rem; color: var(--kolor-blad);" id="ostrzezenie-z">Obliczenie K i zatwierdzenie jest zablokowane do momentu wpisania oceny "Z".</span>
-      
+    <div style="display: flex; justify-content: flex-end; align-items: center; gap: 1rem; padding-bottom: 3rem; flex-wrap: wrap;">
+      <span style="font-size: 0.85rem; color: var(--kolor-blad); margin-right: auto;" id="ostrzezenie-z">Obliczenie K i zatwierdzenie jest zablokowane do momentu wpisania oceny "Z".</span>
+
       <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+        <a href="{{ url_for('zarzadzanie.dokumenty_studenta', student_id=zapis.student_id) }}"
+           class="przycisk przycisk--drugorzedny" style="box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+          Dokumenty studenta →
+        </a>
         <button type="submit" name="zapisz" value="1" class="przycisk przycisk--drugorzedny" style="box-shadow: 0 2px 8px rgba(0,0,0,0.1);">Zapisz Wersję Roboczą</button>
         <button type="submit" name="zakoncz" value="1" id="btn-zakoncz" class="przycisk przycisk--glowny" style="box-shadow: 0 4px 14px rgba(26, 58, 92, 0.3);" disabled>Zakończ i Zatwierdź Ocenę</button>
-        {% if zapis.ocena_uopz is not none %}
-        <a href="{{ url_for('evaluation.generuj_protokol', id=zapis.id) }}"
-           class="przycisk przycisk--drugorzedny" style="box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-          Pobierz Protokół (Zał. 8)
-        </a>
-        {% endif %}
       </div>
     </div>
     </div>

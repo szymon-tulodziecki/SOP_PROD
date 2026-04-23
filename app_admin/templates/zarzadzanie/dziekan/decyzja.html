@@ -32,10 +32,8 @@
             <div class="info-item">
               <label>Ścieżka</label>
               <div>
-                {% if zapis.track_type.value == 'EMPLOYMENT' %}
-                <span class="badge badge--info">Praca zawodowa</span>
-                {% elif zapis.track_type.value == 'OWN_BUSINESS' %}
-                <span class="badge badge--warning">Działalność gospodarcza</span>
+                {% if zapis.track_type.value != 'STANDARD' %}
+                <span class="badge badge--info">B — Uznanie efektów</span>
                 {% endif %}
               </div>
             </div>

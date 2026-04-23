@@ -63,8 +63,20 @@
 
   <!-- Wpisy -->
   <div class="karta">
-    <div class="karta__naglowek">
-      <h3 class="karta__tytul">Wpisy dziennika ({{ wpisy|length }})</h3>
+    <div class="karta__naglowek" style="flex-wrap:wrap; gap:0.75rem;">
+      <h3 class="karta__tytul">Wpisy dziennika ({{ wpisy|length }}{% if data_od or data_do %} — filtr aktywny{% endif %})</h3>
+      <form method="GET" style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap; margin-left:auto;">
+        <label style="font-size:0.85rem; color:var(--kolor-tekst-drugor);">Od</label>
+        <input type="date" name="od" class="pole-formularza__input" style="width:145px; padding:0.3rem 0.5rem; font-size:0.85rem;"
+               value="{{ data_od.isoformat() if data_od else '' }}">
+        <label style="font-size:0.85rem; color:var(--kolor-tekst-drugor);">Do</label>
+        <input type="date" name="do" class="pole-formularza__input" style="width:145px; padding:0.3rem 0.5rem; font-size:0.85rem;"
+               value="{{ data_do.isoformat() if data_do else '' }}">
+        <button type="submit" class="przycisk przycisk--maly przycisk--drugorzedny">Filtruj</button>
+        {% if data_od or data_do %}
+        <a href="{{ url_for('journal.dziennik_zapisu', id=zapis.id) }}" class="przycisk przycisk--maly przycisk--drugorzedny">Wyczyść</a>
+        {% endif %}
+      </form>
     </div>
     <div class="karta__tresc" style="padding: 0;">
       <div class="tabela-wrapper">

@@ -11,15 +11,19 @@ from core.modele.dziennik import JournalEntry
 class RepozytoriumWpisow:
     """Jedyne miejsce zapytań ORM dotyczących tabeli wpisów dziennika."""
 
-    def dla_zapisu(self, enrollment_id, malejaco: bool = True) -> list[JournalEntry]:
-        """Wszystkie wpisy dla danego zapisu, posortowane po dacie."""
+    def dla_zapisu(self, enrollment_id, malejaco: bool = True,
+                   data_od=None, data_do=None) -> list[JournalEntry]:
+        """Wszystkie wpisy dla danego zapisu, posortowane po dacie.
+
+        data_od / data_do — opcjonalne filtry zakresu dat (obiekty date lub None).
+        """
         order = JournalEntry.entry_date.desc() if malejaco else JournalEntry.entry_date
-        return (
-            db.session.query(JournalEntry)
-            .filter_by(enrollment_id=enrollment_id)
-            .order_by(order)
-            .all()
-        )
+        q = db.session.query(JournalEntry).filter_by(enrollment_id=enrollment_id)
+        if data_od:
+            q = q.filter(JournalEntry.entry_date >= data_od)
+        if data_do:
+            q = q.filter(JournalEntry.entry_date <= data_do)
+        return q.order_by(order).all()
 
     def statystyki_dla_zapisow(self, ids: list) -> dict:
         """Zwraca {enrollment_id: (max_date, count)} dla listy zapisów — jedno zapytanie SQL.

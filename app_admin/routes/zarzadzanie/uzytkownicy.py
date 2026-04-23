@@ -193,6 +193,7 @@ def import_csv():
                         study_mode              = w['tryb_studiow'],
                         supervisor_id           = uuid.UUID(uopz_id) if uopz_id else None,
                         require_password_change = False,
+                        commit                  = False,
                     )
                     existing_emails.add(w['email'])
                     existing_albums.add(w['nr_albumu'])

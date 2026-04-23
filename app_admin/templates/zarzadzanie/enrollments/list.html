@@ -33,6 +33,10 @@
            class="przycisk przycisk--{% if request.args.get('status') == 'AWAITING_APPROVAL' %}glowny{% else %}drugorzedny{% endif %} przycisk--maly">
           Nowe zgłoszenia
         </a>
+        <a href="{{ url_for('zarzadzanie.lista_zgloszen', status='REVISION_REQUIRED') }}"
+           class="przycisk przycisk--{% if request.args.get('status') == 'REVISION_REQUIRED' %}glowny{% else %}drugorzedny{% endif %} przycisk--maly">
+          Czeka na poprawki
+        </a>
       </div>
     </div>
   </div>

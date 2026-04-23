@@ -503,7 +503,10 @@ def resubmit_zgloszenia(id):
     from core.uslugi.workflow import ZapisFSM, IllegalTransitionError
     try:
         with ZapisFSM.lock(id) as fsm:
-            fsm.wyslij_do_komisji()
+            if zapis.status == EnrollmentStatus.REVISION_REQUIRED:
+                fsm.wyslij_ponownie_po_poprawkach()
+            else:
+                fsm.wyslij_do_komisji()
             db.session.commit()
     except IllegalTransitionError as e:
         flash(str(e), 'danger')

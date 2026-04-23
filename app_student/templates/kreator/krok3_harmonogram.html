@@ -33,12 +33,12 @@
         <div style="font-size:0.78rem; color:var(--kolor-tekst-drugor); margin-bottom:0.35rem;">
           {{ e.opis }}
         </div>
-        <div style="display:grid; grid-template-columns:1fr 1fr auto; gap:0.5rem; align-items:center;">
-          <input type="text" name="dzial_{{ e.id }}" value="{{ h.get('dzial', '') }}"
-                 class="pole-formularza__input" style="font-size:0.8rem; padding:0.3rem 0.5rem;" placeholder="Dział zakładu pracy">
-          <input type="text" name="prace_{{ e.id }}" value="{{ h.get('prace', '') }}"
-                 class="pole-formularza__input" style="font-size:0.8rem; padding:0.3rem 0.5rem;" placeholder="Przykładowe czynności">
-          <div style="display:flex; align-items:center; gap:0.4rem;">
+        <div style="display:grid; grid-template-columns:1fr 1fr auto; gap:0.5rem; align-items:start;">
+          <textarea name="dzial_{{ e.id }}" rows="2"
+                 class="pole-formularza__input" style="font-size:0.8rem; padding:0.3rem 0.5rem; resize:vertical; min-height:2.2rem;" placeholder="Dział zakładu pracy">{{ h.get('dzial', '') }}</textarea>
+          <textarea name="prace_{{ e.id }}" rows="2"
+                 class="pole-formularza__input" style="font-size:0.8rem; padding:0.3rem 0.5rem; resize:vertical; min-height:2.2rem;" placeholder="Przykładowe czynności">{{ h.get('prace', '') }}</textarea>
+          <div style="display:flex; align-items:center; gap:0.4rem; padding-top:0.3rem;">
             <input type="number" name="dni_{{ e.id }}" value="{{ h.get('dni', '') }}"
                    class="pole-formularza__input" style="width:4rem; font-size:0.8rem; padding:0.3rem 0.5rem; text-align:center;" min="0" max="60" placeholder="0">
             <span style="font-size:0.8rem; color:var(--kolor-tekst-drugor); white-space:nowrap;">dni</span>

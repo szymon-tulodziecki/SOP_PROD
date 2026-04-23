@@ -61,10 +61,8 @@
           {% if zapis.firma %}{{ zapis.firma.nazwa }}
           {% elif zapis.firma_nazwa %}{{ zapis.firma_nazwa }}{% endif %}
           · Ścieżka:
-          {% if wpis.sciezka == 'STANDARD' %}Standardowa
-          {% elif wpis.sciezka == 'EMPLOYMENT' %}Praca etatowa
-          {% elif wpis.sciezka == 'OWN_BUSINESS' %}Działalność gospodarcza
-          {% else %}{{ wpis.sciezka }}{% endif %}
+          {% if wpis.sciezka == 'STANDARD' %}A — Standardowa
+          {% else %}B — Uznanie efektów{% endif %}
         </div>
       </div>
       <span class="status

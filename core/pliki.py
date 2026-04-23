@@ -22,7 +22,7 @@ from flask_login import login_required, current_user
 
 from core.modele import InternshipEnrollment, UserRole, UploadedDocument
 from core.extensions import db, limiter
-from core.szyfrowanie import zaszyfruj, odszyfruj_strumieniowo
+from core.szyfrowanie import zaszyfruj_strumieniowo, odszyfruj_strumieniowo
 
 
 # ── Fileserver ────────────────────────────────────────────────────────────────
@@ -35,7 +35,8 @@ def _fs_headers():
     return {'X-API-Key': FILESERVER_KEY}
 
 
-def _fs_put(filename: str, data: bytes) -> None:
+def _fs_put(filename: str, data) -> None:
+    """Wysyła plik na fileserver. data może być bytes lub iteratorem bajtów."""
     r = httpx.put(f'{FILESERVER_URL}/files/{filename}', content=data, headers=_fs_headers(), timeout=30)
     r.raise_for_status()
 
@@ -192,13 +193,12 @@ def stworz_blueprint_pliki(
             file_ext        = Path(original_filename).suffix.lower()
             stored_filename = f"{uuid.uuid4().hex}{file_ext}"
 
-            # Szyfruj i wyślij do fileservera
-            raw_bytes = file.read()
+            # Wczytaj nagłówek do weryfikacji magic bytes, resztę strumieniuj
+            header = file.read(4096)
 
             # ── Warstwa 2: magic bytes (niefałszowalna weryfikacja formatu) ──
-            # Fail-Closed: MagicBytesError (błąd biblioteki) → 503, nie 200.
             try:
-                magic_ok = _weryfikuj_magic_bytes(raw_bytes)
+                magic_ok = _weryfikuj_magic_bytes(header)
             except MagicBytesError as exc:
                 import logging
                 logging.getLogger(__name__).error("Magic bytes check failed: %s", exc)
@@ -206,8 +206,15 @@ def stworz_blueprint_pliki(
             if not magic_ok:
                 return jsonify({'error': 'Niedozwolony format pliku (weryfikacja binarna)'}), 400
 
-            encrypted_bytes = zaszyfruj(raw_bytes)
-            _fs_put(stored_filename, encrypted_bytes)
+            def _chunks():
+                yield header
+                while True:
+                    chunk = file.read(64 * 1024)
+                    if not chunk:
+                        break
+                    yield chunk
+
+            _fs_put(stored_filename, zaszyfruj_strumieniowo(_chunks()))
 
             doc = UploadedDocument(
                 enrollment_id     = enrollment_id,
