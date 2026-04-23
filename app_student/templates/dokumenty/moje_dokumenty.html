@@ -40,12 +40,14 @@
     <div class="karta__tresc">
       <div style="display: grid; gap: 0.6rem;">
         {% for doc in wpis.docs %}
+
         {% if doc.separator is defined and doc.separator %}
         <div style="display: flex; align-items: center; gap: 0.75rem; margin: 0.5rem 0;">
           <hr style="flex: 1; border: none; border-top: 1px dashed #d1d5db;">
           <span style="font-size: 0.78rem; color: var(--kolor-tekst-drugor); white-space: nowrap; font-weight: 500;">{{ doc.nazwa }}</span>
           <hr style="flex: 1; border: none; border-top: 1px dashed #d1d5db;">
         </div>
+
         {% else %}
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem;
              background: {% if doc.dostepny %}#f8fafc{% else %}#f3f4f6{% endif %};
@@ -67,17 +69,16 @@
             {% if doc.staly is defined and doc.staly %}
             <a href="{{ url_for('documents.pobierz_staly', doc_key=doc.klucz_staly) }}"
                class="przycisk przycisk--drugorzedny przycisk--maly">Pobierz PDF</a>
-
             {% elif doc.dynamiczny is defined and doc.dynamiczny %}
             <a href="{{ url_for('documents.pobierz_dynamiczny', zapis_id=doc.zapis_id, typ=doc.typ) }}"
                class="przycisk przycisk--drugorzedny przycisk--maly">Pobierz PDF</a>
-
             {% endif %}
           {% else %}
           <span style="font-size: 0.78rem; color: var(--kolor-tekst-drugor); padding: 0.3rem 0.625rem; white-space: nowrap;">Niedostępny</span>
           {% endif %}
         </div>
         {% endif %}
+
         {% endfor %}
       </div>
     </div>

@@ -33,7 +33,7 @@ class FormularzSprawozdaniaPracaZawodowa(FlaskForm):
 def index():
     zapis = _repo_zapisow.aktywny_dla_studenta(current_user.id, [
         EnrollmentStatus.IN_PROGRESS, EnrollmentStatus.COMMISSION_REVIEW,
-        EnrollmentStatus.DEAN_APPROVAL, EnrollmentStatus.COMPLETED, EnrollmentStatus.AWAITING_APPROVAL,
+        EnrollmentStatus.DIRECTOR_APPROVAL, EnrollmentStatus.COMPLETED, EnrollmentStatus.AWAITING_APPROVAL,
     ])
 
     if not zapis:

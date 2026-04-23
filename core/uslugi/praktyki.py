@@ -88,7 +88,7 @@ class UslugaPraktyk:
             EnrollmentStatus.AWAITING_APPROVAL: fsm.wyslij_do_akceptacji,
             EnrollmentStatus.COMMISSION_REVIEW: fsm.wyslij_do_komisji,
             EnrollmentStatus.IN_PROGRESS:       fsm.zatwierdz_przez_uopz,
-            EnrollmentStatus.DEAN_APPROVAL:     fsm.zatwierdz_przez_komisje,
+            EnrollmentStatus.DIRECTOR_APPROVAL:     fsm.zatwierdz_przez_komisje,
             EnrollmentStatus.COMPLETED:         fsm.zakoncz,
             EnrollmentStatus.REJECTED:          fsm.odrzuc,
         }
@@ -132,7 +132,7 @@ class UslugaPraktyk:
             fsm.odrzuc()
         db.session.commit()
 
-    def zatwierdz_przez_dziekana(
+    def zatwierdz_przez_dyrektora(
         self,
         zapis: InternshipEnrollment,
         decyzja: str,
@@ -141,13 +141,13 @@ class UslugaPraktyk:
     ) -> None:
         from core.uslugi.workflow import ZapisFSM
         self._dodaj_zdarzenie(
-            zapis, EventType.DEAN_DECISION,
+            zapis, EventType.DIRECTOR_DECISION,
             decyzja=decyzja, komentarz=komentarz,
             wykonane_przez_id=wykonane_przez_id,
         )
         fsm = ZapisFSM(zapis)
         if decyzja == 'APPROVED':
-            fsm.zatwierdz_przez_dziekana()
+            fsm.zatwierdz_przez_dyrektora()
         else:
             fsm.odrzuc()
         db.session.commit()

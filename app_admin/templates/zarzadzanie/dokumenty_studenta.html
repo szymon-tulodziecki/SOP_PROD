@@ -75,7 +75,7 @@
         {% elif zapis.status.value == 'IN_PROGRESS' %}W trakcie
         {% elif zapis.status.value == 'AWAITING_APPROVAL' %}Oczekuje na akceptację
         {% elif zapis.status.value == 'COMMISSION_REVIEW' %}Komisja
-        {% elif zapis.status.value == 'DEAN_APPROVAL' %}Dziekan
+        {% elif zapis.status.value == 'DIRECTOR_APPROVAL' %}Dyrektor
         {% else %}{{ zapis.status.value }}{% endif %}
       </span>
     </div>

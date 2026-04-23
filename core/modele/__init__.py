@@ -11,6 +11,8 @@ from core.modele.uzytkownicy import (
     Student,
     Administrator,
     UniversityMentor,
+    KomisjaUser,
+    DyrektorUser,
     # backward-compat aliases
     RolaUzytkownika,
     Uzytkownik,

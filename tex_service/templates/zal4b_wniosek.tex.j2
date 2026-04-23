@@ -36,7 +36,7 @@ dla kierunku studiów informatyka
 \vspace{3em}
 
 \begin{center}
-<<% if zapis.sciezka.value == 'OWN_BUSINESS' %>>
+<<% if zapis.sciezka == 'OWN_BUSINESS' %>>
 \textbf{\large WNIOSEK O UBIEGANIE SIĘ ZALICZENIA EFEKTÓW UCZENIA SIĘ PRZEWIDZIANYCH DLA PRAKTYKI ZAWODOWEJ NA PODSTAWIE DZIAŁALNOŚCI GOSPODARCZEJ}
 <<% else %>>
 \textbf{\large WNIOSEK O UBIEGANIE SIĘ ZALICZENIA EFEKTÓW UCZENIA SIĘ PRZEWIDZIANYCH DLA PRAKTYKI ZAWODOWEJ NA PODSTAWIE PRACY ZAWODOWEJ/STAŻU}
@@ -48,7 +48,7 @@ dla kierunku studiów informatyka
 \noindent \textbf{Wniosek} \\[0.5em]
 Na podstawie \S 4, ustęp 1 i 2 Regulaminu praktyk zawodowych w Instytucie Informatyki Stosowanej im.
 Krzysztofa Brzeskiego ANS w Elblągu proszę o uznanie efektów uczenia się przewidzianych dla praktyki
-zawodowej na podstawie <<% if zapis.sciezka.value == 'OWN_BUSINESS' %>>działalności gospodarczej.<<% else %>>pracy zawodowej/stażu.<<% endif %>>
+zawodowej na podstawie <<% if zapis.sciezka == 'OWN_BUSINESS' %>>działalności gospodarczej.<<% else %>>pracy zawodowej/stażu.<<% endif %>>
 
 \vspace{1em}
 
@@ -59,7 +59,7 @@ zawodowej na podstawie <<% if zapis.sciezka.value == 'OWN_BUSINESS' %>>działaln
 
 \noindent Dla potwierdzenia uzyskania zakładanych dla praktyki zawodowej efektów uczenia się załączam n/w dokumenty potwierdzające zakres realizowanych czynności zawodowych oraz czas ich realizacji w tym w szczególności:
 \begin{itemize}
-<<% if zapis.sciezka.value == 'EMPLOYMENT' %>>
+<<% if zapis.sciezka == 'EMPLOYMENT' %>>
     \item[$\boxtimes$] Umowę o pracę, zaświadczenie o odbyciu stażu lub wolontariatu
     \item[$\boxtimes$] Opis zajmowanego stanowiska pracy/kartę stanowiskową
     \item[$\boxtimes$] Zakres obowiązków realizowany w ramach stażu/wolontariatu

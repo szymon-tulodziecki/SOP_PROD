@@ -32,9 +32,8 @@ praktyki_bp = Blueprint('praktyki', __name__)
 class FormularzSciezka(FlaskForm):
     """Krok 1: Tylko wybór ścieżki."""
     track_type = SelectField('Ścieżka praktyki', choices=[
-        ('STANDARD',     'A — Standardowa praktyka'),
-        ('EMPLOYMENT',   'B — Praca etatowa / staż'),
-        ('OWN_BUSINESS', 'C — Własna działalność gospodarcza'),
+        ('STANDARD',   'A — Standardowa praktyka'),
+        ('EMPLOYMENT', 'B — Uznanie efektów z pracy zawodowej'),
     ], validators=[DataRequired(message='Wybierz ścieżkę.')])
 
 
@@ -54,7 +53,8 @@ class FormularzDaneFirmy(FlaskForm):
 
     firma_nazwa                  = StringField('Nazwa zakładu pracy', validators=[Optional(), Length(max=255)])
     firma_adres                  = StringField('Adres (ulica, nr)', validators=[Optional(), Length(max=255)])
-    firma_miasto                 = StringField('Miasto i kod pocztowy', validators=[Optional(), Length(max=100)])
+    firma_kod_pocztowy           = StringField('Kod pocztowy', validators=[Optional(), Length(max=10)])
+    firma_miasto                 = StringField('Miasto', validators=[Optional(), Length(max=100)])
     firma_nip_krs                = StringField('NIP / KRS', validators=[Optional(), Length(max=50)])
     firma_upowazniony_osoba      = StringField('Osoba upoważniona do podpisania porozumienia', validators=[Optional(), Length(max=255)])
     firma_upowazniony_stanowisko = StringField('Stanowisko osoby upoważnionej', validators=[Optional(), Length(max=255)])
@@ -64,11 +64,11 @@ class FormularzDaneFirmy(FlaskForm):
     zopz_telefon       = StringField('Telefon ZOPZ', validators=[Optional(), Length(max=50)])
     zopz_email         = StringField('E-mail ZOPZ', validators=[Optional(), Email(message='Nieprawidłowy email.')])
 
-    def validate_firma_miasto(self, field):
+    def validate_firma_kod_pocztowy(self, field):
         if not field.data:
             return
-        if re.fullmatch(r'\d{2}-\d{3}', field.data.strip()):
-            raise ValidationError('Podaj nazwę miasta, nie kod pocztowy. Kod pocztowy możesz dołączyć do adresu.')
+        if not re.fullmatch(r'\d{2}-\d{3}', field.data.strip()):
+            raise ValidationError('Podaj kod pocztowy w formacie XX-XXX (np. 82-300).')
 
     def validate_zopz_imie_nazwisko(self, field):
         if not field.data:
@@ -91,6 +91,10 @@ class FormularzDaneFirmy(FlaskForm):
 
 class FormularzWniosek(FlaskForm):
     """Krok 2B/C: Wniosek dla ścieżek B i C."""
+    employment_subtype  = SelectField('Rodzaj zatrudnienia', choices=[
+        ('WORK',        'B.2 — Praca zawodowa (umowa o pracę / umowa zlecenie)'),
+        ('INTERNSHIP',  'B.1 — Staż'),
+    ], validators=[Optional()])
     pracodawca_nazwa    = StringField('Nazwa pracodawcy / firmy', validators=[DataRequired(message='Podaj nazwę.'), Length(max=255)])
     pracodawca_adres    = StringField('Adres', validators=[Optional(), Length(max=255)])
     pracodawca_miasto   = StringField('Miasto', validators=[Optional(), Length(max=100)])
@@ -125,6 +129,15 @@ def kreator_sciezka(id):
             db.session.add(zapis)
 
         zapis.track_type = InternshipPath(form.track_type.data)
+
+        if form.track_type.data != 'STANDARD':
+            employment_subtype = request.form.get('employment_subtype', '')
+            if employment_subtype in ('WORK', 'INTERNSHIP'):
+                uz = zapis.path_justification or PathJustification(enrollment_id=zapis.id)
+                if uz not in db.session:
+                    db.session.add(uz)
+                uz.employment_subtype = employment_subtype
+
         db.session.commit()
 
         if form.track_type.data == 'STANDARD':
@@ -178,6 +191,7 @@ def kreator_firma(zapis_id):
             zapis.company_id = None
             dm.company_name                  = form.firma_nazwa.data
             dm.company_address               = form.firma_adres.data
+            dm.company_zip                   = form.firma_kod_pocztowy.data or None
             dm.company_city                  = form.firma_miasto.data
             dm.company_tax_id                = form.firma_nip_krs.data
             dm.authorized_person             = form.firma_upowazniony_osoba.data
@@ -191,13 +205,15 @@ def kreator_firma(zapis_id):
         dm.workplace_mentor_position = form.zopz_stanowisko.data
         dm.workplace_mentor_phone    = form.zopz_telefon.data
         dm.workplace_mentor_email    = form.zopz_email.data
+        byl_status = zapis.status
         db.session.commit()
-        if zapis.status == EnrollmentStatus.AWAITING_APPROVAL:
+        if byl_status == EnrollmentStatus.AWAITING_APPROVAL:
             from core.uslugi.workflow import ZapisFSM
             ZapisFSM(zapis).wyslij_do_komisji()
             db.session.commit()
             flash('Dane zaktualizowane i zgłoszenie odesłane do komisji.', 'success')
             return redirect(url_for('praktyki.szczegoly_zgloszenia', id=zapis.id))
+        # PENDING i REVISION_REQUIRED → harmonogram → wyślij
         return redirect(url_for('praktyki.zapisz_krok2', id=zapis.id))
 
     if request.method == 'GET':
@@ -209,6 +225,7 @@ def kreator_firma(zapis_id):
         form.firma_id.data  = str(zapis.company_id) if zapis.company_id else ''
         form.firma_nazwa.data                  = dm.company_name                  if dm else None
         form.firma_adres.data                  = dm.company_address               if dm else None
+        form.firma_kod_pocztowy.data           = dm.company_zip                   if dm else None
         form.firma_miasto.data                 = dm.company_city                  if dm else None
         form.firma_nip_krs.data                = dm.company_tax_id                if dm else None
         form.firma_upowazniony_osoba.data      = dm.authorized_person             if dm else None
@@ -245,26 +262,21 @@ def kreator_wniosek(zapis_id):
         uz = zapis.path_justification or PathJustification(enrollment_id=zapis.id)
         if uz not in db.session:
             db.session.add(uz)
-        uz.justification = form.uzasadnienie.data
+        uz.justification      = form.uzasadnienie.data
+        uz.employment_subtype = form.employment_subtype.data
 
-        byl_awaiting = zapis.status == EnrollmentStatus.AWAITING_APPROVAL
         db.session.commit()
-        if byl_awaiting:
-            from core.uslugi.workflow import ZapisFSM
-            ZapisFSM(zapis).wyslij_do_komisji()
-            db.session.commit()
-            flash('Dane zaktualizowane i wniosek odesłany do komisji.', 'success')
-            return redirect(url_for('praktyki.szczegoly_zgloszenia', id=zapis.id))
         return redirect(url_for('praktyki.potwierdz_wyslanie', id=zapis.id))
 
     if request.method == 'GET':
         dm = zapis.workplace_details
         uz = zapis.path_justification
-        form.pracodawca_nazwa.data  = dm.company_name              if dm else None
-        form.pracodawca_adres.data  = dm.company_address           if dm else None
-        form.pracodawca_miasto.data = dm.company_city              if dm else None
-        form.stanowisko.data        = dm.workplace_mentor_position if dm else None
-        form.uzasadnienie.data      = uz.justification             if uz else None
+        form.pracodawca_nazwa.data     = dm.company_name              if dm else None
+        form.pracodawca_adres.data     = dm.company_address           if dm else None
+        form.pracodawca_miasto.data    = dm.company_city              if dm else None
+        form.stanowisko.data           = dm.workplace_mentor_position if dm else None
+        form.uzasadnienie.data         = uz.justification             if uz else None
+        form.employment_subtype.data   = uz.employment_subtype        if uz else 'WORK'
 
     return render_template('kreator/krok2bc_wniosek.html', form=form, zapis=zapis)
 
@@ -289,13 +301,25 @@ def lista():
             and bool(komentarz_uopz)
             and sciezka in ('EMPLOYMENT', 'OWN_BUSINESS')
         )
-        zwrocone = zwrocone_a or zwrocone_bc
+        zwrocone_komisja = (z.status == EnrollmentStatus.REVISION_REQUIRED)
+        zwrocone = zwrocone_a or zwrocone_bc or zwrocone_komisja
+        komentarz_komisji = None
+        if zwrocone_komisja:
+            from core.modele.praktyki import ProcessEvent, EventType
+            ev = (
+                db.session.query(ProcessEvent)
+                .filter_by(enrollment_id=z.id, event_type=EventType.COMMITTEE_DECISION)
+                .filter(ProcessEvent.decision == 'PARTIALLY_APPROVED')
+                .order_by(ProcessEvent.executed_at.desc())
+                .first()
+            )
+            komentarz_komisji = ev.comment if ev else None
         zapisy_data[str(z.internship_id)] = {
             'id':       str(z.id),
             'status':   z.status.value,
             'sciezka':  sciezka,
             'zwrocone': zwrocone,
-            'komentarz_zwrotny': komentarz_admina or komentarz_uopz or '',
+            'komentarz_zwrotny': komentarz_komisji or komentarz_admina or komentarz_uopz or '',
             'wymaga_uwagi': (
                 z.status == EnrollmentStatus.AWAITING_APPROVAL
                 and bool(komentarz_uopz)
@@ -396,7 +420,7 @@ def potwierdz_wyslanie(id):
     zapis = db.session.get(InternshipEnrollment, id)
     if not zapis or zapis.student_id != current_user.id:
         abort(404)
-    if zapis.status != EnrollmentStatus.PENDING:
+    if zapis.status not in (EnrollmentStatus.PENDING, EnrollmentStatus.REVISION_REQUIRED):
         return redirect(url_for('praktyki.szczegoly_zgloszenia', id=id))
     from flask_wtf import FlaskForm
     csrf_form = FlaskForm()
@@ -409,10 +433,9 @@ def wyslij_do_zatwierdzenia(id):
     zapis = db.session.get(InternshipEnrollment, id)
     if not zapis or zapis.student_id != current_user.id:
         abort(404)
-    if zapis.status != EnrollmentStatus.PENDING:
+    if zapis.status not in (EnrollmentStatus.PENDING, EnrollmentStatus.REVISION_REQUIRED):
         flash('Zgłoszenie zostało już wysłane.', 'info')
         return redirect(url_for('praktyki.szczegoly_zgloszenia', id=id))
-    # Ścieżka A → czeka na UOPZ; B/C → od razu do komisji
     from core.uslugi.workflow import ZapisFSM
     fsm = ZapisFSM(zapis)
     if zapis.path_type and zapis.path_type.value in ('EMPLOYMENT', 'OWN_BUSINESS'):
@@ -420,8 +443,8 @@ def wyslij_do_zatwierdzenia(id):
     else:
         fsm.wyslij_do_akceptacji()
     db.session.commit()
-    flash('Zgłoszenie zostało przesłane do zatwierdzenia.', 'success')
-    return redirect(url_for('praktyki.szczegoly_zgloszenia', id=id))
+    flash('Zgłoszenie zostało przesłane.', 'success')
+    return redirect(url_for('praktyki.lista'))
 
 
 @praktyki_bp.route('/zgloszenie/<uuid:id>/szczegoly')
@@ -443,9 +466,28 @@ def szczegoly_zgloszenia(id):
         for d in rows
     ]
 
+    harmonogram = _repo_zapisow.harmonogram_dla_zapisu(id)
+    efekty = _repo_efektow.wszystkie()
+    harmonogram_dict = {str(h.learning_outcome_id): h for h in harmonogram}
+
     from flask_wtf import FlaskForm
+    from core.modele.praktyki import ProcessEvent, EventType
+    komentarz_komisji = None
+    if zapis.status == EnrollmentStatus.REVISION_REQUIRED:
+        ev = (
+            db.session.query(ProcessEvent)
+            .filter_by(enrollment_id=id, event_type=EventType.COMMITTEE_DECISION)
+            .filter(ProcessEvent.decision == 'PARTIALLY_APPROVED')
+            .order_by(ProcessEvent.executed_at.desc())
+            .first()
+        )
+        komentarz_komisji = ev.comment if ev else None
+
     csrf_form = FlaskForm()
-    return render_template('praktyki/szczegoly_zgloszenia.html', zapis=zapis, uploaded_docs=uploaded_docs, csrf_form=csrf_form)
+    return render_template('praktyki/szczegoly_zgloszenia.html', zapis=zapis,
+                           uploaded_docs=uploaded_docs, csrf_form=csrf_form,
+                           komentarz_komisji=komentarz_komisji,
+                           harmonogram_dict=harmonogram_dict, efekty=efekty)
 
 
 @praktyki_bp.route('/zgloszenie/<uuid:id>/resubmit', methods=['POST'])
@@ -455,12 +497,17 @@ def resubmit_zgloszenia(id):
     zapis = db.session.get(InternshipEnrollment, id)
     if not zapis or zapis.student_id != current_user.id:
         abort(404)
-    if zapis.status != EnrollmentStatus.AWAITING_APPROVAL:
+    if zapis.status not in (EnrollmentStatus.AWAITING_APPROVAL, EnrollmentStatus.REVISION_REQUIRED):
         flash('Zgłoszenie nie może być ponownie wysłane w tym statusie.', 'warning')
         return redirect(url_for('praktyki.szczegoly_zgloszenia', id=id))
-    from core.uslugi.workflow import ZapisFSM
-    ZapisFSM(zapis).wyslij_do_komisji()
-    db.session.commit()
+    from core.uslugi.workflow import ZapisFSM, IllegalTransitionError
+    try:
+        with ZapisFSM.lock(id) as fsm:
+            fsm.wyslij_do_komisji()
+            db.session.commit()
+    except IllegalTransitionError as e:
+        flash(str(e), 'danger')
+        return redirect(url_for('praktyki.szczegoly_zgloszenia', id=id))
     flash('Zgłoszenie zostało ponownie wysłane do weryfikacji komisji.', 'success')
     return redirect(url_for('praktyki.szczegoly_zgloszenia', id=id))
 

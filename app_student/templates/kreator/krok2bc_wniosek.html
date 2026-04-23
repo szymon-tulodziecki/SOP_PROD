@@ -7,44 +7,60 @@
 
   <!-- Pasek postępu -->
   <div style="display: flex; gap: 0.5rem; margin-bottom: 2rem; align-items: center;">
-    <div style="flex:1; text-align:center; padding:0.5rem; background:#d1fae5; color:#065f46; border-radius:0.375rem; font-size:0.85rem;">Ścieżka</div>
+    <div style="flex:1; text-align:center; padding:0.5rem; background:#d1fae5; color:#065f46; border-radius:0.375rem; font-size:0.85rem;">Ścieżka B</div>
     <div style="color:#d1d5db;">›</div>
     <div style="flex:1; text-align:center; padding:0.5rem; background:#3b82f6; color:white; border-radius:0.375rem; font-weight:600; font-size:0.85rem;">2. Wniosek</div>
     <div style="color:#d1d5db;">›</div>
-    <div style="flex:1; text-align:center; padding:0.5rem; background:#f3f4f6; color:#9ca3af; border-radius:0.375rem; font-size:0.85rem;">3. Decyzja komisji</div>
+    <div style="flex:1; text-align:center; padding:0.5rem; background:#f3f4f6; color:#9ca3af; border-radius:0.375rem; font-size:0.85rem;">3. Komisja</div>
     <div style="color:#d1d5db;">›</div>
-    <div style="flex:1; text-align:center; padding:0.5rem; background:#f3f4f6; color:#9ca3af; border-radius:0.375rem; font-size:0.85rem;">4. Sprawozdanie</div>
+    <div style="flex:1; text-align:center; padding:0.5rem; background:#f3f4f6; color:#9ca3af; border-radius:0.375rem; font-size:0.85rem;">4. Dyrektor</div>
   </div>
 
   <div class="karta">
     <div class="karta__naglowek">
-      <h2 class="karta__tytul">
-        {% if zapis.track_type.value == 'EMPLOYMENT' %}
-          Krok 2: Wniosek — Praca etatowa / staż
-        {% else %}
-          Krok 2: Wniosek — Własna działalność gospodarcza
-        {% endif %}
-      </h2>
+      <h2 class="karta__tytul">Krok 2: Wniosek o uznanie efektów z pracy zawodowej</h2>
     </div>
     <div class="karta__tresc">
 
-      <!-- Info o wymaganych załącznikach -->
-      <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:0.5rem; padding:1rem; margin-bottom:1.5rem; font-size:0.85rem;">
-        <div style="font-weight:600; margin-bottom:0.4rem;">Wymagane załączniki do wniosku:</div>
-        {% if zapis.track_type.value == 'EMPLOYMENT' %}
-        <ul style="margin:0; padding-left:1.2rem; color:#1e40af;">
-          <li>Umowa o pracę / zakres obowiązków (PDF)</li>
-          <li>Zaświadczenie od pracodawcy o zatrudnieniu (PDF)</li>
-        </ul>
-        {% else %}
-        <ul style="margin:0; padding-left:1.2rem; color:#1e40af;">
-          <li>Aktualny wpis do CEIDG lub KRS (PDF)</li>
-          <li>Kody PKD zgodne z profilem IT</li>
-        </ul>
-        {% endif %}
+      <!-- Procedura ogólna -->
+      <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:0.5rem; padding:1rem; margin-bottom:1rem; font-size:0.83rem; color:#374151; line-height:1.5;">
+        <div style="font-weight:600; margin-bottom:0.4rem; font-size:0.88rem;">Procedura — Ścieżka B: Uznanie efektów uczenia się</div>
+        Niezależnie od rodzaju zatrudnienia student ubiega się o zaliczenie tych samych
+        <strong>trzynastu efektów uczenia się</strong> (zał. 4a + zał. 4b).
+        Różnica polega wyłącznie na rodzaju dokumentów potwierdzających zakres realizowanych czynności zawodowych.
+        Komisja ds. praktyk wydaje opinię, a Dyrektor Instytutu podejmuje ostateczną decyzję.
       </div>
 
-      <!-- Upload załączników -->
+      {% set subtype = zapis.path_justification.employment_subtype if zapis.path_justification else None %}
+
+      <!-- Info o wymaganych załącznikach -->
+      {% if subtype == 'INTERNSHIP' %}
+      <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:0.5rem; padding:1rem; margin-bottom:1.5rem; font-size:0.85rem;">
+        <div style="font-weight:600; margin-bottom:0.5rem; color:#1e40af;">B.1 — Staż: wymagane dokumenty do wniosku (zał. 4b)</div>
+        <ul style="margin:0; padding-left:1.2rem; color:#1e40af; line-height:1.8;">
+          <li>Zaświadczenie o odbyciu stażu (PDF)</li>
+          <li>Zakres obowiązków realizowanych w ramach stażu (PDF)</li>
+        </ul>
+      </div>
+      {% elif subtype == 'WORK' %}
+      <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:0.5rem; padding:1rem; margin-bottom:1.5rem; font-size:0.85rem;">
+        <div style="font-weight:600; margin-bottom:0.5rem; color:#1e40af;">B.2 — Praca zawodowa: wymagane dokumenty do wniosku (zał. 4b)</div>
+        <ul style="margin:0; padding-left:1.2rem; color:#1e40af; line-height:1.8;">
+          <li>Umowa o pracę / umowa zlecenie (PDF)</li>
+          <li>Opis stanowiska pracy / karta stanowiskowa (PDF)</li>
+        </ul>
+      </div>
+      {% else %}
+      <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:0.5rem; padding:1rem; margin-bottom:1.5rem; font-size:0.85rem;">
+        <div style="font-weight:600; margin-bottom:0.5rem; color:#1e40af;">Wymagane dokumenty do wniosku (zał. 4b)</div>
+        <ul style="margin:0; padding-left:1.2rem; color:#1e40af; line-height:1.8;">
+          <li><strong>Staż:</strong> zaświadczenie o odbyciu stażu + zakres obowiązków</li>
+          <li><strong>Praca zawodowa:</strong> umowa o pracę / zlecenie + opis stanowiska / karta stanowiskowa</li>
+        </ul>
+      </div>
+      {% endif %}
+
+      <!-- Upload załączników (fetch, poza submit formularza) -->
       <div style="margin-bottom:1.5rem;">
         <div style="font-weight:600; margin-bottom:0.75rem; font-size:0.9rem;">Dodaj załączniki (PDF, maks. 10 MB)</div>
 
@@ -62,14 +78,19 @@
                onchange="document.getElementById('upload-file-label').textContent = this.files[0]?.name || 'Wybierz plik PDF'">
 
         <select id="upload-type" class="pole-formularza__input" style="margin-bottom:0.5rem;">
-          {% if zapis.track_type.value == 'EMPLOYMENT' %}
-          <option value="umowa_pracy">Umowa o pracę</option>
-          <option value="zakres_obowiazkow">Zakres obowiązków</option>
-          <option value="zaswiadczenie_zatrudnienie">Zaświadczenie o zatrudnieniu</option>
+          {% if subtype == 'INTERNSHIP' %}
+          <option value="zaswiadczenie_staz">Zaświadczenie o odbyciu stażu</option>
+          <option value="zakres_obowiazkow_staz">Zakres obowiązków (staż)</option>
+          <option value="inne">Inne</option>
+          {% elif subtype == 'WORK' %}
+          <option value="umowa_pracy">Umowa o pracę / zlecenie</option>
+          <option value="karta_stanowiskowa">Opis stanowiska / karta stanowiskowa</option>
           <option value="inne">Inne</option>
           {% else %}
-          <option value="ceidg">Wpis z CEIDG</option>
-          <option value="krs">Odpis z KRS</option>
+          <option value="umowa_pracy">Umowa o pracę / zlecenie</option>
+          <option value="karta_stanowiskowa">Opis stanowiska / karta stanowiskowa</option>
+          <option value="zaswiadczenie_staz">Zaświadczenie o odbyciu stażu</option>
+          <option value="zakres_obowiazkow_staz">Zakres obowiązków (staż)</option>
           <option value="inne">Inne</option>
           {% endif %}
         </select>
@@ -83,6 +104,7 @@
 
       <form method="POST" novalidate>
         {{ form.hidden_tag() }}
+        <input type="hidden" name="employment_subtype" value="{{ subtype or 'WORK' }}">
 
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
           <div class="pole-formularza {% if form.pracodawca_nazwa.errors %}pole-formularza--blad{% endif %}">
@@ -142,6 +164,7 @@ async function loadExistingFiles() {
   } catch(e) { /* cicho ignoruj */ }
 }
 loadExistingFiles();
+
 
 async function uploadZalacznik() {
   const fileInput = document.getElementById('upload-file');

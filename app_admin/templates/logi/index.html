@@ -1,0 +1,111 @@
+{% extends "layouts/base_panel.html" %}
+{% block tytul %}Logi systemowe{% endblock %}
+{% block naglowek %}Logi systemowe{% endblock %}
+
+{% block tresc %}
+<div class="karta" style="margin-bottom:1rem;">
+  <div class="karta__tresc">
+    <form method="GET" style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:flex-end;">
+      <div class="pole-formularza" style="flex:1; min-width:180px; margin:0;">
+        <label class="pole-formularza__etykieta" for="szukaj">Student</label>
+        <input id="szukaj" name="szukaj" class="pole-formularza__input" value="{{ szukaj }}" placeholder="Imię lub nazwisko…">
+      </div>
+      <div class="pole-formularza" style="min-width:200px; margin:0;">
+        <label class="pole-formularza__etykieta" for="typ">Typ zdarzenia</label>
+        <select id="typ" name="typ" class="pole-formularza__input">
+          <option value="">— wszystkie —</option>
+          {% for t in typy_zdarzen %}
+          <option value="{{ t }}" {% if t == aktywny_typ %}selected{% endif %}>{{ etykiety.get(t, t) }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="przycisk przycisk--drugorzedny">Filtruj</button>
+      {% if szukaj or aktywny_typ %}
+      <a href="{{ url_for('logi.lista_logow') }}" class="przycisk przycisk--drugorzedny">Wyczyść</a>
+      {% endif %}
+    </form>
+  </div>
+</div>
+
+<div class="karta">
+  <div class="tabela-wrapper">
+    <table class="tabela" aria-label="Logi systemowe">
+      <thead>
+        <tr>
+          <th>Data i czas</th>
+          <th>Typ zdarzenia</th>
+          <th>Student</th>
+          <th>Wykonał</th>
+          <th>Decyzja</th>
+          <th>Komentarz</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for z in zdarzenia.items %}
+        <tr>
+          <td style="white-space:nowrap; font-size:0.82rem; color:var(--kolor-tekst-drugor);">
+            {{ z.executed_at.strftime('%Y-%m-%d %H:%M') if z.executed_at else '—' }}
+          </td>
+          <td>
+            <span class="status
+              {% if z.event_type.value == 'DYREKTOR_DECYZJA' %}status--zakonczona
+              {% elif z.event_type.value == 'KOMISJA_DECYZJA' %}status--w-trakcie
+              {% elif z.event_type.value in ['ADMIN_KOMENTARZ', 'UOPZ_KOMENTARZ'] %}status--szkic
+              {% else %}status--szkic{% endif %}">
+              {{ etykiety.get(z.event_type.value, z.event_type.value) }}
+            </span>
+          </td>
+          <td>
+            {% if z.enrollment and z.enrollment.student %}
+              {{ z.enrollment.student.imie }} {{ z.enrollment.student.nazwisko }}
+              <div style="font-size:0.75rem; color:var(--kolor-tekst-trzeciorzed);">
+                <a href="{{ url_for('zarzadzanie.szczegoly_zgloszenia', enrollment_id=z.enrollment_id) }}" style="color:inherit;">
+                  szczegóły →
+                </a>
+              </div>
+            {% else %}—{% endif %}
+          </td>
+          <td style="font-size:0.85rem;">
+            {% if z.executed_by %}
+              {{ z.executed_by.imie }} {{ z.executed_by.nazwisko }}
+              <div style="font-size:0.75rem; color:var(--kolor-tekst-trzeciorzed);">{{ z.executed_by.rola.value if z.executed_by.rola else '' }}</div>
+            {% else %}—{% endif %}
+          </td>
+          <td>
+            {% if z.decision == 'APPROVED' %}
+              <span class="status status--zakonczona">Zatwierdzone</span>
+            {% elif z.decision == 'REJECTED' %}
+              <span class="status status--odrzucona">Odrzucone</span>
+            {% else %}—{% endif %}
+          </td>
+          <td style="font-size:0.82rem; max-width:280px; word-break:break-word;">
+            {{ z.comment or '—' }}
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="6" class="tabela--pusta">Brak zdarzeń spełniających kryteria.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if zdarzenia.pages > 1 %}
+  <nav class="paginacja" aria-label="Paginacja">
+    <span class="paginacja__info">Strona {{ zdarzenia.page }} z {{ zdarzenia.pages }}</span>
+    <div class="paginacja__przyciski">
+      {% for nr in zdarzenia.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+        {% if nr %}
+          <a href="{{ url_for('logi.lista_logow', strona=nr, typ=aktywny_typ, szukaj=szukaj) }}"
+             class="paginacja__przycisk {% if nr == zdarzenia.page %}paginacja__przycisk--aktywny{% endif %}"
+             {% if nr == zdarzenia.page %}aria-current="page"{% endif %}>{{ nr }}</a>
+        {% else %}
+          <span class="paginacja__przycisk" aria-hidden="true">…</span>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </nav>
+  {% endif %}
+</div>
+{% endblock %}

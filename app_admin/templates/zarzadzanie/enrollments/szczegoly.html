@@ -406,6 +406,17 @@
         </div>
       </div>
 
+      {% elif zapis.status.value == 'REVISION_REQUIRED' %}
+
+      {# Czeka na poprawki studenta #}
+      <div class="karta">
+        <div class="karta__tresc" style="text-align: center; padding: 2rem 1.5rem;">
+          <div style="width: 48px; height: 48px; border-radius: 50%; background: #fef2f2; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; font-size: 1.35rem; color: #dc2626;">!</div>
+          <div style="font-weight: 700; color: #991b1b; font-size: 1rem; margin-bottom: 0.4rem;">Oczekiwanie na poprawki studenta</div>
+          <div style="color: var(--kolor-tekst-drugor); font-size: 0.875rem; line-height: 1.5;">Zgłoszenie zostało zwrócone do studenta. Po nadesłaniu poprawek pojawi się tu ponownie do zatwierdzenia.</div>
+        </div>
+      </div>
+
       {% else %}
 
       {# Stan po zatwierdzeniu #}

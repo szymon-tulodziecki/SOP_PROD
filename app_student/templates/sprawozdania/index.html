@@ -2,6 +2,15 @@
 {% block tytul %}Sprawozdanie z praktyki{% endblock %}
 {% block naglowek %}Sprawozdanie z przebiegu praktyki{% endblock %}
 
+{% block naglowek_akcje %}
+{% if zapis %}
+<div style="display:flex; gap:0.5rem; align-items:center;">
+  <button type="submit" form="formularz-sprawozdania" class="przycisk przycisk--glowny">Zapisz sprawozdanie</button>
+  <a href="{{ url_for('documents.moje_dokumenty') }}" class="przycisk przycisk--drugorzedny">Moje Dokumenty →</a>
+</div>
+{% endif %}
+{% endblock %}
+
 {% block tresc %}
 <div style="max-width: 900px; margin: 0 auto; padding-bottom: 3rem;">
 
@@ -16,19 +25,7 @@
   </div>
   {% else %}
 
-  <div class="karta" style="margin-bottom: 2rem; border-left: 4px solid var(--kolor-glowny);">
-    <div class="karta__tresc" style="display: flex; justify-content: space-between; align-items: center;">
-      <div>
-        <div style="font-weight: 600; font-size: 1.1rem;">
-          {% if is_standard %}Załącznik 7 — Sprawozdanie z praktyki{% else %}Załącznik 7a — Sprawozdanie z pracy zawodowej{% endif %}
-        </div>
-        <div style="font-size: 0.9rem; color: var(--kolor-tekst-drugor);">{{ zapis.praktyka.rok_uczelniany }} — Semestr {{ zapis.praktyka.semestr }}</div>
-      </div>
-      <a href="{{ url_for('documents.moje_dokumenty') }}" class="przycisk przycisk--drugorzedny">Pobierz PDF (Moje Dokumenty)</a>
-    </div>
-  </div>
-
-  <form method="POST" action="{{ url_for('sprawozdania.index') }}" novalidate>
+<form id="formularz-sprawozdania" method="POST" action="{{ url_for('sprawozdania.index') }}" novalidate>
     {{ form.hidden_tag() }}
 
     <div class="karta" style="margin-bottom: 2rem;">
@@ -44,7 +41,7 @@
           {% endif %}
         </p>
         <div class="pole-formularza {% if form.charakterystyka.errors %}pole-formularza--blad{% endif %}">
-          {{ form.charakterystyka(class="pole-formularza__input", rows="8", placeholder="Tutaj wpisz sekcję I...") }}
+          {{ form.charakterystyka(class="pole-formularza__input", rows="4", placeholder="Tutaj wpisz sekcję I...", style="resize:vertical; overflow:auto;") }}
           {% for e in form.charakterystyka.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
         </div>
       </div>
@@ -63,7 +60,7 @@
           {% endif %}
         </p>
         <div class="pole-formularza {% if form.opis.errors %}pole-formularza--blad{% endif %}">
-          {{ form.opis(class="pole-formularza__input", rows="12", placeholder="Tutaj wpisz sekcję II...") }}
+          {{ form.opis(class="pole-formularza__input", rows="6", placeholder="Tutaj wpisz sekcję II...", style="resize:vertical; overflow:auto;") }}
           {% for e in form.opis.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
         </div>
       </div>
@@ -89,9 +86,7 @@
     {% endif %}
 
     <div style="display: flex; justify-content: flex-end; gap: 1rem;">
-      <button type="submit" class="przycisk przycisk--glowny" style="padding: 1rem 3rem; font-size: 1.1rem; box-shadow: 0 4px 14px rgba(26, 58, 92, 0.3);">
-        Zapisz robocze sprawozdanie
-      </button>
+      <button type="submit" class="przycisk przycisk--glowny">Zapisz sprawozdanie</button>
     </div>
 
   </form>

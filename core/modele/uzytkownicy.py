@@ -16,9 +16,11 @@ from core.extensions import db
 # ── Enums ─────────────────────────────────────────────────────────────────────
 
 class UserRole(enum.Enum):
-    STUDENT = 'STUDENT'
-    UOPZ    = 'UOPZ'
-    ADMIN   = 'ADMIN'
+    STUDENT   = 'STUDENT'
+    UOPZ      = 'UOPZ'
+    KOMISJA   = 'KOMISJA'    # Przewodniczący komisji ds. praktyk
+    DYREKTOR  = 'DYREKTOR'   # Dyrektor Instytutu — ostateczna akceptacja
+    ADMIN     = 'ADMIN'
 
 
 # ── Base model ────────────────────────────────────────────────────────────────
@@ -137,6 +139,22 @@ class UniversityMentor(User):
 
     def __repr__(self) -> str:
         return f'<UniversityMentor {self.email}>'
+
+
+class KomisjaUser(User):
+    """Przewodniczący Komisji ds. praktyk."""
+    __tablename__ = 'komisja_users'
+    __mapper_args__ = {'polymorphic_identity': UserRole.KOMISJA}
+
+    id = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id', ondelete='CASCADE'), primary_key=True)
+
+
+class DyrektorUser(User):
+    """Dyrektor Instytutu."""
+    __tablename__ = 'dyrektor_users'
+    __mapper_args__ = {'polymorphic_identity': UserRole.DYREKTOR}
+
+    id = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id', ondelete='CASCADE'), primary_key=True)
 
 
 # ── Backward-compat aliases (remove after all routes migrated) ────────────────

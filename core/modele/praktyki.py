@@ -26,7 +26,7 @@ class EnrollmentStatus(enum.Enum):
     COMPLETED         = 'COMPLETED'
     REJECTED          = 'REJECTED'
     COMMISSION_REVIEW = 'COMMISSION_REVIEW'
-    DEAN_APPROVAL     = 'DEAN_APPROVAL'
+    DIRECTOR_APPROVAL = 'DIRECTOR_APPROVAL'
 
 
 class InternshipPath(enum.Enum):
@@ -40,7 +40,7 @@ class EventType(enum.Enum):
     SUPERVISOR_COMMENT   = 'UOPZ_KOMENTARZ'
     STUDENT_NOTIFICATION = 'POWIADOMIENIE_STUDENTA'
     COMMITTEE_DECISION   = 'KOMISJA_DECYZJA'
-    DEAN_DECISION        = 'DZIEKAN_DECYZJA'
+    DIRECTOR_DECISION    = 'DYREKTOR_DECYZJA'
 
 
 # Backward-compat aliases for enums (remove after all routes migrated)
@@ -56,7 +56,7 @@ StatusZapisu.W_REALIZACJI       = EnrollmentStatus.IN_PROGRESS
 StatusZapisu.ZAKONCZONA         = EnrollmentStatus.COMPLETED
 StatusZapisu.ODRZUCONA          = EnrollmentStatus.REJECTED
 StatusZapisu.WERYFIKACJA_KOMISJI = EnrollmentStatus.COMMISSION_REVIEW
-StatusZapisu.AKCEPTACJA_DZIEKANA = EnrollmentStatus.DEAN_APPROVAL
+StatusZapisu.AKCEPTACJA_DYREKTORA = EnrollmentStatus.DIRECTOR_APPROVAL
 
 SciezkaPraktyki = InternshipPath
 SciezkaPraktyki.STANDARDOWA        = InternshipPath.STANDARD
@@ -68,7 +68,7 @@ TypZdarzenia.ADMIN_KOMENTARZ        = EventType.ADMIN_COMMENT
 TypZdarzenia.UOPZ_KOMENTARZ         = EventType.SUPERVISOR_COMMENT
 TypZdarzenia.POWIADOMIENIE_STUDENTA = EventType.STUDENT_NOTIFICATION
 TypZdarzenia.KOMISJA_DECYZJA        = EventType.COMMITTEE_DECISION
-TypZdarzenia.DZIEKAN_DECYZJA        = EventType.DEAN_DECISION
+TypZdarzenia.DZIEKAN_DECYZJA        = EventType.DIRECTOR_DECISION
 
 
 # ── Core models ───────────────────────────────────────────────────────────────
@@ -383,17 +383,17 @@ class InternshipEnrollment(db.Model):
 
     @property
     def dean_decision(self):
-        e = self._last_event(EventType.DEAN_DECISION)
+        e = self._last_event(EventType.DIRECTOR_DECISION)
         return e.decision if e else None
 
     @property
     def dean_comment(self):
-        e = self._last_event(EventType.DEAN_DECISION)
+        e = self._last_event(EventType.DIRECTOR_DECISION)
         return e.comment if e else None
 
     @property
     def dean_decision_at(self):
-        e = self._last_event(EventType.DEAN_DECISION)
+        e = self._last_event(EventType.DIRECTOR_DECISION)
         return e.executed_at if e else None
 
     @property
@@ -489,6 +489,7 @@ class WorkplaceDetails(db.Model):
 
     company_name                = db.Column(db.String(255), nullable=True)
     company_address             = db.Column(db.String(255), nullable=True)
+    company_zip                 = db.Column(db.String(10),  nullable=True)
     company_city                = db.Column(db.String(255), nullable=True)
     company_tax_id              = db.Column(db.String(50),  nullable=True)
     authorized_person           = db.Column('company_authorized_person',   db.String(255), nullable=True)
@@ -593,8 +594,9 @@ class PathJustification(db.Model):
 
     id            = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     enrollment_id = db.Column(UUID(as_uuid=True), db.ForeignKey('internship_enrollments.id', ondelete='CASCADE'), nullable=False, unique=True)
-    justification = db.Column(db.Text, nullable=True)
-    attachments   = db.Column(db.Text, nullable=True)
+    justification      = db.Column(db.Text,        nullable=True)
+    attachments        = db.Column(db.Text,        nullable=True)
+    employment_subtype = db.Column(db.String(20),  nullable=True)  # 'WORK' or 'INTERNSHIP'
 
     enrollment = db.relationship('InternshipEnrollment', back_populates='path_justification')
 

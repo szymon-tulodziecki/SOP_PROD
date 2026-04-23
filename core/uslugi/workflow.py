@@ -18,12 +18,12 @@ Diagram przejść:
     → wyslij_do_komisji()          → COMMISSION_REVIEW   (ścieżki B/C, po komentarzu UOPZ)
 
   COMMISSION_REVIEW | REVISION_REQUIRED
-    → zatwierdz_przez_komisje()    → DEAN_APPROVAL
+    → zatwierdz_przez_komisje()    → DIRECTOR_APPROVAL
     → zadaj_poprawki()             → REVISION_REQUIRED
     → odrzuc()                     → REJECTED
 
-  DEAN_APPROVAL
-    → zatwierdz_przez_dziekana()   → IN_PROGRESS
+  DIRECTOR_APPROVAL
+    → zatwierdz_przez_dyrektora()  → IN_PROGRESS
     → odrzuc()                     → REJECTED
 
   IN_PROGRESS
@@ -64,19 +64,22 @@ _ALLOWED: dict[S, set[S]] = {
     S.AWAITING_APPROVAL: {
         S.IN_PROGRESS,
         S.COMMISSION_REVIEW,
+        S.REVISION_REQUIRED,
         S.REJECTED,
     },
     S.COMMISSION_REVIEW: {
-        S.DEAN_APPROVAL,
+        S.DIRECTOR_APPROVAL,
         S.REVISION_REQUIRED,
         S.REJECTED,
     },
     S.REVISION_REQUIRED: {
-        S.DEAN_APPROVAL,
+        S.AWAITING_APPROVAL,   # student ponownie składa (ścieżka A)
+        S.COMMISSION_REVIEW,   # student ponownie składa (ścieżki B/C)
+        S.DIRECTOR_APPROVAL,
         S.REVISION_REQUIRED,   # kolejna runda poprawek
         S.REJECTED,
     },
-    S.DEAN_APPROVAL: {
+    S.DIRECTOR_APPROVAL: {
         S.IN_PROGRESS,
         S.REJECTED,
     },
@@ -196,7 +199,7 @@ class ZapisFSM:
         from core.modele.praktyki import InternshipEnrollment
         from sqlalchemy import func
         aktywne = (S.AWAITING_APPROVAL, S.IN_PROGRESS, S.COMMISSION_REVIEW,
-                   S.REVISION_REQUIRED, S.DEAN_APPROVAL)
+                   S.REVISION_REQUIRED, S.DIRECTOR_APPROVAL)
         subq = (
             db.session.query(
                 InternshipEnrollment.supervisor_id,
@@ -231,9 +234,9 @@ class ZapisFSM:
                                   comment=comment)
 
     def zatwierdz_przez_komisje(self, actor_id=None, comment: str = '') -> None:
-        """COMMISSION_REVIEW / REVISION_REQUIRED → DEAN_APPROVAL."""
+        """COMMISSION_REVIEW / REVISION_REQUIRED → DIRECTOR_APPROVAL."""
         from core.modele.praktyki import EventType
-        self._przejdz(S.DEAN_APPROVAL, 'decyzja komisji')
+        self._przejdz(S.DIRECTOR_APPROVAL, 'decyzja komisji')
         self._dodaj_zdarzenie(EventType.COMMITTEE_DECISION, actor_id=actor_id,
                               comment=comment, decision='APPROVED')
 
@@ -243,16 +246,17 @@ class ZapisFSM:
         self._przejdz(S.REVISION_REQUIRED, 'komisja: wymaga uzupełnień')
         self._dodaj_zdarzenie(EventType.COMMITTEE_DECISION, actor_id=actor_id,
                               comment=comment, decision='PARTIALLY_APPROVED')
-        if comment:
-            self._dodaj_zdarzenie(EventType.SUPERVISOR_COMMENT, actor_id=actor_id,
-                                  comment=f"Komisja: {comment}")
 
-    def zatwierdz_przez_dziekana(self, actor_id=None, comment: str = '') -> None:
-        """DEAN_APPROVAL → IN_PROGRESS."""
+    def zatwierdz_przez_dyrektora(self, actor_id=None, comment: str = '') -> None:
+        """DIRECTOR_APPROVAL → IN_PROGRESS."""
         from core.modele.praktyki import EventType
-        self._przejdz(S.IN_PROGRESS, 'decyzja dziekana')
-        self._dodaj_zdarzenie(EventType.DEAN_DECISION, actor_id=actor_id,
+        self._przejdz(S.IN_PROGRESS, 'decyzja dyrektora')
+        self._dodaj_zdarzenie(EventType.DIRECTOR_DECISION, actor_id=actor_id,
                               comment=comment, decision='APPROVED')
+
+    # backward-compat alias
+    def zatwierdz_przez_dziekana(self, actor_id=None, comment: str = '') -> None:
+        return self.zatwierdz_przez_dyrektora(actor_id=actor_id, comment=comment)
 
     def odrzuc(self, actor_id=None, comment: str = '',
                event_type=None) -> None:

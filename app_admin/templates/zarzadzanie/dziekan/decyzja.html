@@ -1,7 +1,7 @@
 {% extends "layouts/base_panel.html" %}
 
-{% block tytul %}Decyzja dziekana{% endblock %}
-{% block naglowek %}Decyzja dziekana w sprawie wniosku{% endblock %}
+{% block tytul %}Decyzja Dyrektora Instytutu{% endblock %}
+{% block naglowek %}Decyzja Dyrektora Instytutu w sprawie wniosku{% endblock %}
 
 {% block naglowek_akcje %}
 <div style="display: flex; gap: 0.5rem;">
@@ -104,7 +104,7 @@
     <div>
       <div class="karta">
         <div class="karta__naglowek">
-          <h2>Decyzja dziekana</h2>
+          <h2>Decyzja Dyrektora Instytutu</h2>
           <span class="karta__opis">
             Podejmij ostateczną decyzję w sprawie wniosku o zaliczenie praktyki na podstawie pracy zawodowej/działalności gospodarczej
           </span>
@@ -140,67 +140,28 @@
         </div>
       </div>
 
-      <!-- Generowanie dokumentów -->
-      <div class="karta" style="margin-top: 2rem;">
-        <div class="karta__naglowek">
-          <h2>Dokumenty praktyki</h2>
-          <span class="karta__opis">Generuj dokumenty związane z wnioskiem studenta</span>
-        </div>
-        <div class="karta__tresc">
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-            {% if zapis.track_type.value == 'EMPLOYMENT' %}
-            <!-- Ścieżka B - Praca zawodowa -->
-            <div class="document-card">
-              <div class="document-title">ZAL_7 - Wniosek o zaliczenie</div>
-              <div class="document-desc">Wniosek o zaliczenie praktyki na podstawie pracy zawodowej</div>
-              <a href="{{ url_for('documents.generuj_auto', id=zapis.id, doc_type='ZAL_7') }}"
-                 class="przycisk przycisk--maly przycisk--glowny" target="_blank">
-                Generuj PDF
-              </a>
-            </div>
-            <div class="document-card">
-              <div class="document-title">ZAL_4a - Efekty uczenia</div>
-              <div class="document-desc">Zestawienie efektów uczenia się dla pracy zawodowej</div>
-              <a href="{{ url_for('documents.generuj_auto', id=zapis.id, doc_type='ZAL_4a') }}"
-                 class="przycisk przycisk--maly przycisk--drugorzedny" target="_blank">
-                Generuj PDF
-              </a>
-            </div>
-            {% elif zapis.track_type.value == 'OWN_BUSINESS' %}
-            <!-- Ścieżka C - Działalność gospodarcza -->
-            <div class="document-card">
-              <div class="document-title">ZAL_4b - Wniosek działalność</div>
-              <div class="document-desc">Wniosek o zaliczenie na podstawie działalności gospodarczej</div>
-              <a href="{{ url_for('documents.generuj_auto', id=zapis.id, doc_type='ZAL_4b') }}"
-                 class="przycisk przycisk--maly przycisk--glowny" target="_blank">
-                Generuj PDF
-              </a>
-            </div>
-            <div class="document-card">
-              <div class="document-title">ZAL_8 - Protokół egzaminacyjny</div>
-              <div class="document-desc">Protokół z egzaminu praktycznego</div>
-              <a href="{{ url_for('documents.generuj_auto', id=zapis.id, doc_type='ZAL_8') }}"
-                 class="przycisk przycisk--maly przycisk--drugorzedny" target="_blank">
-                Generuj PDF
-              </a>
-            </div>
-            {% endif %}
-          </div>
-        </div>
-      </div>
-
-      <!-- Informacje dodatkowe -->
+      <!-- Dokumenty studenta -->
       <div class="karta" style="margin-top: 2rem;">
         <div class="karta__naglowek">
           <h2>Dokumenty załączone przez studenta</h2>
         </div>
         <div class="karta__tresc">
-          <div style="text-align: center; color: var(--kolor-tekst-drugor);">
-            <p>Liczba załączonych dokumentów: <strong>{{ zapis.uploaded_documents | length }}</strong></p>
-            <p style="font-size: 0.9rem;">
-              Szczegóły dokumentów dostępne w panelu komisji weryfikującej
-            </p>
+          {% if dokumenty %}
+          <div style="display:flex; flex-direction:column; gap:0.5rem;">
+            {% for dok in dokumenty %}
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:0.6rem 0.875rem; background:#f8fafc; border:1px solid #e2e8f0; border-radius:0.375rem;">
+              <div>
+                <div style="font-weight:500; font-size:0.875rem;">{{ dok.original_filename }}</div>
+                <div style="font-size:0.75rem; color:var(--kolor-tekst-drugor);">{{ dok.document_type }}{% if dok.uploaded_at %} · {{ dok.uploaded_at.strftime('%d.%m.%Y') }}{% endif %}</div>
+              </div>
+              <a href="{{ url_for('uploads.download_document', document_id=dok.id) }}"
+                 class="przycisk przycisk--maly przycisk--drugorzedny" target="_blank">Pobierz</a>
+            </div>
+            {% endfor %}
           </div>
+          {% else %}
+          <p style="color:var(--kolor-tekst-drugor); font-size:0.9rem; margin:0;">Brak załączonych dokumentów.</p>
+          {% endif %}
         </div>
       </div>
     </div>

@@ -40,6 +40,9 @@
                   {% elif wniosek.track_type.value == 'OWN_BUSINESS' %}Działalność gospodarcza
                   {% endif %}
                 </span>
+                {% if wniosek.status.value == 'REVISION_REQUIRED' %}
+                <br><span class="status status--draft" style="margin-top:0.25rem; font-size:0.72rem;">Czeka na poprawki studenta</span>
+                {% endif %}
               </td>
               <td>
                 <div style="font-weight: 600;">{{ wniosek.firma_nazwa or 'Nie podano' }}</div>
@@ -66,10 +69,17 @@
                 </span>
               </td>
               <td style="text-align: center;">
+                {% if wniosek.status.value == 'REVISION_REQUIRED' %}
+                <a href="{{ url_for('zarzadzanie.komisja_weryfikuj', id=wniosek.id) }}"
+                   class="przycisk przycisk--maly przycisk--drugorzedny">
+                  Podgląd
+                </a>
+                {% else %}
                 <a href="{{ url_for('zarzadzanie.komisja_weryfikuj', id=wniosek.id) }}"
                    class="przycisk przycisk--maly przycisk--glowny">
                   Weryfikuj
                 </a>
+                {% endif %}
               </td>
             </tr>
             {% endfor %}

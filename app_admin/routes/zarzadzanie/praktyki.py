@@ -85,7 +85,7 @@ class FormularzPrzypiszUOPZ(FlaskForm):
 
 
 @zarzadzanie_bp.route('/zgloszenia')
-@wymaga_roli(UserRole.ADMIN)
+@wymaga_roli(UserRole.ADMIN, UserRole.KOMISJA, UserRole.DYREKTOR)
 def lista_zgloszen():
     strona        = request.args.get('page', 1, type=int)
     status_filter = request.args.get('status', '').strip()
@@ -129,12 +129,13 @@ def przypisz_uopz(id):
 
 
 @zarzadzanie_bp.route('/zgloszenia/<uuid:id>/szczegoly', methods=['GET', 'POST'])
-@wymaga_roli(UserRole.ADMIN, UserRole.UOPZ)
+@wymaga_roli(UserRole.ADMIN, UserRole.UOPZ, UserRole.KOMISJA, UserRole.DYREKTOR)
 def szczegoly_zgloszenia(id):
     zapis = db.session.get(InternshipEnrollment, id) or abort(404)
 
     if current_user.role == UserRole.UOPZ and zapis.supervisor_id != current_user.id:
         abort(403)
+    # KOMISJA i DYREKTOR mają wgląd w każde zgłoszenie (read-only flow)
 
     harmonogram      = _repo_zapisow.harmonogram_dla_zapisu(id)
     harmonogram_dict = {h.learning_outcome_id: h for h in harmonogram}
@@ -160,10 +161,7 @@ def szczegoly_zgloszenia(id):
                     fsm.zatwierdz_przez_uopz(actor_id=current_user.id, comment=komentarz)
                     flash('Zgłoszenie zostało zatwierdzone!', 'success')
                 elif form.odrzuc.data:
-                    from core.modele.praktyki import EventType
-                    fsm.odrzuc(actor_id=current_user.id, comment=komentarz,
-                               event_type=EventType.ADMIN_COMMENT if current_user.role == UserRole.ADMIN
-                               else EventType.SUPERVISOR_COMMENT)
+                    fsm.zadaj_poprawki(actor_id=current_user.id, comment=komentarz)
                     flash('Wysłano prośbę o poprawki do studenta.', 'info')
                 db.session.commit()
         except IllegalTransitionError as e:

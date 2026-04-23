@@ -63,9 +63,10 @@ def create_app():
         from app_admin.routes.ocenianie   import evaluation_bp
         from app_admin.routes.dziennik    import journal_bp
         from app_admin.routes.dokumenty   import documents_bp
+        from app_admin.routes.logi        import logi_bp
 
         auth_bp    = stworz_blueprint_auth(
-            dozwolone_role=[UserRole.ADMIN, UserRole.UOPZ],
+            dozwolone_role=[UserRole.ADMIN, UserRole.UOPZ, UserRole.KOMISJA, UserRole.DYREKTOR],
             template_logowania='auth/logowanie.html',
             template_zmiany_hasla='auth/zmien_haslo.html',
         )
@@ -78,6 +79,7 @@ def create_app():
         app.register_blueprint(journal_bp,    url_prefix='/dzienniki')
         app.register_blueprint(documents_bp,  url_prefix='/dokumenty')
         app.register_blueprint(uploads_bp,    url_prefix='/uploads')
+        app.register_blueprint(logi_bp,       url_prefix='/logi')
 
     @app.context_processor
     def inject_nav_counts():
@@ -98,7 +100,7 @@ def create_app():
             'AWAITING_APPROVAL':  'Oczekuje na zatwierdzenie',
             'COMMISSION_REVIEW':  'Weryfikacja komisji',
             'REVISION_REQUIRED':  'Wymaga uzupełnień',
-            'DEAN_APPROVAL':      'Oczekuje na dziekana',
+            'DIRECTOR_APPROVAL':  'Oczekuje na dyrektora',
             'IN_PROGRESS':        'W trakcie',
             'COMPLETED':          'Zakończona',
             'REJECTED':           'Odrzucone',

@@ -133,12 +133,12 @@ def _weryfikuj_magic_bytes(raw_bytes: bytes) -> bool:
 
 
 def _sprawdz_dostep_do_zapisu(zapis: InternshipEnrollment) -> bool:
-    """Domyślna kontrola dostępu: student widzi tylko swoje, admin/uopz wszystko."""
+    """Domyślna kontrola dostępu: student widzi tylko swoje, admin/uopz/komisja/dyrektor wszystko."""
     if current_user.role == UserRole.STUDENT:
         return zapis.student_id == current_user.id
     if current_user.role == UserRole.UOPZ:
         return zapis.supervisor_id == current_user.id
-    return current_user.role == UserRole.ADMIN
+    return current_user.role in (UserRole.ADMIN, UserRole.KOMISJA, UserRole.DYREKTOR)
 
 
 # ── Fabryka blueprintu ────────────────────────────────────────────────────────

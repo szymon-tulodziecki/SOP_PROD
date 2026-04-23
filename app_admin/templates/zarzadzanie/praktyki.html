@@ -3,9 +3,11 @@
 {% block naglowek %}Praktyki{% endblock %}
 
 {% block naglowek_akcje %}
+  {% if current_user.rola and current_user.rola.value == 'ADMIN' %}
   <a href="{{ url_for('zarzadzanie.nowa_praktyka') }}" class="przycisk przycisk--glowny">
     <span aria-hidden="true">+</span> Nowa praktyka
   </a>
+  {% endif %}
 {% endblock %}
 
 {% block tresc %}
@@ -37,8 +39,8 @@
             {% endif %}
           </td>
           <td style="white-space: nowrap;">
+            {% if current_user.rola and current_user.rola.value == 'ADMIN' %}
             <div style="display: flex; gap: 0.375rem;">
-
               <form method="POST"
                     action="{{ url_for('zarzadzanie.przelacz_aktywnosc_praktyki', id=p.id) }}"
                     style="display: inline;">
@@ -49,7 +51,6 @@
                   {{ 'Dezaktywuj' if p.status.value == 'ACTIVE' else 'Aktywuj' }}
                 </button>
               </form>
-
               <form method="POST"
                     action="{{ url_for('zarzadzanie.usun_praktyke', id=p.id) }}"
                     style="display: inline;">
@@ -60,8 +61,8 @@
                   Usuń
                 </button>
               </form>
-
             </div>
+            {% else %}—{% endif %}
           </td>
         </tr>
         {% else %}

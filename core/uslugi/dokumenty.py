@@ -31,7 +31,9 @@ DOC_CONFIG: dict[str, tuple[str, str]] = {
     'ZAL_1':  ('zal1_porozumienie.tex.j2',  'zal1_porozumienie.pdf'),
     'ZAL_2':  ('zal2_program.tex.j2',        'zal2_program.pdf'),
     'ZAL_2A': ('zal2a_program.tex.j2',       'zal2a_program.pdf'),
-    'ZAL_3':  ('zal3_karta.tex.j2',          'zal3_karta.pdf'),
+    'ZAL_3A': ('zal3a_skierowanie.tex.j2',   'zal3a_skierowanie.pdf'),
+    'ZAL_3B': ('zal3b_karta_zakladowa.tex.j2','zal3b_karta_zakladowa.pdf'),
+    'ZAL_3C': ('zal3c_suplement_uopz.tex.j2', 'zal3c_suplement_uopz.pdf'),
     'ZAL_4':  ('zal4_efekty.tex.j2',         'zal4_efekty.pdf'),
     'ZAL_4A': ('zal4a_komisja.tex.j2',       'zal4a_komisja.pdf'),
     'ZAL_4B': ('zal4b_wniosek.tex.j2',       'zal4b_wniosek.pdf'),
@@ -85,6 +87,7 @@ def _sep(name: str) -> dict:
     return {'separator': True, 'nazwa': name}
 
 
+
 # Reguły dostępności — czytelne funkcje zamiast anonimowych lambdy
 def _zawsze(ctx: dict) -> bool:           return True                                         # noqa: E704
 def _w_trakcie_lub_zakonczona(ctx):       return ctx['w_trakcie'] or ctx['zakonczona']        # noqa: E704
@@ -99,11 +102,13 @@ _POWOD_HARMONOGRAM    = lambda _: 'Wymaga wypełnionego harmonogramu'           
 _POWOD_W_TRAKCIE      = lambda _: 'Dostępny po zatwierdzeniu praktyki'          # noqa: E731
 _POWOD_ZAKONCZONA     = lambda _: 'Dostępny po zakończeniu praktyki'            # noqa: E731
 _POWOD_OCENIONA       = lambda _: 'Dostępny po wystawieniu oceny przez UOPZ'   # noqa: E731
+_POWOD_EGZAMIN        = lambda _: 'Dostępny po egzaminie komisyjnym'            # noqa: E731
 _POWOD_DZIEKAN        = lambda _: 'Dostępny po decyzji dziekana'                # noqa: E731
 
 
 def _docs_standard() -> list:
     return [
+        _sep('Dokumenty startowe'),
         DocumentEntry('Zał. 9 – Oświadczenie instytucji', 'ZAL_9',
                       'Do wypełnienia przez zakład pracy',
                       available_when=_firma_custom),
@@ -116,27 +121,36 @@ def _docs_standard() -> list:
                       'Harmonogram efektów — student + UOPZ + ZOPZ',
                       available_when=_ma_harmonogram,
                       unavailable_reason=_POWOD_HARMONOGRAM),
-        DocumentEntry('Zał. 3 – Karta praktyki / Skierowanie', 'ZAL_3',
-                      'Z danymi studenta, firmy i ZOPZ'),
+        _sep('Załącznik nr 3 — Karta Praktyki Zawodowej'),
+        DocumentEntry('Zał. 3a – Skierowanie na praktykę', 'ZAL_3A',
+                      'Przepustka do firmy — drukujesz i przynosisz pierwszego dnia'),
+        _sep('W trakcie praktyki'),
+        DocumentEntry('Zał. 3b – Karta zakładowa (druk do wypełnienia)', 'ZAL_3B',
+                      'Firma wypełnia i podpisuje przez 6 miesięcy'),
         DocumentEntry('Zał. 6 – Dziennik praktyki', 'ZAL_6',
                       'Generowany z wpisów dziennika',
                       available_when=_w_trakcie_lub_zakonczona,
                       unavailable_reason=_POWOD_W_TRAKCIE),
-        _sep('Pakiet końcowy'),
-        DocumentEntry('Zał. 7 – Sprawozdanie końcowe', 'ZAL_7',
-                      'Podpisuje student',
-                      available_when=_zakonczona,
-                      unavailable_reason=_POWOD_ZAKONCZONA),
+        _sep('Dostępne po zakończeniu praktyki'),
         DocumentEntry('Zał. 4 – Potwierdzenie efektów uczenia się', 'ZAL_4',
                       'Podpisuje ZOPZ + UOPZ',
                       available_when=_zakonczona,
                       unavailable_reason=_POWOD_ZAKONCZONA),
-        _sep('Po egzaminie komisji'),
-        DocumentEntry('Zał. 8 – Protokół egzaminu komisji', 'ZAL_8',
-                      available_when=_oceniona,
-                      unavailable_reason=_POWOD_OCENIONA),
+        DocumentEntry('Zał. 7 – Sprawozdanie końcowe', 'ZAL_7',
+                      'Podpisuje student',
+                      available_when=_zakonczona,
+                      unavailable_reason=_POWOD_ZAKONCZONA),
+        _sep('Rozliczenie na uczelni'),
         DocumentEntry('Zał. 5 – Ankieta oceny praktyki', static_key='ankieta',
                       description='Formularz anonimowej ankiety'),
+        DocumentEntry('Zał. 3c – Ocena uczelniana (UOPZ)', 'ZAL_3C',
+                      'Ocena UOPZ + ocena sprawozdania',
+                      available_when=_oceniona,
+                      unavailable_reason=_POWOD_OCENIONA),
+        DocumentEntry('Zał. 8 – Protokół egzaminu komisji', 'ZAL_8',
+                      'Sporządzany przez Komisję po ustnym egzaminie z praktyki',
+                      available_when=_oceniona,
+                      unavailable_reason=_POWOD_EGZAMIN),
     ]
 
 
@@ -257,7 +271,9 @@ def buduj_kontekst(zapis, typ: str) -> dict:
     dm = zapis.workplace_details
     firma_nazwa  = (_g(zapis.firma, 'name')    if zapis.firma else None) or (dm.company_name    if dm else None) or ''
     firma_adres  = (_g(zapis.firma, 'address') if zapis.firma else None) or (dm.company_address if dm else None) or ''
-    firma_miasto = (_g(zapis.firma, 'city')    if zapis.firma else None) or (dm.company_city    if dm else None) or ''
+    firma_zip    = (_g(zapis.firma, 'zip_code') if zapis.firma else None) or (dm.company_zip     if dm else None) or ''
+    _city_raw    = (_g(zapis.firma, 'city')    if zapis.firma else None) or (dm.company_city    if dm else None) or ''
+    firma_miasto = f"{firma_zip} {_city_raw}".strip() if firma_zip else _city_raw
     firma_nip    = (_g(zapis.firma, 'tax_id')  if zapis.firma else None) or (dm.company_tax_id  if dm else None) or ''
 
     ctx: dict = {
@@ -273,7 +289,12 @@ def buduj_kontekst(zapis, typ: str) -> dict:
             'plec':         _g(s, 'gender', ''),
             'kierunek':     _g(s, 'field_of_study') or 'Informatyka',
             'specjalnosc':  _g(s, 'specialization', ''),
-            'tryb_studiow': _g(s, 'study_mode', ''),
+            'tryb_studiow': {
+                'full-time':      'stacjonarne',
+                'part-time':      'niestacjonarne',
+                'stacjonarne':    'stacjonarne',
+                'niestacjonarne': 'niestacjonarne',
+            }.get(_g(s, 'study_mode', '').lower(), _g(s, 'study_mode', '')),
         },
         'praktyka': {
             'rok_uczelniany': _g(p, 'academic_year') if p else '',
@@ -368,19 +389,33 @@ def buduj_kontekst(zapis, typ: str) -> dict:
         ctx.update({
             'charakterystyka_miejsca': _g(spr, 'charakterystyka_miejsca') if spr else '',
             'opis_prac':               _g(spr, 'opis_i_analiza')          if spr else '',
-            'efekty_opisy':            [''] * 13,
+        })
+
+    elif typ == 'ZAL_3C':
+        fg = zapis.final_grades
+        ctx.update({
+            'ocena_uopz':         str(fg.supervisor_grade) if fg and fg.supervisor_grade else '',
+            'ocena_opisowa_uopz': fg.supervisor_grade_description if fg else '',
+            'ocena_sprawozdania': str(fg.report_grade) if fg and fg.report_grade else '',
         })
 
     elif typ == 'ZAL_4':
-        oceny = getattr(zapis, 'oceny', None) or []
+        from core.modele import LearningOutcome
+        oceny_map = {o.learning_outcome_id: o for o in (getattr(zapis, 'oceny', None) or [])}
+        wszystkie_efekty = db.session.query(LearningOutcome).order_by(LearningOutcome.id).all()
+        def _wynik_str(e):
+            if e.id not in oceny_map:
+                return None
+            w = oceny_map[e.id].wynik
+            return w.value if w else None
+
         ctx.update({
             'oceny': [
                 {
-                    'efekt_id': o.learning_outcome_id,
-                    'wynik':    o.result.value if o.result else 'uzyskał/a',
-                    'uwagi':    _g(o, 'notes', ''),
+                    'efekt': {'id': e.id, 'opis': _g(e, 'opis') or _g(e, 'description', ''), 'kod': _g(e, 'kod', '')},
+                    'wynik': _wynik_str(e),
                 }
-                for o in sorted(oceny, key=lambda x: x.learning_outcome_id)
+                for e in wszystkie_efekty
             ],
             'uwagi_uopz': _g(zapis, 'supervisor_grade_description', ''),
         })

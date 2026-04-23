@@ -65,7 +65,7 @@ def dokumenty_studentow():
 
     aktywne_statusy = [
         EnrollmentStatus.AWAITING_APPROVAL, EnrollmentStatus.COMMISSION_REVIEW,
-        EnrollmentStatus.DEAN_APPROVAL, EnrollmentStatus.IN_PROGRESS,
+        EnrollmentStatus.DIRECTOR_APPROVAL, EnrollmentStatus.IN_PROGRESS,
     ]
     student_ids = [s.id for s in studenci_page.items]
     aktywne_counts = _repo_zapisow.liczba_aktywnych_dla_studentow(
@@ -109,7 +109,7 @@ def dokumenty_studenta(student_id):
     aktywne_statusy = [
         EnrollmentStatus.AWAITING_APPROVAL,
         EnrollmentStatus.COMMISSION_REVIEW,
-        EnrollmentStatus.DEAN_APPROVAL,
+        EnrollmentStatus.DIRECTOR_APPROVAL,
         EnrollmentStatus.IN_PROGRESS,
         EnrollmentStatus.COMPLETED,
     ]

@@ -274,7 +274,7 @@ class RepozytoriumZapisow:
                 selectinload(InternshipEnrollment.firma),
             )
             .join(User, InternshipEnrollment.student_id == User.id)
-            .filter(InternshipEnrollment.status == EnrollmentStatus.DEAN_APPROVAL)
+            .filter(InternshipEnrollment.status == EnrollmentStatus.DIRECTOR_APPROVAL)
             .filter(InternshipEnrollment.path_type.in_(['EMPLOYMENT', 'OWN_BUSINESS']))
         )
         return q.order_by(InternshipEnrollment.enrolled_at.desc()).paginate(
@@ -331,15 +331,19 @@ class RepozytoriumZapisow:
                     (InternshipEnrollment.status == EnrollmentStatus.COMMISSION_REVIEW, 1)
                 )).label('komisja'),
                 func.count(case(
-                    (InternshipEnrollment.status == EnrollmentStatus.DEAN_APPROVAL, 1)
+                    (InternshipEnrollment.status == EnrollmentStatus.DIRECTOR_APPROVAL, 1)
                 )).label('dziekan'),
+                func.count(case(
+                    (InternshipEnrollment.status == EnrollmentStatus.COMPLETED, 1)
+                )).label('do_oceny'),
             )
             .one()
         )
         return {
             'nav_oczekujace': row.oczekujace,
             'nav_komisja':    row.komisja,
-            'nav_dziekan':    row.dziekan,
+            'nav_dyrektor':   row.dziekan,
+            'nav_do_oceny':   row.do_oceny,
         }
 
     def liczba_aktywnych_dla_studentow(self, student_ids: list,

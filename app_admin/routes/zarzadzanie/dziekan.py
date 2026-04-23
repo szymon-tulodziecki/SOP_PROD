@@ -25,10 +25,10 @@ _repo_zapisow = RepozytoriumZapisow()
 from . import zarzadzanie_bp
 from .formularze import *
 
-# ── Dziekan ───────────────────────────────────────────────────────────────────
+# ── Dyrektor Instytutu ────────────────────────────────────────────────────────
 
 @zarzadzanie_bp.route('/dziekan')
-@wymaga_roli(UserRole.ADMIN)
+@wymaga_roli(UserRole.ADMIN, UserRole.DYREKTOR)
 def dziekan_lista():
     strona    = request.args.get('page', 1, type=int)
     wnioski   = _repo_zapisow.wnioski_dziekana_strona(strona=strona)
@@ -37,7 +37,7 @@ def dziekan_lista():
 
 
 @zarzadzanie_bp.route('/dziekan/<uuid:id>/decyzja', methods=['GET', 'POST'])
-@wymaga_roli(UserRole.ADMIN)
+@wymaga_roli(UserRole.ADMIN, UserRole.DYREKTOR)
 def dziekan_decyzja(id):
     from flask_wtf import FlaskForm
     from wtforms import TextAreaField, SelectField, SubmitField
@@ -45,45 +45,49 @@ def dziekan_decyzja(id):
 
     zapis = db.session.get(InternshipEnrollment, id) or abort(404)
 
-    if zapis.status != EnrollmentStatus.DEAN_APPROVAL:
-        flash('Wniosek nie wymaga decyzji dziekana.', 'warning')
+    if zapis.status != EnrollmentStatus.DIRECTOR_APPROVAL:
+        flash('Wniosek nie wymaga decyzji Dyrektora Instytutu.', 'warning')
         return redirect(url_for('zarzadzanie.dziekan_lista'))
 
-    class FormularzDziekana(FlaskForm):
-        decyzja   = SelectField('Decyzja dziekana', choices=[
+    class FormularzDyrektora(FlaskForm):
+        decyzja   = SelectField('Decyzja Dyrektora Instytutu', choices=[
             ('APPROVED', 'Wyrażam zgodę na zaliczenie praktyki'),
             ('REJECTED', 'Nie wyrażam zgody na zaliczenie'),
         ], validators=[DataRequired()])
-        komentarz = TextAreaField('Komentarz dziekana', validators=[Optional()])
+        komentarz = TextAreaField('Komentarz dyrektora', validators=[Optional()])
         submit    = SubmitField('Zapisz decyzję')
 
-    form = FormularzDziekana()
+    form = FormularzDyrektora()
 
     if form.validate_on_submit():
         from core.uslugi.workflow import ZapisFSM, IllegalTransitionError
 
         try:
             with ZapisFSM.lock(id) as fsm:
-                if fsm.zapis.status != EnrollmentStatus.DEAN_APPROVAL:
+                if fsm.zapis.status != EnrollmentStatus.DIRECTOR_APPROVAL:
                     flash('Wniosek zmienił status podczas przetwarzania — spróbuj ponownie.', 'warning')
                     return redirect(url_for('zarzadzanie.dziekan_lista'))
 
                 komentarz = form.komentarz.data or ''
                 if form.decyzja.data == 'APPROVED':
-                    fsm.zatwierdz_przez_dziekana(actor_id=current_user.id, comment=komentarz)
-                    flash('Wniosek zatwierdzony przez dziekana. Student może kontynuować praktykę.', 'success')
+                    fsm.zatwierdz_przez_dyrektora(actor_id=current_user.id, comment=komentarz)
+                    flash('Wniosek zatwierdzony przez Dyrektora Instytutu. Student może kontynuować praktykę.', 'success')
                 else:
                     from core.modele.praktyki import EventType
                     fsm.odrzuc(actor_id=current_user.id,
-                               comment=f"Dziekan nie wyraził zgody: {komentarz}",
-                               event_type=EventType.DEAN_DECISION)
-                    flash('Wniosek odrzucony przez dziekana.', 'warning')
+                               comment=f"Dyrektor nie wyraził zgody: {komentarz}",
+                               event_type=EventType.DIRECTOR_DECISION)
+                    flash('Wniosek odrzucony przez Dyrektora Instytutu.', 'warning')
 
                 db.session.commit()
         except IllegalTransitionError as e:
             flash(str(e), 'danger')
         return redirect(url_for('zarzadzanie.dziekan_lista'))
 
-    return render_template('zarzadzanie/dziekan/decyzja.html', form=form, zapis=zapis)
-
-
+    dokumenty = (
+        db.session.query(UploadedDocument)
+        .filter_by(enrollment_id=id, is_deleted=False)
+        .order_by(UploadedDocument.uploaded_at.desc())
+        .all()
+    )
+    return render_template('zarzadzanie/dziekan/decyzja.html', form=form, zapis=zapis, dokumenty=dokumenty)

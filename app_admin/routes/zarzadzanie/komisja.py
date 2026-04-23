@@ -29,7 +29,7 @@ from .formularze import *
 # ── Komisja weryfikująca ──────────────────────────────────────────────────────
 
 @zarzadzanie_bp.route('/komisja')
-@wymaga_roli(UserRole.ADMIN, UserRole.UOPZ)
+@wymaga_roli(UserRole.ADMIN, UserRole.KOMISJA)
 def komisja_lista():
     strona    = request.args.get('page', 1, type=int)
     wnioski   = _repo_zapisow.wnioski_komisja_strona(strona=strona)
@@ -38,7 +38,7 @@ def komisja_lista():
 
 
 @zarzadzanie_bp.route('/komisja/<uuid:id>/weryfikuj', methods=['GET', 'POST'])
-@wymaga_roli(UserRole.ADMIN, UserRole.UOPZ)
+@wymaga_roli(UserRole.ADMIN, UserRole.KOMISJA)
 def komisja_weryfikuj(id):
     from flask_wtf import FlaskForm
     from wtforms import TextAreaField, SelectField, SubmitField
@@ -52,7 +52,7 @@ def komisja_weryfikuj(id):
 
     class FormularzKomisji(FlaskForm):
         decyzja   = SelectField('Decyzja komisji', choices=[
-            ('APPROVED',           'Zatwierdzam - kieruję do dziekana'),
+            ('APPROVED',           'Zatwierdzam - kieruję do Dyrektora Instytutu'),
             ('PARTIALLY_APPROVED', 'Zatwierdzam częściowo - wymaga uzupełnień'),
             ('REJECTED',           'Odrzucam wniosek'),
         ], validators=[DataRequired()])
@@ -73,7 +73,7 @@ def komisja_weryfikuj(id):
                 komentarz = form.komentarz.data or ''
                 if form.decyzja.data == 'APPROVED':
                     fsm.zatwierdz_przez_komisje(actor_id=current_user.id, comment=komentarz)
-                    flash('Wniosek zatwierdzony i przekazany do dziekana.', 'success')
+                    flash('Wniosek zatwierdzony i przekazany do Dyrektora Instytutu.', 'success')
                 elif form.decyzja.data == 'PARTIALLY_APPROVED':
                     fsm.zadaj_poprawki(actor_id=current_user.id, comment=komentarz)
                     flash('Wniosek wymaga uzupełnień - student zostanie powiadomiony.', 'info')

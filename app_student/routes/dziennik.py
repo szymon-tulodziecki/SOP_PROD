@@ -48,7 +48,7 @@ class FormularzWpisu(FlaskForm):
 def _aktywny_zapis():
     return _repo_zapisow.aktywny_dla_studenta(current_user.id, [
         EnrollmentStatus.IN_PROGRESS, EnrollmentStatus.COMMISSION_REVIEW,
-        EnrollmentStatus.DEAN_APPROVAL, EnrollmentStatus.COMPLETED,
+        EnrollmentStatus.DIRECTOR_APPROVAL, EnrollmentStatus.COMPLETED,
     ])
 
 
@@ -92,6 +92,15 @@ def nowy_wpis():
             return render_template('dziennik/nowy_wpis.html', form=form, zapis=zapis)
 
         godziny = int(form.liczba_godzin.data)
+        wymagane = zapis.praktyka.required_hours
+        zalogowane = sum(w.duration_hours for w in _repo_wpisow.dla_zapisu(zapis.id))
+        if zalogowane + godziny > wymagane:
+            pozostalo = wymagane - zalogowane
+            if pozostalo <= 0:
+                flash(f'Osiągnięto wymagany limit {wymagane} h. Nie można dodać więcej wpisów.', 'danger')
+            else:
+                flash(f'Możesz dodać maksymalnie {pozostalo} h (limit: {wymagane} h). Zmniejsz liczbę godzin.', 'danger')
+            return render_template('dziennik/nowy_wpis.html', form=form, zapis=zapis)
         wybrane_efekty = _repo_efektow.po_ids([int(i) for i in form.efekty_ids.data])
         wpis = JournalEntry(
             id               = uuid.uuid4(),

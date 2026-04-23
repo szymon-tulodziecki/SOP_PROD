@@ -19,7 +19,9 @@
       "Bash(git commit *)",
       "Bash(curl -sf -o /dev/null -w \"admin: %{http_code}\\\\n\" http://localhost:5000/)",
       "Bash(curl -sf -o /dev/null -w \"student: %{http_code}\\\\n\" http://localhost:5001/)",
-      "Bash(curl -sf -o /dev/null -w \"admin:%{http_code} student:%{http_code}\\\\n\" http://localhost:5000/ http://localhost:5001/)"
+      "Bash(curl -sf -o /dev/null -w \"admin:%{http_code} student:%{http_code}\\\\n\" http://localhost:5000/ http://localhost:5001/)",
+      "Bash(docker volume *)",
+      "Bash(docker restart sop_student *)"
     ]
   }
 }

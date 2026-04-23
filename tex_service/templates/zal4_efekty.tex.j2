@@ -25,14 +25,16 @@ Zał. nr 4
 
 \vspace{1em}
 
-\noindent Student/ka: \textbf{<< student.nazwisko | s >>, << student.imie | s >>} \\
+<<% set jest_kobieta = (student.plec == 'F') %>>
+
+\noindent <<% if jest_kobieta %>>Studentka<<% else %>>Student<<% endif %>>: \textbf{<< student.nazwisko | s >>, << student.imie | s >>} \\
 Nr albumu: \textbf{<< student.numer_albumu | s >>} \\
-Kierunek studiów: Informatyka \hfill Specjalność: \textbf{<< specjalnosc | s >>} \\
+Kierunek studiów: \textbf{<< student.kierunek | s >>} \hfill Specjalność: \textbf{<< specjalnosc | s >>} \\
 
 \vspace{1em}
 \noindent W ramach praktyki zawodowej zrealizowanej w wymiarze
 \textbf{<< lacznie_godzin | num >>} godzin
-uzyskał/a~/ nie uzyskał/a~* zakładane efekty uczenia się:
+<<% if jest_kobieta %>>uzyskała / nie uzyskała *<<% else %>>uzyskał / nie uzyskał *<<% endif %>> zakładane efekty uczenia się:
 
 \vspace{1em}
 
@@ -48,13 +50,16 @@ uzyskał/a~/ nie uzyskał/a~* zakładane efekty uczenia się:
 
 <<% for ocena in oceny %>>
 \textbf{<< "%02d"|format(ocena.efekt.id) >>} &
-<< ocena.efekt.opis | s(max_length=500) >> &
-\makecell{<<% if ocena.wynik.value == 'ACHIEVED' %>>
-  \textbf{uzyskał/a} \\ nie uzyskał/a~*
-<<% elif ocena.wynik.value == 'PARTIALLY_ACHIEVED' %>>
-  uzyskał/a \\ \textbf{częściowo}~*
+<< ocena.efekt.opis | s >> &
+\makecell{
+<<% if ocena.wynik is none %>>
+  <<% if jest_kobieta %>>uzyskała / nie uzyskała *<<% else %>>uzyskał / nie uzyskał *<<% endif %>>
+<<% elif ocena.wynik == 'ACHIEVED' %>>
+  \textbf{<<% if jest_kobieta %>>uzyskała<<% else %>>uzyskał<<% endif %>>} \\ <<% if jest_kobieta %>>nie uzyskała *<<% else %>>nie uzyskał *<<% endif %>>
+<<% elif ocena.wynik == 'PARTIALLY_ACHIEVED' %>>
+  <<% if jest_kobieta %>>uzyskała<<% else %>>uzyskał<<% endif %>> \\ \textbf{częściowo} *
 <<% else %>>
-  uzyskał/a \\ \textbf{nie uzyskał/a}~*
+  <<% if jest_kobieta %>>uzyskała *<<% else %>>uzyskał *<<% endif %>> \\ \textbf{<<% if jest_kobieta %>>nie uzyskała<<% else %>>nie uzyskał<<% endif %>>}
 <<% endif %>>
 } \\ \hline
 <<% endfor %>>

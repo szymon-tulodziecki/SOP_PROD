@@ -72,8 +72,8 @@ def create_app():
                 _repo = RepozytoriumZapisow()
                 z = _repo.aktywny_dla_studenta(current_user.id, [
                     EnrollmentStatus.IN_PROGRESS, EnrollmentStatus.COMPLETED,
-                    EnrollmentStatus.COMMISSION_REVIEW, EnrollmentStatus.DEAN_APPROVAL,
-                    EnrollmentStatus.AWAITING_APPROVAL,
+                    EnrollmentStatus.COMMISSION_REVIEW, EnrollmentStatus.DIRECTOR_APPROVAL,
+                    EnrollmentStatus.AWAITING_APPROVAL, EnrollmentStatus.REVISION_REQUIRED,
                 ])
                 if z:
                     info = {
@@ -84,12 +84,16 @@ def create_app():
                 zapisy_do_sprawdzenia = _repo.aktywne_dla_studenta(current_user.id, [
                     EnrollmentStatus.PENDING,
                     EnrollmentStatus.AWAITING_APPROVAL,
+                    EnrollmentStatus.REVISION_REQUIRED,
                 ])
                 for z in zapisy_do_sprawdzenia:
                     if z.status == EnrollmentStatus.PENDING and (z.admin_comments or z.supervisor_comments):
                         wymaga_uwagi = True
                         break
                     if z.status == EnrollmentStatus.AWAITING_APPROVAL and z.supervisor_comments:
+                        wymaga_uwagi = True
+                        break
+                    if z.status == EnrollmentStatus.REVISION_REQUIRED:
                         wymaga_uwagi = True
                         break
         except Exception:
@@ -103,7 +107,8 @@ def create_app():
             'PENDING': 'Szkic',
             'AWAITING_APPROVAL': 'Oczekuje na zatwierdzenie',
             'COMMISSION_REVIEW': 'Weryfikacja komisji',
-            'DEAN_APPROVAL': 'Oczekuje na dziekana',
+            'DIRECTOR_APPROVAL': 'Oczekuje na decyzję dyrektora',
+            'REVISION_REQUIRED': 'Wymaga uzupełnień',
             'IN_PROGRESS': 'W trakcie',
             'COMPLETED': 'Zakończona',
             'REJECTED': 'Odrzucony'

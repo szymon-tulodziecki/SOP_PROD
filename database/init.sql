@@ -9,14 +9,14 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 -- 1. Enum types
 -- ============================================================
 
-CREATE TYPE user_role        AS ENUM ('STUDENT', 'UOPZ', 'ADMIN');
+CREATE TYPE user_role        AS ENUM ('STUDENT', 'UOPZ', 'KOMISJA', 'DYREKTOR', 'ADMIN');
 CREATE TYPE internship_status AS ENUM ('ACTIVE', 'INACTIVE');
 CREATE TYPE enrollment_status AS ENUM (
     'PENDING',
     'AWAITING_APPROVAL',
     'REVISION_REQUIRED',
     'COMMISSION_REVIEW',
-    'DEAN_APPROVAL',
+    'DIRECTOR_APPROVAL',
     'IN_PROGRESS',
     'COMPLETED',
     'REJECTED'
@@ -28,7 +28,7 @@ CREATE TYPE event_type        AS ENUM (
     'UOPZ_KOMENTARZ',
     'POWIADOMIENIE_STUDENTA',
     'KOMISJA_DECYZJA',
-    'DZIEKAN_DECYZJA'
+    'DYREKTOR_DECYZJA'
 );
 
 -- ============================================================
@@ -64,6 +64,14 @@ CREATE TABLE administrators (
 );
 
 CREATE TABLE university_mentors (
+    id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE komisja_users (
+    id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE dyrektor_users (
     id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE
 );
 
@@ -155,6 +163,7 @@ CREATE TABLE workplace_details (
     -- Company data
     company_name                  VARCHAR(255),
     company_address               VARCHAR(255),
+    company_zip                   VARCHAR(10),
     company_city                  VARCHAR(255),
     company_tax_id                VARCHAR(50),
     company_authorized_person     VARCHAR(255),
@@ -174,8 +183,9 @@ CREATE TABLE workplace_details (
 CREATE TABLE path_justifications (
     id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     enrollment_id UUID NOT NULL REFERENCES internship_enrollments(id) ON DELETE CASCADE UNIQUE,
-    justification TEXT,
-    attachments   TEXT     -- file names/paths (JSON or newline-separated)
+    justification      TEXT,
+    attachments        TEXT,        -- file names/paths (JSON or newline-separated)
+    employment_subtype VARCHAR(20)  -- 'WORK' or 'INTERNSHIP'
 );
 
 -- ============================================================
@@ -200,6 +210,7 @@ CREATE TABLE internship_reports (
     enrollment_id        UUID NOT NULL REFERENCES internship_enrollments(id) ON DELETE CASCADE UNIQUE,
     workplace_description TEXT,
     analysis             TEXT,
+    skills               TEXT,
     updated_at           TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -259,11 +270,13 @@ CREATE TABLE final_grades (
     id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     enrollment_id UUID NOT NULL REFERENCES internship_enrollments(id) ON DELETE CASCADE UNIQUE,
 
-    report_grade      NUMERIC(3, 1),
-    supervisor_grade  NUMERIC(3, 1),
-    workplace_grade   NUMERIC(3, 1),
-    supervisor_notes  TEXT,
-    workplace_notes   TEXT
+    report_grade                  NUMERIC(3, 1),
+    supervisor_grade              NUMERIC(3, 1),
+    workplace_grade               NUMERIC(3, 1),
+    supervisor_grade_description  TEXT,
+    workplace_grade_description   TEXT,
+    supervisor_notes              TEXT,
+    workplace_notes               TEXT
 );
 
 -- ============================================================
@@ -370,37 +383,52 @@ AFTER INSERT OR UPDATE OR DELETE ON journal_entries
 FOR EACH ROW EXECUTE FUNCTION update_total_hours();
 
 -- ============================================================
--- Predefiniowane konta administratorów (logowanie przez Microsoft)
+-- Predefiniowane konta (logowanie przez Microsoft)
 -- password_hash = '' — konto MS nie używa hasła lokalnego
 -- ============================================================
 
 INSERT INTO users (email, password_hash, first_name, last_name, role, is_active, require_password_change)
 VALUES
-    ('admin@tulodzieckiallgmail.onmicrosoft.com', '', 'Szymon',    'Tułodziecki', 'ADMIN',   TRUE, FALSE),
-    ('12345@tulodzieckiallgmail.onmicrosoft.com', '', 'Katarzyna', 'Kowalczyk',   'ADMIN',   TRUE, FALSE),
-    ('uopz@tulodzieckiallgmail.onmicrosoft.com',  '', 'Piotr',     'Nowak',       'UOPZ',    TRUE, FALSE),
-    ('21312@tulodzieckiallgmail.onmicrosoft.com', '', 'Marek',     'Wiśniewski',  'STUDENT', TRUE, FALSE),
-    ('21313@tulodzieckiallgmail.onmicrosoft.com', '', 'Anna',      'Kowalska',    'STUDENT', TRUE, FALSE)
+    ('admin@tulodzieckiallgmail.onmicrosoft.com',    '', 'Szymon',    'Tułodziecki', 'ADMIN',    TRUE, FALSE),
+    ('uopz@tulodzieckiallgmail.onmicrosoft.com',     '', 'Piotr',     'Nowak',       'UOPZ',     TRUE, FALSE),
+    ('komisja@tulodzieckiallgmail.onmicrosoft.com',  '', 'Joanna',    'Kamińska',    'KOMISJA',  TRUE, FALSE),
+    ('dyrektor@tulodzieckiallgmail.onmicrosoft.com', '', 'Tomasz',    'Zając',       'DYREKTOR', TRUE, FALSE),
+    ('12345@tulodzieckiallgmail.onmicrosoft.com',    '', 'Katarzyna', 'Kowalczyk',   'STUDENT',  TRUE, FALSE),
+    ('21312@tulodzieckiallgmail.onmicrosoft.com',    '', 'Marek',     'Wiśniewski',  'STUDENT',  TRUE, FALSE),
+    ('21313@tulodzieckiallgmail.onmicrosoft.com',    '', 'Anna',      'Kowalska',    'STUDENT',  TRUE, FALSE)
 ON CONFLICT (email) DO NOTHING;
 
 INSERT INTO administrators (id)
-SELECT id FROM users
-WHERE email IN (
-    'admin@tulodzieckiallgmail.onmicrosoft.com',
-    '12345@tulodzieckiallgmail.onmicrosoft.com'
-)
+SELECT id FROM users WHERE email = 'admin@tulodzieckiallgmail.onmicrosoft.com'
 ON CONFLICT DO NOTHING;
 
 INSERT INTO university_mentors (id)
 SELECT id FROM users WHERE email = 'uopz@tulodzieckiallgmail.onmicrosoft.com'
 ON CONFLICT DO NOTHING;
 
-INSERT INTO students (id, album_number, gender, field_of_study, specialization, study_mode)
-SELECT id, '21312', 'M', 'Informatyka', 'Aplikacje sieciowe i mobilne', 'full-time'
-FROM users WHERE email = '21312@tulodzieckiallgmail.onmicrosoft.com'
+INSERT INTO komisja_users (id)
+SELECT id FROM users WHERE email = 'komisja@tulodzieckiallgmail.onmicrosoft.com'
 ON CONFLICT DO NOTHING;
 
-INSERT INTO students (id, album_number, gender, field_of_study, specialization, study_mode)
-SELECT id, '21313', 'F', 'Informatyka', 'Systemy informatyczne', 'full-time'
-FROM users WHERE email = '21313@tulodzieckiallgmail.onmicrosoft.com'
+INSERT INTO dyrektor_users (id)
+SELECT id FROM users WHERE email = 'dyrektor@tulodzieckiallgmail.onmicrosoft.com'
+ON CONFLICT DO NOTHING;
+
+-- Studenci z przypisanym opiekunem UOPZ
+INSERT INTO students (id, album_number, gender, field_of_study, specialization, study_mode, supervisor_id)
+SELECT u.id, '12345', 'F', 'Informatyka', 'Aplikacje sieciowe i mobilne', 'full-time',
+       (SELECT id FROM users WHERE email = 'uopz@tulodzieckiallgmail.onmicrosoft.com')
+FROM users u WHERE u.email = '12345@tulodzieckiallgmail.onmicrosoft.com'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO students (id, album_number, gender, field_of_study, specialization, study_mode, supervisor_id)
+SELECT u.id, '21312', 'M', 'Informatyka', 'Aplikacje sieciowe i mobilne', 'full-time',
+       (SELECT id FROM users WHERE email = 'uopz@tulodzieckiallgmail.onmicrosoft.com')
+FROM users u WHERE u.email = '21312@tulodzieckiallgmail.onmicrosoft.com'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO students (id, album_number, gender, field_of_study, specialization, study_mode, supervisor_id)
+SELECT u.id, '21313', 'F', 'Informatyka', 'Systemy informatyczne', 'full-time',
+       (SELECT id FROM users WHERE email = 'uopz@tulodzieckiallgmail.onmicrosoft.com')
+FROM users u WHERE u.email = '21313@tulodzieckiallgmail.onmicrosoft.com'
 ON CONFLICT DO NOTHING;

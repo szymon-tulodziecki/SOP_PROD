@@ -15,7 +15,7 @@ _repo_firm = RepozytoriumFirm()
 
 _AKTYWNE_STATUSY = [
     EnrollmentStatus.AWAITING_APPROVAL, EnrollmentStatus.IN_PROGRESS,
-    EnrollmentStatus.COMMISSION_REVIEW, EnrollmentStatus.DEAN_APPROVAL,
+    EnrollmentStatus.COMMISSION_REVIEW, EnrollmentStatus.DIRECTOR_APPROVAL,
 ]
 
 

@@ -22,10 +22,10 @@
     {% set border_color = 'var(--kolor-akcent)' %}
     {% set status_cls = 'status--in-progress' %}
     {% set status_label = 'Zwrócone do uzupełnienia' %}
-  {% elif status_val == 'DEAN_APPROVAL' %}
+  {% elif status_val == 'DIRECTOR_APPROVAL' %}
     {% set border_color = 'var(--kolor-glowny)' %}
     {% set status_cls = 'status--planned' %}
-    {% set status_label = 'Przekazane do dziekana' %}
+    {% set status_label = 'Przekazane do Dyrektora' %}
   {% elif status_val == 'IN_PROGRESS' %}
     {% set border_color = 'var(--kolor-sukces)' %}
     {% set status_cls = 'status--completed' %}

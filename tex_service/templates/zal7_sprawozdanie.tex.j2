@@ -5,6 +5,9 @@
 \setmainfont{Latin Modern Roman}
 \usepackage{geometry}
 \geometry{margin=1.5cm}
+\usepackage{longtable}
+\usepackage{array}
+\renewcommand{\arraystretch}{1.4}
 
 \begin{document}
 
@@ -15,12 +18,12 @@ Instytut Informatyki Stosowanej im. Krzysztofa Brzeskiego
 \vspace{2em}
 
 \noindent Student: \textbf{<< student.imie|s >> << student.nazwisko|s >>} \hfill Nr albumu: \textbf{<< student.nr_albumu|s >>} \\
-Kierunek: informatyka \\
+Kierunek: \textbf{<< student.kierunek|s >>} \\
 Specjalność: \textbf{<< specjalnosc|s >>} \\
 Studia: inżynierskie \textbf{<< student.tryb_studiow|s >>} \\
 Rok ak.: \textbf{<< praktyka.rok_uczelniany|s >>}
 
-\vspace{3em}
+\vspace{2em}
 
 \begin{center}
 \textbf{\large SPRAWOZDANIE STUDENTA} \\[0.5em]
@@ -29,22 +32,29 @@ odbytej w \textbf{<< firma.nazwa|s >>} \\
 \textbf{<< firma.adres|s >>, << firma.miasto|s >>}
 \end{center}
 
-\vspace{3em}
+\vspace{1.5em}
 
-\noindent \textbf{I. CHARAKTERYSTYKA MIEJSCA ODBYWANIA PRAKTYKI} \\
-{\small (Krótki opis instytucji, w której odbywała się praktyka zawodowa)}
+\noindent \textbf{I. CHARAKTERYSTYKA MIEJSCA ODBYWANIA PRAKTYKI}
 
-\vspace{4em}
+\vspace{0.75em}
 
-\noindent \textbf{II. OPIS I ANALIZA WYKONYWANYCH PRAC} \\
-{\small (Syntetyczny opis wykonanych prac)} \\[0.5em]
-{\small\textit{/Student opisuje w sposób syntetyczny, jakie zadania wykonywał w trakcie praktyki (jego zdaniem najważniejsze)/}}
+\noindent << charakterystyka_miejsca|s >>
 
-\vspace{6em}
+\vspace{2em}
+
+\noindent \textbf{II. OPIS I ANALIZA WYKONYWANYCH PRAC}
+
+\vspace{0.75em}
+
+\noindent << opis_prac|s >>
+
+\vspace{2em}
 
 \noindent \textbf{III. WIEDZA I UMIEJĘTNOŚCI UZYSKANE W TRAKCIE PRAKTYKI} \\
-{\small (Samoocena w zakresie nabytych kompetencji oraz osiągniętych efektów uczenia się)} \\[0.5em]
-{\small\textit{/Student opisuje, jakie kompetencje nabył w trakcie praktyki zawodowej oraz dokonuje samooceny w zakresie osiągniętych efektów uczenia się. Cytuje po kolei zakładane efekty uczenia się i wykazuje wykonane prace, które prowadziły do ich osiągnięcia/}}
+{\small (Samoocena w zakresie nabytych kompetencji oraz osiągniętych efektów uczenia się)}
+
+\vspace{0.5em}
+{\small\textit{Student opisuje, jakie kompetencje nabył w trakcie praktyki zawodowej oraz dokonuje samooceny w zakresie osiągniętych efektów uczenia się. Cytuje po kolei zakładane efekty uczenia się i wykazuje wykonane prace, które prowadziły do ich osiągnięcia.}}
 
 \vspace{10em}
 
