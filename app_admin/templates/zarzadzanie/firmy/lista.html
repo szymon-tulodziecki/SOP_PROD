@@ -5,8 +5,11 @@
 
 {% block naglowek_akcje %}
 <div style="display: flex; gap: 0.5rem;">
-  <a href="{{ url_for('zarzadzanie.dodaj_firme') }}" class="przycisk przycisk--glowny">+ Dodaj firmę</a>
-  <a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← Dashboard</a>
+  <a href="{{ url_for('zarzadzanie.dodaj_firme') }}" class="przycisk przycisk--glowny">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Dodaj firmę
+  </a>
+  <a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
 </div>
 {% endblock %}
 
@@ -19,7 +22,7 @@
       <div>
         <div style="font-weight: 600; margin-bottom: 0.5rem;">System zarządzania firmami</div>
         <div style="color: var(--kolor-tekst-drugor); font-size: 0.9rem;">
-          Firmy z flagą <strong>"Stała umowa"</strong> nie wymagają generowania Załącznika 3 (Porozumienia).
+          Firmy z flagą <strong>"Stała umowa"</strong> nie wymagają generowania Załącznika 1 (Porozumienia o organizacji praktyki).
           Studenci mogą wybierać firmy z bazy podczas rejestracji na praktykę.
         </div>
       </div>

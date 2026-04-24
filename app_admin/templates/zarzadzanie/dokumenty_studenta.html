@@ -4,7 +4,7 @@
 
 {% block naglowek_akcje %}
 <a href="{{ url_for('zarzadzanie.dokumenty_studentow') }}" class="przycisk przycisk--drugorzedny">
-  ← Powrót do listy
+  ← Powrót
 </a>
 {% endblock %}
 
@@ -25,7 +25,7 @@
           <div style="font-size: 0.85rem; color: var(--kolor-tekst-drugor); margin-top: 0.2rem;">
             Nr albumu: <strong>{{ student.album_number or '—' }}</strong>
             {% if student.kierunek %} · {{ student.kierunek }}{% endif %}
-            {% if student.tryb_studiow %} ({{ student.tryb_studiow }}){% endif %}
+            {% if student.tryb_studiow %} ({{ {'full-time': 'Stacjonarne', 'part-time': 'Niestacjonarne'}.get(student.tryb_studiow, student.tryb_studiow) }}){% endif %}
             {% if uopz %} · Opiekun: {{ uopz.first_name }} {{ uopz.last_name }}{% endif %}
           </div>
         </div>
@@ -74,6 +74,9 @@
         {% elif zapis.status.value == 'AWAITING_APPROVAL' %}Oczekuje na akceptację
         {% elif zapis.status.value == 'COMMISSION_REVIEW' %}Komisja
         {% elif zapis.status.value == 'DIRECTOR_APPROVAL' %}Dyrektor
+        {% elif zapis.status.value == 'REVISION_REQUIRED' %}Czeka na poprawki
+        {% elif zapis.status.value == 'REJECTED' %}Odrzucona
+        {% elif zapis.status.value == 'PENDING' %}Oczekuje
         {% else %}{{ zapis.status.value }}{% endif %}
       </span>
     </div>

@@ -10,6 +10,7 @@ import uuid
 
 from core.extensions import db
 from core.modele.uzytkownicy import UserRole, User, Student, Administrator, UniversityMentor
+from core.modele.praktyki import InternshipEnrollment
 
 # Potrzebne do metod pomocniczych
 import uuid as _uuid
@@ -99,11 +100,17 @@ class RepozytoriumUzytkownikow:
         )
 
     def studenci_strona(self, szukaj: str = '', supervisor_id=None,
-                         strona: int = 1, na_strone: int = 25):
+                         strona: int = 1, na_strone: int = 25, sciezki=None):
         """Paginowana lista studentów z opcjonalnym filtrem UOPZ i wyszukiwaniem."""
         q = db.session.query(Student)
         if supervisor_id is not None:
             q = q.filter(Student.supervisor_id == supervisor_id)
+        if sciezki:
+            q = q.filter(Student.id.in_(
+                db.session.query(InternshipEnrollment.student_id)
+                .filter(InternshipEnrollment.path_type.in_(sciezki))
+                .distinct()
+            ))
         if szukaj:
             album_sub = db.session.query(Student.id).filter(
                 Student.album_number.ilike(f'%{szukaj}%')

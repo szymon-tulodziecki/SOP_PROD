@@ -5,7 +5,7 @@
 
 {% block naglowek_akcje %}
 <div style="display: flex; gap: 0.5rem; align-items: center;">
-  <a href="{{ url_for('zarzadzanie.komisja_lista') }}" class="przycisk przycisk--drugorzedny">← Powrót do listy</a>
+  <a href="{{ url_for('zarzadzanie.komisja_lista') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
 </div>
 {% endblock %}
 
@@ -18,6 +18,10 @@
     {% set border_color = '#3b82f6' %}
     {% set status_cls = 'status--planned' %}
     {% set status_label = 'Do rozpatrzenia przez komisję' %}
+  {% elif status_val == 'REVISION_REQUIRED' %}
+    {% set border_color = '#dc2626' %}
+    {% set status_cls = 'status--odrzucona' %}
+    {% set status_label = 'Czeka na poprawki studenta' %}
   {% elif status_val == 'AWAITING_APPROVAL' %}
     {% set border_color = 'var(--kolor-akcent)' %}
     {% set status_cls = 'status--in-progress' %}
@@ -179,6 +183,13 @@
           <h3 class="karta__tytul">Decyzja komisji</h3>
         </div>
         <div class="karta__tresc">
+          {% if zapis.status.value == 'REVISION_REQUIRED' %}
+          <div style="text-align: center; padding: 1rem 0.5rem;">
+            <div style="width: 48px; height: 48px; border-radius: 50%; background: #fef2f2; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; font-size: 1.35rem; color: #dc2626;">!</div>
+            <div style="font-weight: 700; color: #991b1b; font-size: 1rem; margin-bottom: 0.4rem;">Oczekiwanie na poprawki studenta</div>
+            <div style="color: var(--kolor-tekst-drugor); font-size: 0.875rem; line-height: 1.5;">Zgłoszenie zostało zwrócone do studenta. Po nadesłaniu poprawek pojawi się tu ponownie do zatwierdzenia.</div>
+          </div>
+          {% else %}
           <form method="POST">
             {{ form.hidden_tag() }}
 
@@ -204,6 +215,7 @@
             </div>
 
           </form>
+          {% endif %}
         </div>
       </div>
 

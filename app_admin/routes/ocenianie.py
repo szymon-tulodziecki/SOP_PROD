@@ -67,16 +67,31 @@ def lista_ocen():
             'zakonczona': zapis.status == EnrollmentStatus.COMPLETED,
         })
 
-    w_trakcie = [z for z in zapisy_z_deadlinami if z['w_trakcie']]
     zakonczone = [z for z in zapisy_z_deadlinami if z['zakonczona']]
 
-    do_oceny = [z for z in zakonczone if z['zapis'].final_grade is None]
-    ocenione = [z for z in zakonczone if z['zapis'].final_grade is not None]
+    def _ma_oceny(p):
+        fg = p.final_grades
+        return bool(fg and fg.supervisor_grade is not None
+                    and fg.report_grade is not None and fg.workplace_grade is not None)
+
+    for z in zakonczone:
+        z['oceniony'] = _ma_oceny(z['zapis'])
+
+    # nieocenieni pierwsi, potem ocenieni
+    zakonczone.sort(key=lambda z: z['oceniony'])
+
+    filtr = request.args.get('filtr')
+    if filtr == 'nieocenione':
+        widoczne = [z for z in zakonczone if not z['oceniony']]
+    elif filtr == 'ocenione':
+        widoczne = [z for z in zakonczone if z['oceniony']]
+    else:
+        widoczne = zakonczone
 
     return render_template('evaluation/lista_ocen.html',
-                           w_trakcie=w_trakcie,
-                           do_oceny=do_oceny,
-                           ocenione=ocenione)
+                           widoczne=widoczne,
+                           zakonczone=zakonczone,
+                           filtr=filtr)
 
 @evaluation_bp.route('/zapis/<uuid:id>/karta_ocen', methods=['GET', 'POST'])
 @wymaga_roli(UserRole.ADMIN, UserRole.UOPZ)

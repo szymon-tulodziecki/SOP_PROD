@@ -59,19 +59,6 @@
           <span class="sidebar__ikona" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="15" y2="16"/></svg></span> Wszystkie praktyki
         </a>
       </li>
-      {% if current_user.is_authenticated and current_user.rola and current_user.rola.value == 'ADMIN' %}
-      <li class="sidebar__menu-pozycja">
-        <a href="{{ url_for('zarzadzanie.lista_zgloszen') }}" class="sidebar__link {% if 'zgloszenia' in (request.endpoint or '') %}sidebar__link--aktywny{% endif %}" {% if 'zgloszenia' in (request.endpoint or '') %}aria-current="page"{% endif %}>
-          <span class="sidebar__ikona" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10,9 9,9 8,9"/></svg></span> Zgłoszenia studentów{% if nav_oczekujace %} <span style="display:inline-flex;align-items:center;justify-content:center;background:#ef4444;color:white;border-radius:9999px;min-width:1.25rem;height:1.25rem;font-size:0.65rem;font-weight:700;padding:0 0.25rem;margin-left:0.35rem;">{{ nav_oczekujace }}</span>{% endif %}
-        </a>
-      </li>
-      {% elif current_user.is_authenticated and current_user.rola and current_user.rola.value in ['UOPZ', 'KOMISJA', 'DYREKTOR'] %}
-      <li class="sidebar__menu-pozycja">
-        <a href="{{ url_for('zarzadzanie.lista_zgloszen') }}" class="sidebar__link {% if 'zgloszenia' in (request.endpoint or '') %}sidebar__link--aktywny{% endif %}" {% if 'zgloszenia' in (request.endpoint or '') %}aria-current="page"{% endif %}>
-          <span class="sidebar__ikona" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10,9 9,9 8,9"/></svg></span> Zgłoszenia studentów{% if nav_oczekujace %} <span style="display:inline-flex;align-items:center;justify-content:center;background:#ef4444;color:white;border-radius:9999px;min-width:1.25rem;height:1.25rem;font-size:0.65rem;font-weight:700;padding:0 0.25rem;margin-left:0.35rem;">{{ nav_oczekujace }}</span>{% endif %}
-        </a>
-      </li>
-      {% endif %}
       {% if current_user.is_authenticated and current_user.rola and current_user.rola.value in ['ADMIN', 'UOPZ'] %}
       <li class="sidebar__menu-pozycja">
         <a href="{{ url_for('evaluation.lista_ocen') }}" class="sidebar__link {% if 'evaluation' in (request.endpoint or '') %}sidebar__link--aktywny{% endif %}" {% if 'evaluation' in (request.endpoint or '') %}aria-current="page"{% endif %}>

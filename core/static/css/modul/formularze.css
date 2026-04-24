@@ -9,7 +9,7 @@
 .pole-formularza__etykieta { font-size: 0.875rem; font-weight: 500; color: var(--kolor-tekst); }
 .pole-formularza__wymagane { color: var(--kolor-blad); margin-left: 0.2em; font-weight: 700; }
 
-.pole-formularza__input { width: 100%; padding: 0.75rem 1rem; font-family: var(--font-glowny), serif; font-size: 1rem; color: var(--kolor-tekst); background: var(--kolor-biale); border: 2px solid var(--kolor-ramka); border-radius: var(--promien); transition: border-color 0.15s, box-shadow 0.15s; }
+.pole-formularza__input { width: 100%; padding: 0.75rem 1rem; font-family: var(--font-glowny), serif; font-size: 1rem; color: var(--kolor-tekst); background: var(--kolor-biale); border: 2px solid var(--kolor-ramka-mocna); border-radius: var(--promien); transition: border-color 0.15s, box-shadow 0.15s; }
 .pole-formularza__input:hover { border-color: var(--kolor-glowny-jasny); }
 .pole-formularza__input:focus { border-color: var(--kolor-glowny); box-shadow: 0 0 0 3px rgba(26,58,92,0.15); outline: var(--fokus-grubosc) solid var(--fokus-kolor); outline-offset: var(--fokus-offset); }
 .pole-formularza--blad .pole-formularza__input { border-color: var(--kolor-blad); }

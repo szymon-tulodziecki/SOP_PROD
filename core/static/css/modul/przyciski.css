@@ -5,11 +5,11 @@
 .przycisk--glowny { background: var(--kolor-glowny); color: var(--kolor-biale); }
 .przycisk--glowny:hover { background: var(--kolor-glowny-ciemny); }
 
-.przycisk--drugorzedny { background: var(--kolor-tlo); color: var(--kolor-tekst); border: 1px solid var(--kolor-ramka); }
+.przycisk--drugorzedny { background: var(--kolor-tlo); color: var(--kolor-tekst); border: 1px solid var(--kolor-ramka-mocna); }
 .przycisk--drugorzedny:hover { background: var(--kolor-ramka); }
 
-.przycisk--ostrzezenie { background: #f59e0b; color: white; border: 1px solid #f59e0b; }
-.przycisk--ostrzezenie:hover { background: #d97706; border-color: #d97706; }
+.przycisk--ostrzezenie { background: #b45309; color: white; border: 1px solid #b45309; }
+.przycisk--ostrzezenie:hover { background: #92400e; border-color: #92400e; }
 
 .przycisk--niebezpieczny { background: var(--kolor-blad); color: var(--kolor-biale); }
 .przycisk--niebezpieczny:hover { background: #a93226; }

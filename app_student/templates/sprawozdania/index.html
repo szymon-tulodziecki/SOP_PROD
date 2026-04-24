@@ -3,12 +3,12 @@
 {% block naglowek %}Sprawozdanie z przebiegu praktyki{% endblock %}
 
 {% block naglowek_akcje %}
-{% if zapis %}
 <div style="display:flex; gap:0.5rem; align-items:center;">
+  {% if zapis %}
   <button type="submit" form="formularz-sprawozdania" class="przycisk przycisk--glowny">Zapisz sprawozdanie</button>
-  <a href="{{ url_for('documents.moje_dokumenty') }}" class="przycisk przycisk--drugorzedny">Moje Dokumenty →</a>
+  {% endif %}
+  <a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
 </div>
-{% endif %}
 {% endblock %}
 
 {% block tresc %}

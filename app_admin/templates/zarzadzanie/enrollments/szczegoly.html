@@ -30,6 +30,22 @@
     {% set border_color = 'var(--kolor-glowny)' %}
     {% set status_cls = 'status--completed' %}
     {% set status_label = 'Zakończona' %}
+  {% elif status_val == 'REVISION_REQUIRED' %}
+    {% set border_color = '#dc2626' %}
+    {% set status_cls = 'status--odrzucona' %}
+    {% set status_label = 'Czeka na poprawki' %}
+  {% elif status_val == 'COMMISSION_REVIEW' %}
+    {% set border_color = '#3b82f6' %}
+    {% set status_cls = 'status--planned' %}
+    {% set status_label = 'Weryfikacja komisji' %}
+  {% elif status_val == 'DIRECTOR_APPROVAL' %}
+    {% set border_color = 'var(--kolor-glowny)' %}
+    {% set status_cls = 'status--planned' %}
+    {% set status_label = 'Decyzja dyrektora' %}
+  {% elif status_val == 'REJECTED' %}
+    {% set border_color = '#dc2626' %}
+    {% set status_cls = 'status--odrzucona' %}
+    {% set status_label = 'Odrzucona' %}
   {% else %}
     {% set border_color = 'var(--kolor-ramka)' %}
     {% set status_cls = 'status--draft' %}

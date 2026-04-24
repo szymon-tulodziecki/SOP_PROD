@@ -2,6 +2,10 @@
 {% block tytul %}Logi systemowe{% endblock %}
 {% block naglowek %}Logi systemowe{% endblock %}
 
+{% block naglowek_akcje %}
+<a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
+{% endblock %}
+
 {% block tresc %}
 <div class="karta" style="margin-bottom:1rem;">
   <div class="karta__tresc">
@@ -19,10 +23,12 @@
           {% endfor %}
         </select>
       </div>
-      <button type="submit" class="przycisk przycisk--drugorzedny">Filtruj</button>
-      {% if szukaj or aktywny_typ %}
-      <a href="{{ url_for('logi.lista_logow') }}" class="przycisk przycisk--drugorzedny">Wyczyść</a>
-      {% endif %}
+      <div style="display:flex; gap:0.5rem; align-self:flex-end;">
+        <button type="submit" class="przycisk przycisk--drugorzedny">Filtruj</button>
+        {% if szukaj or aktywny_typ %}
+        <a href="{{ url_for('logi.lista_logow') }}" class="przycisk przycisk--drugorzedny">Wyczyść</a>
+        {% endif %}
+      </div>
     </form>
   </div>
 </div>
@@ -38,6 +44,7 @@
           <th>Wykonał</th>
           <th>Decyzja</th>
           <th>Komentarz</th>
+          <th></th>
         </tr>
       </thead>
       <tbody>
@@ -58,11 +65,6 @@
           <td>
             {% if z.enrollment and z.enrollment.student %}
               {{ z.enrollment.student.imie }} {{ z.enrollment.student.nazwisko }}
-              <div style="font-size:0.75rem; color:var(--kolor-tekst-trzeciorzed);">
-                <a href="{{ url_for('zarzadzanie.szczegoly_zgloszenia', id=z.enrollment_id) }}" style="color:inherit;">
-                  szczegóły →
-                </a>
-              </div>
             {% else %}—{% endif %}
           </td>
           <td style="font-size:0.85rem;">
@@ -74,6 +76,8 @@
           <td>
             {% if z.decision == 'APPROVED' %}
               <span class="status status--zakonczona">Zatwierdzone</span>
+            {% elif z.decision == 'PARTIALLY_APPROVED' %}
+              <span class="status status--w-trakcie">Częściowo</span>
             {% elif z.decision == 'REJECTED' %}
               <span class="status status--odrzucona">Odrzucone</span>
             {% else %}—{% endif %}
@@ -81,10 +85,16 @@
           <td style="font-size:0.82rem; max-width:280px; word-break:break-word;">
             {{ z.comment or '—' }}
           </td>
+          <td>
+            {% if z.enrollment_id %}
+            <a href="{{ url_for('zarzadzanie.szczegoly_zgloszenia', id=z.enrollment_id) }}"
+               class="przycisk przycisk--maly przycisk--drugorzedny">Szczegóły</a>
+            {% endif %}
+          </td>
         </tr>
         {% else %}
         <tr>
-          <td colspan="6" class="tabela--pusta">Brak zdarzeń spełniających kryteria.</td>
+          <td colspan="7" class="tabela--pusta">Brak zdarzeń spełniających kryteria.</td>
         </tr>
         {% endfor %}
       </tbody>

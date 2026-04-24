@@ -2,6 +2,10 @@
 {% block tytul %}Dokumenty studentów{% endblock %}
 {% block naglowek %}Dokumenty studentów{% endblock %}
 
+{% block naglowek_akcje %}
+<a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
+{% endblock %}
+
 {% block tresc %}
 <div class="karta">
   <div class="karta__naglowek">
@@ -57,7 +61,7 @@
           <td>{{ s.album_number or '—' }}</td>
           <td>
             <div style="font-size: 0.875rem;">{{ s.kierunek or '—' }}</div>
-            {% if s.tryb_studiow %}<div style="font-size: 0.78rem; color: var(--kolor-tekst-drugor);">{{ s.tryb_studiow }}</div>{% endif %}
+            {% if s.tryb_studiow %}<div style="font-size: 0.78rem; color: var(--kolor-tekst-drugor);">{{ {'full-time': 'Stacjonarne', 'part-time': 'Niestacjonarne'}.get(s.tryb_studiow, s.tryb_studiow) }}</div>{% endif %}
           </td>
           <td style="font-size: 0.875rem;">
             {% if wpis.uopz %}{{ wpis.uopz.first_name }} {{ wpis.uopz.last_name }}{% else %}<span style="color: var(--kolor-tekst-trzeciorzed);">—</span>{% endif %}

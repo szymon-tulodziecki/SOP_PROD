@@ -162,13 +162,15 @@ class RepozytoriumZapisow:
 
     def w_trakcie_strona(self, szukaj: str = '', supervisor_id=None,
                           strona: int = 1, na_strone: int = 20):
-        """Lista zapisów IN_PROGRESS z opcjonalnym filtrem UOPZ i wyszukiwaniem."""
+        """Lista zapisów IN_PROGRESS i COMPLETED z opcjonalnym filtrem UOPZ i wyszukiwaniem."""
         from sqlalchemy.orm import selectinload
         from core.modele.uzytkownicy import User
         q = (
             db.session.query(InternshipEnrollment)
             .options(selectinload(InternshipEnrollment.student))
-            .filter(InternshipEnrollment.status == EnrollmentStatus.IN_PROGRESS)
+            .filter(InternshipEnrollment.status.in_([
+                EnrollmentStatus.IN_PROGRESS, EnrollmentStatus.COMPLETED,
+            ]))
         )
         if supervisor_id is not None:
             q = q.filter_by(supervisor_id=supervisor_id)
@@ -192,6 +194,7 @@ class RepozytoriumZapisow:
                 selectinload(InternshipEnrollment.student),
                 selectinload(InternshipEnrollment.firma),
                 selectinload(InternshipEnrollment.final_grades),
+                selectinload(InternshipEnrollment.examination),
             )
             .filter(InternshipEnrollment.status.in_(
                 [EnrollmentStatus.IN_PROGRESS, EnrollmentStatus.COMPLETED]
@@ -325,6 +328,7 @@ class RepozytoriumZapisow:
 
     def liczniki_nav(self, supervisor_id=None) -> dict:
         """Liczniki statusów dla paska nawigacji (inject_nav_counts) — jedno zapytanie."""
+        from core.modele.praktyki import FinalGrades
         q = db.session.query(
             func.count(case(
                 (InternshipEnrollment.status == EnrollmentStatus.AWAITING_APPROVAL, 1)
@@ -336,9 +340,13 @@ class RepozytoriumZapisow:
                 (InternshipEnrollment.status == EnrollmentStatus.DIRECTOR_APPROVAL, 1)
             )).label('dziekan'),
             func.count(case(
-                (InternshipEnrollment.status == EnrollmentStatus.COMPLETED, 1)
+                (
+                    (InternshipEnrollment.status == EnrollmentStatus.COMPLETED) &
+                    (FinalGrades.supervisor_grade == None),
+                    1
+                )
             )).label('do_oceny'),
-        )
+        ).outerjoin(FinalGrades, FinalGrades.enrollment_id == InternshipEnrollment.id)
         if supervisor_id:
             q = q.filter(InternshipEnrollment.supervisor_id == supervisor_id)
         row = q.one()

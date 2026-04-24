@@ -3,6 +3,10 @@
 {% block tytul %}Komisja weryfikująca{% endblock %}
 {% block naglowek %}Wnioski do weryfikacji przez komisję{% endblock %}
 
+{% block naglowek_akcje %}
+<a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
+{% endblock %}
+
 {% block tresc %}
 <div style="max-width: 1400px; margin: 0 auto;">
 

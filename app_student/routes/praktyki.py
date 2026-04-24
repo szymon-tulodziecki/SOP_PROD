@@ -302,7 +302,9 @@ def lista():
             and sciezka in ('EMPLOYMENT', 'OWN_BUSINESS')
         )
         zwrocone_komisja = (z.status == EnrollmentStatus.REVISION_REQUIRED)
-        zwrocone = zwrocone_a or zwrocone_bc or zwrocone_komisja
+        # COMMISSION_REVIEW / DIRECTOR_APPROVAL = student już odesłał poprawki, nie czeka na akcję
+        in_review = z.status in (EnrollmentStatus.COMMISSION_REVIEW, EnrollmentStatus.DIRECTOR_APPROVAL)
+        zwrocone = (zwrocone_a or zwrocone_bc or zwrocone_komisja) and not in_review
         komentarz_komisji = None
         if zwrocone_komisja:
             from core.modele.praktyki import ProcessEvent, EventType

@@ -70,6 +70,8 @@ def lista_dziennikow():
 def dziennik_zapisu(id):
     from datetime import date as _date
     zapis = _repo_zapisow.znajdz_po_id(id) or abort(404)
+    if current_user.role == UserRole.UOPZ and zapis.supervisor_id != current_user.id:
+        abort(403)
 
     def _parse_date(key):
         val = request.args.get(key, '').strip()

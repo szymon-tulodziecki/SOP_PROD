@@ -2,6 +2,10 @@
 {% block tytul %}Moje Dokumenty{% endblock %}
 {% block naglowek %}Moje Dokumenty{% endblock %}
 
+{% block naglowek_akcje %}
+<a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
+{% endblock %}
+
 {% block tresc %}
 <div style="max-width: 900px; margin: 0 auto;">
 

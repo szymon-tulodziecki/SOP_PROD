@@ -3,127 +3,84 @@
 {% block tytul %}Oceny i efekty{% endblock %}
 {% block naglowek %}Studenci — oceny i efekty{% endblock %}
 
+{% block naglowek_akcje %}
+<a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
+{% endblock %}
+
 {% block tresc %}
 <div style="max-width: 1200px; margin: 0 auto;">
 
-{% macro tabela_studentow(items, tytul, kolor) %}
-<div class="karta" style="margin-bottom: 1.5rem;">
-  <div class="karta__naglowek" style="border-left: 4px solid {{ kolor }};">
-    <h2 class="karta__tytul">{{ tytul }} <span style="font-size:0.85rem; font-weight:400; color:var(--kolor-tekst-drugor);">({{ items|length }})</span></h2>
-  </div>
-  <div class="karta__tresc">
-    {% if items %}
-    <div class="tabela-wrapper">
-      <table class="tabela">
-        <thead>
-          <tr>
-            <th>Student</th>
-            <th>Kierunek / Specjalność</th>
-            <th>Zakład pracy</th>
-            <th>Termin</th>
-            <th>Godziny</th>
-            <th>Akcje</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for item in items %}
-          {% set p = item.zapis %}
-          <tr {% if item.przekroczony %}style="background: rgba(220,38,38,0.04);"{% endif %}>
-            <td>
-              <div style="font-weight:600;">{{ p.student.last_name }} {{ p.student.first_name }}</div>
-              <div style="font-size:0.8rem; color:var(--kolor-tekst-drugor);">
-                Nr alb.: {{ p.student.album_number or '-' }}
-                {% if p.student.plec %} · {{ 'K' if p.student.plec == 'K' else 'M' }}{% endif %}
-              </div>
-            </td>
-            <td style="font-size:0.85rem;">
-              {{ p.student.kierunek or 'Informatyka' }}<br>
-              <span style="color:var(--kolor-tekst-drugor);">{{ p.student.specjalnosc or p.specjalnosc or '-' }}</span>
-            </td>
-            <td style="font-size:0.85rem;">
-              {{ (p.firma.nazwa if p.firma else p.firma_nazwa) or '-' }}
-            </td>
-            <td style="font-size:0.85rem;">
-              {{ p.termin_od.strftime('%d.%m.%Y') if p.termin_od else '—' }} –
-              {{ p.termin_do.strftime('%d.%m.%Y') if p.termin_do else '—' }}
-              {% if item.deadline %}
-              <div style="font-size:0.75rem; {% if item.przekroczony %}color:var(--kolor-blad); font-weight:600;{% elif item.dni_do_deadline <= 2 %}color:#d97706;{% else %}color:var(--kolor-tekst-drugor);{% endif %}">
-                {% if item.przekroczony %}Deadline przekroczony o {{ -item.dni_do_deadline }} dni
-                {% elif item.dni_do_deadline == 0 %}Dziś ostatni dzień!
-                {% else %}Deadline za {{ item.dni_do_deadline }} dni{% endif %}
-              </div>
-              {% endif %}
-            </td>
-            <td><strong>{{ p.total_hours_logged or 0 }} h</strong></td>
-            <td>
-              <a href="{{ url_for('evaluation.ocen_praktyke', id=p.id) }}"
-                 class="przycisk przycisk--maly {% if item.przekroczony %}przycisk--niebezpieczny{% elif item.zakonczona %}przycisk--glowny{% else %}przycisk--drugorzedny{% endif %}">
-                {% if item.przekroczony %}PILNE: Ocen{% elif item.zakonczona %}Wystaw ocenę{% else %}Podgląd{% endif %}
-              </a>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+<div class="karta">
+  <div class="karta__naglowek" style="flex-wrap:wrap; gap:0.75rem;">
+    <h2 class="karta__tytul">Zakończone praktyki <span style="font-size:0.85rem; font-weight:400; color:var(--kolor-tekst-drugor);">({{ widoczne|length }}{% if filtr %} filtr aktywny{% endif %})</span></h2>
+    <div style="display:flex; gap:0.5rem; margin-left:auto; flex-wrap:wrap;">
+      <a href="{{ url_for('evaluation.lista_ocen') }}"
+         class="przycisk przycisk--maly {% if not filtr %}przycisk--glowny{% else %}przycisk--drugorzedny{% endif %}">
+        Wszystkie ({{ zakonczone|length }})
+      </a>
+      <a href="{{ url_for('evaluation.lista_ocen', filtr='nieocenione') }}"
+         class="przycisk przycisk--maly {% if filtr == 'nieocenione' %}przycisk--glowny{% else %}przycisk--drugorzedny{% endif %}">
+        Nieocenione ({{ zakonczone|selectattr('oceniony', 'equalto', false)|list|length }})
+      </a>
+      <a href="{{ url_for('evaluation.lista_ocen', filtr='ocenione') }}"
+         class="przycisk przycisk--maly {% if filtr == 'ocenione' %}przycisk--glowny{% else %}przycisk--drugorzedny{% endif %}">
+        Ocenione ({{ zakonczone|selectattr('oceniony')|list|length }})
+      </a>
     </div>
-    {% else %}
-    <div style="text-align:center; padding:2rem; color:var(--kolor-tekst-drugor);">Brak studentów.</div>
-    {% endif %}
   </div>
-</div>
-{% endmacro %}
-
-{{ tabela_studentow(do_oceny, 'Gotowi do oceny (zakończone praktyki)', '#dc2626') }}
-
-<div class="karta" style="margin-bottom: 1.5rem;">
-  <div class="karta__naglowek" style="border-left: 4px solid #16a34a;">
-    <h2 class="karta__tytul">Oceny wystawione <span style="font-size:0.85rem; font-weight:400; color:var(--kolor-tekst-drugor);">({{ ocenione|length }})</span></h2>
-  </div>
-  <div class="karta__tresc">
-    {% if ocenione %}
-    <div class="tabela-wrapper">
-      <table class="tabela">
-        <thead>
-          <tr>
-            <th>Student</th>
-            <th>Zakład pracy</th>
-            <th>S</th>
-            <th>U</th>
-            <th>Z</th>
-            <th>E</th>
-            <th>Ocena K</th>
-            <th>Akcje</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for item in ocenione %}
-          {% set p = item.zapis %}
-          <tr>
-            <td>
-              <div style="font-weight:600;">{{ p.student.last_name }} {{ p.student.first_name }}</div>
-              <div style="font-size:0.8rem; color:var(--kolor-tekst-drugor);">Nr alb.: {{ p.student.album_number or '-' }}</div>
-            </td>
-            <td style="font-size:0.85rem;">{{ (p.firma.nazwa if p.firma else p.firma_nazwa) or '-' }}</td>
-            <td>{{ p.ocena_sprawozdania or '—' }}</td>
-            <td>{{ p.ocena_uopz or '—' }}</td>
-            <td>{{ p.ocena_zopz or '—' }}</td>
-            <td>{{ p.exam_grade or '—' }}</td>
-            <td>
-              <strong style="font-size:1.1rem; color:{% if p.final_grade >= 3.0 %}var(--kolor-sukces){% else %}var(--kolor-blad){% endif %};">
-                {{ p.final_grade }}
-              </strong>
-            </td>
-            <td>
-              <a href="{{ url_for('evaluation.ocen_praktyke', id=p.id) }}" class="przycisk przycisk--maly przycisk--drugorzedny">Edytuj</a>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-    {% else %}
-    <div style="text-align:center; padding:2rem; color:var(--kolor-tekst-drugor);">Brak wystawionych ocen.</div>
-    {% endif %}
+  <div class="tabela-wrapper">
+    <table class="tabela">
+      <thead>
+        <tr>
+          <th>Student</th>
+          <th>Zakład pracy</th>
+          <th style="text-align:center;" title="Ocena sprawozdania">Spr.</th>
+          <th style="text-align:center;" title="Ocena UOPZ">UOPZ</th>
+          <th style="text-align:center;" title="Ocena ZOPZ (z karty papierowej)">ZOPZ</th>
+          <th style="text-align:center;" title="Średnia z egzaminu komisyjnego">Egz.</th>
+          <th style="text-align:center;" title="Ocena końcowa: K = 0.4·E + 0.1·S + 0.2·U + 0.3·Z">Ocena K</th>
+          <th style="text-align:center;">Akcje</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in widoczne %}
+        {% set p = item.zapis %}
+        <tr {% if item.przekroczony %}style="background:rgba(220,38,38,0.04);"{% endif %}>
+          <td>
+            <div style="font-weight:600;">{{ p.student.last_name }} {{ p.student.first_name }}</div>
+            <div style="font-size:0.8rem; color:var(--kolor-tekst-drugor);">Nr alb.: {{ p.student.album_number or '-' }}</div>
+            {% if item.deadline %}
+            <div style="font-size:0.75rem; margin-top:0.2rem; {% if item.przekroczony %}color:var(--kolor-blad); font-weight:600;{% elif item.dni_do_deadline <= 2 %}color:#d97706;{% else %}color:var(--kolor-tekst-drugor);{% endif %}">
+              {% if item.przekroczony %}Deadline przekroczony o {{ -item.dni_do_deadline }} dni
+              {% elif item.dni_do_deadline == 0 %}Dziś ostatni dzień!
+              {% else %}Deadline za {{ item.dni_do_deadline }} dni{% endif %}
+            </div>
+            {% endif %}
+          </td>
+          <td style="font-size:0.85rem;">{{ (p.firma.nazwa if p.firma else p.firma_nazwa) or '-' }}</td>
+          <td style="text-align:center;">{{ p.ocena_sprawozdania or '—' }}</td>
+          <td style="text-align:center;">{{ p.ocena_uopz or '—' }}</td>
+          <td style="text-align:center;">{{ p.ocena_zopz or '—' }}</td>
+          <td style="text-align:center;">{{ p.exam_grade or '—' }}</td>
+          <td style="text-align:center;">
+            {% if p.final_grade is not none %}
+            <strong style="font-size:1.05rem; color:{% if p.final_grade >= 3.0 %}var(--kolor-sukces){% else %}var(--kolor-blad){% endif %};">
+              {{ p.final_grade }}
+            </strong>
+            {% else %}—{% endif %}
+          </td>
+          <td style="text-align:center;">
+            <a href="{{ url_for('evaluation.ocen_praktyke', id=p.id) }}"
+               class="przycisk przycisk--maly {% if item.przekroczony %}przycisk--niebezpieczny{% elif not item.oceniony %}przycisk--glowny{% else %}przycisk--drugorzedny{% endif %}">
+              {% if item.przekroczony %}PILNE{% elif not item.oceniony %}Wystaw ocenę{% else %}Edytuj{% endif %}
+            </a>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" class="tabela--pusta">Brak studentów.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
 </div>
 

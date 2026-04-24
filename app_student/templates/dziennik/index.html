@@ -6,8 +6,8 @@
 <div style="display: flex; gap: 0.5rem; align-items: center;">
   {% if zapis %}
   <a href="{{ url_for('dziennik.nowy_wpis') }}" class="przycisk przycisk--glowny">Nowy wpis</a>
-  <a href="{{ url_for('documents.moje_dokumenty') }}" class="przycisk przycisk--drugorzedny">Moje Dokumenty →</a>
   {% endif %}
+  <a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
 </div>
 {% endblock %}
 

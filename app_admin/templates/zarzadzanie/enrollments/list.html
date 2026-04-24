@@ -3,35 +3,21 @@
 {% block tytul %}Zgłoszenia studentów{% endblock %}
 {% block naglowek %}Zarządzanie zgłoszeniami praktyk{% endblock %}
 
-{% block naglowek_akcje %}
-<div style="display: flex; gap: 0.5rem;">
-  <a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
-</div>
-{% endblock %}
-
 {% block tresc %}
 <div style="max-width: 1400px; margin: 0 auto;">
 
   <!-- Filtry statusu -->
   <div class="karta" style="margin-bottom: 2rem;">
     <div class="karta__tresc">
-      <div style="display: flex; gap: 1rem; align-items: center;">
-        <span style="font-weight: 600;">Filtruj według statusu:</span>
+      <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+        <span style="font-weight: 600;">Filtruj:</span>
         <a href="{{ url_for('zarzadzanie.lista_zgloszen') }}"
            class="przycisk przycisk--{% if not request.args.get('status') %}glowny{% else %}drugorzedny{% endif %} przycisk--maly">
           Wszystkie
         </a>
-        <a href="{{ url_for('zarzadzanie.lista_zgloszen', status='PENDING') }}"
-           class="przycisk przycisk--{% if request.args.get('status') == 'PENDING' %}glowny{% else %}drugorzedny{% endif %} przycisk--maly">
-          Oczekujące
-        </a>
-        <a href="{{ url_for('zarzadzanie.lista_zgloszen', status='IN_PROGRESS') }}"
-           class="przycisk przycisk--{% if request.args.get('status') == 'IN_PROGRESS' %}glowny{% else %}drugorzedny{% endif %} przycisk--maly">
-          Zatwierdzone
-        </a>
         <a href="{{ url_for('zarzadzanie.lista_zgloszen', status='AWAITING_APPROVAL') }}"
            class="przycisk przycisk--{% if request.args.get('status') == 'AWAITING_APPROVAL' %}glowny{% else %}drugorzedny{% endif %} przycisk--maly">
-          Nowe zgłoszenia
+          Oczekujące
         </a>
         <a href="{{ url_for('zarzadzanie.lista_zgloszen', status='REVISION_REQUIRED') }}"
            class="przycisk przycisk--{% if request.args.get('status') == 'REVISION_REQUIRED' %}glowny{% else %}drugorzedny{% endif %} przycisk--maly">

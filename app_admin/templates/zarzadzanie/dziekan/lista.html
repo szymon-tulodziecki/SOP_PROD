@@ -3,6 +3,10 @@
 {% block tytul %}Decyzje Dyrektora Instytutu{% endblock %}
 {% block naglowek %}Wnioski oczekujące na decyzję Dyrektora Instytutu{% endblock %}
 
+{% block naglowek_akcje %}
+<a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
+{% endblock %}
+
 {% block tresc %}
 <div style="max-width: 1400px; margin: 0 auto;">
 

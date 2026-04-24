@@ -11,7 +11,7 @@ import httpx
 from flask import render_template, request, abort, make_response, current_app
 from flask_login import login_required, current_user
 
-from core.modele import EnrollmentStatus, UserRole
+from core.modele import EnrollmentStatus, UserRole, InternshipPath
 from core.uslugi.dokumenty import DOC_CONFIG, STATIC_TEMPLATES, rozwiaz_dokumenty, buduj_kontekst
 from core.repozytoria import RepozytoriumUzytkownikow, RepozytoriumZapisow
 
@@ -59,13 +59,15 @@ def dokumenty_studentow():
     szukaj     = request.args.get('szukaj', '').strip()
     uopz_id    = current_user.id if current_user.role == UserRole.UOPZ else None
 
+    sciezki_b = [InternshipPath.EMPLOYMENT, InternshipPath.OWN_BUSINESS]
     studenci_page = _repo_uzytk.studenci_strona(
-        szukaj=szukaj, supervisor_id=uopz_id, strona=strona
+        szukaj=szukaj, supervisor_id=uopz_id, strona=strona, sciezki=sciezki_b
     )
 
     aktywne_statusy = [
         EnrollmentStatus.AWAITING_APPROVAL, EnrollmentStatus.COMMISSION_REVIEW,
         EnrollmentStatus.DIRECTOR_APPROVAL, EnrollmentStatus.IN_PROGRESS,
+        EnrollmentStatus.COMPLETED,
     ]
     student_ids = [s.id for s in studenci_page.items]
     aktywne_counts = _repo_zapisow.liczba_aktywnych_dla_studentow(
