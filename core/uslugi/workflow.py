@@ -64,6 +64,7 @@ _ALLOWED: dict[S, set[S]] = {
     S.AWAITING_APPROVAL: {
         S.IN_PROGRESS,
         S.COMMISSION_REVIEW,
+        S.DIRECTOR_APPROVAL,
         S.REVISION_REQUIRED,
         S.REJECTED,
     },
@@ -245,12 +246,19 @@ class ZapisFSM:
             self._dodaj_zdarzenie(EventType.SUPERVISOR_COMMENT, actor_id=actor_id,
                                   comment=comment)
 
-    def zatwierdz_przez_komisje(self, actor_id=None, comment: str = '') -> None:
-        """COMMISSION_REVIEW / REVISION_REQUIRED → DIRECTOR_APPROVAL."""
+    def wyslij_do_dyrektora(self, decision: str, actor_id=None, comment: str = '') -> None:
+        """COMMISSION_REVIEW / AWAITING_APPROVAL / REVISION_REQUIRED → DIRECTOR_APPROVAL.
+
+        decision: 'APPROVED' | 'PARTIALLY_APPROVED' | 'REJECTED'
+        """
         from core.modele.praktyki import EventType
-        self._przejdz(S.DIRECTOR_APPROVAL, 'decyzja komisji')
+        self._przejdz(S.DIRECTOR_APPROVAL, 'opinia komisji')
         self._dodaj_zdarzenie(EventType.COMMITTEE_DECISION, actor_id=actor_id,
-                              comment=comment, decision='APPROVED')
+                              comment=comment, decision=decision)
+
+    def zatwierdz_przez_komisje(self, actor_id=None, comment: str = '') -> None:
+        """COMMISSION_REVIEW / REVISION_REQUIRED → DIRECTOR_APPROVAL (backward compat)."""
+        self.wyslij_do_dyrektora(decision='APPROVED', actor_id=actor_id, comment=comment)
 
     def zadaj_poprawki(self, actor_id=None, comment: str = '') -> None:
         """COMMISSION_REVIEW / REVISION_REQUIRED → REVISION_REQUIRED."""

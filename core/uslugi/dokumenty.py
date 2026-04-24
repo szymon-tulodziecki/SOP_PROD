@@ -420,4 +420,30 @@ def buduj_kontekst(zapis, typ: str) -> dict:
             'uwagi_uopz': _g(zapis, 'supervisor_grade_description', ''),
         })
 
+    elif typ in ('ZAL_4A', 'ZAL_4a'):
+        from core.modele import LearningOutcome, CommitteeOutcomeEvaluation
+        wszystkie_efekty = db.session.query(LearningOutcome).order_by(LearningOutcome.id).all()
+        oceny_map = {
+            e.learning_outcome_id: e
+            for e in CommitteeOutcomeEvaluation.query.filter_by(enrollment_id=zapis.id).all()
+        }
+        gender = _g(s, 'gender', '') or ''
+        if gender == 'M':
+            forma = {'pos': 'uzyskał', 'par': 'uzyskał częściowo', 'neg': 'nie uzyskał'}
+        elif gender == 'F':
+            forma = {'pos': 'uzyskała', 'par': 'uzyskała częściowo', 'neg': 'nie uzyskała'}
+        else:
+            forma = {'pos': 'uzyskał/a', 'par': 'uzyskał/a częściowo', 'neg': 'nie uzyskał/a'}
+        ctx['oceny_komisji'] = [
+            {
+                'efekt_kod':  str(e.id).zfill(2),
+                'efekt_opis': _g(e, 'opis') or _g(e, 'description', ''),
+                'wynik':      oceny_map[e.id].result.value if e.id in oceny_map else None,
+                'uwagi':      (oceny_map[e.id].notes or '') if e.id in oceny_map else '',
+            }
+            for e in wszystkie_efekty
+        ]
+        ctx['forma']             = forma
+        ctx['komentarz_komisji'] = zapis.komentarze_komisji or ''
+
     return ctx

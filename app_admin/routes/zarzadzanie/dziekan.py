@@ -13,7 +13,8 @@ from wtforms.validators import DataRequired, Email, Length, Optional, Validation
 from werkzeug.security import generate_password_hash
 
 from core.modele import (User, Student, Internship, InternshipEnrollment, InternshipSchedule, LearningOutcome,
-                    UserRole, InternshipStatus, EnrollmentStatus, UploadedDocument, Company)
+                    UserRole, InternshipStatus, EnrollmentStatus, UploadedDocument, Company,
+                    CommitteeOutcomeEvaluation)
 from core.extensions import db
 from core.uslugi import UslugaUzytkownikow as _UslugaUzytkownikow
 _serwis_uzytkownikow = _UslugaUzytkownikow()
@@ -50,39 +51,37 @@ def dziekan_decyzja(id):
         return redirect(url_for('zarzadzanie.dziekan_lista'))
 
     class FormularzDyrektora(FlaskForm):
-        decyzja   = SelectField('Decyzja Dyrektora Instytutu', choices=[
-            ('APPROVED', 'Wyrażam zgodę na zaliczenie praktyki'),
-            ('REJECTED', 'Nie wyrażam zgody na zaliczenie'),
-        ], validators=[DataRequired()])
         komentarz = TextAreaField('Komentarz dyrektora', validators=[Optional()])
-        submit    = SubmitField('Zapisz decyzję')
 
     form = FormularzDyrektora()
 
     if form.validate_on_submit():
-        from core.uslugi.workflow import ZapisFSM, IllegalTransitionError
+        decyzja = request.form.get('decyzja')
+        if decyzja not in ('APPROVED', 'REJECTED'):
+            flash('Wybierz decyzję (jeden z dwóch przycisków).', 'warning')
+        else:
+            from core.uslugi.workflow import ZapisFSM, IllegalTransitionError
+            try:
+                with ZapisFSM.lock(id) as fsm:
+                    if fsm.zapis.status != EnrollmentStatus.DIRECTOR_APPROVAL:
+                        flash('Wniosek zmienił status podczas przetwarzania — spróbuj ponownie.', 'warning')
+                        return redirect(url_for('zarzadzanie.dziekan_lista'))
 
-        try:
-            with ZapisFSM.lock(id) as fsm:
-                if fsm.zapis.status != EnrollmentStatus.DIRECTOR_APPROVAL:
-                    flash('Wniosek zmienił status podczas przetwarzania — spróbuj ponownie.', 'warning')
-                    return redirect(url_for('zarzadzanie.dziekan_lista'))
+                    komentarz = form.komentarz.data or ''
+                    if decyzja == 'APPROVED':
+                        fsm.zatwierdz_przez_dyrektora(actor_id=current_user.id, comment=komentarz)
+                        flash('Wniosek zatwierdzony przez Dyrektora Instytutu. Student może kontynuować praktykę.', 'success')
+                    else:
+                        from core.modele.praktyki import EventType
+                        fsm.odrzuc(actor_id=current_user.id,
+                                   comment=f"Dyrektor nie wyraził zgody: {komentarz}",
+                                   event_type=EventType.DIRECTOR_DECISION)
+                        flash('Wniosek odrzucony przez Dyrektora Instytutu.', 'warning')
 
-                komentarz = form.komentarz.data or ''
-                if form.decyzja.data == 'APPROVED':
-                    fsm.zatwierdz_przez_dyrektora(actor_id=current_user.id, comment=komentarz)
-                    flash('Wniosek zatwierdzony przez Dyrektora Instytutu. Student może kontynuować praktykę.', 'success')
-                else:
-                    from core.modele.praktyki import EventType
-                    fsm.odrzuc(actor_id=current_user.id,
-                               comment=f"Dyrektor nie wyraził zgody: {komentarz}",
-                               event_type=EventType.DIRECTOR_DECISION)
-                    flash('Wniosek odrzucony przez Dyrektora Instytutu.', 'warning')
-
-                db.session.commit()
-        except IllegalTransitionError as e:
-            flash(str(e), 'danger')
-        return redirect(url_for('zarzadzanie.dziekan_lista'))
+                    db.session.commit()
+            except IllegalTransitionError as e:
+                flash(str(e), 'danger')
+            return redirect(url_for('zarzadzanie.dziekan_lista'))
 
     dokumenty = (
         db.session.query(UploadedDocument)
@@ -90,4 +89,11 @@ def dziekan_decyzja(id):
         .order_by(UploadedDocument.uploaded_at.desc())
         .all()
     )
-    return render_template('zarzadzanie/dziekan/decyzja.html', form=form, zapis=zapis, dokumenty=dokumenty)
+    efekty = LearningOutcome.query.order_by(LearningOutcome.id).all()
+    oceny_komisji = {
+        e.learning_outcome_id: e
+        for e in CommitteeOutcomeEvaluation.query.filter_by(enrollment_id=id).all()
+    }
+    return render_template('zarzadzanie/dziekan/decyzja.html',
+                           form=form, zapis=zapis, dokumenty=dokumenty,
+                           efekty=efekty, oceny_komisji=oceny_komisji)

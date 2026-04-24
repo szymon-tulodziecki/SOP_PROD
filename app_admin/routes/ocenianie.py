@@ -43,6 +43,9 @@ def lista_ocen():
     SerwisOceniania.auto_complete_internships()
 
     uopz_id = current_user.id if current_user.role == UserRole.UOPZ else None
+    from core.modele.praktyki import InternshipPath
+    _PATH_B = (InternshipPath.EMPLOYMENT, InternshipPath.OWN_BUSINESS)
+
     zapisy  = _repo_zapisow.aktywne_i_zakonczone(supervisor_id=uopz_id)
 
     from datetime import date, timedelta
@@ -52,6 +55,7 @@ def lista_ocen():
         deadline = None
         dni_do_deadline = None
         przekroczony = False
+        is_path_b = zapis.path_type in _PATH_B
 
         if zapis.end_date and zapis.status == EnrollmentStatus.COMPLETED:
             deadline = zapis.end_date + timedelta(days=7)
@@ -65,14 +69,21 @@ def lista_ocen():
             'przekroczony': przekroczony,
             'w_trakcie': zapis.status == EnrollmentStatus.IN_PROGRESS,
             'zakonczona': zapis.status == EnrollmentStatus.COMPLETED,
+            'is_path_b': is_path_b,
         })
-
-    zakonczone = [z for z in zapisy_z_deadlinami if z['zakonczona']]
 
     def _ma_oceny(p):
         fg = p.final_grades
-        return bool(fg and fg.supervisor_grade is not None
-                    and fg.report_grade is not None and fg.workplace_grade is not None)
+        if not fg:
+            return False
+        if p.path_type in _PATH_B:
+            return fg.report_grade is not None and p.exam_grade is not None
+        return (fg.supervisor_grade is not None
+                and fg.report_grade is not None and fg.workplace_grade is not None)
+
+    # path B IN_PROGRESS also appear — UOPZ grades them immediately after Director approves
+    zakonczone = [z for z in zapisy_z_deadlinami
+                  if z['zakonczona'] or (z['w_trakcie'] and z['is_path_b'])]
 
     for z in zakonczone:
         z['oceniony'] = _ma_oceny(z['zapis'])

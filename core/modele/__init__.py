@@ -65,6 +65,7 @@ from core.modele.dziennik import (
     entry_outcomes,
     JournalEntry,
     OutcomeAssessment,
+    CommitteeOutcomeEvaluation,
     # backward-compat aliases
     WynikOceny,
     EfektUczenia,
@@ -106,7 +107,7 @@ __all__ = [
     'IndywidualnyProgram', 'NumerPisma',
     # dziennik — English
     'AssessmentResult', 'LearningOutcome', 'entry_outcomes',
-    'JournalEntry', 'OutcomeAssessment',
+    'JournalEntry', 'OutcomeAssessment', 'CommitteeOutcomeEvaluation',
     # dziennik — compat
     'WynikOceny', 'EfektUczenia', 'wpisy_efekty', 'WpisDziennika', 'OcenaPraktyki',
     # dokumenty — English

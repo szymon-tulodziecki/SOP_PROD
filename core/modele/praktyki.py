@@ -457,11 +457,15 @@ class InternshipEnrollment(db.Model):
 
     @hybrid_property
     def final_grade(self):
-        """Final grade: 0.4E + 0.1S + 0.2U + 0.3Z."""
+        """Final grade: path A = 0.4E+0.1S+0.2U+0.3Z, path B = 0.9E+0.1S."""
         if self.final_grades is None:
             return None
         e = self.exam_grade
-        s = float(self.final_grades.report_grade)    if self.final_grades.report_grade    is not None else None
+        s = float(self.final_grades.report_grade) if self.final_grades.report_grade is not None else None
+        if self.path_type in (InternshipPath.EMPLOYMENT, InternshipPath.OWN_BUSINESS):
+            if None in (e, s):
+                return None
+            return round(0.9 * e + 0.1 * s, 2)
         u = float(self.final_grades.supervisor_grade) if self.final_grades.supervisor_grade is not None else None
         z = float(self.final_grades.workplace_grade)  if self.final_grades.workplace_grade  is not None else None
         if None in (e, s, u, z):

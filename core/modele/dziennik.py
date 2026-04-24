@@ -125,6 +125,26 @@ class OutcomeAssessment(db.Model):
         return self.learning_outcome
 
 
+class CommitteeOutcomeEvaluation(db.Model):
+    """Commission's per-outcome evaluation (Załącznik 4a) for path B submissions."""
+    __tablename__ = 'committee_outcome_evaluations'
+
+    id                  = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    enrollment_id       = db.Column(UUID(as_uuid=True), db.ForeignKey('internship_enrollments.id', ondelete='CASCADE'), nullable=False)
+    learning_outcome_id = db.Column(db.Integer, db.ForeignKey('learning_outcomes.id'), nullable=False)
+    result              = db.Column(
+        db.Enum(AssessmentResult, name='assessment_result', values_callable=lambda e: [x.value for x in e]),
+        nullable=False,
+    )
+    notes = db.Column(db.Text, nullable=True)
+
+    learning_outcome = db.relationship('LearningOutcome', lazy='select')
+
+    __table_args__ = (
+        db.UniqueConstraint('enrollment_id', 'learning_outcome_id', name='uq_committee_outcome_enrollment'),
+    )
+
+
 # Backward-compat aliases
 WynikOceny    = AssessmentResult
 EfektUczenia  = LearningOutcome

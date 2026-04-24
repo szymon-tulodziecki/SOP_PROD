@@ -40,6 +40,8 @@
     {% set status_label = status_val %}
   {% endif %}
 
+  {% set form_active = status_val in ['COMMISSION_REVIEW', 'AWAITING_APPROVAL'] %}
+
   <div style="background: var(--kolor-biale); border-radius: var(--promien-duzy); border-top: 4px solid {{ border_color }}; box-shadow: var(--cien-karta); margin-bottom: 2rem; overflow: hidden;">
     <div style="padding: 1.75rem 2rem; display: grid; grid-template-columns: auto 1fr auto; gap: 2rem; align-items: center;">
 
@@ -88,6 +90,7 @@
   </div>
 
   {# ── Główna siatka treści ── #}
+  {% if form_active %}<form method="POST">{{ form.hidden_tag() }}{% endif %}
   <div style="display: grid; grid-template-columns: 1fr 480px; gap: 1.5rem; align-items: start;">
 
     {# ═══ LEWA KOLUMNA ═══ #}
@@ -172,52 +175,129 @@
       </div>
       {% endif %}
 
+      {# ── Weryfikacja efektów uczenia się (Zał. 4a) — tylko gdy formularz aktywny ── #}
+      {% if form_active %}
+      <div class="karta">
+        <div class="karta__naglowek">
+          <h3 class="karta__tytul">Weryfikacja efektów uczenia się <span style="font-size: 0.75rem; font-weight: 400; color: var(--kolor-tekst-trzeciorzed);">Załącznik nr 4a</span></h3>
+        </div>
+        <div class="karta__tresc" style="padding: 0;">
+          <table class="tabela-efektow">
+            <thead>
+              <tr>
+                <th style="width: 3rem;">Nr</th>
+                <th>Efekt uczenia się</th>
+                <th style="width: 7rem; text-align: center;">Uzyskał/a</th>
+                <th style="width: 9rem; text-align: center;">Częściowo</th>
+                <th style="width: 7.5rem; text-align: center;">Nie uzyskał/a</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for efekt in efekty %}
+              {% set ev = istniejace.get(efekt.id) %}
+              <tr>
+                <td class="nr-efektu">{{ efekt.kod }}</td>
+                <td style="font-size: 0.85rem; line-height: 1.5; color: var(--kolor-tekst);">{{ efekt.opis }}</td>
+                <td class="radio-cell">
+                  <input type="radio" name="outcome_{{ efekt.id }}" value="ACHIEVED"
+                         class="radio-efekt" data-outcome="{{ efekt.id }}"
+                         {% if ev and ev.result.value == 'ACHIEVED' %}checked{% endif %}
+                         required>
+                </td>
+                <td class="radio-cell">
+                  <input type="radio" name="outcome_{{ efekt.id }}" value="PARTIALLY_ACHIEVED"
+                         class="radio-efekt" data-outcome="{{ efekt.id }}"
+                         {% if ev and ev.result.value == 'PARTIALLY_ACHIEVED' %}checked{% endif %}>
+                </td>
+                <td class="radio-cell">
+                  <input type="radio" name="outcome_{{ efekt.id }}" value="NOT_ACHIEVED"
+                         class="radio-efekt" data-outcome="{{ efekt.id }}"
+                         {% if ev and ev.result.value == 'NOT_ACHIEVED' %}checked{% endif %}>
+                </td>
+              </tr>
+              <tr id="notes_row_{{ efekt.id }}"
+                  style="display: {% if ev and ev.result.value == 'PARTIALLY_ACHIEVED' %}table-row{% else %}none{% endif %}; background: #fffbeb;">
+                <td></td>
+                <td colspan="4" style="padding: 0.5rem 1rem 0.75rem;">
+                  <label style="font-size: 0.75rem; font-weight: 600; color: #92400e; display: block; margin-bottom: 0.3rem;">
+                    Uzasadnienie (wymagane)
+                  </label>
+                  <textarea name="notes_{{ efekt.id }}"
+                            class="pole-formularza__textarea"
+                            rows="2"
+                            placeholder="Opisz, w jakim zakresie efekt został częściowo uzyskany…"
+                            style="width: 100%; box-sizing: border-box; font-size: 0.85rem; border-color: #d97706; resize: vertical;"
+                            {% if ev and ev.result.value == 'PARTIALLY_ACHIEVED' %}required{% endif %}>{% if ev and ev.notes %}{{ ev.notes }}{% endif %}</textarea>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {% endif %}
+
     </div>
 
     {# ═══ PRAWA KOLUMNA ═══ #}
     <div style="display: flex; flex-direction: column; gap: 1.5rem; position: sticky; top: 1.5rem;">
 
-      {# Formularz decyzji komisji #}
+      {# Panel decyzji komisji #}
+      {% if form_active %}
       <div class="karta">
         <div class="karta__naglowek">
-          <h3 class="karta__tytul">Decyzja komisji</h3>
+          <h3 class="karta__tytul">Opinia komisji</h3>
+          <span style="font-size: 0.75rem; color: var(--kolor-tekst-trzeciorzed);">Wszystkie opcje przekazują do Dyrektora</span>
         </div>
         <div class="karta__tresc">
-          {% if zapis.status.value == 'REVISION_REQUIRED' %}
-          <div style="text-align: center; padding: 1rem 0.5rem;">
-            <div style="width: 48px; height: 48px; border-radius: 50%; background: #fef2f2; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; font-size: 1.35rem; color: #dc2626;">!</div>
-            <div style="font-weight: 700; color: #991b1b; font-size: 1rem; margin-bottom: 0.4rem;">Oczekiwanie na poprawki studenta</div>
-            <div style="color: var(--kolor-tekst-drugor); font-size: 0.875rem; line-height: 1.5;">Zgłoszenie zostało zwrócone do studenta. Po nadesłaniu poprawek pojawi się tu ponownie do zatwierdzenia.</div>
+          <div style="margin-bottom: 1.25rem;">
+            <label class="pole-formularza__etykieta" style="display: block; margin-bottom: 0.4rem;">Komentarz ogólny <span style="font-weight: 400; color: var(--kolor-tekst-trzeciorzed);">(opcjonalny)</span></label>
+            {{ form.komentarz(class="pole-formularza__textarea", rows="5",
+               placeholder="Uwagi dla Dyrektora widoczne w dokumentacji…",
+               style="width: 100%; box-sizing: border-box;") }}
           </div>
-          {% else %}
-          <form method="POST">
-            {{ form.hidden_tag() }}
 
-            <div style="margin-bottom: 1.25rem;">
-              {{ form.decyzja.label(class="pole-formularza__etykieta", style="display: block; margin-bottom: 0.4rem;") }}
-              {{ form.decyzja(class="pole-formularza__select") }}
-              {% for error in form.decyzja.errors %}
-                <span class="pole-formularza__blad">{{ error }}</span>
-              {% endfor %}
-            </div>
-
-            <div style="margin-bottom: 1.25rem;">
-              <label class="pole-formularza__etykieta" style="display: block; margin-bottom: 0.4rem;">Komentarz <span style="font-weight: 400; color: var(--kolor-tekst-trzeciorzed);">(opcjonalny)</span></label>
-              {{ form.komentarz(class="pole-formularza__textarea", rows="7", placeholder="Uzasadnienie decyzji widoczne dla studenta i dziekana…", style="width: 100%; box-sizing: border-box;") }}
-              {% for error in form.komentarz.errors %}
-                <span class="pole-formularza__blad">{{ error }}</span>
-              {% endfor %}
-            </div>
-
-            <div style="border-top: 1px solid var(--kolor-ramka); padding-top: 1.25rem; display: flex; flex-direction: column; gap: 0.5rem;">
-              {{ form.submit(class="przycisk przycisk--glowny", style="width: 100%; justify-content: center;") }}
-              <a href="{{ url_for('zarzadzanie.komisja_lista') }}" class="przycisk przycisk--drugorzedny" style="width: 100%; justify-content: center; text-align: center;">Anuluj</a>
-            </div>
-
-          </form>
-          {% endif %}
+          <div style="border-top: 1px solid var(--kolor-ramka); padding-top: 1.25rem; display: flex; flex-direction: column; gap: 0.625rem;">
+            <button type="submit" name="opinia" value="APPROVED"
+                    class="przycisk przycisk--glowny"
+                    style="width: 100%; justify-content: center; text-align: center;">
+              Opinia Pozytywna
+            </button>
+            <button type="submit" name="opinia" value="PARTIALLY_APPROVED"
+                    class="przycisk przycisk--ostrzezenie"
+                    style="width: 100%; justify-content: center; text-align: center;">
+              Opinia Częściowo Pozytywna
+            </button>
+            <button type="submit" name="opinia" value="REJECTED"
+                    class="przycisk przycisk--niebezpieczny"
+                    style="width: 100%; justify-content: center; text-align: center;">
+              Opinia Negatywna
+            </button>
+            <a href="{{ url_for('zarzadzanie.komisja_lista') }}"
+               class="przycisk przycisk--drugorzedny"
+               style="width: 100%; justify-content: center; text-align: center;">Anuluj</a>
+          </div>
         </div>
       </div>
+
+      {% elif status_val == 'REVISION_REQUIRED' %}
+      <div class="karta">
+        <div class="karta__tresc" style="text-align: center; padding: 2rem 1.5rem;">
+          <div style="width: 48px; height: 48px; border-radius: 50%; background: #fef2f2; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; font-size: 1.35rem; color: #dc2626;">!</div>
+          <div style="font-weight: 700; color: #991b1b; font-size: 1rem; margin-bottom: 0.4rem;">Oczekiwanie na poprawki studenta</div>
+          <div style="color: var(--kolor-tekst-drugor); font-size: 0.875rem; line-height: 1.5;">Zgłoszenie zostało zwrócone do studenta. Po nadesłaniu poprawek pojawi się tu ponownie do zatwierdzenia.</div>
+        </div>
+      </div>
+
+      {% else %}
+      <div class="karta">
+        <div class="karta__tresc" style="text-align: center; padding: 2rem 1.5rem;">
+          <div style="width: 48px; height: 48px; border-radius: 50%; background: #d1fae5; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; font-size: 1.35rem; color: var(--kolor-sukces);">✓</div>
+          <div style="font-weight: 700; color: var(--kolor-sukces); font-size: 1rem; margin-bottom: 0.4rem;">Opinia przekazana do Dyrektora</div>
+          <div style="color: var(--kolor-tekst-drugor); font-size: 0.875rem; line-height: 1.5;">Wniosek oczekuje na decyzję Dyrektora Instytutu.</div>
+        </div>
+      </div>
+      {% endif %}
 
       {# Historia decyzji #}
       {% if zapis.decyzja_komisji or zapis.decyzja_dziekana %}
@@ -230,10 +310,10 @@
           <div style="padding: 1rem; border: 1px solid var(--kolor-ramka); border-radius: var(--promien); background: var(--kolor-tlo);">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
               <span style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--kolor-tekst-trzeciorzed);">Komisja ds. praktyk</span>
-              <span class="status {% if zapis.decyzja_komisji == 'APPROVED' %}status--completed{% elif zapis.decyzja_komisji == 'PARTIALLY_APPROVED' %}status--in-progress{% else %}status--draft{% endif %}">
-                {% if zapis.decyzja_komisji == 'APPROVED' %}Zatwierdzone
-                {% elif zapis.decyzja_komisji == 'PARTIALLY_APPROVED' %}Częściowo zatwierdzone
-                {% else %}Odrzucone{% endif %}
+              <span class="status {% if zapis.decyzja_komisji == 'APPROVED' %}status--completed{% elif zapis.decyzja_komisji == 'PARTIALLY_APPROVED' %}status--in-progress{% else %}status--odrzucona{% endif %}">
+                {% if zapis.decyzja_komisji == 'APPROVED' %}Opinia pozytywna
+                {% elif zapis.decyzja_komisji == 'PARTIALLY_APPROVED' %}Opinia częściowo pozytywna
+                {% else %}Opinia negatywna{% endif %}
               </span>
             </div>
             {% if zapis.komentarze_komisji %}
@@ -245,7 +325,7 @@
           <div style="padding: 1rem; border: 1px solid var(--kolor-ramka); border-radius: var(--promien); background: var(--kolor-tlo);">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
               <span style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--kolor-tekst-trzeciorzed);">Dyrektor IIS</span>
-              <span class="status {% if zapis.decyzja_dziekana == 'APPROVED' %}status--completed{% else %}status--draft{% endif %}">
+              <span class="status {% if zapis.decyzja_dziekana == 'APPROVED' %}status--completed{% else %}status--odrzucona{% endif %}">
                 {{ 'Zatwierdzone' if zapis.decyzja_dziekana == 'APPROVED' else 'Odrzucone' }}
               </span>
             </div>
@@ -273,6 +353,7 @@
     </div>
 
   </div>
+  {% if form_active %}</form>{% endif %}
 
 </div>
 
@@ -290,6 +371,72 @@
   color: var(--kolor-tekst);
   line-height: 1.45;
 }
+
+/* Tabela efektów uczenia się */
+.tabela-efektow {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+.tabela-efektow thead th {
+  padding: 0.75rem 1rem;
+  background: var(--kolor-tlo);
+  border-bottom: 2px solid var(--kolor-ramka);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--kolor-tekst-trzeciorzed);
+}
+.tabela-efektow tbody tr {
+  border-bottom: 1px solid var(--kolor-ramka);
+}
+.tabela-efektow tbody tr:last-child {
+  border-bottom: none;
+}
+.tabela-efektow tbody tr:hover {
+  background: var(--kolor-tlo);
+}
+.tabela-efektow td {
+  padding: 0.75rem 1rem;
+  vertical-align: top;
+}
+.nr-efektu {
+  font-weight: 700;
+  color: var(--kolor-glowny);
+  font-size: 0.8rem;
+  vertical-align: middle !important;
+}
+.radio-cell {
+  text-align: center;
+  vertical-align: middle !important;
+}
+.radio-efekt {
+  width: 1.1rem;
+  height: 1.1rem;
+  cursor: pointer;
+  accent-color: var(--kolor-glowny);
+}
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  document.querySelectorAll('.radio-efekt').forEach(function (radio) {
+    radio.addEventListener('change', function () {
+      var outcomeId  = this.dataset.outcome;
+      var notesRow   = document.getElementById('notes_row_' + outcomeId);
+      var isPartial  = this.value === 'PARTIALLY_ACHIEVED';
+      if (notesRow) {
+        notesRow.style.display = isPartial ? 'table-row' : 'none';
+        var ta = notesRow.querySelector('textarea');
+        if (ta) {
+          ta.required = isPartial;
+          if (!isPartial) ta.value = '';
+        }
+      }
+    });
+  });
+});
+</script>
 
 {% endblock %}

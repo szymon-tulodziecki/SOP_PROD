@@ -95,7 +95,9 @@ class SerwisOceniania:
         sp.commission_member_3 = (dane.commission_member_3 or '').strip() or None
 
         if dane.finalize:
-            missing = SerwisOceniania._waliduj_kompletnosc(ok, sp)
+            from core.modele.praktyki import InternshipPath
+            is_path_b = zapis.path_type in (InternshipPath.EMPLOYMENT, InternshipPath.OWN_BUSINESS)
+            missing = SerwisOceniania._waliduj_kompletnosc(ok, sp, is_path_b=is_path_b)
             if missing:
                 db.session.rollback()
                 return GradeResult(success=False, missing_fields=missing)
@@ -108,12 +110,14 @@ class SerwisOceniania:
         return GradeResult(success=True, missing_fields=[])
 
     @staticmethod
-    def _waliduj_kompletnosc(ok, sp) -> list[str]:
+    def _waliduj_kompletnosc(ok, sp, is_path_b: bool = False) -> list[str]:
         """Zwraca listę brakujących ocen. Pusta lista = komplet."""
         missing = []
-        if ok.report_grade    is None: missing.append('ocena sprawozdania')
-        if ok.supervisor_grade is None: missing.append('ocena UOPZ')
-        if ok.workplace_grade  is None: missing.append('ocena ZOPZ')
+        if ok.report_grade is None:
+            missing.append('ocena sprawozdania (S)')
+        if not is_path_b:
+            if ok.supervisor_grade is None: missing.append('ocena UOPZ (U)')
+            if ok.workplace_grade  is None: missing.append('ocena ZOPZ (Z)')
         if sp.grade_1 is None and sp.grade_2 is None and sp.grade_3 is None:
             missing.append('co najmniej jedna ocena ze sprawdzianu')
         return missing

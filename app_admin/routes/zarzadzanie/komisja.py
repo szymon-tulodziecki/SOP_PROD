@@ -41,8 +41,9 @@ def komisja_lista():
 @wymaga_roli(UserRole.ADMIN, UserRole.KOMISJA)
 def komisja_weryfikuj(id):
     from flask_wtf import FlaskForm
-    from wtforms import TextAreaField, SelectField, SubmitField
-    from wtforms.validators import DataRequired, Optional
+    from wtforms import TextAreaField
+    from wtforms.validators import Optional
+    from core.modele import CommitteeOutcomeEvaluation, AssessmentResult
 
     zapis = db.session.get(InternshipEnrollment, id) or abort(404)
 
@@ -51,46 +52,88 @@ def komisja_weryfikuj(id):
         return redirect(url_for('zarzadzanie.komisja_lista'))
 
     class FormularzKomisji(FlaskForm):
-        decyzja   = SelectField('Decyzja komisji', choices=[
-            ('APPROVED',           'Zatwierdzam - kieruję do Dyrektora Instytutu'),
-            ('PARTIALLY_APPROVED', 'Zatwierdzam częściowo - wymaga uzupełnień'),
-            ('REJECTED',           'Odrzucam wniosek'),
-        ], validators=[DataRequired()])
-        komentarz = TextAreaField('Komentarz komisji', validators=[Optional()])
-        submit    = SubmitField('Zapisz decyzję')
+        komentarz = TextAreaField('Komentarz ogólny komisji', validators=[Optional()])
 
     form = FormularzKomisji()
+    efekty = LearningOutcome.query.order_by(LearningOutcome.id).all()
+
+    ACTIVE_STATUSES = (EnrollmentStatus.COMMISSION_REVIEW, EnrollmentStatus.AWAITING_APPROVAL)
 
     if form.validate_on_submit():
-        from core.uslugi.workflow import ZapisFSM, IllegalTransitionError
+        if zapis.status not in ACTIVE_STATUSES:
+            flash('Wniosek nie jest w stanie umożliwiającym decyzję komisji.', 'warning')
+            return redirect(url_for('zarzadzanie.komisja_lista'))
 
+        opinia = request.form.get('opinia')
+        if opinia not in ('APPROVED', 'PARTIALLY_APPROVED', 'REJECTED'):
+            flash('Wybierz opinię komisji (jeden z trzech przycisków).', 'warning')
+            istniejace = {e.learning_outcome_id: e for e in CommitteeOutcomeEvaluation.query.filter_by(enrollment_id=id).all()}
+            dokumenty  = _repo_docs.dla_zapisu_studenta(id, zapis.student_id)
+            return render_template('zarzadzanie/komisja/weryfikuj.html',
+                                   form=form, zapis=zapis, dokumenty=dokumenty,
+                                   efekty=efekty, istniejace=istniejace)
+
+        errors     = []
+        evaluations = []
+        for efekt in efekty:
+            wynik_val = request.form.get(f'outcome_{efekt.id}')
+            if not wynik_val:
+                errors.append(f'Efekt {efekt.kod}: brak oceny')
+                continue
+            notes_val = request.form.get(f'notes_{efekt.id}', '').strip()
+            if wynik_val == 'PARTIALLY_ACHIEVED' and not notes_val:
+                errors.append(f'Efekt {efekt.kod}: wymagane uzasadnienie dla wyniku „Uzyskał/a częściowo"')
+            evaluations.append((efekt.id, wynik_val, notes_val))
+
+        if errors:
+            for err in errors:
+                flash(err, 'danger')
+            istniejace = {e.learning_outcome_id: e for e in CommitteeOutcomeEvaluation.query.filter_by(enrollment_id=id).all()}
+            dokumenty  = _repo_docs.dla_zapisu_studenta(id, zapis.student_id)
+            return render_template('zarzadzanie/komisja/weryfikuj.html',
+                                   form=form, zapis=zapis, dokumenty=dokumenty,
+                                   efekty=efekty, istniejace=istniejace)
+
+        from core.uslugi.workflow import ZapisFSM, IllegalTransitionError
         try:
             with ZapisFSM.lock(id) as fsm:
-                if fsm.zapis.status not in (EnrollmentStatus.COMMISSION_REVIEW, EnrollmentStatus.AWAITING_APPROVAL, EnrollmentStatus.REVISION_REQUIRED):
+                if fsm.zapis.status not in ACTIVE_STATUSES:
                     flash('Wniosek zmienił status podczas przetwarzania — spróbuj ponownie.', 'warning')
                     return redirect(url_for('zarzadzanie.komisja_lista'))
 
-                komentarz = form.komentarz.data or ''
-                if form.decyzja.data == 'APPROVED':
-                    fsm.zatwierdz_przez_komisje(actor_id=current_user.id, comment=komentarz)
-                    flash('Wniosek zatwierdzony i przekazany do Dyrektora Instytutu.', 'success')
-                elif form.decyzja.data == 'PARTIALLY_APPROVED':
-                    fsm.zadaj_poprawki(actor_id=current_user.id, comment=komentarz)
-                    flash('Wniosek wymaga uzupełnień - student zostanie powiadomiony.', 'info')
-                else:
-                    from core.modele.praktyki import EventType
-                    fsm.odrzuc(actor_id=current_user.id,
-                               comment=f"Wniosek odrzucony przez komisję: {komentarz}",
-                               event_type=EventType.COMMITTEE_DECISION)
-                    flash('Wniosek został odrzucony.', 'warning')
+                for outcome_id, wynik_val, notes_val in evaluations:
+                    existing = CommitteeOutcomeEvaluation.query.filter_by(
+                        enrollment_id=id, learning_outcome_id=outcome_id
+                    ).first()
+                    if existing:
+                        existing.result = AssessmentResult(wynik_val)
+                        existing.notes  = notes_val or None
+                    else:
+                        db.session.add(CommitteeOutcomeEvaluation(
+                            enrollment_id=id,
+                            learning_outcome_id=outcome_id,
+                            result=AssessmentResult(wynik_val),
+                            notes=notes_val or None,
+                        ))
 
+                komentarz = form.komentarz.data or ''
+                fsm.wyslij_do_dyrektora(decision=opinia, actor_id=current_user.id, comment=komentarz)
                 db.session.commit()
+
+            _LABELS = {
+                'APPROVED':           'Opinia pozytywna',
+                'PARTIALLY_APPROVED': 'Opinia częściowo pozytywna',
+                'REJECTED':           'Opinia negatywna',
+            }
+            flash(f'{_LABELS[opinia]} — wniosek przekazany do Dyrektora Instytutu.', 'success')
         except IllegalTransitionError as e:
             flash(str(e), 'danger')
         return redirect(url_for('zarzadzanie.komisja_lista'))
 
-    dokumenty = _repo_docs.dla_zapisu_studenta(id, zapis.student_id)
+    istniejace = {e.learning_outcome_id: e for e in CommitteeOutcomeEvaluation.query.filter_by(enrollment_id=id).all()}
+    dokumenty  = _repo_docs.dla_zapisu_studenta(id, zapis.student_id)
     return render_template('zarzadzanie/komisja/weryfikuj.html',
-                           form=form, zapis=zapis, dokumenty=dokumenty)
+                           form=form, zapis=zapis, dokumenty=dokumenty,
+                           efekty=efekty, istniejace=istniejace)
 
 

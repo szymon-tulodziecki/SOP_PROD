@@ -437,6 +437,44 @@
       </div>
       {% endif %}
 
+      {# Historia decyzji #}
+      {% if zapis.decyzja_komisji or zapis.decyzja_dziekana %}
+      <div class="karta">
+        <div class="karta__naglowek">
+          <h3 class="karta__tytul">Historia decyzji</h3>
+        </div>
+        <div class="karta__tresc" style="display: flex; flex-direction: column; gap: 1rem;">
+          {% if zapis.decyzja_komisji %}
+          <div style="padding: 1rem; border: 1px solid var(--kolor-ramka); border-radius: var(--promien); background: var(--kolor-tlo);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+              <span style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--kolor-tekst-trzeciorzed);">Komisja ds. praktyk</span>
+              <span class="status {% if zapis.decyzja_komisji == 'APPROVED' %}status--completed{% elif zapis.decyzja_komisji == 'PARTIALLY_APPROVED' %}status--in-progress{% else %}status--odrzucona{% endif %}">
+                {% if zapis.decyzja_komisji == 'APPROVED' %}Opinia pozytywna
+                {% elif zapis.decyzja_komisji == 'PARTIALLY_APPROVED' %}Opinia częściowo pozytywna
+                {% else %}Opinia negatywna{% endif %}
+              </span>
+            </div>
+            {% if zapis.komentarze_komisji %}
+            <p style="font-size: 0.85rem; color: var(--kolor-tekst-drugor); line-height: 1.5; margin: 0;">{{ zapis.komentarze_komisji }}</p>
+            {% endif %}
+          </div>
+          {% endif %}
+          {% if zapis.decyzja_dziekana %}
+          <div style="padding: 1rem; border: 1px solid var(--kolor-ramka); border-radius: var(--promien); background: var(--kolor-tlo);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+              <span style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--kolor-tekst-trzeciorzed);">Dyrektor IIS</span>
+              <span class="status {% if zapis.decyzja_dziekana == 'APPROVED' %}status--completed{% else %}status--odrzucona{% endif %}">
+                {{ 'Zatwierdzone' if zapis.decyzja_dziekana == 'APPROVED' else 'Odrzucone' }}
+              </span>
+            </div>
+            {% if zapis.komentarze_dziekana %}
+            <p style="font-size: 0.85rem; color: var(--kolor-tekst-drugor); line-height: 1.5; margin: 0;">{{ zapis.komentarze_dziekana }}</p>
+            {% endif %}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
 
     </div>
 
