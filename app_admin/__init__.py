@@ -102,18 +102,8 @@ def create_app():
 
     @app.context_processor
     def inject_tlumacz():
-        return dict(tlumacz_status=lambda val: {
-            'PENDING':            'Oczekuje na wysłanie',
-            'AWAITING_APPROVAL':  'Oczekuje na zatwierdzenie',
-            'COMMISSION_REVIEW':  'Weryfikacja komisji',
-            'REVISION_REQUIRED':  'Wymaga uzupełnień',
-            'DIRECTOR_APPROVAL':  'Oczekuje na dyrektora',
-            'IN_PROGRESS':        'W trakcie',
-            'COMPLETED':          'Zakończona',
-            'REJECTED':           'Odrzucone',
-            'ACTIVE':             'Aktywna',
-            'INACTIVE':           'Nieaktywna',
-        }.get(val, val))
+        from core.tlumaczenia import tlumacz_status
+        return dict(tlumacz_status=tlumacz_status)
 
 
     return app

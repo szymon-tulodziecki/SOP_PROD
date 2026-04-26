@@ -13,16 +13,10 @@ from core.modele.uzytkownicy import (
     UniversityMentor,
     KomisjaUser,
     DyrektorUser,
-    # backward-compat aliases
-    RolaUzytkownika,
-    Uzytkownik,
-    OpikunUczelniany,
 )
 
 from core.modele.firmy import (
     Company,
-    # backward-compat alias
-    Firma,
 )
 
 from core.modele.praktyki import (
@@ -41,22 +35,6 @@ from core.modele.praktyki import (
     InternshipReport,
     IndividualProgram,
     DocumentNumber,
-    # backward-compat aliases
-    StatusPraktyki,
-    StatusZapisu,
-    SciezkaPraktyki,
-    TypZdarzenia,
-    Praktyka,
-    ZapisPraktyki,
-    DaneMiejscaPraktyki,
-    UzasadnienieSciezki,
-    Sprawdzian,
-    OcenyKoncowe,
-    ZdarzenieProces,
-    HarmonogramPraktyki,
-    Sprawozdanie,
-    IndywidualnyProgram,
-    NumerPisma,
 )
 
 from core.modele.dziennik import (
@@ -66,52 +44,29 @@ from core.modele.dziennik import (
     JournalEntry,
     OutcomeAssessment,
     CommitteeOutcomeEvaluation,
-    # backward-compat aliases
-    WynikOceny,
-    EfektUczenia,
-    wpisy_efekty,
-    WpisDziennika,
-    OcenaPraktyki,
 )
 
 from core.modele.dokumenty import (
     DocumentStatus,
     DocumentAuditLog,
     UploadedDocument,
-    # backward-compat aliases
-    StatusDokumentu,
-    LogAudytuDokumentow,
-    DokumentPrzeslany,
 )
 
 __all__ = [
-    # uzytkownicy — English
+    # uzytkownicy
     'UserRole', 'User', 'Student', 'Administrator', 'UniversityMentor',
-    # uzytkownicy — compat
-    'RolaUzytkownika', 'Uzytkownik', 'OpikunUczelniany',
-    # firmy — English
+    'KomisjaUser', 'DyrektorUser',
+    # firmy
     'Company',
-    # firmy — compat
-    'Firma',
-    # praktyki — English
+    # praktyki
     'InternshipStatus', 'EnrollmentStatus', 'InternshipPath', 'EventType',
     'Internship', 'InternshipEnrollment',
     'WorkplaceDetails', 'PathJustification', 'Examination', 'FinalGrades',
     'ProcessEvent', 'InternshipSchedule', 'InternshipReport',
     'IndividualProgram', 'DocumentNumber',
-    # praktyki — compat
-    'StatusPraktyki', 'StatusZapisu', 'SciezkaPraktyki', 'TypZdarzenia',
-    'Praktyka', 'ZapisPraktyki',
-    'DaneMiejscaPraktyki', 'UzasadnienieSciezki', 'Sprawdzian', 'OcenyKoncowe',
-    'ZdarzenieProces', 'HarmonogramPraktyki', 'Sprawozdanie',
-    'IndywidualnyProgram', 'NumerPisma',
-    # dziennik — English
+    # dziennik
     'AssessmentResult', 'LearningOutcome', 'entry_outcomes',
     'JournalEntry', 'OutcomeAssessment', 'CommitteeOutcomeEvaluation',
-    # dziennik — compat
-    'WynikOceny', 'EfektUczenia', 'wpisy_efekty', 'WpisDziennika', 'OcenaPraktyki',
-    # dokumenty — English
+    # dokumenty
     'DocumentStatus', 'DocumentAuditLog', 'UploadedDocument',
-    # dokumenty — compat
-    'StatusDokumentu', 'LogAudytuDokumentow', 'DokumentPrzeslany',
 ]

@@ -85,20 +85,20 @@
             {% for firma in firmy.items %}
             <tr>
               <td>
-                <div style="font-weight: 600;">{{ firma.nazwa }}</div>
+                <div style="font-weight: 600;">{{ firma.name }}</div>
               </td>
               <td>
                 <div style="font-size: 0.9rem; color: var(--kolor-tekst-drugor);">
-                  {% if firma.adres %}
-                  {{ firma.adres }}
-                  {% if firma.miasto %}<br>{{ firma.miasto }}{% endif %}
+                  {% if firma.address %}
+                  {{ firma.address }}
+                  {% if firma.city %}<br>{{ firma.city }}{% endif %}
                   {% else %}
                   Brak adresu
                   {% endif %}
                 </div>
               </td>
               <td style="font-size: 0.9rem;">
-                {{ firma.nip_krs or '-' }}
+                {{ firma.tax_id or '-' }}
               </td>
               <td style="text-align: center;">
                 {% if firma.is_active %}
@@ -127,7 +127,7 @@
                   {{ csrf_form.hidden_tag() }}
                   <button type="submit"
                           class="przycisk przycisk--niebezpieczny przycisk--maly"
-                          onclick="return confirm('Czy na pewno chcesz trwale usunąć firmę {{ firma.nazwa }}? Tej operacji nie można cofnąć.')">
+                          onclick="return confirm('Czy na pewno chcesz trwale usunąć firmę {{ firma.name }}? Tej operacji nie można cofnąć.')">
                     Usuń
                   </button>
                 </form>

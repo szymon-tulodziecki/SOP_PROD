@@ -201,6 +201,85 @@ class UslugaPraktyk:
         db.session.add(zdarzenie)
         return zdarzenie
 
+    # ── Student-facing helpers ────────────────────────────────────────────────
+
+    @staticmethod
+    def waliduj_mozliwosc_zakonczenia(zapis) -> tuple[bool, str]:
+        """Sprawdza czy praktykę STANDARD można zakończyć.
+
+        Returns:
+            (True, '') jeśli można zakończyć,
+            (False, komunikat) jeśli warunek nie jest spełniony.
+        """
+        wymagane      = zapis.internship.required_hours if zapis.internship else 0
+        zalogowane    = zapis.total_hours_logged or 0
+        liczba_wpisow = len(zapis.journal_entries)
+
+        if liczba_wpisow == 0:
+            return False, 'Nie można zakończyć praktyki bez wpisów w dzienniku.'
+        if zalogowane < wymagane:
+            return (
+                False,
+                f'Nie można zakończyć praktyki — zalogowano {zalogowane} z wymaganych {wymagane} godzin.',
+            )
+        return True, ''
+
+    @staticmethod
+    def status_dla_studenta(zapis) -> dict:
+        """Analizuje zapis i zwraca gotowy dict do widoku listy praktyk studenta."""
+        komentarz_admina = zapis.admin_comments
+        komentarz_uopz   = zapis.supervisor_comments
+        sciezka = zapis.path_type.value if zapis.path_type else None
+
+        zwrocone_a = (
+            zapis.status == EnrollmentStatus.PENDING
+            and bool(komentarz_admina or komentarz_uopz)
+        )
+        zwrocone_bc = (
+            zapis.status == EnrollmentStatus.AWAITING_APPROVAL
+            and bool(komentarz_uopz)
+            and sciezka in ('EMPLOYMENT', 'OWN_BUSINESS')
+        )
+        zwrocone_komisja = (zapis.status == EnrollmentStatus.REVISION_REQUIRED)
+        in_review = zapis.status in (EnrollmentStatus.COMMISSION_REVIEW, EnrollmentStatus.DIRECTOR_APPROVAL)
+        zwrocone = (zwrocone_a or zwrocone_bc or zwrocone_komisja) and not in_review
+
+        komentarz_komisji = None
+        if zwrocone_komisja:
+            ev = (
+                db.session.query(ProcessEvent)
+                .filter_by(enrollment_id=zapis.id, event_type=EventType.COMMITTEE_DECISION)
+                .filter(ProcessEvent.decision == 'PARTIALLY_APPROVED')
+                .order_by(ProcessEvent.executed_at.desc())
+                .first()
+            )
+            komentarz_komisji = ev.comment if ev else None
+
+        komentarz_odrzucenia = None
+        if zapis.status == EnrollmentStatus.REJECTED:
+            ev = (
+                db.session.query(ProcessEvent)
+                .filter_by(enrollment_id=zapis.id)
+                .filter(ProcessEvent.decision == 'REJECTED')
+                .order_by(ProcessEvent.executed_at.desc())
+                .first()
+            )
+            komentarz_odrzucenia = ev.comment if ev else None
+
+        return {
+            'id':                   str(zapis.id),
+            'status':               zapis.status.value,
+            'sciezka':              sciezka,
+            'zwrocone':             zwrocone,
+            'komentarz_zwrotny':    komentarz_komisji or komentarz_admina or komentarz_uopz or '',
+            'komentarz_odrzucenia': komentarz_odrzucenia or '',
+            'wymaga_uwagi': (
+                zapis.status == EnrollmentStatus.AWAITING_APPROVAL
+                and bool(komentarz_uopz)
+                and sciezka == 'STANDARD'
+            ),
+        }
+
     # ── Repository access ─────────────────────────────────────────────────────
 
     @property

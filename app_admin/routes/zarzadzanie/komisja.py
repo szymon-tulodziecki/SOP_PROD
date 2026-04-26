@@ -13,11 +13,13 @@ from wtforms.validators import DataRequired, Email, Length, Optional, Validation
 from werkzeug.security import generate_password_hash
 
 from core.modele import (User, Student, Internship, InternshipEnrollment, InternshipSchedule, LearningOutcome,
-                    UserRole, InternshipStatus, EnrollmentStatus, UploadedDocument, Company)
+                    UserRole, InternshipStatus, EnrollmentStatus, UploadedDocument, Company,
+                    CommitteeOutcomeEvaluation, AssessmentResult)
 from core.extensions import db
-from core.uslugi import UslugaUzytkownikow as _UslugaUzytkownikow
+from core.uslugi import UslugaUzytkownikow as _UslugaUzytkownikow, SerwisKomisji
 _serwis_uzytkownikow = _UslugaUzytkownikow()
 from core.autoryzacja import wymaga_roli
+from core.uslugi.workflow import ZapisFSM, IllegalTransitionError
 from core.repozytoria import RepozytoriumZapisow, RepozytoriumDokumentowStudenta
 
 _repo_zapisow = RepozytoriumZapisow()
@@ -40,11 +42,6 @@ def komisja_lista():
 @zarzadzanie_bp.route('/komisja/<uuid:id>/weryfikuj', methods=['GET', 'POST'])
 @wymaga_roli(UserRole.ADMIN, UserRole.KOMISJA)
 def komisja_weryfikuj(id):
-    from flask_wtf import FlaskForm
-    from wtforms import TextAreaField
-    from wtforms.validators import Optional
-    from core.modele import CommitteeOutcomeEvaluation, AssessmentResult
-
     enrollment = db.session.get(InternshipEnrollment, id) or abort(404)
 
     if enrollment.status not in (EnrollmentStatus.COMMISSION_REVIEW, EnrollmentStatus.AWAITING_APPROVAL, EnrollmentStatus.REVISION_REQUIRED):
@@ -73,17 +70,7 @@ def komisja_weryfikuj(id):
                                    form=form, zapis=enrollment, dokumenty=documents,
                                    efekty=outcomes, istniejace=existing_evaluations)
 
-        errors      = []
-        evaluations = []
-        for outcome in outcomes:
-            result_val = request.form.get(f'outcome_{outcome.id}')
-            if not result_val:
-                errors.append(f'Efekt {outcome.kod}: brak oceny')
-                continue
-            notes_val = request.form.get(f'notes_{outcome.id}', '').strip()
-            if result_val == 'PARTIALLY_ACHIEVED' and not notes_val:
-                errors.append(f'Efekt {outcome.kod}: wymagane uzasadnienie dla wyniku „Uzyskał/a częściowo"')
-            evaluations.append((outcome.id, result_val, notes_val))
+        errors, evaluations = SerwisKomisji.waliduj_oceny_efektow(outcomes, request.form)
 
         if errors:
             for err in errors:
@@ -94,7 +81,6 @@ def komisja_weryfikuj(id):
                                    form=form, zapis=enrollment, dokumenty=documents,
                                    efekty=outcomes, istniejace=existing_evaluations)
 
-        from core.uslugi.workflow import ZapisFSM, IllegalTransitionError
         try:
             with ZapisFSM.lock(id) as fsm:
                 if fsm.zapis.status not in ACTIVE_STATUSES:

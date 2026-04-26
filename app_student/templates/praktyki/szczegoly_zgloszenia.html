@@ -25,11 +25,11 @@
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
         <div class="pole-formularza">
           <label class="pole-formularza__etykieta">Data rozpoczęcia</label>
-          <input class="pole-formularza__input" type="text" readonly value="{{ zapis.termin_od.strftime('%d.%m.%Y') if zapis.termin_od else '—' }}">
+          <input class="pole-formularza__input" type="text" readonly value="{{ zapis.start_date.strftime('%d.%m.%Y') if zapis.start_date else '—' }}">
         </div>
         <div class="pole-formularza">
           <label class="pole-formularza__etykieta">Data zakończenia</label>
-          <input class="pole-formularza__input" type="text" readonly value="{{ zapis.termin_do.strftime('%d.%m.%Y') if zapis.termin_do else '—' }}">
+          <input class="pole-formularza__input" type="text" readonly value="{{ zapis.end_date.strftime('%d.%m.%Y') if zapis.end_date else '—' }}">
         </div>
       </div>
       <div style="background:#fef3cd; border:1px solid #fde68a; border-radius:0.5rem; padding:0.875rem; margin-top:1rem;">
@@ -53,7 +53,7 @@
       </div>
       <div class="pole-formularza">
         <label class="pole-formularza__etykieta">Wybrana firma</label>
-        <input class="pole-formularza__input" type="text" readonly value="{{ zapis.firma.nazwa }}">
+        <input class="pole-formularza__input" type="text" readonly value="{{ zapis.firma.name }}">
       </div>
       {% elif dm %}
       <div class="pole-formularza" style="margin-bottom:1rem;">

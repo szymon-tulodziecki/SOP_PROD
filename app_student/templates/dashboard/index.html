@@ -21,15 +21,15 @@
 {% else %}
   <section class="siatka-statystyk" aria-label="Twój postęp">
     <div class="karta-stat"><span class="karta-stat__liczba">{{ zapis.total_hours_logged }}</span><span class="karta-stat__etykieta">Zalogowanych godzin</span></div>
-    <div class="karta-stat"><span class="karta-stat__liczba">{{ zapis.praktyka.wymiar_godzin }}</span><span class="karta-stat__etykieta">Wymaganych godzin</span></div>
+    <div class="karta-stat"><span class="karta-stat__liczba">{{ zapis.praktyka.required_hours }}</span><span class="karta-stat__etykieta">Wymaganych godzin</span></div>
     <div class="karta-stat"><span class="karta-stat__liczba">{{ zapis.wpisy_dziennika | length }}</span><span class="karta-stat__etykieta">Wpisów w dzienniku</span></div>
-    <div class="karta-stat">{% set procent = 0 if not zapis.praktyka.wymiar_godzin else [(zapis.total_hours_logged / zapis.praktyka.wymiar_godzin * 100)|round|int, 100]|min %}<span class="karta-stat__liczba">{{ procent }}%</span><span class="karta-stat__etykieta">Ukończono</span></div>
+    <div class="karta-stat"><span class="karta-stat__liczba">{{ zapis.progress_percent }}%</span><span class="karta-stat__etykieta">Ukończono</span></div>
   </section>
 
   <div class="karta" style="margin-bottom:2rem;">
     <div class="karta__tresc">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
-        <span style="font-weight:600;">Postęp praktyki — {{ zapis.praktyka.rok_uczelniany }} ({{ zapis.praktyka.semestr }})</span>
+        <span style="font-weight:600;">Postęp praktyki — {{ zapis.praktyka.academic_year }} ({{ zapis.praktyka.semester }})</span>
         <div style="display:flex; align-items:center; gap:0.75rem;">
           <span class="status
             {%- if zapis.status.value == 'PENDING' %} status--draft
@@ -51,11 +51,11 @@
             {% elif zapis.status.value == 'REJECTED' %}Odrzucony
             {% endif %}
           </span>
-          <span style="font-size:0.85rem; color:var(--kolor-tekst-drugor);">{{ zapis.total_hours_logged }} / {{ zapis.praktyka.wymiar_godzin }} h</span>
+          <span style="font-size:0.85rem; color:var(--kolor-tekst-drugor);">{{ zapis.total_hours_logged }} / {{ zapis.praktyka.required_hours }} h</span>
         </div>
       </div>
       <div class="pasek-postep" style="height:12px;">
-        <div class="pasek-postep__wypelnienie" style="width:{{ procent }}%;"></div>
+        <div class="pasek-postep__wypelnienie" style="width:{{ zapis.progress_percent }}%;"></div>
       </div>
       {% if zapis.status.value == 'REVISION_REQUIRED' %}
       <div style="margin-top:1rem; padding:0.75rem 1rem; background:#fef2f2; border-radius:0.375rem; border-left:4px solid #dc2626;">

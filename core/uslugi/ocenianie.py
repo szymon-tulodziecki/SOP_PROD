@@ -12,7 +12,7 @@ from datetime import date, timedelta
 from typing import Optional
 
 from core.extensions import db
-from core.modele import InternshipEnrollment, EnrollmentStatus
+from core.modele import InternshipEnrollment, EnrollmentStatus, FinalGrades, Examination
 
 log = logging.getLogger(__name__)
 
@@ -67,9 +67,7 @@ class SerwisOceniania:
             GradeResult(success=False, missing_fields=[...]) gdy finalize=True
             i brakuje ocen. W przeciwnym razie GradeResult(success=True).
         """
-        from core.modele import OcenyKoncowe, Sprawdzian as SprawdzianModel
-
-        ok = zapis.oceny_koncowe or OcenyKoncowe(enrollment_id=zapis.id)
+        ok = zapis.final_grades or FinalGrades(enrollment_id=zapis.id)
         if ok not in db.session:
             db.session.add(ok)
 
@@ -79,7 +77,7 @@ class SerwisOceniania:
         ok.supervisor_grade_description = dane.supervisor_grade_description
         ok.workplace_grade_description  = dane.workplace_grade_description
 
-        sp = zapis.sprawdzian or SprawdzianModel(enrollment_id=zapis.id)
+        sp = zapis.examination or Examination(enrollment_id=zapis.id)
         if sp not in db.session:
             db.session.add(sp)
 
@@ -124,6 +122,17 @@ class SerwisOceniania:
 
 
     @staticmethod
+    def deadline_info(enrollment) -> dict:
+        """Zwraca słownik z informacjami o terminie oceny dla danego zapisu."""
+        deadline = days_to_deadline = None
+        overdue = False
+        if enrollment.end_date and enrollment.status == EnrollmentStatus.COMPLETED:
+            deadline         = enrollment.end_date + timedelta(days=7)
+            days_to_deadline = (deadline - date.today()).days
+            overdue          = days_to_deadline < 0
+        return {'deadline': deadline, 'dni_do_deadline': days_to_deadline, 'przekroczony': overdue}
+
+    @staticmethod
     def get_pilne_oceny(uopz_id=None) -> list[dict]:
         """Zwraca listę praktyk z pilnymi ocenami (termin ≤ 3 dni)."""
         q = db.session.query(InternshipEnrollment).filter_by(status=EnrollmentStatus.COMPLETED)
@@ -132,16 +141,9 @@ class SerwisOceniania:
 
         pilne = []
         for zapis in q.all():
-            if zapis.termin_do:
-                deadline       = zapis.termin_do + timedelta(days=7)
-                dni_do_konca   = (deadline - date.today()).days
-                if dni_do_konca <= 3:
-                    pilne.append({
-                        'zapis':           zapis,
-                        'deadline':        deadline,
-                        'dni_do_deadline': dni_do_konca,
-                        'przekroczony':    dni_do_konca < 0,
-                    })
+            info = SerwisOceniania.deadline_info(zapis)
+            if info['dni_do_deadline'] is not None and info['dni_do_deadline'] <= 3:
+                pilne.append({'zapis': zapis, **info})
         return sorted(pilne, key=lambda x: x['dni_do_deadline'])
 
     @staticmethod
@@ -182,3 +184,50 @@ class SerwisOceniania:
         if completed:
             db.session.commit()
         return {'completed': completed, 'skipped': skipped}
+
+    @staticmethod
+    def przygotuj_liste_ocen(supervisor_id=None, filtr: str | None = None) -> dict:
+        """Zwraca dane do widoku listy ocen.
+
+        Returns:
+            {'widoczne': [...], 'zakonczone': [...], 'filtr': filtr}
+        """
+        from core.repozytoria import RepozytoriumZapisow
+        enrollments = RepozytoriumZapisow().aktywne_i_zakonczone(supervisor_id=supervisor_id)
+
+        def _ma_oceny(enrollment) -> bool:
+            fg = enrollment.final_grades
+            if not fg:
+                return False
+            if enrollment.is_path_b:
+                return fg.report_grade is not None and enrollment.exam_grade is not None
+            return (fg.supervisor_grade is not None
+                    and fg.report_grade is not None and fg.workplace_grade is not None)
+
+        enriched = [
+            {
+                'zapis':      e,
+                'w_trakcie':  e.status == EnrollmentStatus.IN_PROGRESS,
+                'zakonczona': e.status == EnrollmentStatus.COMPLETED,
+                'is_path_b':  e.is_path_b,
+                **SerwisOceniania.deadline_info(e),
+            }
+            for e in enrollments
+        ]
+
+        completed_list = [z for z in enriched
+                          if z['zakonczona'] or (z['w_trakcie'] and z['is_path_b'])]
+
+        for z in completed_list:
+            z['oceniony'] = _ma_oceny(z['zapis'])
+
+        completed_list.sort(key=lambda z: z['oceniony'])
+
+        if filtr == 'nieocenione':
+            visible = [z for z in completed_list if not z['oceniony']]
+        elif filtr == 'ocenione':
+            visible = [z for z in completed_list if z['oceniony']]
+        else:
+            visible = completed_list
+
+        return {'widoczne': visible, 'zakonczone': completed_list, 'filtr': filtr}

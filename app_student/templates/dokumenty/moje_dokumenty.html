@@ -28,9 +28,9 @@
   <div class="karta" style="margin-bottom: 1.5rem;">
     <div class="karta__naglowek">
       <div>
-        <div style="font-weight: 600;">{{ wpis.zapis.praktyka.rok_uczelniany }} · Semestr {{ wpis.zapis.praktyka.semestr }}</div>
+        <div style="font-weight: 600;">{{ wpis.zapis.praktyka.academic_year }} · Semestr {{ wpis.zapis.praktyka.semester }}</div>
         <div style="font-size: 0.85rem; color: var(--kolor-tekst-drugor); margin-top: 0.25rem;">
-          {% if wpis.zapis.firma %}{{ wpis.zapis.firma.nazwa }}{% elif wpis.zapis.firma_nazwa %}{{ wpis.zapis.firma_nazwa }}{% endif %}
+          {% if wpis.zapis.firma %}{{ wpis.zapis.firma.name }}{% elif wpis.zapis.firma_nazwa %}{{ wpis.zapis.firma_nazwa }}{% endif %}
           · Ścieżka:
           {% if wpis.sciezka == 'STANDARD' %}Standardowa
           {% elif wpis.sciezka == 'EMPLOYMENT' %}Praca etatowa
@@ -48,7 +48,7 @@
         {% if doc.separator is defined and doc.separator %}
         <div style="display: flex; align-items: center; gap: 0.75rem; margin: 0.5rem 0;">
           <hr style="flex: 1; border: none; border-top: 1px dashed #d1d5db;">
-          <span style="font-size: 0.78rem; color: var(--kolor-tekst-drugor); white-space: nowrap; font-weight: 500;">{{ doc.nazwa }}</span>
+          <span style="font-size: 0.78rem; color: var(--kolor-tekst-drugor); white-space: nowrap; font-weight: 500;">{{ doc.name }}</span>
           <hr style="flex: 1; border: none; border-top: 1px dashed #d1d5db;">
         </div>
 
@@ -59,7 +59,7 @@
              border-radius: 0.5rem;">
           <div>
             <div style="font-weight: 500; font-size: 0.9rem; {% if not doc.dostepny %}color: var(--kolor-tekst-drugor);{% endif %}">
-              {{ doc.nazwa }}
+              {{ doc.name }}
             </div>
             {% if doc.opis %}
             <div style="font-size: 0.78rem; color: var(--kolor-tekst-drugor);">{{ doc.opis }}</div>

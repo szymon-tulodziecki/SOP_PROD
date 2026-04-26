@@ -44,7 +44,7 @@
     <div class="karta__naglowek" style="background: var(--kolor-tlo);">
       <div style="display: flex; justify-content: space-between; align-items: center;">
         <h3 class="karta__tytul">
-          {{ item.zapis.praktyka.rok_uczelniany }} ({{ item.zapis.praktyka.semestr }})
+          {{ item.zapis.praktyka.academic_year }} ({{ item.zapis.praktyka.semester }})
         </h3>
         <span class="status status--{% if item.zapis.status.value == 'AWAITING_APPROVAL' %}planned{% elif item.zapis.status.value == 'IN_PROGRESS' %}w-trakcie{% elif item.zapis.status.value == 'COMPLETED' %}zakonczona{% else %}draft{% endif %}">
           {{ tlumacz_status(item.zapis.status.value) }}
@@ -57,8 +57,8 @@
         <div style="font-size: 0.9rem; color: var(--kolor-tekst-drugor);">
           <strong>Firma:</strong> {{ item.zapis.firma_nazwa or 'Nie podano' }} |
           <strong>Okres:</strong>
-          {% if item.zapis.termin_od and item.zapis.termin_do %}
-          {{ item.zapis.termin_od.strftime('%d.%m.%Y') }} - {{ item.zapis.termin_do.strftime('%d.%m.%Y') }}
+          {% if item.zapis.start_date and item.zapis.end_date %}
+          {{ item.zapis.start_date.strftime('%d.%m.%Y') }} - {{ item.zapis.end_date.strftime('%d.%m.%Y') }}
           {% else %}
           Nie określono
           {% endif %}

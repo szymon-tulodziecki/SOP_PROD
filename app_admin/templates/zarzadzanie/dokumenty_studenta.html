@@ -54,11 +54,11 @@
     <div class="karta__naglowek">
       <div>
         <div style="font-weight: 600;">
-          {{ zapis.praktyka.rok_uczelniany if zapis.praktyka else '—' }}
-          {% if zapis.praktyka %} · Semestr {{ zapis.praktyka.semestr }}{% endif %}
+          {{ zapis.praktyka.academic_year if zapis.praktyka else '—' }}
+          {% if zapis.praktyka %} · Semestr {{ zapis.praktyka.semester }}{% endif %}
         </div>
         <div style="font-size: 0.82rem; color: var(--kolor-tekst-drugor); margin-top: 0.2rem;">
-          {% if zapis.firma %}{{ zapis.firma.nazwa }}
+          {% if zapis.firma %}{{ zapis.firma.name }}
           {% elif zapis.firma_nazwa %}{{ zapis.firma_nazwa }}{% endif %}
           · Ścieżka:
           {% if wpis.sciezka == 'STANDARD' %}A — Standardowa
@@ -87,7 +87,7 @@
         {% if doc.separator is defined and doc.separator %}
         <div style="display: flex; align-items: center; gap: 0.75rem; margin: 0.4rem 0;">
           <hr style="flex: 1; border: none; border-top: 1px dashed #d1d5db;">
-          <span style="font-size: 0.78rem; color: var(--kolor-tekst-drugor); white-space: nowrap; font-weight: 500;">{{ doc.nazwa }}</span>
+          <span style="font-size: 0.78rem; color: var(--kolor-tekst-drugor); white-space: nowrap; font-weight: 500;">{{ doc.name }}</span>
           <hr style="flex: 1; border: none; border-top: 1px dashed #d1d5db;">
         </div>
         {% else %}
@@ -98,7 +98,7 @@
              border-radius: 0.5rem;">
           <div>
             <div style="font-weight: 500; font-size: 0.9rem; {% if not doc.dostepny %}color: var(--kolor-tekst-drugor);{% endif %}">
-              {{ doc.nazwa }}
+              {{ doc.name }}
             </div>
             {% if doc.opis %}
             <div style="font-size: 0.78rem; color: var(--kolor-tekst-drugor);">{{ doc.opis }}</div>

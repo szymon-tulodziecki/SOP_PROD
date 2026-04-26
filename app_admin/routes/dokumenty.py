@@ -17,6 +17,8 @@ from core.modele import InternshipEnrollment, DocumentAuditLog, UserRole
 from core.extensions import db, limiter
 from core.autoryzacja import wymaga_roli
 from core.repozytoria import RepozytoriumZapisow, RepozytoriumLogow
+from core.uslugi.dokumenty import buduj_kontekst
+from celery_app import generuj_pdf_z_szablonu, celery
 
 _repo_enrollments = RepozytoriumZapisow()
 _repo_logs        = RepozytoriumLogow()
@@ -70,9 +72,6 @@ def generuj_auto(id, doc_type):
 
     template_name, _ = DOCUMENTS[doc_type]
 
-    from core.uslugi.dokumenty import buduj_kontekst
-    from celery_app import generuj_pdf_z_szablonu
-
     context = buduj_kontekst(enrollment, doc_type)
 
     try:
@@ -87,7 +86,6 @@ def generuj_auto(id, doc_type):
 def status_pdf(task_id):
     """Legacy polling endpoint — zachowany dla kompatybilności wstecznej."""
     try:
-        from celery_app import celery
         task = celery.AsyncResult(task_id)
         if task.state == 'SUCCESS':
             res = task.result
@@ -112,8 +110,6 @@ def stream_status(task_id):
     co chroni wątki serwera przed blokadą przez osierocone połączenia
     (np. po zamknięciu karty przez użytkownika).
     """
-    from celery_app import celery
-
     def generate():
         deadline = time.monotonic() + _SSE_MAX_SECONDS
         try:
@@ -152,7 +148,6 @@ def stream_status(task_id):
 @wymaga_roli(UserRole.ADMIN, UserRole.UOPZ)
 def pobierz_pdf(task_id):
     try:
-        from celery_app import celery
         task = celery.AsyncResult(task_id)
         if task.state != 'SUCCESS':
             abort(404)

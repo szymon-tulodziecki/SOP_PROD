@@ -12,6 +12,9 @@ from core.modele import (Internship, InternshipEnrollment, InternshipStatus, Enr
                          InternshipPath, LearningOutcome, InternshipSchedule, Company,
                          IndividualProgram, DocumentStatus, UploadedDocument,
                          WorkplaceDetails, PathJustification)
+from core.modele.praktyki import ProcessEvent, EventType
+from core.uslugi.workflow import ZapisFSM, IllegalTransitionError
+from core.uslugi.praktyki import UslugaPraktyk
 from core.repozytoria import (RepozytoriumPraktyk, RepozytoriumZapisow,
                                RepozytoriumEfektow, RepozytoriumFirm,
                                RepozytoriumDokumentowStudenta)
@@ -134,7 +137,6 @@ def kreator_sciezka(id):
         elif odrzucony:
             zapis = odrzucony
             zapis.status = EnrollmentStatus.PENDING
-            from core.modele.praktyki import ProcessEvent
             db.session.query(ProcessEvent).filter_by(enrollment_id=zapis.id).delete()
         else:
             zapis = InternshipEnrollment(id=uuid.uuid4(), internship_id=id,
@@ -222,7 +224,6 @@ def kreator_firma(zapis_id):
         byl_status = zapis.status
         db.session.commit()
         if byl_status == EnrollmentStatus.AWAITING_APPROVAL:
-            from core.uslugi.workflow import ZapisFSM
             ZapisFSM(zapis).wyslij_do_komisji()
             db.session.commit()
             flash('Dane zaktualizowane i zgłoszenie odesłane do komisji.', 'success')
@@ -300,64 +301,14 @@ def kreator_wniosek(zapis_id):
 @praktyki_bp.route('/', methods=['GET'])
 @login_required
 def lista():
-    dostepne = _repo_praktyk.aktywne()
-
-    zapisy_data = {}
-    for z in _repo_zapisow.dla_studenta(current_user.id):
-        komentarz_admina = z.admin_comments
-        komentarz_uopz   = z.supervisor_comments
-        sciezka = z.path_type.value if z.path_type else None
-        # Ścieżka A: admin zwraca do PENDING z komentarzem
-        zwrocone_a = (z.status == EnrollmentStatus.PENDING and bool(komentarz_admina or komentarz_uopz))
-        # Ścieżka B/C: komisja zwraca do AWAITING_APPROVAL z komentarzem UOPZ
-        zwrocone_bc = (
-            z.status == EnrollmentStatus.AWAITING_APPROVAL
-            and bool(komentarz_uopz)
-            and sciezka in ('EMPLOYMENT', 'OWN_BUSINESS')
-        )
-        zwrocone_komisja = (z.status == EnrollmentStatus.REVISION_REQUIRED)
-        # COMMISSION_REVIEW / DIRECTOR_APPROVAL = student już odesłał poprawki, nie czeka na akcję
-        in_review = z.status in (EnrollmentStatus.COMMISSION_REVIEW, EnrollmentStatus.DIRECTOR_APPROVAL)
-        zwrocone = (zwrocone_a or zwrocone_bc or zwrocone_komisja) and not in_review
-        komentarz_komisji = None
-        if zwrocone_komisja:
-            from core.modele.praktyki import ProcessEvent, EventType
-            ev = (
-                db.session.query(ProcessEvent)
-                .filter_by(enrollment_id=z.id, event_type=EventType.COMMITTEE_DECISION)
-                .filter(ProcessEvent.decision == 'PARTIALLY_APPROVED')
-                .order_by(ProcessEvent.executed_at.desc())
-                .first()
-            )
-            komentarz_komisji = ev.comment if ev else None
-        komentarz_odrzucenia = None
-        if z.status == EnrollmentStatus.REJECTED:
-            from core.modele.praktyki import ProcessEvent
-            ev = (
-                db.session.query(ProcessEvent)
-                .filter_by(enrollment_id=z.id)
-                .filter(ProcessEvent.decision == 'REJECTED')
-                .order_by(ProcessEvent.executed_at.desc())
-                .first()
-            )
-            komentarz_odrzucenia = ev.comment if ev else None
-
-        zapisy_data[str(z.internship_id)] = {
-            'id':       str(z.id),
-            'status':   z.status.value,
-            'sciezka':  sciezka,
-            'zwrocone': zwrocone,
-            'komentarz_zwrotny': komentarz_komisji or komentarz_admina or komentarz_uopz or '',
-            'komentarz_odrzucenia': komentarz_odrzucenia or '',
-            'wymaga_uwagi': (
-                z.status == EnrollmentStatus.AWAITING_APPROVAL
-                and bool(komentarz_uopz)
-                and sciezka == 'STANDARD'
-            ),
-        }
+    available  = _repo_praktyk.aktywne()
+    status_map = {
+        str(z.internship_id): UslugaPraktyk.status_dla_studenta(z)
+        for z in _repo_zapisow.dla_studenta(current_user.id)
+    }
 
     csrf_form = FlaskForm()
-    return render_template('praktyki/lista.html', dostepne=dostepne, zapisy_data=zapisy_data, csrf_form=csrf_form)
+    return render_template('praktyki/lista.html', dostepne=available, zapisy_data=status_map, csrf_form=csrf_form)
 
 
 @praktyki_bp.route('/zgloszenie/<uuid:id>/zakoncz', methods=['POST'])
@@ -372,17 +323,11 @@ def zakoncz_praktyke(id):
 
     path_val = zapis.path_type.value if hasattr(zapis.path_type, 'value') else str(zapis.path_type)
     if path_val == 'STANDARD':
-        wymagane = zapis.internship.required_hours if zapis.internship else 0
-        zalogowane = zapis.total_hours_logged or 0
-        liczba_wpisow = len(zapis.journal_entries)
-        if liczba_wpisow == 0:
-            flash('Nie można zakończyć praktyki bez wpisów w dzienniku.', 'danger')
-            return redirect(url_for('praktyki.lista'))
-        if zalogowane < wymagane:
-            flash(f'Nie można zakończyć praktyki — zalogowano {zalogowane} z wymaganych {wymagane} godzin.', 'danger')
+        ok, msg = UslugaPraktyk.waliduj_mozliwosc_zakonczenia(zapis)
+        if not ok:
+            flash(msg, 'danger')
             return redirect(url_for('praktyki.lista'))
 
-    from core.uslugi.workflow import ZapisFSM
     ZapisFSM(zapis).zakoncz()
     db.session.commit()
     flash('Praktyka została zakończona. Dokumenty końcowe są dostępne w zakładce Moje Dokumenty.', 'success')
@@ -511,7 +456,6 @@ def szczegoly_zgloszenia(id):
     harmonogram_dict = {str(h.learning_outcome_id): h for h in harmonogram}
 
     from flask_wtf import FlaskForm
-    from core.modele.praktyki import ProcessEvent, EventType
     komentarz_komisji = None
     if zapis.status == EnrollmentStatus.REVISION_REQUIRED:
         ev = (
@@ -540,7 +484,6 @@ def resubmit_zgloszenia(id):
     if zapis.status not in (EnrollmentStatus.AWAITING_APPROVAL, EnrollmentStatus.REVISION_REQUIRED):
         flash('Zgłoszenie nie może być ponownie wysłane w tym statusie.', 'warning')
         return redirect(url_for('praktyki.szczegoly_zgloszenia', id=id))
-    from core.uslugi.workflow import ZapisFSM, IllegalTransitionError
     try:
         with ZapisFSM.lock(id) as fsm:
             if zapis.status == EnrollmentStatus.REVISION_REQUIRED:

@@ -107,17 +107,8 @@ def create_app():
     # Dodaj funkcje pomocnicze do szablonów
     @app.template_global()
     def tlumacz_status(status_value):
-        translations = {
-            'PENDING': 'Szkic',
-            'AWAITING_APPROVAL': 'Oczekuje na zatwierdzenie',
-            'COMMISSION_REVIEW': 'Weryfikacja komisji',
-            'DIRECTOR_APPROVAL': 'Oczekuje na decyzję dyrektora',
-            'REVISION_REQUIRED': 'Wymaga uzupełnień',
-            'IN_PROGRESS': 'W trakcie',
-            'COMPLETED': 'Zakończona',
-            'REJECTED': 'Odrzucony'
-        }
-        return translations.get(status_value, status_value)
+        from core.tlumaczenia import tlumacz_status as _tlumacz
+        return _tlumacz(status_value)
 
     @app.before_request
     def sprawdz_studenta():

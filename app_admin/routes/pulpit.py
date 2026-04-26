@@ -2,6 +2,7 @@ from flask import Blueprint, render_template
 from flask_login import login_required, current_user
 from core.modele import UserRole, EnrollmentStatus
 from core.repozytoria import RepozytoriumZapisow, RepozytoriumPraktyk, RepozytoriumUzytkownikow
+from core.uslugi import SerwisOceniania
 from flask_wtf import FlaskForm
 
 dashboard_bp = Blueprint('dashboard', __name__)
@@ -25,20 +26,7 @@ def index():
 
     ostatnie_zapisy = _repo_zapisow.ostatnie(supervisor_id=uopz_id, limit=8)
 
-    pilne_oceny = []
-    if current_user.role == UserRole.UOPZ:
-        from datetime import date, timedelta
-        for zapis in _repo_zapisow.zakonczone_dla_uopz(current_user.id):
-            if zapis.termin_do:
-                deadline        = zapis.termin_do + timedelta(days=7)
-                dni_do_deadline = (deadline - date.today()).days
-                if dni_do_deadline <= 2:
-                    pilne_oceny.append({
-                        'zapis':           zapis,
-                        'deadline':        deadline,
-                        'dni_do_deadline': dni_do_deadline,
-                        'przekroczony':    dni_do_deadline < 0,
-                    })
+    pilne_oceny = SerwisOceniania.get_pilne_oceny(current_user.id) if current_user.role == UserRole.UOPZ else []
 
     csrf_form = FlaskForm()
     return render_template('dashboard/index.html',

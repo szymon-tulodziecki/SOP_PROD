@@ -1,6 +1,4 @@
 import uuid
-import csv
-import io
 import datetime
 from flask import (Blueprint, render_template, redirect, url_for,
                    flash, request, abort)
@@ -29,11 +27,11 @@ from .formularze import (StudentForm, StudentEditForm, StaffForm,
 @zarzadzanie_bp.route('/uzytkownicy')
 @login_required
 def lista_uzytkownikow():
-    page        = request.args.get('strona', 1, type=int)
+    page         = request.args.get('strona', 1, type=int)
     search_query = request.args.get('szukaj', '').strip()
     role_filter  = request.args.get('rola', '').strip()
 
-    users     = _repo_uzytk.szukaj_strona(szukaj=search_query, filtr_rola=role_filter, strona=page)
+    users = _repo_uzytk.szukaj_strona(szukaj=search_query, filtr_rola=role_filter, strona=page)
     csrf_form = FlaskForm()
     return render_template('zarzadzanie/uzytkownicy.html',
                            uzytkownicy=users,
@@ -61,7 +59,7 @@ def nowy_student():
             require_password_change=False,
         )
         flash(
-            f'Konto studenta {u.imie} {u.nazwisko} (nr alb. {u.numer_albumu}) '
+            f'Konto studenta {u.first_name} {u.last_name} (nr alb. {u.album_number}) '
             f'zostało utworzone. Student może się teraz zalogować przez Microsoft ({u.email}).',
             'success'
         )
@@ -133,79 +131,11 @@ def import_csv():
     results = None
 
     if form.validate_on_submit():
-        uopz_id = form.uopz_id.data or None
         content = form.file.data.read().decode('utf-8-sig')
-        reader  = csv.DictReader(io.StringIO(content))
-
-        created, skipped, errors = 0, 0, []
-
-        csv_rows = []
-        for row_number, row in enumerate(reader, start=2):
-            first_name    = (row.get('imie')         or row.get('Imię')        or '').strip()
-            last_name     = (row.get('nazwisko')      or row.get('Nazwisko')    or '').strip()
-            email         = (row.get('email')         or row.get('Email')       or '').strip().lower()
-            album_number  = (row.get('numer_albumu')  or row.get('Nr albumu')   or '').strip()
-            gender        = (row.get('plec')          or row.get('Płeć')        or '').strip().upper() or None
-            field_of_study = (row.get('kierunek')     or row.get('Kierunek')    or '').strip() or None
-            specialization = (row.get('specjalnosc')  or row.get('Specjalność') or '').strip() or None
-            study_mode    = (row.get('tryb_studiow')  or row.get('Tryb')        or '').strip().lower() or None
-
-            if not all([first_name, last_name, email, album_number, gender, field_of_study, study_mode]):
-                errors.append(f'Wiersz {row_number}: brakujące dane (wymagane: imie, nazwisko, email, numer_albumu, plec, kierunek, tryb_studiow)')
-                skipped += 1
-                continue
-
-            csv_rows.append({
-                'row_number': row_number,
-                'first_name': first_name, 'last_name': last_name,
-                'email': email, 'album_number': album_number, 'gender': gender,
-                'field_of_study': field_of_study, 'specialization': specialization,
-                'study_mode': study_mode,
-            })
-
-        if csv_rows:
-            all_emails = [r['email'] for r in csv_rows]
-            all_albums = [r['album_number'] for r in csv_rows]
-
-            existing = _repo_uzytk.znajdz_istniejace_po_email_lub_albumie(
-                all_emails, all_albums
-            )
-
-            existing_emails = {row.email for row in existing}
-            existing_albums = {row.album_number for row in existing if row.album_number}
-
-            for r in csv_rows:
-                if r['email'] in existing_emails or r['album_number'] in existing_albums:
-                    errors.append(f"Wiersz {r['row_number']}: {r['email']} lub nr {r['album_number']} już istnieje")
-                    skipped += 1
-                    continue
-                try:
-                    _serwis_uzytkownikow.utworz_studenta(
-                        email                   = r['email'].lower().strip(),
-                        haslo                   = '',
-                        imie                    = r['first_name'],
-                        nazwisko                = r['last_name'],
-                        numer_albumu            = r['album_number'],
-                        gender                  = r['gender'],
-                        field_of_study          = r['field_of_study'],
-                        specialization          = r['specialization'],
-                        study_mode              = r['study_mode'],
-                        supervisor_id           = uuid.UUID(uopz_id) if uopz_id else None,
-                        require_password_change = False,
-                        commit                  = False,
-                    )
-                    existing_emails.add(r['email'])
-                    existing_albums.add(r['album_number'])
-                    created += 1
-                except Exception as e:
-                    errors.append(f"Wiersz {r['row_number']}: {str(e)}")
-                    skipped += 1
-
-            db.session.commit()
-
-        results = {'created': created, 'skipped': skipped, 'errors': errors}
-        if created:
-            flash(f'Import zakończony: {created} kont utworzonych.', 'success')
+        uopz_id = form.uopz_id.data or None
+        results = _serwis_uzytkownikow.importuj_z_csv(content, uopz_id)
+        if results['created']:
+            flash(f'Import zakończony: {results["created"]} kont utworzonych.', 'success')
 
     return render_template('zarzadzanie/import_csv.html', form=form, results=results)
 

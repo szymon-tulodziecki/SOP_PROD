@@ -8,7 +8,7 @@
 {% endblock %}
 
 {% block tresc %}
-{% set is_bc = zapis.path_type.value in ['EMPLOYMENT', 'OWN_BUSINESS'] %}
+{% set is_bc = zapis.is_path_b %}
 
 <div style="max-width: 1000px; margin: 0 auto;">
 

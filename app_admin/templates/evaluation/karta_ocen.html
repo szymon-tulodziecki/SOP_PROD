@@ -8,8 +8,8 @@
 {% endblock %}
 
 {% block tresc %}
-{% set is_path_b = zapis.path_type.value != 'STANDARD' %}
-{% set path_label = 'Staż/zatrudnienie' if zapis.path_type.value == 'EMPLOYMENT' else 'Dział. gospod.' %}
+{% set is_path_b = zapis.is_path_b %}
+{% set path_label = 'Staż/zatrudnienie' if zapis.path_type == zapis.path_type.EMPLOYMENT else 'Dział. gospod.' %}
 <div style="max-width: 900px; margin: 0 auto;">
 
   <!-- Info o studencie -->
@@ -21,7 +21,7 @@
           {% if is_path_b %}
           {{ path_label }} — Uznanie efektów · {{ zapis.firma_nazwa or 'Brak nazwy firmy' }}
           {% else %}
-          Firma: {{ zapis.firma_nazwa or 'Brak nazwy firmy' }} | ZOPZ: {{ zapis.zopz_imie_nazwisko or 'Brak ZOPZ' }} | Godziny: {{ zapis.lacznie_godzin }} h
+          Firma: {{ zapis.firma_nazwa or 'Brak nazwy firmy' }} | ZOPZ: {{ zapis.zopz_imie_nazwisko or 'Brak ZOPZ' }} | Godziny: {{ zapis.total_hours_logged }} h
           {% endif %}
         </p>
       </div>

@@ -146,7 +146,7 @@
   <script>
   const firmy = {
     {% for f in firmy_list %}
-    "{{ f.id }}": { nazwa: "{{ f.nazwa }}", adres: "{{ f.adres or '' }}", miasto: "{{ f.miasto or '' }}", nip: "{{ f.nip_krs or '' }}" }{% if not loop.last %},{% endif %}
+    "{{ f.id }}": { name: "{{ f.name }}", address: "{{ f.address or '' }}", city: "{{ f.city or '' }}", nip: "{{ f.tax_id or '' }}" }{% if not loop.last %},{% endif %}
     {% endfor %}
   };
 
@@ -167,7 +167,7 @@
   firmaSel.addEventListener('change', function() {
     const f = firmy[this.value];
     if (f) {
-      podglad.innerHTML = `<strong>${f.nazwa}</strong><br>${f.adres}, ${f.miasto}${f.nip ? ' · NIP: ' + f.nip : ''}`;
+      podglad.innerHTML = `<strong>${f.name}</strong><br>${f.address}, ${f.city}${f.nip ? ' · NIP: ' + f.nip : ''}`;
       podglad.style.display = 'block';
     } else {
       podglad.style.display = 'none';

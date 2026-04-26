@@ -98,18 +98,6 @@ class Internship(db.Model):
         lazy='select', cascade=_CASCADE_DELETE, passive_deletes=True,
     )
 
-    # Backward-compat shims
-    @property
-    def rok_uczelniany(self):
-        return self.academic_year
-
-    @property
-    def wymiar_godzin(self):
-        return self.required_hours
-
-    @property
-    def semestr(self):
-        return self.semester
 
 
 class InternshipEnrollment(db.Model):
@@ -195,44 +183,12 @@ class InternshipEnrollment(db.Model):
         self.path_type = v
 
     @property
-    def termin_od(self):
-        return self.start_date
-
-    @termin_od.setter
-    def termin_od(self, v):
-        self.start_date = v
-
-    @property
-    def termin_do(self):
-        return self.end_date
-
-    @termin_do.setter
-    def termin_do(self, v):
-        self.end_date = v
-
-    @property
     def specjalnosc(self):
         return self.specialization
 
     @specjalnosc.setter
     def specjalnosc(self, v):
         self.specialization = v
-
-    @property
-    def ubezpieczenie_nw(self):
-        return self.accident_insurance
-
-    @ubezpieczenie_nw.setter
-    def ubezpieczenie_nw(self, v):
-        self.accident_insurance = v
-
-    @property
-    def lacznie_godzin(self):
-        return self.total_hours_logged
-
-    @property
-    def zapisano_o(self):
-        return self.enrolled_at
 
     @property
     def dane_miejsca(self):
@@ -480,6 +436,26 @@ class InternshipEnrollment(db.Model):
         if None in (e, s, u, z):
             return None
         return _round_half(0.4 * e + 0.1 * s + 0.2 * u + 0.3 * z)
+
+    # ── Path helpers ───────────────────────────────────────────────
+
+    @property
+    def is_path_b(self) -> bool:
+        return self.path_type in (InternshipPath.EMPLOYMENT, InternshipPath.OWN_BUSINESS)
+
+    @property
+    def is_standard(self) -> bool:
+        return self.path_type == InternshipPath.STANDARD
+
+    @property
+    def progress_percent(self) -> int:
+        if not self.internship or not self.internship.required_hours:
+            return 0
+        return min(int(self.total_hours_logged / self.internship.required_hours * 100), 100)
+
+    @property
+    def is_completed_or_in_progress(self) -> bool:
+        return self.status in (EnrollmentStatus.IN_PROGRESS, EnrollmentStatus.COMPLETED)
 
     # Legacy computed grade aliases
     @hybrid_property

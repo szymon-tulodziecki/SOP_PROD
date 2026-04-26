@@ -70,7 +70,7 @@ class DocumentEntry:
     def resolve(self, ctx: dict) -> dict:
         available = self.available_when(ctx)
         entry = {
-            'nazwa':    self.name,
+            'name':     self.name,
             'opis':     self.description,
             'dostepny': available,
             'powod':    None if available else self.unavailable_reason(ctx),
@@ -84,7 +84,7 @@ class DocumentEntry:
 
 
 def _sep(name: str) -> dict:
-    return {'separator': True, 'nazwa': name}
+    return {'separator': True, 'name': name}
 
 
 
@@ -357,7 +357,7 @@ def buduj_kontekst(zapis, typ: str) -> dict:
                 'efekt_kod':  _g(h.efekt, 'kod') if h.efekt else str(h.learning_outcome_id).zfill(2),
                 'efekt_opis': _g(h.efekt, 'opis') if h.efekt else '',
                 'dzial':      _g(h, 'department_name', ''),
-                'prace':      _g(h, 'sample_tasks', ''),
+                'prace':      _g(h, 'example_tasks', ''),
                 'dni':        _g(h, 'days_count', 0),
             }
             for h in harmonogramy
@@ -455,25 +455,29 @@ def buduj_kontekst(zapis, typ: str) -> dict:
 
     elif typ == 'ZAL_8':
         fg  = zapis.final_grades
-        sw  = getattr(zapis, 'sprawdzian', None)
+        sw  = zapis.examination
+
+        def _f(v):
+            return float(v) if v is not None else None
+
         ctx['zapis'].update({
-            'ocena_sprawozdania':      float(fg.report_grade)     if fg and fg.report_grade     else None,
-            'ocena_uopz':              float(fg.supervisor_grade) if fg and fg.supervisor_grade else None,
-            'ocena_zopz':              float(_g(zapis, 'ocena_zopz', None)) if _g(zapis, 'ocena_zopz', None) else None,
-            'sprawdzian_pytanie_1':    _g(zapis, 'sprawdzian_pytanie_1', ''),
-            'sprawdzian_pytanie_2':    _g(zapis, 'sprawdzian_pytanie_2', ''),
-            'sprawdzian_pytanie_3':    _g(zapis, 'sprawdzian_pytanie_3', ''),
-            'sprawdzian_ocena_1':      float(_g(zapis, 'sprawdzian_ocena_1', None)) if _g(zapis, 'sprawdzian_ocena_1', None) else None,
-            'sprawdzian_ocena_2':      float(_g(zapis, 'sprawdzian_ocena_2', None)) if _g(zapis, 'sprawdzian_ocena_2', None) else None,
-            'sprawdzian_ocena_3':      float(_g(zapis, 'sprawdzian_ocena_3', None)) if _g(zapis, 'sprawdzian_ocena_3', None) else None,
-            'komisja_przewodniczacy':  _g(sw, 'commission_chair',    '') if sw else '',
-            'komisja_czlonek_2':       _g(sw, 'commission_member_2', '') if sw else '',
-            'komisja_czlonek_3':       _g(sw, 'commission_member_3', '') if sw else '',
+            'firma_nazwa':            firma_nazwa,
+            'termin_od':              _fmt(zapis.start_date),
+            'termin_do':              _fmt(zapis.end_date),
+            'ocena_sprawozdania':     _f(fg.report_grade)       if fg else None,
+            'ocena_uopz':             _f(fg.supervisor_grade)   if fg else None,
+            'ocena_zopz':             _f(fg.workplace_grade)    if fg else None,
+            'sprawdzian_pytanie_1':   sw.question_1             if sw else None,
+            'sprawdzian_ocena_1':     _f(sw.grade_1)            if sw else None,
+            'sprawdzian_pytanie_2':   sw.question_2             if sw else None,
+            'sprawdzian_ocena_2':     _f(sw.grade_2)            if sw else None,
+            'sprawdzian_pytanie_3':   sw.question_3             if sw else None,
+            'sprawdzian_ocena_3':     _f(sw.grade_3)            if sw else None,
+            'uopz':                   {'first_name': uopz.first_name, 'last_name': uopz.last_name} if uopz else None,
+            'komisja_przewodniczacy': sw.commission_chair        if sw else None,
+            'komisja_czlonek_2':      sw.commission_member_2     if sw else None,
+            'komisja_czlonek_3':      sw.commission_member_3     if sw else None,
         })
-        ctx['uopz'] = {
-            'first_name':    _g(uopz, 'first_name') if uopz else '',
-            'last_name':     _g(uopz, 'last_name')  if uopz else '',
-            'imie_nazwisko': f"{uopz.first_name} {uopz.last_name}" if uopz else '',
-        }
+        ctx['data_egzaminu'] = date.today().strftime('%d.%m.%Y')
 
     return ctx

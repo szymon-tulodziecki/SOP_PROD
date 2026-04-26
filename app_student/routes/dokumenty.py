@@ -135,9 +135,9 @@ def generuj(doc_type: str):
 
     # Walidacja kompletności danych
     warnings = []
-    if not (zapis.firma_nazwa or (zapis.firma and zapis.firma.nazwa)):
+    if not (zapis.firma_nazwa or (zapis.firma and zapis.firma.name)):
         warnings.append('Nazwa firmy')
-    if not (zapis.firma_adres or (zapis.firma and zapis.firma.adres)):
+    if not (zapis.firma_adres or (zapis.firma and zapis.firma.address)):
         warnings.append('Adres firmy')
     if doc_type == 'ZAL_6' and not getattr(zapis, 'wpisy_dziennika', None):
         warnings.append('Brak wpisów w dzienniku')

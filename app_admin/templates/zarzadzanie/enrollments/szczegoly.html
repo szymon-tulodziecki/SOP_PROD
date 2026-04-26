@@ -72,8 +72,8 @@
         </div>
         <div>
           <div style="font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--kolor-tekst-trzeciorzed); margin-bottom: 0.35rem;">Rok akademicki</div>
-          <div style="font-weight: 600; color: var(--kolor-tekst);">{{ zapis.praktyka.rok_uczelniany }}</div>
-          <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor);">Semestr {{ zapis.praktyka.semestr }}</div>
+          <div style="font-weight: 600; color: var(--kolor-tekst);">{{ zapis.praktyka.academic_year }}</div>
+          <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor);">Semestr {{ zapis.praktyka.semester }}</div>
         </div>
         <div>
           <div style="font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--kolor-tekst-trzeciorzed); margin-bottom: 0.35rem;">Ścieżka</div>
@@ -131,15 +131,15 @@
             <div class="pole-info">
               <div class="pole-info__etykieta">Termin praktyki</div>
               <div class="pole-info__wartosc">
-                {{ zapis.termin_od.strftime('%d.%m.%Y') if zapis.termin_od else 'Brak' }}
+                {{ zapis.start_date.strftime('%d.%m.%Y') if zapis.start_date else 'Brak' }}
                 <span style="color: var(--kolor-tekst-trzeciorzed); margin: 0 0.25rem;">→</span>
-                {{ zapis.termin_do.strftime('%d.%m.%Y') if zapis.termin_do else 'Brak' }}
+                {{ zapis.end_date.strftime('%d.%m.%Y') if zapis.end_date else 'Brak' }}
               </div>
             </div>
             <div class="pole-info">
               <div class="pole-info__etykieta">Ubezpieczenie NW</div>
               <div class="pole-info__wartosc">
-                {% if zapis.ubezpieczenie_nw %}
+                {% if zapis.accident_insurance %}
                   <span style="color: var(--kolor-sukces); display: inline-flex; align-items: center; gap: 0.35rem;">
                     <span style="width: 8px; height: 8px; border-radius: 50%; background: currentColor; display: inline-block;"></span>
                     Potwierdzone

@@ -8,13 +8,14 @@ na sesjach bazy danych.
 from core.uslugi.praktyki  import UslugaPraktyk
 from core.uslugi.uzytkownicy import UslugaUzytkownikow
 from core.uslugi.ocenianie import SerwisOceniania
+from core.uslugi.komisja import SerwisKomisji
 from core.uslugi.dokumenty import (
     DOC_CONFIG, STATIC_TEMPLATES,
     DocumentEntry, buduj_flagi, rozwiaz_dokumenty, buduj_kontekst,
 )
 
 __all__ = [
-    'UslugaPraktyk', 'UslugaUzytkownikow', 'SerwisOceniania',
+    'UslugaPraktyk', 'UslugaUzytkownikow', 'SerwisOceniania', 'SerwisKomisji',
     'DOC_CONFIG', 'STATIC_TEMPLATES',
     'DocumentEntry', 'buduj_flagi', 'rozwiaz_dokumenty', 'buduj_kontekst',
 ]

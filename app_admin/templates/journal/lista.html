@@ -36,14 +36,14 @@
               <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor);">Album: {{ d.zapis.student.album_number or '-' }}</div>
             </td>
             <td>
-              <div>{{ d.zapis.praktyka.rok_uczelniany }}</div>
-              <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor);">{{ d.zapis.praktyka.semestr | capitalize }}</div>
+              <div>{{ d.zapis.praktyka.academic_year }}</div>
+              <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor);">{{ d.zapis.praktyka.semester | capitalize }}</div>
             </td>
             <td>
-              <div style="font-weight: 600;">{{ d.zapis.total_hours_logged }} / {{ d.zapis.praktyka.wymiar_godzin }} h</div>
+              <div style="font-weight: 600;">{{ d.zapis.total_hours_logged }} / {{ d.zapis.praktyka.required_hours }} h</div>
               <div class="pasek-postep" style="margin-top: 4px;">
-                <div class="pasek-postep__wypelnienie {{ 'pasek-postep__wypelnienie--zakonczony' if d.zapis.total_hours_logged >= d.zapis.praktyka.wymiar_godzin else '' }}"
-                     style="width: {{ [((d.zapis.total_hours_logged / d.zapis.praktyka.wymiar_godzin) * 100)|round|int, 100]|min }}%;"></div>
+                <div class="pasek-postep__wypelnienie {{ 'pasek-postep__wypelnienie--zakonczony' if d.zapis.progress_percent >= 100 else '' }}"
+                     style="width: {{ d.zapis.progress_percent }}%;"></div>
               </div>
             </td>
             <td><strong>{{ d.liczba_wpisow }}</strong></td>

@@ -133,7 +133,7 @@ def _get_app() -> Flask:
 
 
 # ── Wyjątki domenowe (nie ponawiamy) ─────────────────────────────────────────
-class ZapisNieIstnieje(Exception):
+class EnrollmentNotFound(Exception):
     """Brak rekordu w bazie — błąd stały, retry bez sensu."""
 
 
@@ -150,11 +150,11 @@ def generate_pdf_dziennik(self, enrollment_id: str) -> dict:
     from core.modele import InternshipEnrollment
     from core.uslugi.dokumenty import buduj_kontekst
 
-    zapis = db.session.get(InternshipEnrollment, uuid.UUID(enrollment_id))
-    if not zapis:
-        raise ZapisNieIstnieje(f'Zapis {enrollment_id} nie istnieje')
+    enrollment = db.session.get(InternshipEnrollment, uuid.UUID(enrollment_id))
+    if not enrollment:
+        raise EnrollmentNotFound(f'Enrollment {enrollment_id} not found')
 
-    context = buduj_kontekst(zapis, 'ZAL_6')
+    context = buduj_kontekst(enrollment, 'ZAL_6')
 
     tex_url = _get_app().config.get('TEX_SERVICE_URL', TEX_SERVICE_URL)
     try:
@@ -178,7 +178,7 @@ def generate_pdf_dziennik(self, enrollment_id: str) -> dict:
     return {
         'status':   'success',
         'path':     str(output_path),
-        'filename': f"dziennik_{zapis.student.last_name}_{zapis.student.first_name}.pdf",
+        'filename': f"dziennik_{enrollment.student.last_name}_{enrollment.student.first_name}.pdf",
     }
 
 
@@ -238,9 +238,9 @@ def cleanup_deleted_internships() -> dict:
                  .filter(Internship.deleted_at <= cutoff)
                  .all())
         for p in stare:
-            for zapis in p.enrollments:
+            for enrollment in p.enrollments:
                 docs = db.session.execute(
-                    db.select(UploadedDocument).filter_by(enrollment_id=zapis.id)
+                    db.select(UploadedDocument).filter_by(enrollment_id=enrollment.id)
                 ).scalars().all()
                 for doc in docs:
                     try:

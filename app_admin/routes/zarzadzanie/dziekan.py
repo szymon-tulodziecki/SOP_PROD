@@ -8,7 +8,7 @@ from flask import (Blueprint, render_template, redirect, url_for,
 from flask_login import login_required, current_user
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
-from wtforms import StringField, SelectField
+from wtforms import StringField, SelectField, TextAreaField, SubmitField
 from wtforms.validators import DataRequired, Email, Length, Optional, ValidationError
 from werkzeug.security import generate_password_hash
 
@@ -19,6 +19,8 @@ from core.extensions import db
 from core.uslugi import UslugaUzytkownikow as _UslugaUzytkownikow
 _serwis_uzytkownikow = _UslugaUzytkownikow()
 from core.autoryzacja import wymaga_roli
+from core.uslugi.workflow import ZapisFSM, IllegalTransitionError
+from core.modele.praktyki import EventType
 from core.repozytoria import RepozytoriumZapisow
 
 _repo_zapisow = RepozytoriumZapisow()
@@ -40,10 +42,6 @@ def dziekan_lista():
 @zarzadzanie_bp.route('/dziekan/<uuid:id>/decyzja', methods=['GET', 'POST'])
 @wymaga_roli(UserRole.ADMIN, UserRole.DYREKTOR)
 def dziekan_decyzja(id):
-    from flask_wtf import FlaskForm
-    from wtforms import TextAreaField, SelectField, SubmitField
-    from wtforms.validators import DataRequired, Optional
-
     enrollment = db.session.get(InternshipEnrollment, id) or abort(404)
 
     if enrollment.status != EnrollmentStatus.DIRECTOR_APPROVAL:
@@ -60,7 +58,6 @@ def dziekan_decyzja(id):
         if decision not in ('APPROVED', 'REJECTED'):
             flash('Wybierz decyzję (jeden z dwóch przycisków).', 'warning')
         else:
-            from core.uslugi.workflow import ZapisFSM, IllegalTransitionError
             try:
                 with ZapisFSM.lock(id) as fsm:
                     if fsm.zapis.status != EnrollmentStatus.DIRECTOR_APPROVAL:
@@ -72,7 +69,6 @@ def dziekan_decyzja(id):
                         fsm.zatwierdz_przez_dyrektora(actor_id=current_user.id, comment=comment)
                         flash('Wniosek zatwierdzony przez Dyrektora Instytutu. Student może kontynuować praktykę.', 'success')
                     else:
-                        from core.modele.praktyki import EventType
                         fsm.odrzuc(actor_id=current_user.id,
                                    comment=f"Dyrektor nie wyraził zgody: {comment}",
                                    event_type=EventType.DIRECTOR_DECISION)

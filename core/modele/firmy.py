@@ -20,27 +20,6 @@ class Company(db.Model):
     is_active            = db.Column(db.Boolean, default=True)
     created_at           = db.Column(db.DateTime, server_default=db.func.now())
 
-    # Backward-compat shims
-    @property
-    def nazwa(self):
-        return self.name
-
-    @property
-    def adres(self):
-        return self.address
-
-    @property
-    def miasto(self):
-        return self.city
-
-    @property
-    def nip_krs(self):
-        return self.tax_id
-
-    @property
-    def ma_stala_umowe(self):
-        return self.has_standing_agreement
-
     def __repr__(self) -> str:
         return f'<Company {self.name}>'
 

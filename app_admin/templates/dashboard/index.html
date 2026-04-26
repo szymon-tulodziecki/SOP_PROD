@@ -100,7 +100,7 @@
             {% for z in ostatnie_zapisy %}
             <tr>
               <td>{{ z.student.first_name }} {{ z.student.last_name }}</td>
-              <td>{{ z.praktyka.rok_uczelniany }} ({{ z.praktyka.semestr }})</td>
+              <td>{{ z.praktyka.academic_year }} ({{ z.praktyka.semester }})</td>
               <td>
                 <span class="status status--{{ z.status.value|lower|replace('_', '-') }}">
                   {{ tlumacz_status(z.status.value) }}
@@ -136,7 +136,7 @@
         <li style="padding: 1rem 0; border-bottom: 1px solid var(--kolor-ramka); display: flex; justify-content: space-between; align-items: center;">
           <div>
             <span style="display: block; font-weight: 600;">{{ z.student.first_name }} {{ z.student.last_name }}</span>
-            <span style="font-size: 0.85rem; color: var(--kolor-tekst-drugor);">{{ z.praktyka.rok_uczelniany }}</span>
+            <span style="font-size: 0.85rem; color: var(--kolor-tekst-drugor);">{{ z.praktyka.academic_year }}</span>
           </div>
         </li>
         {% else %}

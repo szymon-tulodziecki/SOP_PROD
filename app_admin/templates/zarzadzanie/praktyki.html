@@ -30,9 +30,9 @@
       <tbody>
         {% for p in praktyki.items %}
         <tr>
-          <td style="font-weight: 500;">{{ p.rok_uczelniany }}</td>
-          <td>{{ p.semestr | capitalize }}</td>
-          <td>{{ p.wymiar_godzin }} h</td>
+          <td style="font-weight: 500;">{{ p.academic_year }}</td>
+          <td>{{ p.semester | capitalize }}</td>
+          <td>{{ p.required_hours }} h</td>
           <td>{{ p.zapisy | length }}</td>
           <td>
             {% if p.status.value == 'ACTIVE' %}
@@ -118,8 +118,8 @@
         {% for p in do_usuniecia %}
         {% set dni_pozostale = ((p.deleted_at.timestamp() + 7*86400 - now().timestamp()) / 86400) | int %}
         <tr>
-          <td style="font-weight: 500;">{{ p.rok_uczelniany }}</td>
-          <td>{{ p.semestr | capitalize }}</td>
+          <td style="font-weight: 500;">{{ p.academic_year }}</td>
+          <td>{{ p.semester | capitalize }}</td>
           <td>{{ p.deleted_at.strftime('%d.%m.%Y %H:%M') }}</td>
           <td>
             {% if dni_pozostale <= 1 %}

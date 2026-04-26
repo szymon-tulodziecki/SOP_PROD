@@ -8,7 +8,7 @@ from flask import (Blueprint, render_template, redirect, url_for,
 from flask_login import login_required, current_user
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
-from wtforms import StringField, SelectField
+from wtforms import StringField, SelectField, TextAreaField, SubmitField
 from wtforms.validators import DataRequired, Email, Length, Optional, ValidationError
 from werkzeug.security import generate_password_hash
 
@@ -18,6 +18,7 @@ from core.extensions import db
 from core.uslugi import UslugaUzytkownikow as _UslugaUzytkownikow
 _serwis_uzytkownikow = _UslugaUzytkownikow()
 from core.autoryzacja import wymaga_roli
+from core.uslugi.workflow import ZapisFSM, IllegalTransitionError
 from core.repozytoria import (RepozytoriumPraktyk, RepozytoriumZapisow,
                                RepozytoriumUzytkownikow, RepozytoriumEfektow,
                                RepozytoriumDokumentowStudenta)
@@ -36,8 +37,8 @@ from .formularze import *
 @zarzadzanie_bp.route('/praktyki')
 @login_required
 def lista_praktyk():
-    strona = request.args.get('strona', 1, type=int)
-    praktyki = _repo_praktyk.lista_strona(strona=strona)
+    page = request.args.get('strona', 1, type=int)
+    praktyki = _repo_praktyk.lista_strona(strona=page)
     do_usuniecia = _repo_praktyk.do_usuniecia()
     csrf_form = FlaskForm()
     return render_template('zarzadzanie/praktyki.html', praktyki=praktyki,
@@ -89,30 +90,29 @@ class FormularzPrzypiszUOPZ(FlaskForm):
 @zarzadzanie_bp.route('/zgloszenia')
 @wymaga_roli(UserRole.ADMIN, UserRole.KOMISJA, UserRole.DYREKTOR, UserRole.UOPZ)
 def lista_zgloszen():
-    strona        = request.args.get('page', 1, type=int)
+    page          = request.args.get('page', 1, type=int)
     status_filter = request.args.get('status', '').strip()
 
     uopz_id = current_user.id if current_user.role == UserRole.UOPZ else None
     try:
-        zgloszenia = _repo_zapisow.lista_zgloszen_strona(status_filter=status_filter, strona=strona, supervisor_id=uopz_id)
+        applications = _repo_zapisow.lista_zgloszen_strona(status_filter=status_filter, strona=page, supervisor_id=uopz_id)
     except ValueError:
         flash(f'Nieznany status: {status_filter}', 'warning')
-        zgloszenia = _repo_zapisow.lista_zgloszen_strona(strona=strona, supervisor_id=uopz_id)
+        applications = _repo_zapisow.lista_zgloszen_strona(strona=page, supervisor_id=uopz_id)
     csrf_form = FlaskForm()
-    return render_template('zarzadzanie/enrollments/list.html', zgloszenia=zgloszenia, csrf_form=csrf_form)
+    return render_template('zarzadzanie/enrollments/list.html', zgloszenia=applications, csrf_form=csrf_form)
 
 
 @zarzadzanie_bp.route('/zgloszenia/<uuid:id>/przypisz-uopz', methods=['GET', 'POST'])
 @wymaga_roli(UserRole.ADMIN)
 def przypisz_uopz(id):
-    zapis     = db.session.get(InternshipEnrollment, id) or abort(404)
-    form      = FormularzPrzypiszUOPZ()
-    uopz_list = _repo_uzytk.aktywni_uopz()
+    enrollment = db.session.get(InternshipEnrollment, id) or abort(404)
+    form       = FormularzPrzypiszUOPZ()
+    uopz_list  = _repo_uzytk.aktywni_uopz()
     form.uopz_id.choices = [('', '--- brak ---')] + [(str(u.id), f"{u.first_name} {u.last_name}") for u in uopz_list]
 
     if form.validate_on_submit():
         if form.uopz_id.data:
-            from core.uslugi.workflow import ZapisFSM, IllegalTransitionError
             try:
                 with ZapisFSM.lock(id) as fsm:
                     fsm.zapis.supervisor_id = form.uopz_id.data
@@ -126,26 +126,23 @@ def przypisz_uopz(id):
         return redirect(url_for('zarzadzanie.lista_zgloszen'))
 
     if request.method == 'GET':
-        form.uopz_id.data = str(zapis.supervisor_id) if zapis.supervisor_id else ''
+        form.uopz_id.data = str(enrollment.supervisor_id) if enrollment.supervisor_id else ''
 
-    return render_template('zarzadzanie/enrollments/przypisz_uopz.html', form=form, zapis=zapis)
+    return render_template('zarzadzanie/enrollments/przypisz_uopz.html', form=form, zapis=enrollment)
 
 
 @zarzadzanie_bp.route('/zgloszenia/<uuid:id>/szczegoly', methods=['GET', 'POST'])
 @wymaga_roli(UserRole.ADMIN, UserRole.UOPZ, UserRole.KOMISJA, UserRole.DYREKTOR)
 def szczegoly_zgloszenia(id):
-    zapis = db.session.get(InternshipEnrollment, id) or abort(404)
+    enrollment = db.session.get(InternshipEnrollment, id) or abort(404)
 
-    if current_user.role == UserRole.UOPZ and zapis.supervisor_id != current_user.id:
+    if current_user.role == UserRole.UOPZ and enrollment.supervisor_id != current_user.id:
         abort(403)
     # KOMISJA i DYREKTOR mają wgląd w każde zgłoszenie (read-only flow)
 
-    harmonogram      = _repo_zapisow.harmonogram_dla_zapisu(id)
-    harmonogram_dict = {h.learning_outcome_id: h for h in harmonogram}
-    efekty           = _repo_efektow.wszystkie()
-
-    from flask_wtf import FlaskForm
-    from wtforms import TextAreaField, SubmitField
+    schedule      = _repo_zapisow.harmonogram_dla_zapisu(id)
+    schedule_dict = {h.learning_outcome_id: h for h in schedule}
+    outcomes      = _repo_efektow.wszystkie()
 
     class CommentForm(FlaskForm):
         comment    = TextAreaField('Komentarz do studenta')
@@ -155,8 +152,6 @@ def szczegoly_zgloszenia(id):
     form = CommentForm()
 
     if form.validate_on_submit():
-        from core.uslugi.workflow import ZapisFSM, IllegalTransitionError
-
         try:
             with ZapisFSM.lock(id) as fsm:
                 comment = form.comment.data or ''
@@ -171,17 +166,16 @@ def szczegoly_zgloszenia(id):
             flash(str(e), 'danger')
         return redirect(url_for('zarzadzanie.lista_zgloszen'))
 
-    uploaded_docs = _repo_docs.dla_zapisu_studenta(id, zapis.student_id)
+    uploaded_docs = _repo_docs.dla_zapisu_studenta(id, enrollment.student_id)
 
     return render_template('zarzadzanie/enrollments/szczegoly.html',
-                           zapis=zapis, harmonogram_dict=harmonogram_dict,
-                           efekty=efekty, form=form, uploaded_docs=uploaded_docs)
+                           zapis=enrollment, harmonogram_dict=schedule_dict,
+                           efekty=outcomes, form=form, uploaded_docs=uploaded_docs)
 
 
 @zarzadzanie_bp.route('/zgloszenia/<uuid:id>/zatwierdz-zaklad', methods=['POST'])
 @wymaga_roli(UserRole.UOPZ, UserRole.ADMIN)
 def zatwierdz_zaklad(id):
-    from core.uslugi.workflow import ZapisFSM, IllegalTransitionError
     try:
         with ZapisFSM.lock(id) as fsm:
             fsm.zatwierdz_przez_uopz()
@@ -195,7 +189,6 @@ def zatwierdz_zaklad(id):
 @zarzadzanie_bp.route('/zgloszenia/<uuid:id>/potwierdz', methods=['POST'])
 @wymaga_roli(UserRole.ADMIN, UserRole.UOPZ)
 def potwierdz_zapis(id):
-    from core.uslugi.workflow import ZapisFSM, IllegalTransitionError
     try:
         with ZapisFSM.lock(id) as fsm:
             fsm.zatwierdz_przez_uopz()
@@ -214,23 +207,23 @@ def moje_zgloszenia():
     """Lista zgłoszeń przypisanych do aktualnego UOPZ"""
     from app_admin.routes.ocenianie import get_pilne_oceny
 
-    strona        = request.args.get('page', 1, type=int)
+    page          = request.args.get('page', 1, type=int)
     status_filter = request.args.get('status', '').strip()
 
     try:
-        zgloszenia = _repo_zapisow.dla_uopz_strona(
-            current_user.id, status_filter=status_filter, strona=strona
+        applications = _repo_zapisow.dla_uopz_strona(
+            current_user.id, status_filter=status_filter, strona=page
         )
     except ValueError:
         flash(f'Nieznany status: {status_filter}', 'warning')
-        zgloszenia = _repo_zapisow.dla_uopz_strona(current_user.id, strona=strona)
+        applications = _repo_zapisow.dla_uopz_strona(current_user.id, strona=page)
 
-    liczniki    = _repo_zapisow.liczniki_dla_uopz(current_user.id)
-    pilne_oceny = get_pilne_oceny(current_user.id)
-    csrf_form   = FlaskForm()
+    counts        = _repo_zapisow.liczniki_dla_uopz(current_user.id)
+    urgent_grades = get_pilne_oceny(current_user.id)
+    csrf_form     = FlaskForm()
     return render_template('zarzadzanie/enrollments/moje_lista.html',
-                           zgloszenia=zgloszenia, liczniki=liczniki,
-                           pilne_oceny=pilne_oceny, csrf_form=csrf_form)
+                           zgloszenia=applications, liczniki=counts,
+                           pilne_oceny=urgent_grades, csrf_form=csrf_form)
 
 
 @zarzadzanie_bp.route('/praktyki/<uuid:id>/usun', methods=['POST'])

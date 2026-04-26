@@ -32,8 +32,8 @@
       <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem;">
         <div>
           <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--kolor-tekst-drugor); margin-bottom: 0.25rem;">Praktyka</div>
-          <div style="font-weight: 600;">{{ zapis.praktyka.rok_uczelniany }}</div>
-          <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor);">Semestr {{ zapis.praktyka.semestr }}</div>
+          <div style="font-weight: 600;">{{ zapis.praktyka.academic_year }}</div>
+          <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor);">Semestr {{ zapis.praktyka.semester }}</div>
         </div>
         <div>
           <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--kolor-tekst-drugor); margin-bottom: 0.25rem;">Wpisy</div>
@@ -41,11 +41,11 @@
         </div>
         <div>
           <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--kolor-tekst-drugor); margin-bottom: 0.25rem;">Godziny</div>
-          <div style="font-weight: 700; font-size: 1.2rem; color: var(--kolor-glowny);">{{ zapis.total_hours_logged }} / {{ zapis.praktyka.wymiar_godzin }} h</div>
+          <div style="font-weight: 700; font-size: 1.2rem; color: var(--kolor-glowny);">{{ zapis.total_hours_logged }} / {{ zapis.praktyka.required_hours }} h</div>
           <div class="pasek-postep" style="margin-top: 0.5rem; margin-bottom: 1rem;">
             {% set proc_h = 0 %}
-            {% if zapis and zapis.praktyka and zapis.praktyka.wymiar_godzin > 0 %}
-              {% set proc_h = [(zapis.total_hours_logged / zapis.praktyka.wymiar_godzin * 100)|int, 100]|min %}
+            {% if zapis and zapis.praktyka and zapis.praktyka.required_hours > 0 %}
+              {% set proc_h = [(zapis.total_hours_logged / zapis.praktyka.required_hours * 100)|int, 100]|min %}
             {% endif %}
             <div class="pasek-postep__wypelnienie{% if proc_h >= 100 %} pasek-postep__wypelnienie--zakonczony{% endif %}" style="width: {{ proc_h }}%;"></div>
           </div>
@@ -61,7 +61,7 @@
     </div>
   </div>
 
-  {% if zapis.total_hours_logged >= zapis.praktyka.wymiar_godzin %}
+  {% if zapis.total_hours_logged >= zapis.praktyka.required_hours %}
   <div class="karta" style="margin-bottom: 1.5rem; border-left: 4px solid #dc2626;">
     <div class="karta__naglowek" style="justify-content:center; text-align:center;">
       <h2 class="karta__tytul">⚠ Dokumenty końcowe praktyki</h2>

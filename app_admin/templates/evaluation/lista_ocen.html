@@ -49,10 +49,10 @@
           <td>
             <div style="font-weight:600;">{{ p.student.last_name }} {{ p.student.first_name }}</div>
             <div style="font-size:0.8rem; color:var(--kolor-tekst-drugor);">Nr alb.: {{ p.student.album_number or '-' }}
-              {% if item.is_path_b %}<span class="status status--in-progress" style="font-size:0.65rem; margin-left:0.4rem;">{% if p.path_type.value == 'EMPLOYMENT' %}Staż/zatrudnienie{% else %}Dział. gospod.{% endif %}</span>{% else %}<span class="status status--completed" style="font-size:0.65rem; margin-left:0.4rem;">Praktyka</span>{% endif %}
+              {% if item.is_path_b %}<span class="status status--in-progress" style="font-size:0.65rem; margin-left:0.4rem;">{% if p.path_type == p.path_type.EMPLOYMENT %}Staż/zatrudnienie{% else %}Dział. gospod.{% endif %}</span>{% else %}<span class="status status--completed" style="font-size:0.65rem; margin-left:0.4rem;">Praktyka</span>{% endif %}
             </div>
           </td>
-          <td style="font-size:0.85rem;">{{ (p.firma.nazwa if p.firma else p.firma_nazwa) or '-' }}</td>
+          <td style="font-size:0.85rem;">{{ (p.firma.name if p.firma else p.firma_nazwa) or '-' }}</td>
           <td style="text-align:center;">{{ p.ocena_sprawozdania or '—' }}</td>
           <td style="text-align:center;">{{ p.ocena_uopz or '—' }}</td>
           <td style="text-align:center;">{{ p.ocena_zopz or '—' }}</td>

@@ -116,11 +116,11 @@
                 {% endif %}
               </td>
               <td>
-                <div style="font-weight: 600;">{{ z.praktyka.rok_uczelniany }}</div>
-                <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor);">Semestr {{ z.praktyka.semestr }}</div>
-                {% if z.termin_od and z.termin_do %}
+                <div style="font-weight: 600;">{{ z.praktyka.academic_year }}</div>
+                <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor);">Semestr {{ z.praktyka.semester }}</div>
+                {% if z.start_date and z.end_date %}
                 <div style="font-size: 0.75rem; color: var(--kolor-tekst-drugor); margin-top: 0.25rem;">
-                  {{ z.termin_od.strftime('%d.%m') }} - {{ z.termin_do.strftime('%d.%m.%Y') }}
+                  {{ z.start_date.strftime('%d.%m') }} - {{ z.end_date.strftime('%d.%m.%Y') }}
                 </div>
                 {% endif %}
               </td>
