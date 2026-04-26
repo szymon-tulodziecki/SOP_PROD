@@ -49,15 +49,8 @@
           <td>
             <div style="font-weight:600;">{{ p.student.last_name }} {{ p.student.first_name }}</div>
             <div style="font-size:0.8rem; color:var(--kolor-tekst-drugor);">Nr alb.: {{ p.student.album_number or '-' }}
-              {% if item.is_path_b %}<span class="status status--in-progress" style="font-size:0.65rem; margin-left:0.4rem;">Ścieżka B</span>{% endif %}
+              {% if item.is_path_b %}<span class="status status--in-progress" style="font-size:0.65rem; margin-left:0.4rem;">{% if p.path_type.value == 'EMPLOYMENT' %}Staż/zatrudnienie{% else %}Dział. gospod.{% endif %}</span>{% else %}<span class="status status--completed" style="font-size:0.65rem; margin-left:0.4rem;">Praktyka</span>{% endif %}
             </div>
-            {% if item.deadline %}
-            <div style="font-size:0.75rem; margin-top:0.2rem; {% if item.przekroczony %}color:var(--kolor-blad); font-weight:600;{% elif item.dni_do_deadline <= 2 %}color:#d97706;{% else %}color:var(--kolor-tekst-drugor);{% endif %}">
-              {% if item.przekroczony %}Deadline przekroczony o {{ -item.dni_do_deadline }} dni
-              {% elif item.dni_do_deadline == 0 %}Dziś ostatni dzień!
-              {% else %}Deadline za {{ item.dni_do_deadline }} dni{% endif %}
-            </div>
-            {% endif %}
           </td>
           <td style="font-size:0.85rem;">{{ (p.firma.nazwa if p.firma else p.firma_nazwa) or '-' }}</td>
           <td style="text-align:center;">{{ p.ocena_sprawozdania or '—' }}</td>
@@ -67,7 +60,7 @@
           <td style="text-align:center;">
             {% if p.final_grade is not none %}
             <strong style="font-size:1.05rem; color:{% if p.final_grade >= 3.0 %}var(--kolor-sukces){% else %}var(--kolor-blad){% endif %};">
-              {{ p.final_grade }}
+              {{ "%.1f"|format(p.final_grade) }}
             </strong>
             {% else %}—{% endif %}
           </td>

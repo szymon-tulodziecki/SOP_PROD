@@ -111,3 +111,5 @@ dump.rdb
 x.py
 y.py
 fill_journal.mjs
+sonar-project.*
+docker-compose.sonar.yml

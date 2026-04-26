@@ -38,8 +38,10 @@ from .formularze import *
 def lista_praktyk():
     strona = request.args.get('strona', 1, type=int)
     praktyki = _repo_praktyk.lista_strona(strona=strona)
+    do_usuniecia = _repo_praktyk.do_usuniecia()
     csrf_form = FlaskForm()
-    return render_template('zarzadzanie/praktyki.html', praktyki=praktyki, csrf_form=csrf_form)
+    return render_template('zarzadzanie/praktyki.html', praktyki=praktyki,
+                           do_usuniecia=do_usuniecia, csrf_form=csrf_form)
 
 
 @zarzadzanie_bp.route('/praktyki/nowa', methods=['GET', 'POST'])
@@ -234,27 +236,28 @@ def moje_zgloszenia():
 @zarzadzanie_bp.route('/praktyki/<uuid:id>/usun', methods=['POST'])
 @wymaga_roli(UserRole.ADMIN)
 def usun_praktyke(id):
+    from datetime import datetime, timezone
     p    = db.session.get(Internship, id) or abort(404)
     opis = f'{p.academic_year} ({p.semester})'
+    if p.enrollments:
+        p.deleted_at = datetime.now(timezone.utc)
+        db.session.commit()
+        flash(f'Praktyka {opis} została dezaktywowana i zostanie trwale usunięta po 7 dniach. Możesz ją przywrócić.', 'warning')
+    else:
+        db.session.delete(p)
+        db.session.commit()
+        flash(f'Praktyka {opis} została trwale usunięta (brak zapisanych studentów).', 'success')
+    return redirect(url_for('zarzadzanie.lista_praktyk'))
 
-    from core.pliki import _fs_delete
-    import logging
-    _log = logging.getLogger(__name__)
 
-    for zapis in p.enrollments:
-        docs = db.session.execute(
-            db.select(UploadedDocument).filter_by(enrollment_id=zapis.id)
-        ).scalars().all()
-        for doc in docs:
-            try:
-                _fs_delete(doc.file_path)
-            except Exception as exc:
-                _log.warning("Nie udało się usunąć pliku %s z fileservera: %s", doc.file_path, exc)
-            db.session.delete(doc)
-
-    db.session.delete(p)
+@zarzadzanie_bp.route('/praktyki/<uuid:id>/przywroc', methods=['POST'])
+@wymaga_roli(UserRole.ADMIN)
+def przywroc_praktyke(id):
+    p = db.session.get(Internship, id) or abort(404)
+    opis = f'{p.academic_year} ({p.semester})'
+    p.deleted_at = None
     db.session.commit()
-    flash(f'Internship {opis} została usunięta.', 'success')
+    flash(f'Praktyka {opis} została przywrócona.', 'success')
     return redirect(url_for('zarzadzanie.lista_praktyk'))
 
 

@@ -99,7 +99,7 @@ class FormularzWniosek(FlaskForm):
     pracodawca_adres    = StringField('Adres', validators=[Optional(), Length(max=255)])
     pracodawca_miasto   = StringField('Miasto', validators=[Optional(), Length(max=100)])
     stanowisko          = StringField('Stanowisko / zakres działalności', validators=[DataRequired(message='Podaj stanowisko.'), Length(max=255)])
-    uzasadnienie        = TextAreaField('Uzasadnienie wniosku', validators=[DataRequired(message='Napisz uzasadnienie.'), Length(max=2000)])
+    uzasadnienie        = TextAreaField('Uzasadnienie wniosku', validators=[DataRequired(message='Napisz uzasadnienie.'), Length(min=500, max=2000, message='Uzasadnienie musi mieć od 500 do 2000 znaków.')])
 
 
 # ═══════════════════════════════════════════════════════════
@@ -117,11 +117,25 @@ def kreator_sciezka(id):
 
     istniejacy = _repo_zapisow.pending_dla_studenta_i_praktyki(current_user.id, id)
 
+    # Jeśli jedyny istniejący zapis to REJECTED, traktujemy go jak nowy (reset)
+    odrzucony = None
+    if not istniejacy:
+        odrzucony = db.session.query(InternshipEnrollment).filter_by(
+            student_id=current_user.id,
+            internship_id=id,
+            status=EnrollmentStatus.REJECTED,
+        ).first()
+
     form = FormularzSciezka()
 
     if form.validate_on_submit():
         if istniejacy:
             zapis = istniejacy
+        elif odrzucony:
+            zapis = odrzucony
+            zapis.status = EnrollmentStatus.PENDING
+            from core.modele.praktyki import ProcessEvent
+            db.session.query(ProcessEvent).filter_by(enrollment_id=zapis.id).delete()
         else:
             zapis = InternshipEnrollment(id=uuid.uuid4(), internship_id=id,
                                    student_id=current_user.id, status=EnrollmentStatus.PENDING,
@@ -283,7 +297,7 @@ def kreator_wniosek(zapis_id):
 
 
 
-@praktyki_bp.route('/')
+@praktyki_bp.route('/', methods=['GET'])
 @login_required
 def lista():
     dostepne = _repo_praktyk.aktywne()
@@ -316,12 +330,25 @@ def lista():
                 .first()
             )
             komentarz_komisji = ev.comment if ev else None
+        komentarz_odrzucenia = None
+        if z.status == EnrollmentStatus.REJECTED:
+            from core.modele.praktyki import ProcessEvent
+            ev = (
+                db.session.query(ProcessEvent)
+                .filter_by(enrollment_id=z.id)
+                .filter(ProcessEvent.decision == 'REJECTED')
+                .order_by(ProcessEvent.executed_at.desc())
+                .first()
+            )
+            komentarz_odrzucenia = ev.comment if ev else None
+
         zapisy_data[str(z.internship_id)] = {
             'id':       str(z.id),
             'status':   z.status.value,
             'sciezka':  sciezka,
             'zwrocone': zwrocone,
             'komentarz_zwrotny': komentarz_komisji or komentarz_admina or komentarz_uopz or '',
+            'komentarz_odrzucenia': komentarz_odrzucenia or '',
             'wymaga_uwagi': (
                 z.status == EnrollmentStatus.AWAITING_APPROVAL
                 and bool(komentarz_uopz)
@@ -342,14 +369,27 @@ def zakoncz_praktyke(id):
     if zapis.status != EnrollmentStatus.IN_PROGRESS:
         flash('Praktykę można zakończyć tylko gdy jest w trakcie realizacji.', 'warning')
         return redirect(url_for('praktyki.lista'))
+
+    path_val = zapis.path_type.value if hasattr(zapis.path_type, 'value') else str(zapis.path_type)
+    if path_val == 'STANDARD':
+        wymagane = zapis.internship.required_hours if zapis.internship else 0
+        zalogowane = zapis.total_hours_logged or 0
+        liczba_wpisow = len(zapis.journal_entries)
+        if liczba_wpisow == 0:
+            flash('Nie można zakończyć praktyki bez wpisów w dzienniku.', 'danger')
+            return redirect(url_for('praktyki.lista'))
+        if zalogowane < wymagane:
+            flash(f'Nie można zakończyć praktyki — zalogowano {zalogowane} z wymaganych {wymagane} godzin.', 'danger')
+            return redirect(url_for('praktyki.lista'))
+
     from core.uslugi.workflow import ZapisFSM
     ZapisFSM(zapis).zakoncz()
     db.session.commit()
-    flash('Internship została oznaczona jako zakończona. Dokumenty końcowe są teraz dostępne w zakładce Moje Dokumenty.', 'success')
+    flash('Praktyka została zakończona. Dokumenty końcowe są dostępne w zakładce Moje Dokumenty.', 'success')
     return redirect(url_for('praktyki.lista'))
 
 
-@praktyki_bp.route('/<uuid:id>/zapisz/krok1')
+@praktyki_bp.route('/<uuid:id>/zapisz/krok1', methods=['GET'])
 @login_required
 def zapisz_krok1(id):
     """Stara trasa — przekierowanie do nowego kreatora."""
@@ -370,7 +410,6 @@ def zapisz_krok2(id):
         # Czyszczenie starego jeśli student wraca z jakiegoś powodu
         _repo_zapisow.usun_harmonogram(zapis.id)
         
-        suma_dni = 0
         nowe_wiersze = []
         for e in efekty:
             dz = request.form.get(f'dzial_{e.id}', '')
@@ -380,7 +419,7 @@ def zapisz_krok2(id):
                 dni = int(dni_str)
             except Exception:
                 dni = 0
-                
+
             if dz.strip() and pr.strip():
                 nowe_wiersze.append(InternshipSchedule(
                     id=uuid.uuid4(),
@@ -390,7 +429,6 @@ def zapisz_krok2(id):
                     example_tasks=pr,
                     days_count=dni
                 ))
-                suma_dni += dni
                 
         db.session.add_all(nowe_wiersze)
         db.session.commit()
@@ -416,7 +454,7 @@ def zapisz_krok2(id):
                          istniejace_harmonogramy=istniejace_harmonogramy)
 
 
-@praktyki_bp.route('/zgloszenie/<uuid:id>/potwierdz-wyslanie')
+@praktyki_bp.route('/zgloszenie/<uuid:id>/potwierdz-wyslanie', methods=['GET'])
 @login_required
 def potwierdz_wyslanie(id):
     zapis = db.session.get(InternshipEnrollment, id)
@@ -449,7 +487,7 @@ def wyslij_do_zatwierdzenia(id):
     return redirect(url_for('praktyki.lista'))
 
 
-@praktyki_bp.route('/zgloszenie/<uuid:id>/szczegoly')
+@praktyki_bp.route('/zgloszenie/<uuid:id>/szczegoly', methods=['GET'])
 @login_required
 def szczegoly_zgloszenia(id):
     """Szczegóły zgłoszenia studenta wraz z komentarzami UOPZ"""

@@ -30,7 +30,7 @@ def _get_tex_url() -> str:
 
 # ── Lista dokumentów studenta ─────────────────────────────────────────────────
 
-@documents_bp.route('/moje')
+@documents_bp.route('/moje', methods=['GET'])
 @login_required
 def moje_dokumenty():
     zapisy = _repo_zapisow.aktywne_dla_studenta(
@@ -52,7 +52,7 @@ def moje_dokumenty():
 
 # ── Dokumenty statyczne ───────────────────────────────────────────────────────
 
-@documents_bp.route('/staly/<doc_key>')
+@documents_bp.route('/staly/<doc_key>', methods=['GET'])
 @login_required
 def pobierz_staly(doc_key):
     if doc_key not in STATIC_TEMPLATES:
@@ -77,7 +77,7 @@ def pobierz_staly(doc_key):
 
 # ── Dokumenty dynamiczne ──────────────────────────────────────────────────────
 
-@documents_bp.route('/dynamiczny/<uuid:zapis_id>/<typ>')
+@documents_bp.route('/dynamiczny/<uuid:zapis_id>/<typ>', methods=['GET'])
 @login_required
 def pobierz_dynamiczny(zapis_id, typ):
     if typ not in DOC_CONFIG:

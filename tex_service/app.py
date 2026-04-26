@@ -20,7 +20,7 @@ def _allowed_templates() -> set[str]:
     return {f.name for f in TEMPLATES_DIR.glob("*.tex.j2")}
 
 
-@app.route("/health")
+@app.route("/health", methods=["GET"])
 def health():
     lualatex_ok = bool(shutil.which("lualatex"))
     templates = list(_allowed_templates())
@@ -82,4 +82,4 @@ def generuj():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5002, debug=False)
+    app.run(host="127.0.0.1", port=5002, debug=False)

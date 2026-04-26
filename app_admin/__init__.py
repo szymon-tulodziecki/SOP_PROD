@@ -96,6 +96,11 @@ def create_app():
         return counts
 
     @app.context_processor
+    def inject_now():
+        from datetime import datetime
+        return dict(now=datetime.utcnow)
+
+    @app.context_processor
     def inject_tlumacz():
         return dict(tlumacz_status=lambda val: {
             'PENDING':            'Oczekuje na wysłanie',

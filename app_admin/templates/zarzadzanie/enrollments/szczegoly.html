@@ -405,9 +405,12 @@
               {{ form.komentarz(class="pole-formularza__textarea", rows="7", placeholder="Uwagi widoczne dla studenta w panelu praktyk…", style="width: 100%; box-sizing: border-box;") }}
             </div>
 
-            <div style="border-top: 1px solid var(--kolor-ramka); padding-top: 1.25rem; display: flex; flex-direction: column; gap: 0.5rem;">
-              {{ form.zatwierdz(class="przycisk przycisk--glowny", style="width: 100%; justify-content: center;") }}
-              {{ form.odrzuc(class="przycisk przycisk--drugorzedny", style="width: 100%; justify-content: center;") }}
+            <div style="border-top: 1px solid var(--kolor-ramka); padding-top: 1.25rem; display: flex; flex-direction: column; gap: 0.625rem;">
+              {{ form.zatwierdz(class="przycisk przycisk--glowny", style="width: 100%; justify-content: center; text-align: center;") }}
+              {{ form.odrzuc(class="przycisk przycisk--ostrzezenie", style="width: 100%; justify-content: center; text-align: center;") }}
+              <a href="{{ url_for('zarzadzanie.lista_zgloszen') }}"
+                 class="przycisk przycisk--drugorzedny"
+                 style="width: 100%; justify-content: center; text-align: center;">Anuluj</a>
             </div>
 
           </form>

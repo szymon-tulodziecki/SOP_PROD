@@ -89,7 +89,7 @@ def _sep(name: str) -> dict:
 
 
 # Reguły dostępności — czytelne funkcje zamiast anonimowych lambdy
-def _zawsze(ctx: dict) -> bool:           return True                                         # noqa: E704
+def _zawsze(_ctx: dict) -> bool:          return True                                         # noqa: E704
 def _w_trakcie_lub_zakonczona(ctx):       return ctx['w_trakcie'] or ctx['zakonczona']        # noqa: E704
 def _zakonczona(ctx):                     return ctx['zakonczona']                            # noqa: E704
 def _oceniona(ctx):                       return ctx['oceniona']                              # noqa: E704
@@ -97,6 +97,7 @@ def _ma_harmonogram(ctx):                 return ctx['harmonogram_count'] > 0   
 def _firma_custom(ctx):                   return ctx['firma_custom']                          # noqa: E704
 def _firma_bez_umowy(ctx):                return ctx['firma_bez_umowy']                       # noqa: E704
 def _dziekan_lub_zakonczona(ctx):         return ctx['dziekan_zatwierdził'] or ctx['zakonczona']  # noqa: E704
+def _po_egzaminie(ctx):                   return ctx.get('po_egzaminie', False)                    # noqa: E704
 
 _POWOD_HARMONOGRAM    = lambda _: 'Wymaga wypełnionego harmonogramu'            # noqa: E731
 _POWOD_W_TRAKCIE      = lambda _: 'Dostępny po zatwierdzeniu praktyki'          # noqa: E731
@@ -149,7 +150,7 @@ def _docs_standard() -> list:
                       unavailable_reason=_POWOD_OCENIONA),
         DocumentEntry('Zał. 8 – Protokół egzaminu komisji', 'ZAL_8',
                       'Sporządzany przez Komisję po ustnym egzaminie z praktyki',
-                      available_when=_oceniona,
+                      available_when=_po_egzaminie,
                       unavailable_reason=_POWOD_EGZAMIN),
     ]
 
@@ -169,8 +170,8 @@ def _docs_employment_own_business() -> list:
         _sep('Po egzaminie komisji'),
         DocumentEntry('Zał. 5 – Ankieta', static_key='ankieta'),
         DocumentEntry('Zał. 8 – Protokół egzaminu komisji', 'ZAL_8',
-                      available_when=_dziekan_lub_zakonczona,
-                      unavailable_reason=_POWOD_DZIEKAN),
+                      available_when=_po_egzaminie,
+                      unavailable_reason=_POWOD_EGZAMIN),
     ]
 
 
@@ -196,6 +197,7 @@ def buduj_flagi(zapis) -> dict:
         'zakonczona':          zakonczona,
         'oceniona':            zakonczona and (zapis.final_grades and zapis.final_grades.supervisor_grade) is not None,
         'dziekan_zatwierdził': w_trakcie or zakonczona,
+        'po_egzaminie':        zapis.final_grade is not None,
         'harmonogram_count':   db.session.execute(
                                  db.select(db.func.count()).select_from(InternshipSchedule).filter_by(enrollment_id=zapis.id)
                                ).scalar(),
@@ -384,11 +386,12 @@ def buduj_kontekst(zapis, typ: str) -> dict:
             ],
         })
 
-    elif typ == 'ZAL_7':
+    elif typ in ('ZAL_7', 'ZAL_7A'):
         spr = getattr(zapis, 'sprawozdanie', None)
         ctx.update({
             'charakterystyka_miejsca': _g(spr, 'charakterystyka_miejsca') if spr else '',
             'opis_prac':               _g(spr, 'opis_i_analiza')          if spr else '',
+            'wiedza':                  _g(spr, 'wiedza')                  if spr else '',
         })
 
     elif typ == 'ZAL_3C':
@@ -420,6 +423,10 @@ def buduj_kontekst(zapis, typ: str) -> dict:
             'uwagi_uopz': _g(zapis, 'supervisor_grade_description', ''),
         })
 
+    elif typ == 'ZAL_4B':
+        dd = zapis.dean_decision  # 'APPROVED' | 'PARTIALLY_APPROVED' | 'REJECTED' | None
+        ctx['decyzja_dyrektora'] = dd or ''
+
     elif typ in ('ZAL_4A', 'ZAL_4a'):
         from core.modele import LearningOutcome, CommitteeOutcomeEvaluation
         wszystkie_efekty = db.session.query(LearningOutcome).order_by(LearningOutcome.id).all()
@@ -445,5 +452,28 @@ def buduj_kontekst(zapis, typ: str) -> dict:
         ]
         ctx['forma']             = forma
         ctx['komentarz_komisji'] = zapis.komentarze_komisji or ''
+
+    elif typ == 'ZAL_8':
+        fg  = zapis.final_grades
+        sw  = getattr(zapis, 'sprawdzian', None)
+        ctx['zapis'].update({
+            'ocena_sprawozdania':      float(fg.report_grade)     if fg and fg.report_grade     else None,
+            'ocena_uopz':              float(fg.supervisor_grade) if fg and fg.supervisor_grade else None,
+            'ocena_zopz':              float(_g(zapis, 'ocena_zopz', None)) if _g(zapis, 'ocena_zopz', None) else None,
+            'sprawdzian_pytanie_1':    _g(zapis, 'sprawdzian_pytanie_1', ''),
+            'sprawdzian_pytanie_2':    _g(zapis, 'sprawdzian_pytanie_2', ''),
+            'sprawdzian_pytanie_3':    _g(zapis, 'sprawdzian_pytanie_3', ''),
+            'sprawdzian_ocena_1':      float(_g(zapis, 'sprawdzian_ocena_1', None)) if _g(zapis, 'sprawdzian_ocena_1', None) else None,
+            'sprawdzian_ocena_2':      float(_g(zapis, 'sprawdzian_ocena_2', None)) if _g(zapis, 'sprawdzian_ocena_2', None) else None,
+            'sprawdzian_ocena_3':      float(_g(zapis, 'sprawdzian_ocena_3', None)) if _g(zapis, 'sprawdzian_ocena_3', None) else None,
+            'komisja_przewodniczacy':  _g(sw, 'commission_chair',    '') if sw else '',
+            'komisja_czlonek_2':       _g(sw, 'commission_member_2', '') if sw else '',
+            'komisja_czlonek_3':       _g(sw, 'commission_member_3', '') if sw else '',
+        })
+        ctx['uopz'] = {
+            'first_name':    _g(uopz, 'first_name') if uopz else '',
+            'last_name':     _g(uopz, 'last_name')  if uopz else '',
+            'imie_nazwisko': f"{uopz.first_name} {uopz.last_name}" if uopz else '',
+        }
 
     return ctx

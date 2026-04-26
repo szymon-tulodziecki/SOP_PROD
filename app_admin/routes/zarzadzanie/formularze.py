@@ -91,4 +91,20 @@ class FormularzPraktyki(FlaskForm):
     ], validators=[DataRequired()])
     wymiar_godzin = StringField('Wymiar godzin (h)', validators=[DataRequired()])
 
+    def validate_rok_uczelniany(self, field):
+        import re
+        if not re.fullmatch(r'\d{4}/\d{4}', field.data or ''):
+            raise ValidationError('Podaj rok w formacie RRRR/RRRR (np. 2025/2026).')
+        rok1, rok2 = int(field.data[:4]), int(field.data[5:])
+        if rok2 != rok1 + 1:
+            raise ValidationError('Drugi rok musi być o 1 większy od pierwszego (np. 2025/2026).')
+
+    def validate_wymiar_godzin(self, field):
+        try:
+            val = int(field.data)
+        except (ValueError, TypeError):
+            raise ValidationError('Podaj liczbę całkowitą.')
+        if val <= 0:
+            raise ValidationError('Wymiar godzin musi być większy od zera.')
+
 

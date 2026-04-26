@@ -10,6 +10,11 @@ from sqlalchemy.ext.hybrid import hybrid_property
 
 from core.extensions import db
 
+# ── Stałe ─────────────────────────────────────────────────────────────────────
+_CASCADE_DELETE = 'all, delete-orphan'
+_FK_USERS       = 'users.id'
+_FK_ENROLLMENTS = 'internship_enrollments.id'
+_ON_SET_NULL    = 'SET NULL'
 
 # ── Enums ─────────────────────────────────────────────────────────────────────
 
@@ -86,10 +91,11 @@ class Internship(db.Model):
         nullable=False, default=InternshipStatus.INACTIVE,
     )
     created_at = db.Column(db.DateTime, server_default=db.func.now())
+    deleted_at = db.Column(db.DateTime, nullable=True, default=None)
 
     enrollments = db.relationship(
         'InternshipEnrollment', backref='internship',
-        lazy='select', cascade='all, delete-orphan', passive_deletes=True,
+        lazy='select', cascade=_CASCADE_DELETE, passive_deletes=True,
     )
 
     # Backward-compat shims
@@ -113,8 +119,8 @@ class InternshipEnrollment(db.Model):
     id            = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     internship_id = db.Column(UUID(as_uuid=True), db.ForeignKey('internships.id',  ondelete='CASCADE'), nullable=False)
     student_id    = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id',        ondelete='CASCADE'), nullable=False)
-    supervisor_id = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id',        ondelete='SET NULL'), nullable=True)
-    company_id    = db.Column(UUID(as_uuid=True), db.ForeignKey('companies.id',    ondelete='SET NULL'), nullable=True)
+    supervisor_id = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id',        ondelete=_ON_SET_NULL), nullable=True)
+    company_id    = db.Column(UUID(as_uuid=True), db.ForeignKey('companies.id',    ondelete=_ON_SET_NULL), nullable=True)
 
     status = db.Column(
         db.Enum(EnrollmentStatus, name='enrollment_status', values_callable=lambda e: [x.value for x in e]),
@@ -136,15 +142,15 @@ class InternshipEnrollment(db.Model):
     student          = db.relationship('User',              foreign_keys=[student_id],   lazy='select')
     uopz             = db.relationship('User',              foreign_keys=[supervisor_id], lazy='select')
     firma            = db.relationship('Company',           foreign_keys=[company_id],   lazy='select')
-    workplace_details = db.relationship('WorkplaceDetails', back_populates='enrollment', uselist=False, cascade='all, delete-orphan')
-    path_justification = db.relationship('PathJustification', back_populates='enrollment', uselist=False, cascade='all, delete-orphan')
-    examination      = db.relationship('Examination',       back_populates='enrollment', uselist=False, cascade='all, delete-orphan')
-    final_grades     = db.relationship('FinalGrades',       back_populates='enrollment', uselist=False, cascade='all, delete-orphan')
-    process_events   = db.relationship('ProcessEvent',      back_populates='enrollment', lazy='select', cascade='all, delete-orphan', order_by='ProcessEvent.executed_at')
-    journal_entries  = db.relationship('JournalEntry',      backref='enrollment',        lazy='select', cascade='all, delete-orphan')
-    outcome_assessments = db.relationship('OutcomeAssessment', backref='enrollment',     lazy='select', cascade='all, delete-orphan')
-    schedule         = db.relationship('InternshipSchedule', backref='enrollment',       lazy='select', cascade='all, delete-orphan')
-    report           = db.relationship('InternshipReport',  backref='enrollment',        uselist=False, lazy='select', cascade='all, delete-orphan')
+    workplace_details = db.relationship('WorkplaceDetails', back_populates='enrollment', uselist=False, cascade=_CASCADE_DELETE)
+    path_justification = db.relationship('PathJustification', back_populates='enrollment', uselist=False, cascade=_CASCADE_DELETE)
+    examination      = db.relationship('Examination',       back_populates='enrollment', uselist=False, cascade=_CASCADE_DELETE)
+    final_grades     = db.relationship('FinalGrades',       back_populates='enrollment', uselist=False, cascade=_CASCADE_DELETE)
+    process_events   = db.relationship('ProcessEvent',      back_populates='enrollment', lazy='select', cascade=_CASCADE_DELETE, order_by='ProcessEvent.executed_at')
+    journal_entries  = db.relationship('JournalEntry',      backref='enrollment',        lazy='select', cascade=_CASCADE_DELETE)
+    outcome_assessments = db.relationship('OutcomeAssessment', backref='enrollment',     lazy='select', cascade=_CASCADE_DELETE)
+    schedule         = db.relationship('InternshipSchedule', backref='enrollment',       lazy='select', cascade=_CASCADE_DELETE)
+    report           = db.relationship('InternshipReport',  backref='enrollment',        uselist=False, lazy='select', cascade=_CASCADE_DELETE)
 
     # ── Backward-compat property shims ────────────────────────
 
@@ -462,15 +468,18 @@ class InternshipEnrollment(db.Model):
             return None
         e = self.exam_grade
         s = float(self.final_grades.report_grade) if self.final_grades.report_grade is not None else None
+        def _round_half(v):
+            return round(round(v * 2) / 2, 1)
+
         if self.path_type in (InternshipPath.EMPLOYMENT, InternshipPath.OWN_BUSINESS):
             if None in (e, s):
                 return None
-            return round(0.9 * e + 0.1 * s, 2)
+            return _round_half(0.9 * e + 0.1 * s)
         u = float(self.final_grades.supervisor_grade) if self.final_grades.supervisor_grade is not None else None
         z = float(self.final_grades.workplace_grade)  if self.final_grades.workplace_grade  is not None else None
         if None in (e, s, u, z):
             return None
-        return round(0.4 * e + 0.1 * s + 0.2 * u + 0.3 * z, 2)
+        return _round_half(0.4 * e + 0.1 * s + 0.2 * u + 0.3 * z)
 
     # Legacy computed grade aliases
     @hybrid_property
@@ -729,7 +738,7 @@ class ProcessEvent(db.Model):
     )
     decision       = db.Column(db.String(20), nullable=True)   # 'APPROVED' / 'REJECTED'
     comment        = db.Column(db.Text,       nullable=True)
-    executed_by_id = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
+    executed_by_id = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id', ondelete=_ON_SET_NULL), nullable=True)
     executed_at    = db.Column(db.DateTime,   server_default=db.func.now())
 
     enrollment   = db.relationship('InternshipEnrollment', back_populates='process_events')

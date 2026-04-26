@@ -240,7 +240,7 @@ def stworz_blueprint_pliki(
             db.session.rollback()
             return jsonify({'error': f'Błąd podczas zapisywania: {str(e)}'}), 500
 
-    @uploads_bp.route('/document/<uuid:document_id>/download')
+    @uploads_bp.route('/document/<uuid:document_id>/download', methods=['GET'])
     @login_required
     def download_document(document_id):
         doc = db.session.get(UploadedDocument, document_id)
@@ -290,7 +290,7 @@ def stworz_blueprint_pliki(
             db.session.rollback()
             return jsonify({'error': str(e)}), 500
 
-    @uploads_bp.route('/enrollment/<uuid:enrollment_id>/documents')
+    @uploads_bp.route('/enrollment/<uuid:enrollment_id>/documents', methods=['GET'])
     @login_required
     def list_documents(enrollment_id):
         zapis = db.session.get(InternshipEnrollment, enrollment_id)

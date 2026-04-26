@@ -91,7 +91,7 @@ def stworz_blueprint_auth(
 
     # ── Krok 1: przekieruj do Microsoft ──────────────────────────────────────
 
-    @auth_bp.route('/ms-login')
+    @auth_bp.route('/ms-login', methods=['GET'])
     @limiter.limit("20 per minute")
     def ms_login():
         if current_user.is_authenticated:
@@ -119,7 +119,7 @@ def stworz_blueprint_auth(
 
     # ── Krok 2: callback z Microsoft ─────────────────────────────────────────
 
-    @auth_bp.route('/ms-callback')
+    @auth_bp.route('/ms-callback', methods=['GET'])
     @limiter.limit("20 per minute")
     def ms_callback():
         # Weryfikacja stanu CSRF

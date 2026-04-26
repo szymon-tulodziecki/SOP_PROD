@@ -28,21 +28,24 @@ class RepozytoriumPraktyk:
         return db.session.get(Internship, praktyka_id)
 
     def wszystkie(self) -> list[Internship]:
-        return db.session.query(Internship).order_by(Internship.academic_year.desc(), Internship.semester).all()
+        return (db.session.query(Internship)
+                .filter(Internship.deleted_at.is_(None))
+                .order_by(Internship.academic_year.desc(), Internship.semester).all())
 
     def aktywne(self) -> list[Internship]:
         return (
             db.session.query(Internship)
             .filter_by(status=InternshipStatus.ACTIVE)
+            .filter(Internship.deleted_at.is_(None))
             .order_by(Internship.academic_year.desc())
             .all()
         )
 
     def aktywna_edycja(self) -> Optional[Internship]:
-        """Zwraca pierwszą aktywną edycję praktyk lub None."""
         return (
             db.session.query(Internship)
             .filter_by(status=InternshipStatus.ACTIVE)
+            .filter(Internship.deleted_at.is_(None))
             .order_by(Internship.academic_year.desc())
             .first()
         )
@@ -50,12 +53,21 @@ class RepozytoriumPraktyk:
     def lista_strona(self, strona: int = 1, na_strone: int = 25):
         return (
             db.session.query(Internship)
+            .filter(Internship.deleted_at.is_(None))
             .order_by(Internship.academic_year.desc(), Internship.semester)
             .paginate(page=strona, per_page=na_strone, error_out=False)
         )
 
     def liczba_nieaktywnych(self) -> int:
-        return db.session.query(Internship).filter_by(status=InternshipStatus.INACTIVE).count()
+        return (db.session.query(Internship)
+                .filter_by(status=InternshipStatus.INACTIVE)
+                .filter(Internship.deleted_at.is_(None)).count())
+
+    def do_usuniecia(self) -> list[Internship]:
+        """Praktyki oznaczone do usunięcia (deleted_at ustawione)."""
+        return (db.session.query(Internship)
+                .filter(Internship.deleted_at.isnot(None))
+                .order_by(Internship.deleted_at.desc()).all())
 
     def zapisz(self, praktyka: Internship) -> Internship:
         db.session.add(praktyka)
@@ -109,11 +121,14 @@ class RepozytoriumZapisow:
 
     def pending_dla_studenta_i_praktyki(self, student_id: uuid.UUID,
                                          praktyka_id: uuid.UUID) -> Optional[InternshipEnrollment]:
-        """Zwraca PENDING zapis studenta dla danej edycji praktyki lub None."""
+        """Zwraca istniejący (nie-odrzucony) zapis studenta dla danej edycji lub None."""
         return (
             db.session.query(InternshipEnrollment)
-            .filter_by(student_id=student_id, internship_id=praktyka_id,
-                       status=EnrollmentStatus.PENDING)
+            .filter(
+                InternshipEnrollment.student_id == student_id,
+                InternshipEnrollment.internship_id == praktyka_id,
+                InternshipEnrollment.status != EnrollmentStatus.REJECTED,
+            )
             .first()
         )
 
@@ -327,34 +342,53 @@ class RepozytoriumZapisow:
         }
 
     def liczniki_nav(self, supervisor_id=None) -> dict:
-        """Liczniki statusów dla paska nawigacji (inject_nav_counts) — jedno zapytanie."""
+        """Liczniki statusów dla paska nawigacji (inject_nav_counts)."""
         from core.modele.praktyki import FinalGrades
-        q = db.session.query(
-            func.count(case(
-                (InternshipEnrollment.status == EnrollmentStatus.AWAITING_APPROVAL, 1)
-            )).label('oczekujace'),
-            func.count(case(
-                (InternshipEnrollment.status == EnrollmentStatus.COMMISSION_REVIEW, 1)
-            )).label('komisja'),
-            func.count(case(
-                (InternshipEnrollment.status == EnrollmentStatus.DIRECTOR_APPROVAL, 1)
-            )).label('dziekan'),
-            func.count(case(
-                (
-                    (InternshipEnrollment.status == EnrollmentStatus.COMPLETED) &
-                    (FinalGrades.supervisor_grade == None),
-                    1
-                )
-            )).label('do_oceny'),
-        ).outerjoin(FinalGrades, FinalGrades.enrollment_id == InternshipEnrollment.id)
-        if supervisor_id:
-            q = q.filter(InternshipEnrollment.supervisor_id == supervisor_id)
-        row = q.one()
+
+        def _base(extra_filter=None):
+            q = db.session.query(func.count(InternshipEnrollment.id))
+            if supervisor_id:
+                q = q.filter(InternshipEnrollment.supervisor_id == supervisor_id)
+            if extra_filter is not None:
+                q = q.filter(extra_filter)
+            return q.scalar() or 0
+
+        oczekujace = _base(InternshipEnrollment.status == EnrollmentStatus.AWAITING_APPROVAL)
+        komisja    = _base(InternshipEnrollment.status == EnrollmentStatus.COMMISSION_REVIEW)
+        dziekan    = _base(InternshipEnrollment.status == EnrollmentStatus.DIRECTOR_APPROVAL)
+
+        # Ungraded path A: COMPLETED, no supervisor_grade row
+        # Ungraded path B: COMPLETED or IN_PROGRESS, no report_grade row
+        # Use NOT EXISTS subquery to avoid join issues with NULL FinalGrades
+        from sqlalchemy import exists, and_, or_, cast, String
+
+        has_supervisor = exists().where(
+            and_(FinalGrades.enrollment_id == InternshipEnrollment.id,
+                 FinalGrades.supervisor_grade.isnot(None))
+        )
+        has_report = exists().where(
+            and_(FinalGrades.enrollment_id == InternshipEnrollment.id,
+                 FinalGrades.report_grade.isnot(None))
+        )
+        path_b_vals = ('EMPLOYMENT', 'OWN_BUSINESS')
+
+        ungraded_a = and_(
+            InternshipEnrollment.status == EnrollmentStatus.COMPLETED,
+            cast(InternshipEnrollment.path_type, String).notin_(path_b_vals),
+            ~has_supervisor,
+        )
+        ungraded_b = and_(
+            InternshipEnrollment.status.in_([EnrollmentStatus.COMPLETED, EnrollmentStatus.IN_PROGRESS]),
+            cast(InternshipEnrollment.path_type, String).in_(path_b_vals),
+            ~has_report,
+        )
+        do_oceny = _base(or_(ungraded_a, ungraded_b))
+
         return {
-            'nav_oczekujace': row.oczekujace,
-            'nav_komisja':    row.komisja,
-            'nav_dyrektor':   row.dziekan,
-            'nav_do_oceny':   row.do_oceny,
+            'nav_oczekujace': oczekujace,
+            'nav_komisja':    komisja,
+            'nav_dyrektor':   dziekan,
+            'nav_do_oceny':   do_oceny,
         }
 
     def liczba_aktywnych_dla_studentow(self, student_ids: list,

@@ -9,7 +9,7 @@ dashboard_bp = Blueprint('dashboard', __name__)
 _repo_zapisow = RepozytoriumZapisow()
 
 
-@dashboard_bp.route('/')
+@dashboard_bp.route('/', methods=['GET'])
 @login_required
 def index():
     zapis = _repo_zapisow.ostatni_dla_studenta(current_user.id)

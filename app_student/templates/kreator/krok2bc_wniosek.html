@@ -132,9 +132,25 @@
 
         <div class="pole-formularza {% if form.uzasadnienie.errors %}pole-formularza--blad{% endif %}" style="margin-bottom:1.5rem;">
           {{ form.uzasadnienie.label(class="pole-formularza__etykieta") }}
-          {{ form.uzasadnienie(class="pole-formularza__input", rows=5, style="height:auto;", placeholder="Opisz zakres obowiązków/działalności i dlaczego spełniają wymagania praktyki zawodowej...") }}
-          {% for e in form.uzasadnienie.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
+          {{ form.uzasadnienie(class="pole-formularza__input", rows=8, style="height:auto;", placeholder="Opisz zakres obowiązków/działalności i dlaczego spełniają wymagania praktyki zawodowej...", id="uzasadnienie_input", maxlength=2000) }}
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.3rem;">
+            <div>{% for e in form.uzasadnienie.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}</div>
+            <span id="uzasadnienie_licznik" style="font-size:0.78rem;">0 / min. 500 znaków</span>
+          </div>
         </div>
+        <script>
+          (function(){
+            var ta = document.getElementById('uzasadnienie_input');
+            var lc = document.getElementById('uzasadnienie_licznik');
+            function upd(){
+              var n = ta.value.length;
+              lc.textContent = n + ' / min. 500 znaków';
+              lc.style.color = n < 500 ? '#dc2626' : 'var(--kolor-tekst-trzeciorzed)';
+            }
+            ta.addEventListener('input', upd);
+            upd();
+          })();
+        </script>
 
         <div style="display:flex; justify-content:space-between; gap:1rem;">
           <a href="{{ url_for('praktyki.kreator_sciezka', id=zapis.internship_id) }}" class="przycisk przycisk--drugorzedny">← Wróć</a>

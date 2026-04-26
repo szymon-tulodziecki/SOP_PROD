@@ -8,7 +8,8 @@
 {% endblock %}
 
 {% block tresc %}
-{% set is_path_b = zapis.track_type.value != 'STANDARD' %}
+{% set is_path_b = zapis.path_type.value != 'STANDARD' %}
+{% set path_label = 'Staż/zatrudnienie' if zapis.path_type.value == 'EMPLOYMENT' else 'Dział. gospod.' %}
 <div style="max-width: 900px; margin: 0 auto;">
 
   <!-- Info o studencie -->
@@ -18,7 +19,7 @@
         <h2 style="font-size: 1.1rem; margin-bottom: 0.25rem;">{{ zapis.student.imie }} {{ zapis.student.nazwisko }}</h2>
         <p style="color: var(--kolor-tekst-drugor); font-size: 0.9rem;">
           {% if is_path_b %}
-          Ścieżka B — Uznanie efektów · {{ zapis.firma_nazwa or 'Brak nazwy firmy' }}
+          {{ path_label }} — Uznanie efektów · {{ zapis.firma_nazwa or 'Brak nazwy firmy' }}
           {% else %}
           Firma: {{ zapis.firma_nazwa or 'Brak nazwy firmy' }} | ZOPZ: {{ zapis.zopz_imie_nazwisko or 'Brak ZOPZ' }} | Godziny: {{ zapis.lacznie_godzin }} h
           {% endif %}
@@ -27,7 +28,7 @@
       <div style="text-align: right;">
         <span class="status status--{{ zapis.status.value|lower|replace('_', '-') }}">{{ tlumacz_status(zapis.status.value) }}</span>
         {% if is_path_b %}
-        <div style="margin-top: 0.4rem;"><span class="status status--in-progress" style="font-size: 0.7rem;">Ścieżka B</span></div>
+        <div style="margin-top: 0.4rem;"><span class="status status--in-progress" style="font-size: 0.7rem;">{{ path_label }}</span></div>
         {% endif %}
       </div>
     </div>
@@ -41,7 +42,7 @@
       <div class="karta__naglowek" style="background: var(--kolor-tlo);">
         {% if is_path_b %}
         <h3 class="karta__tytul">Ocena sprawozdania</h3>
-        <span style="font-size:0.8rem; color:var(--kolor-tekst-trzeciorzed);">W ścieżce B nie występują oceny Z (ZOPZ) ani U (UOPZ)</span>
+        <span style="font-size:0.8rem; color:var(--kolor-tekst-trzeciorzed);">Uznanie efektów na podstawie {{ path_label|lower }} — brak ocen Z i U</span>
         {% else %}
         <h3 class="karta__tytul">Karta oceny praktyki (Zał. 3c)</h3>
         {% endif %}
@@ -163,7 +164,7 @@
 
         <div style="text-align: center;">
           <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor); text-transform: uppercase;">Średnia Egzaminu (E)</div>
-          <div id="wynik-e" style="font-size: 2.5rem; font-weight: 700; color: var(--kolor-glowny);">—</div>
+          <div id="wynik-e" style="font-size: 2.5rem; font-weight: 700; color: var(--kolor-glowny);">{{ "%.2f"|format(zapis.exam_grade) if zapis.exam_grade is not none else '—' }}</div>
         </div>
 
         <div style="font-size: 1.5rem; color: var(--kolor-ramka);">→</div>
@@ -179,7 +180,7 @@
 
         <div style="text-align: center;">
           <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor); text-transform: uppercase;">Ocena Końcowa (K)</div>
-          <div id="wynik-k" style="font-size: 2.5rem; font-weight: 700; color: var(--kolor-glowny);">—</div>
+          <div id="wynik-k" style="font-size: 2.5rem; font-weight: 700; color: {% if zapis.final_grade is not none %}{% if zapis.final_grade >= 3.0 %}var(--kolor-sukces){% else %}var(--kolor-blad){% endif %}{% else %}var(--kolor-glowny){% endif %};">{{ "%.1f"|format(zapis.final_grade) if zapis.final_grade is not none else '—' }}</div>
         </div>
 
       </div>
@@ -188,8 +189,8 @@
     <!-- Akcje -->
     <div style="display: flex; justify-content: flex-end; align-items: center; gap: 1rem; padding-bottom: 3rem; flex-wrap: wrap;">
       <span style="font-size: 0.85rem; color: var(--kolor-blad); margin-right: auto;" id="ostrzezenie-z">
-        {% if is_path_b %}Obliczenie K wymaga oceny S i co najmniej jednej oceny ze sprawdzianu.
-        {% else %}Obliczenie K i zatwierdzenie jest zablokowane do momentu wpisania oceny "Z".{% endif %}
+        {% if is_path_b %}Wymagane: ocena sprawozdania (S) oraz co najmniej jedna ocena ze sprawdzianu (E).
+        {% else %}Wymagane wszystkie oceny: S, U, Z oraz co najmniej jedna ocena ze sprawdzianu.{% endif %}
       </span>
 
       <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
@@ -222,6 +223,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnZakoncz = document.getElementById('btn-zakoncz');
     const ostrzezenie = document.getElementById('ostrzezenie-z');
 
+    function roundHalf(v) { return Math.round(v * 2) / 2; }
+
     function obl() {
         let e1 = parseFloat(p1 && p1.value) || 0;
         let e2 = parseFloat(p2 && p2.value) || 0;
@@ -238,8 +241,9 @@ document.addEventListener('DOMContentLoaded', () => {
         let canCalc = isPathB ? (exam_avg > 0 && s > 0) : (exam_avg > 0 && s > 0 && u > 0 && z > 0);
 
         if (canCalc) {
-            let k = isPathB ? (0.9 * exam_avg + 0.1 * s) : (0.4 * exam_avg + 0.1 * s + 0.2 * u + 0.3 * z);
-            wk.textContent = k.toFixed(2);
+            let kRaw = isPathB ? (0.9 * exam_avg + 0.1 * s) : (0.4 * exam_avg + 0.1 * s + 0.2 * u + 0.3 * z);
+            let k = roundHalf(kRaw);
+            wk.textContent = k.toFixed(1);
             wk.style.color = k >= 3.0 ? 'var(--kolor-sukces)' : 'var(--kolor-blad)';
             btnZakoncz.disabled = false;
             ostrzezenie.style.display = 'none';
@@ -251,8 +255,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    [p1, p2, p3, os, ou, oz].filter(Boolean).forEach(el => el.addEventListener('input', obl));
-    obl();
+    // Keep server-rendered K/E on load; only override once user edits an input
+    const serverK = wk.textContent.trim();
+    const serverE = we.textContent.trim();
+    if (serverK !== '—') {
+        btnZakoncz.disabled = false;
+        ostrzezenie.style.display = 'none';
+    }
+
+    let userEdited = false;
+    [p1, p2, p3, os, ou, oz].filter(Boolean).forEach(el => {
+        el.addEventListener('input',  () => { userEdited = true; obl(); });
+        el.addEventListener('change', () => { userEdited = true; obl(); });
+    });
 });
 </script>
 {% endblock %}

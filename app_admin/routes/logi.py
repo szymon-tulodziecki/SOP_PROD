@@ -9,14 +9,14 @@ from sqlalchemy import desc
 logi_bp = Blueprint('logi', __name__)
 
 _ETYKIETY = {
-    'ADMIN_KOMENTARZ':      'Komentarz admina',
-    'UOPZ_KOMENTARZ':       'Komentarz UOPZ',
-    'POWIADOMIENIE_STUDENTA': 'Powiadomienie studenta',
-    'KOMISJA_DECYZJA':      'Decyzja Komisji',
-    'DYREKTOR_DECYZJA':     'Decyzja Dyrektora',
+    'ADMIN_KOMENTARZ':        'Komentarz admina',
+    'UOPZ_KOMENTARZ':         'Komentarz UOPZ',
+    'POWIADOMIENIE_STUDENTA':  'Powiadomienie studenta',
+    'KOMISJA_DECYZJA':        'Decyzja weryfikacji',
+    'DYREKTOR_DECYZJA':       'Decyzja Dyrektora',
 }
 
-@logi_bp.route('/')
+@logi_bp.route('/', methods=['GET'])
 @login_required
 @wymaga_roli(UserRole.ADMIN)
 def lista_logow():

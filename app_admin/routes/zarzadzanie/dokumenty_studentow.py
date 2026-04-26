@@ -11,7 +11,7 @@ import httpx
 from flask import render_template, request, abort, make_response, current_app
 from flask_login import login_required, current_user
 
-from core.modele import EnrollmentStatus, UserRole, InternshipPath
+from core.modele import EnrollmentStatus, UserRole
 from core.uslugi.dokumenty import DOC_CONFIG, STATIC_TEMPLATES, rozwiaz_dokumenty, buduj_kontekst
 from core.repozytoria import RepozytoriumUzytkownikow, RepozytoriumZapisow
 
@@ -59,9 +59,8 @@ def dokumenty_studentow():
     szukaj     = request.args.get('szukaj', '').strip()
     uopz_id    = current_user.id if current_user.role == UserRole.UOPZ else None
 
-    sciezki_b = [InternshipPath.EMPLOYMENT, InternshipPath.OWN_BUSINESS]
     studenci_page = _repo_uzytk.studenci_strona(
-        szukaj=szukaj, supervisor_id=uopz_id, strona=strona, sciezki=sciezki_b
+        szukaj=szukaj, supervisor_id=uopz_id, strona=strona
     )
 
     aktywne_statusy = [
@@ -105,9 +104,6 @@ def dokumenty_studenta(student_id):
     from core.extensions import db
     student = db.session.get(Student, student_id) or abort(404)
 
-    if current_user.role == UserRole.UOPZ and student.supervisor_id != current_user.id:
-        abort(403)
-
     aktywne_statusy = [
         EnrollmentStatus.AWAITING_APPROVAL,
         EnrollmentStatus.COMMISSION_REVIEW,
@@ -116,6 +112,12 @@ def dokumenty_studenta(student_id):
         EnrollmentStatus.COMPLETED,
     ]
     zapisy = _repo_zapisow.aktywne_dla_studenta(student_id, aktywne_statusy)
+
+    if current_user.role == UserRole.UOPZ:
+        is_student_supervisor = student.supervisor_id == current_user.id
+        is_enrollment_supervisor = any(z.supervisor_id == current_user.id for z in zapisy)
+        if not (is_student_supervisor or is_enrollment_supervisor):
+            abort(403)
     uopz   = _repo_uzytk.znajdz_po_id(student.uopz_id) if student.uopz_id else None
 
     dokumenty_list = [

@@ -62,12 +62,15 @@ def index():
     if form.validate_on_submit():
         zapis.sprawozdanie.charakterystyka_miejsca = form.charakterystyka.data
         zapis.sprawozdanie.opis_i_analiza = form.opis.data
+        if form.wiedza.data:
+            zapis.sprawozdanie.wiedza = form.wiedza.data
         db.session.commit()
-        flash('InternshipReport zostało zapisane.', 'success')
+        flash('Sprawozdanie zostało zapisane.', 'success')
         return redirect(url_for('sprawozdania.index'))
     elif request.method == 'GET':
         form.charakterystyka.data = zapis.sprawozdanie.charakterystyka_miejsca
         form.opis.data = zapis.sprawozdanie.opis_i_analiza
+        form.wiedza.data = zapis.sprawozdanie.wiedza
 
     return render_template('sprawozdania/index.html',
                            zapis=zapis, form=form, ma_zapis=zapis,

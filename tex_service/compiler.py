@@ -14,7 +14,7 @@ from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
-from sanitizer import sanitize, sanitize_date, sanitize_int
+from sanitizer import sanitize, sanitize_text, sanitize_date, sanitize_int
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +43,7 @@ def _build_jinja_env() -> Environment:
         keep_trailing_newline=True,
     )
     env.filters["s"] = sanitize
+    env.filters["text"] = sanitize_text
     env.filters["date"] = sanitize_date
     env.filters["num"] = sanitize_int
     return env

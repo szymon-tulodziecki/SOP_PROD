@@ -22,7 +22,9 @@
       "Bash(curl -sf -o /dev/null -w \"admin:%{http_code} student:%{http_code}\\\\n\" http://localhost:5000/ http://localhost:5001/)",
       "Bash(docker volume *)",
       "Bash(docker restart sop_student *)",
-      "Bash(docker restart sop_admin *)"
+      "Bash(docker restart sop_admin *)",
+      "Bash(docker restart *)",
+      "Bash(docker run *)"
     ]
   }
 }

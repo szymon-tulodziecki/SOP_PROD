@@ -21,7 +21,7 @@ Kierunek studiów: Informatyka
 
 \vspace{1em}
 
-\noindent Student/ka: \textbf{<< student.imie|s >> << student.nazwisko|s >>} \\
+\noindent <<% if student.plec == 'K' %>>Studentka<<% else %>>Student<<% endif %>>: \textbf{<< student.imie|s >> << student.nazwisko|s >>} \\
 Nr albumu: \textbf{<< student.nr_albumu|s >>} \\
 Kierunek studiów: Informatyka \hfill Specjalność: \textbf{<< specjalnosc|s >>} \\
 Miejsce praktyki (instytucja): \textbf{<< firma.nazwa|s >>} \\

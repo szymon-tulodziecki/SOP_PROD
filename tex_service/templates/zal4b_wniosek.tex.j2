@@ -53,7 +53,7 @@ zawodowej na podstawie <<% if zapis.sciezka == 'OWN_BUSINESS' %>>działalności 
 \vspace{1em}
 
 \noindent \textbf{Uzasadnienie} \\
-\textbf{<< uzasadnienie|s >>}
+<< uzasadnienie|text >>
 
 \vspace{1em}
 
@@ -97,17 +97,18 @@ zawodowej na podstawie <<% if zapis.sciezka == 'OWN_BUSINESS' %>>działalności 
 \end{minipage}
 
 \vspace{2em}
+<<% set decyzja_dyrektora = decyzja_dyrektora | default('') -%>>
 \noindent \textbf{Decyzja Dyrektora Instytutu Informatyki Stosowanej im. Krzysztofa Brzeskiego:}
 \begin{itemize}
-    \item[$\square$] Wyrażam zgodę na uznanie efektów uczenia się przewidzianych dla praktyki zawodowej
-    \item[$\square$] Wyrażam zgodę na częściowe zaliczenie efektów uczenia się przewidzianych dla praktyki zawodowej i wskazuję na konieczność dodatkowego zaliczenia n/w efektów uczenia się
+    \item[<<% if decyzja_dyrektora == 'APPROVED' %>>$\boxtimes$<<% else %>>$\square$<<% endif %>>] Wyrażam zgodę na uznanie efektów uczenia się przewidzianych dla praktyki zawodowej
+    \item[<<% if decyzja_dyrektora == 'PARTIALLY_APPROVED' %>>$\boxtimes$<<% else %>>$\square$<<% endif %>>] Wyrażam zgodę na częściowe zaliczenie efektów uczenia się przewidzianych dla praktyki zawodowej i wskazuję na konieczność dodatkowego zaliczenia n/w efektów uczenia się
 \end{itemize}
 \vspace{-0.5em}
 \dotfill \\
 \dotfill \\
 \dotfill
 \begin{itemize}
-    \item[$\square$] Nie wyrażam zgody na zaliczenie efektów uczenia się przewidzianych dla praktyki zawodowej.
+    \item[<<% if decyzja_dyrektora == 'REJECTED' %>>$\boxtimes$<<% else %>>$\square$<<% endif %>>] Nie wyrażam zgody na zaliczenie efektów uczenia się przewidzianych dla praktyki zawodowej.
 \end{itemize}
 
 \vspace{2em}

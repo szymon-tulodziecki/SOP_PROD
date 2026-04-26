@@ -31,6 +31,26 @@ _LATEX_SPECIAL_CHARS = {
 }
 
 
+def sanitize_text(value, max_length: int = 5000) -> str:
+    """Jak sanitize(), ale dla wieloakapitowych pól tekstowych.
+
+    Zachowuje przełamania akapitów (puste linie → \\par w LaTeX).
+    Używać dla pól sprawozdania, uzasadnienia itp.
+    """
+    if value is None:
+        return ''
+    text = str(value).strip()
+    if max_length:
+        text = text[:max_length]
+    paragraphs = text.split('\n\n')
+    encoded = []
+    for p in paragraphs:
+        lines = p.split('\n')
+        encoded_lines = [unicode_to_latex(line) for line in lines]
+        encoded.append(r'\\'.join(encoded_lines))
+    return '\n\n'.join(encoded)
+
+
 def sanitize(value, max_length: int = 500) -> str:
     """Oczyszcza wartość do bezpiecznego wstawienia w szablon LaTeX.
 

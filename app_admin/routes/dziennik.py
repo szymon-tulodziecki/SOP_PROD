@@ -34,7 +34,7 @@ def _wykryj_przerwy(wpisy, prog_dni=3):
     return przerwy
 
 
-@journal_bp.route('/')
+@journal_bp.route('/', methods=['GET'])
 @login_required
 def lista_dziennikow():
     szukaj     = request.args.get('szukaj', '').strip()
@@ -50,6 +50,9 @@ def lista_dziennikow():
     dane      = []
     dzisiaj   = date.today()
     for z in zapisy.items:
+        path_val = z.path_type.value if hasattr(z.path_type, 'value') else str(z.path_type)
+        if path_val != 'STANDARD':
+            continue
         ostatni, liczba_wpisow = stats.get(z.id, (None, 0))
         alert = False
         if ostatni:
@@ -65,7 +68,7 @@ def lista_dziennikow():
     return render_template('journal/lista.html', dane=dane, zapisy=zapisy)
 
 
-@journal_bp.route('/zapis/<uuid:id>')
+@journal_bp.route('/zapis/<uuid:id>', methods=['GET'])
 @login_required
 def dziennik_zapisu(id):
     from datetime import date as _date
@@ -91,7 +94,7 @@ def dziennik_zapisu(id):
                            data_od=data_od, data_do=data_do)
 
 
-@journal_bp.route('/zapis/<uuid:id>/pdf')
+@journal_bp.route('/zapis/<uuid:id>/pdf', methods=['GET'])
 @login_required
 def pdf_dziennik(id):
     zapis = _repo_zapisow.znajdz_po_id(id) or abort(404)

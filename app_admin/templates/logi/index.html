@@ -54,13 +54,21 @@
             {{ z.executed_at.strftime('%Y-%m-%d %H:%M') if z.executed_at else '—' }}
           </td>
           <td>
-            <span class="status
-              {% if z.event_type.value == 'DYREKTOR_DECYZJA' %}status--zakonczona
-              {% elif z.event_type.value == 'KOMISJA_DECYZJA' %}status--w-trakcie
-              {% elif z.event_type.value in ['ADMIN_KOMENTARZ', 'UOPZ_KOMENTARZ'] %}status--szkic
-              {% else %}status--szkic{% endif %}">
-              {{ etykiety.get(z.event_type.value, z.event_type.value) }}
-            </span>
+            {% set rola = z.executed_by.rola.value if z.executed_by and z.executed_by.rola else '' %}
+            {% if z.event_type.value == 'DYREKTOR_DECYZJA' %}
+              {% set label = 'Decyzja Dyrektora' %}{% set cls = 'status--zakonczona' %}
+            {% elif z.event_type.value == 'KOMISJA_DECYZJA' and rola == 'KOMISJA' %}
+              {% set label = 'Decyzja Komisji' %}{% set cls = 'status--w-trakcie' %}
+            {% elif z.event_type.value == 'KOMISJA_DECYZJA' and rola == 'UOPZ' %}
+              {% set label = 'Decyzja UOPZ' %}{% set cls = 'status--w-trakcie' %}
+            {% elif z.event_type.value == 'KOMISJA_DECYZJA' %}
+              {% set label = 'Decyzja Admina' %}{% set cls = 'status--szkic' %}
+            {% elif z.event_type.value in ['ADMIN_KOMENTARZ', 'UOPZ_KOMENTARZ'] %}
+              {% set label = etykiety.get(z.event_type.value, z.event_type.value) %}{% set cls = 'status--szkic' %}
+            {% else %}
+              {% set label = etykiety.get(z.event_type.value, z.event_type.value) %}{% set cls = 'status--szkic' %}
+            {% endif %}
+            <span class="status {{ cls }}">{{ label }}</span>
           </td>
           <td>
             {% if z.enrollment and z.enrollment.student %}
@@ -77,7 +85,7 @@
             {% if z.decision == 'APPROVED' %}
               <span class="status status--zakonczona">Zatwierdzone</span>
             {% elif z.decision == 'PARTIALLY_APPROVED' %}
-              <span class="status status--w-trakcie">Częściowo</span>
+              <span class="status status--w-trakcie">Wymaga poprawek</span>
             {% elif z.decision == 'REJECTED' %}
               <span class="status status--odrzucona">Odrzucone</span>
             {% else %}—{% endif %}

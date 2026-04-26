@@ -50,6 +50,10 @@ celery.conf.update(
             'task': 'cleanup_old_pdfs',
             'schedule': 3600.0,   # co godzinę
         },
+        'cleanup-deleted-internships': {
+            'task': 'cleanup_deleted_internships',
+            'schedule': 86400.0,  # raz na dobę
+        },
     },
 )
 
@@ -215,6 +219,41 @@ def cleanup_old_pdfs(max_age_hours: int = 24) -> dict:
 
     logger.info("Czyszczenie PDF: usunięto %d, błędy %d (próg: %dh)", deleted, errors, max_age_hours)
     return {'deleted': deleted, 'errors': errors}
+
+
+@celery.task(name='cleanup_deleted_internships')
+def cleanup_deleted_internships() -> dict:
+    """Trwale usuwa praktyki oznaczone do usunięcia ponad 7 dni temu."""
+    from datetime import datetime, timedelta, timezone
+    from core.pliki import _fs_delete
+
+    cutoff = datetime.now(timezone.utc) - timedelta(days=7)
+    deleted = 0
+
+    with _worker_app.app_context():
+        from core.modele.praktyki import Internship
+        from core.modele import UploadedDocument
+        stare = (db.session.query(Internship)
+                 .filter(Internship.deleted_at.isnot(None))
+                 .filter(Internship.deleted_at <= cutoff)
+                 .all())
+        for p in stare:
+            for zapis in p.enrollments:
+                docs = db.session.execute(
+                    db.select(UploadedDocument).filter_by(enrollment_id=zapis.id)
+                ).scalars().all()
+                for doc in docs:
+                    try:
+                        _fs_delete(doc.file_path)
+                    except Exception as exc:
+                        logger.warning("Nie udało się usunąć pliku %s: %s", doc.file_path, exc)
+                    db.session.delete(doc)
+            db.session.delete(p)
+            deleted += 1
+        db.session.commit()
+
+    logger.info("Czyszczenie praktyk: trwale usunięto %d", deleted)
+    return {'deleted': deleted}
 
 
 @celery.task(bind=True, name='generuj_pdf_z_szablonu',

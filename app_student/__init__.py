@@ -85,6 +85,7 @@ def create_app():
                     EnrollmentStatus.PENDING,
                     EnrollmentStatus.AWAITING_APPROVAL,
                     EnrollmentStatus.REVISION_REQUIRED,
+                    EnrollmentStatus.REJECTED,
                 ])
                 for z in zapisy_do_sprawdzenia:
                     if z.status == EnrollmentStatus.PENDING and (z.admin_comments or z.supervisor_comments):
@@ -94,6 +95,9 @@ def create_app():
                         wymaga_uwagi = True
                         break
                     if z.status == EnrollmentStatus.REVISION_REQUIRED:
+                        wymaga_uwagi = True
+                        break
+                    if z.status == EnrollmentStatus.REJECTED:
                         wymaga_uwagi = True
                         break
         except Exception:

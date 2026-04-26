@@ -37,14 +37,19 @@ def get_pilne_oceny(uopz_id=None):
     return SerwisOceniania.get_pilne_oceny(uopz_id)
 
 
-@evaluation_bp.route('/')
+@evaluation_bp.route('/', methods=['GET'])
 @login_required
 def lista_ocen():
     SerwisOceniania.auto_complete_internships()
 
     uopz_id = current_user.id if current_user.role == UserRole.UOPZ else None
     from core.modele.praktyki import InternshipPath
-    _PATH_B = (InternshipPath.EMPLOYMENT, InternshipPath.OWN_BUSINESS)
+    _PATH_B_VALS = ('EMPLOYMENT', 'OWN_BUSINESS')
+
+    def _is_path_b(zapis):
+        pt = zapis.path_type
+        val = pt.value if hasattr(pt, 'value') else str(pt)
+        return val in _PATH_B_VALS
 
     zapisy  = _repo_zapisow.aktywne_i_zakonczone(supervisor_id=uopz_id)
 
@@ -55,7 +60,7 @@ def lista_ocen():
         deadline = None
         dni_do_deadline = None
         przekroczony = False
-        is_path_b = zapis.path_type in _PATH_B
+        is_path_b = _is_path_b(zapis)
 
         if zapis.end_date and zapis.status == EnrollmentStatus.COMPLETED:
             deadline = zapis.end_date + timedelta(days=7)
@@ -76,7 +81,7 @@ def lista_ocen():
         fg = p.final_grades
         if not fg:
             return False
-        if p.path_type in _PATH_B:
+        if _is_path_b(p):
             return fg.report_grade is not None and p.exam_grade is not None
         return (fg.supervisor_grade is not None
                 and fg.report_grade is not None and fg.workplace_grade is not None)
@@ -155,7 +160,7 @@ def ocen_praktyke(id):
                            pracownicy=pracownicy,
                            csrf_form=csrf_form)
 
-@evaluation_bp.route('/zapis/<uuid:id>/sprawozdanie')
+@evaluation_bp.route('/zapis/<uuid:id>/sprawozdanie', methods=['GET'])
 @wymaga_roli(UserRole.ADMIN, UserRole.UOPZ)
 def podglad_sprawozdania(id):
     zapis = db.session.get(InternshipEnrollment, id) or abort(404)
@@ -211,7 +216,7 @@ def zakoncz_zapis(id):
     flash(f'Praktyka studenta {zapis.student.first_name} {zapis.student.last_name} została zakończona.', 'success')
     return redirect(url_for('evaluation.lista_ocen'))
 
-@evaluation_bp.route('/zapis/<uuid:id>/protokol')
+@evaluation_bp.route('/zapis/<uuid:id>/protokol', methods=['GET'])
 @wymaga_roli(UserRole.ADMIN, UserRole.UOPZ)
 def generuj_protokol(id):
     """Generuje Protokół egzaminu (zał.8) przez tex-service."""

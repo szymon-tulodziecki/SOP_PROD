@@ -7,7 +7,6 @@
 \geometry{margin=1.5cm}
 \usepackage{longtable}
 \usepackage{makecell}
-\usepackage[normalem]{ulem}
 
 \begin{document}
 
@@ -18,19 +17,30 @@ Załącznik nr 4a
 \vspace{-1em}
 \begin{center}
 \textbf{\large POTWIERDZENIE UZYSKANIA} \\[0.5em]
-\textbf{\large EFEKTÓW UCZENIA SIĘ W RAMACH PRAKTYKI ZAWODOWEJ NA PODSTAWIE ZATRUDNIENIA/STAŻU/DZIAŁALNOŚCI GOSPODARCZEJ*}
+\textbf{\large EFEKTÓW UCZENIA SIĘ W RAMACH PRAKTYKI ZAWODOWEJ NA PODSTAWIE %
+<<% if zapis.sciezka == 'OWN_BUSINESS' %>>DZIAŁALNOŚCI GOSPODARCZEJ<<% else %>>ZATRUDNIENIA/STAŻU<<% endif %>>}
 \end{center}
 
 \vspace{1em}
 
 \noindent Kierunek studiów: Informatyka \\
-Student / ka: \textbf{<< student.imie|s >> << student.nazwisko|s >>} \\
+<<% if student.plec == 'K' %>>Studentka<<% else %>>Student<<% endif %>>: \textbf{<< student.imie|s >> << student.nazwisko|s >>} \\
 Nr albumu: \textbf{<< student.nr_albumu|s >>} \\
 Kierunek studiów: Informatyka \hfill Specjalność: \textbf{<< specjalnosc|s >>} \\
 Miejsce pracy/działalności: \textbf{<< firma.nazwa|s >>}
 
 \vspace{1em}
-\noindent W ramach pracy zawodowej/stażu/działalności gospodarczej* uzyskał/a / nie uzyskał/a * zakładane dla praktyki zawodowej efekty uczenia się:
+<<% set wyniki = oceny_komisji | selectattr('wynik') | map(attribute='wynik') | list -%>>
+<<% if wyniki and wyniki | select('eq', 'NOT_ACHIEVED') | list | length == wyniki | length -%>>
+<<% set wynik_ogolny = forma.neg -%>>
+<<% elif wyniki and 'NOT_ACHIEVED' not in wyniki and 'PARTIALLY_ACHIEVED' not in wyniki -%>>
+<<% set wynik_ogolny = forma.pos -%>>
+<<% elif 'PARTIALLY_ACHIEVED' in wyniki or ('ACHIEVED' in wyniki and 'NOT_ACHIEVED' in wyniki) -%>>
+<<% set wynik_ogolny = forma.par -%>>
+<<% else -%>>
+<<% set wynik_ogolny = forma.pos ~ ' / ' ~ forma.neg -%>>
+<<% endif -%>>
+\noindent W ramach <<% if zapis.sciezka == 'OWN_BUSINESS' %>>działalności gospodarczej<<% else %>>pracy zawodowej/stażu<<% endif %>> << wynik_ogolny|s >> zakładane dla praktyki zawodowej efekty uczenia się:
 
 \vspace{1em}
 
@@ -44,7 +54,7 @@ Miejsce pracy/działalności: \textbf{<< firma.nazwa|s >>}
 \endhead
 
 <<% for row in oceny_komisji -%>>
-<< row.efekt_kod >> & << row.efekt_opis|s >> & \makecell{<<% if row.wynik == 'ACHIEVED' %>>\textbf{\underline{<< forma.pos|s >>}} \\[2pt] \sout{<< forma.par|s >>} \\[2pt] \sout{<< forma.neg|s >>}<<% elif row.wynik == 'PARTIALLY_ACHIEVED' %>>\sout{<< forma.pos|s >>} \\[2pt] \textbf{\underline{<< forma.par|s >>}} \\[2pt] \sout{<< forma.neg|s >>}<<% if row.uwagi %>> \\[4pt] \footnotesize\textit{<< row.uwagi|s >>}\normalsize<<% endif %>><<% elif row.wynik == 'NOT_ACHIEVED' %>>\sout{<< forma.pos|s >>} \\[2pt] \sout{<< forma.par|s >>} \\[2pt] \textbf{\underline{<< forma.neg|s >>}}<<% else %>><< forma.pos|s >> * \\[2pt] << forma.par|s >> * \\[2pt] << forma.neg|s >> *<<% endif %>>} \\ \hline
+<< row.efekt_kod >> & << row.efekt_opis|s >> & \makecell{<<% if row.wynik == 'ACHIEVED' %>>\textbf{<< forma.pos|s >>}<<% elif row.wynik == 'PARTIALLY_ACHIEVED' %>>\textbf{<< forma.par|s >>}<<% if row.uwagi %>> \\[4pt] \footnotesize\textit{<< row.uwagi|s >>}\normalsize<<% endif %>><<% elif row.wynik == 'NOT_ACHIEVED' %>>\textbf{<< forma.neg|s >>}<<% else %>>---<<% endif %>>} \\ \hline
 <<% endfor -%>>
 \end{longtable}
 
@@ -64,8 +74,5 @@ Miejsce pracy/działalności: \textbf{<< firma.nazwa|s >>}
 \dotfill \\
 \small data, podpis Przewodniczącego Komisji do spraw praktyk
 \end{minipage}
-
-\vspace{2em}
-\noindent \footnotesize{* niepotrzebne skreślić} \normalsize
 
 \end{document}

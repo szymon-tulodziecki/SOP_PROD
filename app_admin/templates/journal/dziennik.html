@@ -94,7 +94,14 @@
             <tr>
               <td><strong>{{ w.entry_date.strftime('%d.%m.%Y') }}</strong></td>
               <td style="text-align: center;">{{ w.duration_hours }} h</td>
-              <td style="font-size: 0.85rem; line-height: 1.5;">{{ w.description }}</td>
+              <td style="font-size: 0.85rem; line-height: 1.5; max-width: 420px;">
+                {% if w.description | length > 120 %}
+                  <span class="opis-skrot">{{ w.description[:120] }}&hellip; <button type="button" class="btn-rozwin" onclick="rozwinOpis(this)">Rozwiń</button></span>
+                  <span class="opis-pelny" style="display:none;">{{ w.description }} <button type="button" class="btn-rozwin" onclick="zwinOpis(this)">Zwiń</button></span>
+                {% else %}
+                  {{ w.description }}
+                {% endif %}
+              </td>
               <td style="white-space: nowrap; text-align: center;">
                 {% if w.efekty_uczenia %}
                   {% for e in w.efekty_uczenia %}
@@ -184,5 +191,23 @@ function getCsrf() {
   const meta = document.querySelector('meta[name="csrf-token"]');
   return meta ? meta.getAttribute('content') : '';
 }
+function rozwinOpis(btn) {
+  const skrot = btn.closest('.opis-skrot');
+  skrot.style.display = 'none';
+  skrot.nextElementSibling.style.display = '';
+}
+function zwinOpis(btn) {
+  const pelny = btn.closest('.opis-pelny');
+  pelny.style.display = 'none';
+  pelny.previousElementSibling.style.display = '';
+}
 </script>
+<style>
+.btn-rozwin {
+  background: none; border: none; padding: 0;
+  color: var(--kolor-glowny); font-size: 0.8rem;
+  cursor: pointer; text-decoration: underline;
+}
+.btn-rozwin:hover { opacity: 0.75; }
+</style>
 {% endblock %}

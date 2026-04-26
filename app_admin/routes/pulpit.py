@@ -11,7 +11,7 @@ _repo_praktyk    = RepozytoriumPraktyk()
 _repo_uzytk      = RepozytoriumUzytkownikow()
 
 
-@dashboard_bp.route('/')
+@dashboard_bp.route('/', methods=['GET'])
 @login_required
 def index():
     uopz_id = current_user.id if current_user.role == UserRole.UOPZ else None

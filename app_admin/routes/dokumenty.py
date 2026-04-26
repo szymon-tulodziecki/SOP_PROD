@@ -51,12 +51,14 @@ def log_audit(zapis_id, doc_type, action, details=""):
     ))
     db.session.commit()
 
-@documents_bp.route('/zapis/<uuid:id>')
+@documents_bp.route('/zapis/<uuid:id>', methods=['GET'])
 @wymaga_roli(UserRole.ADMIN, UserRole.UOPZ)
 def panel(id):
     zapis = _repo_zapisow.znajdz_po_id(id) or abort(404)
     logs  = _repo_logow.ostatnie_dla_zapisu(id)
-    return render_template('documents/panel.html', zapis=zapis, docs=DOCUMENTS, logs=logs)
+    docs = {k: v for k, v in DOCUMENTS.items()
+            if k != 'ZAL_8' or zapis.final_grade is not None}
+    return render_template('documents/panel.html', zapis=zapis, docs=docs, logs=logs)
 
 @documents_bp.route('/zapis/<uuid:id>/generuj_auto/<doc_type>', methods=['POST'])
 @wymaga_roli(UserRole.ADMIN, UserRole.UOPZ)
@@ -80,7 +82,7 @@ def generuj_auto(id, doc_type):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@documents_bp.route('/status/<task_id>')
+@documents_bp.route('/status/<task_id>', methods=['GET'])
 @wymaga_roli(UserRole.ADMIN, UserRole.UOPZ)
 def status_pdf(task_id):
     """Legacy polling endpoint — zachowany dla kompatybilności wstecznej."""
@@ -101,7 +103,7 @@ def status_pdf(task_id):
 
 _SSE_MAX_SECONDS = 30    # po tym czasie klient powinien przełączyć się na polling
 
-@documents_bp.route('/stream/<task_id>')
+@documents_bp.route('/stream/<task_id>', methods=['GET'])
 @wymaga_roli(UserRole.ADMIN, UserRole.UOPZ)
 def stream_status(task_id):
     """Server-Sent Events — status generowania PDF.
@@ -146,7 +148,7 @@ def stream_status(task_id):
     return Response(generate(), mimetype='text/event-stream',
                     headers={'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no'})
 
-@documents_bp.route('/pobierz/<task_id>')
+@documents_bp.route('/pobierz/<task_id>', methods=['GET'])
 @wymaga_roli(UserRole.ADMIN, UserRole.UOPZ)
 def pobierz_pdf(task_id):
     try:

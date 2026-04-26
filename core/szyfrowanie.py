@@ -61,7 +61,7 @@ def _key() -> bytes:
     return _KEY
 
 
-def _cipher(nonce: bytes):
+def _cipher(_nonce: bytes):
     from cryptography.hazmat.primitives.ciphers.aead import AESGCM
     return AESGCM(_key())
 

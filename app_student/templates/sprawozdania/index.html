@@ -33,12 +33,8 @@
         <h2 class="karta__tytul">{{ form.charakterystyka.label.text }}</h2>
       </div>
       <div class="karta__tresc">
-        <p style="font-size: 0.85rem; color: var(--kolor-tekst-drugor); margin-bottom: 1rem;">
-          {% if is_standard %}
-          Opisz zwięźle zakład pracy (branża, wielkość, używane technologie) oraz konkretny dział/komórkę organizacyjną, w której realizowana była praktyka.
-          {% else %}
-          Opisz zwięźle miejsce pracy / działalność (branża, wielkość firmy, technologie IT, zakres działalności).
-          {% endif %}
+        <p style="font-size: 0.8rem; color: var(--kolor-tekst-drugor); margin-bottom: 0.5rem; font-style: italic;">
+          Krótki opis instytucji, w której odbywała się praktyka zawodowa
         </p>
         <div class="pole-formularza {% if form.charakterystyka.errors %}pole-formularza--blad{% endif %}">
           {{ form.charakterystyka(class="pole-formularza__input", rows="4", placeholder="Tutaj wpisz sekcję I...", style="resize:vertical; overflow:auto;") }}
@@ -52,12 +48,8 @@
         <h2 class="karta__tytul">{{ form.opis.label.text }}</h2>
       </div>
       <div class="karta__tresc">
-        <p style="font-size: 0.85rem; color: var(--kolor-tekst-drugor); margin-bottom: 1rem;">
-          {% if is_standard %}
-          Przedstaw szczegółowy opis i analizę wykonanych prac w ramach zrealizowanego harmonogramu.
-          {% else %}
-          Opisz syntetycznie jakie zadania wykonywałeś/aś w trakcie pracy zawodowej lub działalności gospodarczej (najważniejsze z punktu widzenia efektów uczenia się).
-          {% endif %}
+        <p style="font-size: 0.8rem; color: var(--kolor-tekst-drugor); margin-bottom: 0.5rem; font-style: italic;">
+          Syntetyczny opis wykonanych prac — student opisuje w sposób syntetyczny, jakie zadania wykonywał w trakcie praktyki (jego zdaniem najważniejsze).
         </p>
         <div class="pole-formularza {% if form.opis.errors %}pole-formularza--blad{% endif %}">
           {{ form.opis(class="pole-formularza__input", rows="6", placeholder="Tutaj wpisz sekcję II...", style="resize:vertical; overflow:auto;") }}
@@ -66,24 +58,20 @@
       </div>
     </div>
 
-    {% if is_standard %}
     <div class="karta" style="margin-bottom: 2rem;">
       <div class="karta__naglowek">
-        <h2 class="karta__tytul">Sekcja III: Wykonane zadania (Zestawienie efektów)</h2>
+        <h2 class="karta__tytul">{{ form.wiedza.label.text }}</h2>
       </div>
-      <div class="karta__tresc py-3">
-        <div style="background: var(--kolor-tlo); border-radius: 8px; padding: 1.5rem; border: 1px dashed var(--kolor-ramka);">
-          <p style="font-size: 0.9rem; color: var(--kolor-tekst);">
-            <strong>Uwaga:</strong> Sekcja III zawierająca szczegółowe zestawienie godzinowych nakładów pracy dla każdego zdefiniowanego efektu uczenia się <strong style="color: var(--kolor-glowny);">jest generowana w 100% automatycznie</strong> na podstawie Twojego Dziennika Praktyk.
-          </p>
-          <ul style="margin-top: 1rem; padding-left: 1.5rem; font-size: 0.85rem; color: var(--kolor-tekst-drugor);">
-            <li>Nie musisz nic tu wpisywać. Wystarczy regularnie uzupełniać dziennik.</li>
-            <li>System sumuje godziny i przypisuje je do właściwych komórek tabeli z załącznika.</li>
-          </ul>
+      <div class="karta__tresc">
+        <p style="font-size: 0.8rem; color: var(--kolor-tekst-drugor); margin-bottom: 0.5rem; font-style: italic;">
+          Samoocena w zakresie nabytych kompetencji oraz osiągniętych efektów uczenia się — student opisuje, jakie kompetencje nabył w trakcie praktyki zawodowej oraz dokonuje samooceny w zakresie osiągniętych efektów uczenia się. Cytuje po kolei zakładane efekty uczenia się i wykazuje wykonane prace, które prowadziły do ich osiągnięcia.
+        </p>
+        <div class="pole-formularza {% if form.wiedza.errors %}pole-formularza--blad{% endif %}">
+          {{ form.wiedza(class="pole-formularza__input", rows="5", placeholder="Tutaj wpisz sekcję III...", style="resize:vertical; overflow:auto;") }}
+          {% for e in form.wiedza.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
         </div>
       </div>
     </div>
-    {% endif %}
 
     <div style="display: flex; justify-content: flex-end; gap: 1rem;">
       <button type="submit" class="przycisk przycisk--glowny">Zapisz sprawozdanie</button>
