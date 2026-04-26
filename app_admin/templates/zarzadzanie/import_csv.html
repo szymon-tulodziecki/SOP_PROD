@@ -14,22 +14,22 @@
         {{ form.hidden_tag() }}
 
         <div class="pole-formularza">
-          <label for="plik" class="pole-formularza__etykieta">
+          <label for="file" class="pole-formularza__etykieta">
             Plik CSV <span class="pole-formularza__wymagane" aria-label="wymagane">*</span>
           </label>
-          <label for="plik" style="display:flex; align-items:center; gap:0.75rem; padding:0.75rem 1rem;
+          <label for="file" style="display:flex; align-items:center; gap:0.75rem; padding:0.75rem 1rem;
                  border:2px dashed var(--kolor-ramka); border-radius:var(--promien);
                  cursor:pointer; background:var(--kolor-tlo); transition:border-color 0.15s;"
                  onmouseover="this.style.borderColor='var(--kolor-glowny)'"
                  onmouseout="this.style.borderColor='var(--kolor-ramka)'">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22" style="flex-shrink:0;color:var(--kolor-tekst-drugor)"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            <span id="plik-label" style="font-size:0.875rem; color:var(--kolor-tekst-drugor);">Wybierz plik CSV lub przeciągnij tutaj</span>
+            <span id="file-label" style="font-size:0.875rem; color:var(--kolor-tekst-drugor);">Wybierz plik CSV lub przeciągnij tutaj</span>
           </label>
-          <input type="file" id="plik" name="plik" accept=".csv" required
+          <input type="file" id="file" name="file" accept=".csv" required
                  style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;"
-                 onchange="document.getElementById('plik-label').textContent = this.files[0]?.name || 'Wybierz plik CSV'">
-          {% if form.plik.errors %}
-            <span class="pole-formularza__blad" role="alert">{{ form.plik.errors[0] }}</span>
+                 onchange="document.getElementById('file-label').textContent = this.files[0]?.name || 'Wybierz plik CSV'">
+          {% if form.file.errors %}
+            <span class="pole-formularza__blad" role="alert">{{ form.file.errors[0] }}</span>
           {% endif %}
         </div>
 
@@ -70,7 +70,7 @@ Anna,Nowak,67890@ans-elblag.pl,67890,K,Informatyka,niestacjonarne</code>
 
 </div>
 
-{% if wyniki %}
+{% if results %}
 <div class="karta" style="margin-top: 1.25rem; max-width:560px;">
   <div class="karta__naglowek">
     <h2 class="karta__tytul">Wyniki importu</h2>
@@ -78,22 +78,22 @@ Anna,Nowak,67890@ans-elblag.pl,67890,K,Informatyka,niestacjonarne</code>
   <div class="karta__tresc">
     <div style="display: flex; gap: 2rem; margin-bottom: 1rem;">
       <div style="text-align: center;">
-        <p style="font-size: 2rem; font-weight: 700; color: var(--kolor-sukces);">{{ wyniki.utworzono }}</p>
+        <p style="font-size: 2rem; font-weight: 700; color: var(--kolor-sukces);">{{ results.created }}</p>
         <p style="font-size: 0.85rem; color: var(--kolor-tekst-drugor);">Kont utworzonych</p>
       </div>
       <div style="text-align: center;">
-        <p style="font-size: 2rem; font-weight: 700; color: var(--kolor-blad);">{{ wyniki.pominieto }}</p>
+        <p style="font-size: 2rem; font-weight: 700; color: var(--kolor-blad);">{{ results.skipped }}</p>
         <p style="font-size: 0.85rem; color: var(--kolor-tekst-drugor);">Pominiętych</p>
       </div>
     </div>
-    {% if wyniki.bledy %}
+    {% if results.errors %}
     <details>
       <summary style="cursor: pointer; font-size: 0.875rem; font-weight: 500; color: var(--kolor-blad);">
-        Pokaż błędy ({{ wyniki.bledy|length }})
+        Pokaż błędy ({{ results.errors|length }})
       </summary>
       <ul style="margin-top: 0.5rem; font-size: 0.825rem; color: var(--kolor-tekst-drugor); list-style: none; padding: 0;">
-        {% for blad in wyniki.bledy %}
-        <li style="padding: 0.25rem 0; border-bottom: 1px solid var(--kolor-ramka);">{{ blad }}</li>
+        {% for error in results.errors %}
+        <li style="padding: 0.25rem 0; border-bottom: 1px solid var(--kolor-ramka);">{{ error }}</li>
         {% endfor %}
       </ul>
     </details>

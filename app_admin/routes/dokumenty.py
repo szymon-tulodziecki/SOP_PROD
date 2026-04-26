@@ -18,8 +18,8 @@ from core.extensions import db, limiter
 from core.autoryzacja import wymaga_roli
 from core.repozytoria import RepozytoriumZapisow, RepozytoriumLogow
 
-_repo_zapisow = RepozytoriumZapisow()
-_repo_logow   = RepozytoriumLogow()
+_repo_enrollments = RepozytoriumZapisow()
+_repo_logs        = RepozytoriumLogow()
 
 import logging
 logger = logging.getLogger(__name__)
@@ -40,11 +40,11 @@ DOCUMENTS = {
     'ZAL_9':  ('zal9_zobowiazanie.tex.j2',  'Załącznik 9 (Zobowiązanie poufności)'),
 }
 
-def log_audit(zapis_id, doc_type, action, details=""):
+def log_audit(enrollment_id, doc_type, action, details=""):
     db.session.add(DocumentAuditLog(
         id=uuid.uuid4(),
         user_id=current_user.id,
-        enrollment_id=zapis_id,
+        enrollment_id=enrollment_id,
         document_type=doc_type,
         action=action,
         details=details
@@ -54,17 +54,17 @@ def log_audit(zapis_id, doc_type, action, details=""):
 @documents_bp.route('/zapis/<uuid:id>', methods=['GET'])
 @wymaga_roli(UserRole.ADMIN, UserRole.UOPZ)
 def panel(id):
-    zapis = _repo_zapisow.znajdz_po_id(id) or abort(404)
-    logs  = _repo_logow.ostatnie_dla_zapisu(id)
-    docs = {k: v for k, v in DOCUMENTS.items()
-            if k != 'ZAL_8' or zapis.final_grade is not None}
-    return render_template('documents/panel.html', zapis=zapis, docs=docs, logs=logs)
+    enrollment = _repo_enrollments.znajdz_po_id(id) or abort(404)
+    logs       = _repo_logs.ostatnie_dla_zapisu(id)
+    docs       = {k: v for k, v in DOCUMENTS.items()
+                  if k != 'ZAL_8' or enrollment.final_grade is not None}
+    return render_template('documents/panel.html', zapis=enrollment, docs=docs, logs=logs)
 
 @documents_bp.route('/zapis/<uuid:id>/generuj_auto/<doc_type>', methods=['POST'])
 @wymaga_roli(UserRole.ADMIN, UserRole.UOPZ)
 @limiter.limit("60 per hour")
 def generuj_auto(id, doc_type):
-    zapis = _repo_zapisow.znajdz_po_id(id) or abort(404)
+    enrollment = _repo_enrollments.znajdz_po_id(id) or abort(404)
     if doc_type not in DOCUMENTS:
         abort(404)
 
@@ -73,11 +73,11 @@ def generuj_auto(id, doc_type):
     from core.uslugi.dokumenty import buduj_kontekst
     from celery_app import generuj_pdf_z_szablonu
 
-    context = buduj_kontekst(zapis, doc_type)
+    context = buduj_kontekst(enrollment, doc_type)
 
     try:
         task = generuj_pdf_z_szablonu.delay(template_name, context, doc_type.lower())
-        log_audit(zapis.id, doc_type, 'GENERATED_AUTO', f'Wygenerowano {doc_type}')
+        log_audit(enrollment.id, doc_type, 'GENERATED_AUTO', f'Wygenerowano {doc_type}')
         return jsonify({'task_id': task.id, 'status': 'PENDING'})
     except Exception as e:
         return jsonify({'error': str(e)}), 500

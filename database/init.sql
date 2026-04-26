@@ -1,6 +1,5 @@
 -- ============================================================
 -- System Praktyk Zawodowych — ANS Elbląg
--- Database schema (English table and column names)
 -- ============================================================
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;

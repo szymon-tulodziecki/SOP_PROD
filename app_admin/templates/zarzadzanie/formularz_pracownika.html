@@ -18,15 +18,15 @@
       {{ form.hidden_tag() }}
 
       <div class="formularz-panel__siatka">
-        <div class="pole-formularza {% if form.imie.errors %}pole-formularza--blad{% endif %}">
-          <label for="imie" class="pole-formularza__etykieta">Imię <span class="pole-formularza__wymagane" aria-label="wymagane">*</span></label>
-          {{ form.imie(class="pole-formularza__input") }}
-          {% if form.imie.errors %}<span class="pole-formularza__blad" role="alert">{{ form.imie.errors[0] }}</span>{% endif %}
+        <div class="pole-formularza {% if form.first_name.errors %}pole-formularza--blad{% endif %}">
+          <label for="first_name" class="pole-formularza__etykieta">Imię <span class="pole-formularza__wymagane" aria-label="wymagane">*</span></label>
+          {{ form.first_name(class="pole-formularza__input") }}
+          {% if form.first_name.errors %}<span class="pole-formularza__blad" role="alert">{{ form.first_name.errors[0] }}</span>{% endif %}
         </div>
-        <div class="pole-formularza {% if form.nazwisko.errors %}pole-formularza--blad{% endif %}">
-          <label for="nazwisko" class="pole-formularza__etykieta">Nazwisko <span class="pole-formularza__wymagane" aria-label="wymagane">*</span></label>
-           {{ form.nazwisko(class="pole-formularza__input") }}
-          {% if form.nazwisko.errors %}<span class="pole-formularza__blad" role="alert">{{ form.nazwisko.errors[0] }}</span>{% endif %}
+        <div class="pole-formularza {% if form.last_name.errors %}pole-formularza--blad{% endif %}">
+          <label for="last_name" class="pole-formularza__etykieta">Nazwisko <span class="pole-formularza__wymagane" aria-label="wymagane">*</span></label>
+           {{ form.last_name(class="pole-formularza__input") }}
+          {% if form.last_name.errors %}<span class="pole-formularza__blad" role="alert">{{ form.last_name.errors[0] }}</span>{% endif %}
         </div>
       </div>
 
@@ -36,10 +36,10 @@
         {% if form.email.errors %}<span class="pole-formularza__blad" role="alert">{{ form.email.errors[0] }}</span>{% endif %}
       </div>
       
-      <div class="pole-formularza {% if form.rola.errors %}pole-formularza--blad{% endif %}">
-        <label for="rola" class="pole-formularza__etykieta">Rola w systemie <span class="pole-formularza__wymagane" aria-label="wymagane">*</span></label>
-        {{ form.rola(class="filtr-select", style="width:100%") }}
-        {% if form.rola.errors %}<span class="pole-formularza__blad" role="alert">{{ form.rola.errors[0] }}</span>{% endif %}
+      <div class="pole-formularza {% if form.role.errors %}pole-formularza--blad{% endif %}">
+        <label for="role" class="pole-formularza__etykieta">Rola w systemie <span class="pole-formularza__wymagane" aria-label="wymagane">*</span></label>
+        {{ form.role(class="filtr-select", style="width:100%") }}
+        {% if form.role.errors %}<span class="pole-formularza__blad" role="alert">{{ form.role.errors[0] }}</span>{% endif %}
       </div>
 
       <div style="background: #f4f6f9; border-radius: var(--promien); padding: 0.875rem 1rem; font-size: 0.875rem; color: var(--kolor-tekst-drugor);">

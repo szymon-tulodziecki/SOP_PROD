@@ -29,17 +29,17 @@
         <div style="display: grid; grid-template-columns: 1fr; gap: 1.5rem; margin-bottom: 2rem;">
 
           <!-- Nazwa firmy -->
-          <div class="pole-formularza {% if form.nazwa.errors %}pole-formularza--blad{% endif %}">
-            {{ form.nazwa.label(class="pole-formularza__etykieta") }}
-            {{ form.nazwa(class="pole-formularza__input") }}
-            {% for e in form.nazwa.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
+          <div class="pole-formularza {% if form.name.errors %}pole-formularza--blad{% endif %}">
+            {{ form.name.label(class="pole-formularza__etykieta") }}
+            {{ form.name(class="pole-formularza__input") }}
+            {% for e in form.name.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
           </div>
 
           <!-- Adres -->
-          <div class="pole-formularza {% if form.adres.errors %}pole-formularza--blad{% endif %}">
-            {{ form.adres.label(class="pole-formularza__etykieta") }}
-            {{ form.adres(class="pole-formularza__input") }}
-            {% for e in form.adres.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
+          <div class="pole-formularza {% if form.address.errors %}pole-formularza--blad{% endif %}">
+            {{ form.address.label(class="pole-formularza__etykieta") }}
+            {{ form.address(class="pole-formularza__input") }}
+            {% for e in form.address.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
             <small style="font-size: 0.8rem; color: var(--kolor-tekst-drugor);">
               Pełny adres, np. "ul. Kolejowa 15/3"
             </small>
@@ -47,17 +47,17 @@
 
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
             <!-- Miasto -->
-            <div class="pole-formularza {% if form.miasto.errors %}pole-formularza--blad{% endif %}">
-              {{ form.miasto.label(class="pole-formularza__etykieta") }}
-              {{ form.miasto(class="pole-formularza__input") }}
-              {% for e in form.miasto.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
+            <div class="pole-formularza {% if form.city.errors %}pole-formularza--blad{% endif %}">
+              {{ form.city.label(class="pole-formularza__etykieta") }}
+              {{ form.city(class="pole-formularza__input") }}
+              {% for e in form.city.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
             </div>
 
             <!-- NIP/KRS -->
-            <div class="pole-formularza {% if form.nip_krs.errors %}pole-formularza--blad{% endif %}">
-              {{ form.nip_krs.label(class="pole-formularza__etykieta") }}
-              {{ form.nip_krs(class="pole-formularza__input") }}
-              {% for e in form.nip_krs.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
+            <div class="pole-formularza {% if form.vat_number.errors %}pole-formularza--blad{% endif %}">
+              {{ form.vat_number.label(class="pole-formularza__etykieta") }}
+              {{ form.vat_number(class="pole-formularza__input") }}
+              {% for e in form.vat_number.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
               <small style="font-size: 0.8rem; color: var(--kolor-tekst-drugor);">
                 NIP lub numer KRS
               </small>

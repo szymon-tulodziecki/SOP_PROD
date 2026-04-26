@@ -29,7 +29,7 @@
           </tr>
         </thead>
         <tbody>
-          {% for d in dane %}
+          {% for d in rows %}
           <tr {% if d.alert %}style="background: rgba(192, 57, 43, 0.05);"{% endif %}>
             <td>
               <div style="font-weight: 600;">{{ d.zapis.student.last_name }} {{ d.zapis.student.first_name }}</div>
@@ -76,14 +76,14 @@
       </table>
     </div>
 
-    {% if zapisy.pages > 1 %}
+    {% if paginated_enrollments.pages > 1 %}
     <nav class="paginacja" aria-label="Nawigacja po stronach">
-      <span class="paginacja__info">Strona {{ zapisy.page }} z {{ zapisy.pages }}</span>
+      <span class="paginacja__info">Strona {{ paginated_enrollments.page }} z {{ paginated_enrollments.pages }}</span>
       <div class="paginacja__przyciski">
-        {% for strona in zapisy.iter_pages() %}
+        {% for strona in paginated_enrollments.iter_pages() %}
           {% if strona %}
             <a href="{{ url_for('journal.lista_dziennikow', strona=strona, szukaj=request.args.get('szukaj', '')) }}"
-               class="paginacja__przycisk {{ 'paginacja__przycisk--aktywny' if strona == zapisy.page else '' }}">
+               class="paginacja__przycisk {{ 'paginacja__przycisk--aktywny' if strona == paginated_enrollments.page else '' }}">
               {{ strona }}
             </a>
           {% else %}

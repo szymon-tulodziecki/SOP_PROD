@@ -12,20 +12,20 @@
     <form method="GET" style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:flex-end;">
       <div class="pole-formularza" style="flex:1; min-width:180px; margin:0;">
         <label class="pole-formularza__etykieta" for="szukaj">Student</label>
-        <input id="szukaj" name="szukaj" class="pole-formularza__input" value="{{ szukaj }}" placeholder="Imię lub nazwisko…">
+        <input id="szukaj" name="szukaj" class="pole-formularza__input" value="{{ search_query }}" placeholder="Imię lub nazwisko…">
       </div>
       <div class="pole-formularza" style="min-width:200px; margin:0;">
         <label class="pole-formularza__etykieta" for="typ">Typ zdarzenia</label>
         <select id="typ" name="typ" class="pole-formularza__input">
           <option value="">— wszystkie —</option>
-          {% for t in typy_zdarzen %}
-          <option value="{{ t }}" {% if t == aktywny_typ %}selected{% endif %}>{{ etykiety.get(t, t) }}</option>
+          {% for t in event_types %}
+          <option value="{{ t }}" {% if t == active_type %}selected{% endif %}>{{ labels.get(t, t) }}</option>
           {% endfor %}
         </select>
       </div>
       <div style="display:flex; gap:0.5rem; align-self:flex-end;">
         <button type="submit" class="przycisk przycisk--drugorzedny">Filtruj</button>
-        {% if szukaj or aktywny_typ %}
+        {% if search_query or active_type %}
         <a href="{{ url_for('logi.lista_logow') }}" class="przycisk przycisk--drugorzedny">Wyczyść</a>
         {% endif %}
       </div>
@@ -48,7 +48,7 @@
         </tr>
       </thead>
       <tbody>
-        {% for z in zdarzenia.items %}
+        {% for z in events.items %}
         <tr>
           <td style="white-space:nowrap; font-size:0.82rem; color:var(--kolor-tekst-drugor);">
             {{ z.executed_at.strftime('%Y-%m-%d %H:%M') if z.executed_at else '—' }}
@@ -64,9 +64,9 @@
             {% elif z.event_type.value == 'KOMISJA_DECYZJA' %}
               {% set label = 'Decyzja Admina' %}{% set cls = 'status--szkic' %}
             {% elif z.event_type.value in ['ADMIN_KOMENTARZ', 'UOPZ_KOMENTARZ'] %}
-              {% set label = etykiety.get(z.event_type.value, z.event_type.value) %}{% set cls = 'status--szkic' %}
+              {% set label = labels.get(z.event_type.value, z.event_type.value) %}{% set cls = 'status--szkic' %}
             {% else %}
-              {% set label = etykiety.get(z.event_type.value, z.event_type.value) %}{% set cls = 'status--szkic' %}
+              {% set label = labels.get(z.event_type.value, z.event_type.value) %}{% set cls = 'status--szkic' %}
             {% endif %}
             <span class="status {{ cls }}">{{ label }}</span>
           </td>
@@ -109,15 +109,15 @@
     </table>
   </div>
 
-  {% if zdarzenia.pages > 1 %}
+  {% if events.pages > 1 %}
   <nav class="paginacja" aria-label="Paginacja">
-    <span class="paginacja__info">Strona {{ zdarzenia.page }} z {{ zdarzenia.pages }}</span>
+    <span class="paginacja__info">Strona {{ events.page }} z {{ events.pages }}</span>
     <div class="paginacja__przyciski">
-      {% for nr in zdarzenia.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+      {% for nr in events.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
         {% if nr %}
-          <a href="{{ url_for('logi.lista_logow', strona=nr, typ=aktywny_typ, szukaj=szukaj) }}"
-             class="paginacja__przycisk {% if nr == zdarzenia.page %}paginacja__przycisk--aktywny{% endif %}"
-             {% if nr == zdarzenia.page %}aria-current="page"{% endif %}>{{ nr }}</a>
+          <a href="{{ url_for('logi.lista_logow', strona=nr, typ=active_type, szukaj=search_query) }}"
+             class="paginacja__przycisk {% if nr == events.page %}paginacja__przycisk--aktywny{% endif %}"
+             {% if nr == events.page %}aria-current="page"{% endif %}>{{ nr }}</a>
         {% else %}
           <span class="paginacja__przycisk" aria-hidden="true">…</span>
         {% endif %}

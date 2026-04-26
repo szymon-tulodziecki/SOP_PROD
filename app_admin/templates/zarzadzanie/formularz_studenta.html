@@ -20,19 +20,19 @@
       {{ form.hidden_tag() }}
 
       <div class="formularz-panel__siatka" style="margin-bottom: 1.5rem;">
-        <div class="pole-formularza {% if form.imie.errors %}pole-formularza--blad{% endif %}">
-          <label for="imie" class="pole-formularza__etykieta">Imię <span class="pole-formularza__wymagane" aria-label="wymagane">*</span></label>
-          <input type="text" id="imie" name="imie" class="pole-formularza__input"
-                 value="{{ form.imie.data or '' }}" required aria-required="true"
-                 {% if form.imie.errors %}aria-invalid="true" aria-describedby="imie-blad"{% endif %}>
-          {% if form.imie.errors %}<span id="imie-blad" class="pole-formularza__blad" role="alert">{{ form.imie.errors[0] }}</span>{% endif %}
+        <div class="pole-formularza {% if form.first_name.errors %}pole-formularza--blad{% endif %}">
+          <label for="first_name" class="pole-formularza__etykieta">Imię <span class="pole-formularza__wymagane" aria-label="wymagane">*</span></label>
+          <input type="text" id="first_name" name="first_name" class="pole-formularza__input"
+                 value="{{ form.first_name.data or '' }}" required aria-required="true"
+                 {% if form.first_name.errors %}aria-invalid="true" aria-describedby="first_name-blad"{% endif %}>
+          {% if form.first_name.errors %}<span id="first_name-blad" class="pole-formularza__blad" role="alert">{{ form.first_name.errors[0] }}</span>{% endif %}
         </div>
-        <div class="pole-formularza {% if form.nazwisko.errors %}pole-formularza--blad{% endif %}">
-          <label for="nazwisko" class="pole-formularza__etykieta">Nazwisko <span class="pole-formularza__wymagane" aria-label="wymagane">*</span></label>
-          <input type="text" id="nazwisko" name="nazwisko" class="pole-formularza__input"
-                 value="{{ form.nazwisko.data or '' }}" required aria-required="true"
-                 {% if form.nazwisko.errors %}aria-invalid="true" aria-describedby="nazwisko-blad"{% endif %}>
-          {% if form.nazwisko.errors %}<span id="nazwisko-blad" class="pole-formularza__blad" role="alert">{{ form.nazwisko.errors[0] }}</span>{% endif %}
+        <div class="pole-formularza {% if form.last_name.errors %}pole-formularza--blad{% endif %}">
+          <label for="last_name" class="pole-formularza__etykieta">Nazwisko <span class="pole-formularza__wymagane" aria-label="wymagane">*</span></label>
+          <input type="text" id="last_name" name="last_name" class="pole-formularza__input"
+                 value="{{ form.last_name.data or '' }}" required aria-required="true"
+                 {% if form.last_name.errors %}aria-invalid="true" aria-describedby="last_name-blad"{% endif %}>
+          {% if form.last_name.errors %}<span id="last_name-blad" class="pole-formularza__blad" role="alert">{{ form.last_name.errors[0] }}</span>{% endif %}
         </div>
       </div>
 
@@ -44,42 +44,42 @@
                  {% if form.email.errors %}aria-invalid="true" aria-describedby="email-blad"{% endif %}>
           {% if form.email.errors %}<span id="email-blad" class="pole-formularza__blad" role="alert">{{ form.email.errors[0] }}</span>{% endif %}
         </div>
-        <div class="pole-formularza {% if form.numer_albumu.errors %}pole-formularza--blad{% endif %}">
-          <label for="numer_albumu" class="pole-formularza__etykieta">Nr albumu <span class="pole-formularza__wymagane" aria-label="wymagane">*</span></label>
-          <input type="text" id="numer_albumu" name="numer_albumu" class="pole-formularza__input"
-                 value="{{ form.numer_albumu.data or '' }}" required aria-required="true"
+        <div class="pole-formularza {% if form.album_number.errors %}pole-formularza--blad{% endif %}">
+          <label for="album_number" class="pole-formularza__etykieta">Nr albumu <span class="pole-formularza__wymagane" aria-label="wymagane">*</span></label>
+          <input type="text" id="album_number" name="album_number" class="pole-formularza__input"
+                 value="{{ form.album_number.data or '' }}" required aria-required="true"
                  placeholder="np. 12345" maxlength="20"
-                 {% if form.numer_albumu.errors %}aria-invalid="true" aria-describedby="album-blad"{% endif %}>
-          {% if form.numer_albumu.errors %}<span id="album-blad" class="pole-formularza__blad" role="alert">{{ form.numer_albumu.errors[0] }}</span>{% endif %}
+                 {% if form.album_number.errors %}aria-invalid="true" aria-describedby="album-blad"{% endif %}>
+          {% if form.album_number.errors %}<span id="album-blad" class="pole-formularza__blad" role="alert">{{ form.album_number.errors[0] }}</span>{% endif %}
           {% if not uzytkownik %}<span style="font-size: 0.775rem; color: var(--kolor-tekst-trzeciorzed);">Będzie użyty jako hasło tymczasowe</span>{% endif %}
         </div>
         <div class="pole-formularza">
-          <label for="plec" class="pole-formularza__etykieta">Płeć</label>
-          <select id="plec" name="plec" class="filtr-select" style="width:100%;">
-            <option value="" {% if not form.plec.data %}selected{% endif %}>--- Wybierz ---</option>
-            <option value="M" {% if form.plec.data == 'M' %}selected{% endif %}>Mężczyzna</option>
-            <option value="K" {% if form.plec.data == 'K' %}selected{% endif %}>Kobieta</option>
+          <label for="gender" class="pole-formularza__etykieta">Płeć</label>
+          <select id="gender" name="gender" class="filtr-select" style="width:100%;">
+            <option value="" {% if not form.gender.data %}selected{% endif %}>--- Wybierz ---</option>
+            <option value="M" {% if form.gender.data == 'M' %}selected{% endif %}>Mężczyzna</option>
+            <option value="K" {% if form.gender.data == 'K' %}selected{% endif %}>Kobieta</option>
           </select>
         </div>
       </div>
 
       <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
         <div class="pole-formularza">
-          <label for="kierunek" class="pole-formularza__etykieta">Kierunek studiów</label>
-          <input type="text" id="kierunek" name="kierunek" class="pole-formularza__input"
-                 value="{{ form.kierunek.data or '' }}" placeholder="np. Informatyka">
+          <label for="field_of_study" class="pole-formularza__etykieta">Kierunek studiów</label>
+          <input type="text" id="field_of_study" name="field_of_study" class="pole-formularza__input"
+                 value="{{ form.field_of_study.data or '' }}" placeholder="np. Informatyka">
         </div>
         <div class="pole-formularza">
-          <label for="specjalnosc" class="pole-formularza__etykieta">Specjalność</label>
-          <input type="text" id="specjalnosc" name="specjalnosc" class="pole-formularza__input"
-                 value="{{ form.specjalnosc.data or '' }}" placeholder="np. PBDiOU">
+          <label for="specialization" class="pole-formularza__etykieta">Specjalność</label>
+          <input type="text" id="specialization" name="specialization" class="pole-formularza__input"
+                 value="{{ form.specialization.data or '' }}" placeholder="np. PBDiOU">
         </div>
         <div class="pole-formularza">
-          <label for="tryb_studiow" class="pole-formularza__etykieta">Tryb studiów</label>
-          <select id="tryb_studiow" name="tryb_studiow" class="filtr-select" style="width:100%;">
+          <label for="study_mode" class="pole-formularza__etykieta">Tryb studiów</label>
+          <select id="study_mode" name="study_mode" class="filtr-select" style="width:100%;">
             <option value="">--- Wybierz ---</option>
-            <option value="stacjonarne" {% if form.tryb_studiow.data == 'stacjonarne' %}selected{% endif %}>Stacjonarne</option>
-            <option value="niestacjonarne" {% if form.tryb_studiow.data == 'niestacjonarne' %}selected{% endif %}>Niestacjonarne</option>
+            <option value="stacjonarne" {% if form.study_mode.data == 'stacjonarne' %}selected{% endif %}>Stacjonarne</option>
+            <option value="niestacjonarne" {% if form.study_mode.data == 'niestacjonarne' %}selected{% endif %}>Niestacjonarne</option>
           </select>
         </div>
       </div>

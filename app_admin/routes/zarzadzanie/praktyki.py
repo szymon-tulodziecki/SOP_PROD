@@ -47,20 +47,20 @@ def lista_praktyk():
 @zarzadzanie_bp.route('/praktyki/nowa', methods=['GET', 'POST'])
 @wymaga_roli(UserRole.ADMIN)
 def nowa_praktyka():
-    form = FormularzPraktyki()
+    form = InternshipForm()
     if form.validate_on_submit():
-        rok = (form.rok_uczelniany.data or '').strip()
+        academic_year = (form.academic_year.data or '').strip()
         try:
-            wymiar = int(form.wymiar_godzin.data)
+            required_hours = int(form.required_hours.data)
         except Exception:
             flash('Wymiar godzin musi być liczbą całkowitą.', 'danger')
             return render_template('zarzadzanie/formularz_praktyki.html', form=form)
         p = Internship(
             id             = uuid.uuid4(),
-            academic_year  = rok,
-            semester       = form.semestr.data,
-            required_hours = wymiar,
-            status         = InternshipStatus.INACTIVE,  # noqa: forms use Polish field names deliberately
+            academic_year  = academic_year,
+            semester       = form.semester.data,
+            required_hours = required_hours,
+            status         = InternshipStatus.INACTIVE,
         )
         db.session.add(p)
         db.session.commit()
@@ -147,24 +147,24 @@ def szczegoly_zgloszenia(id):
     from flask_wtf import FlaskForm
     from wtforms import TextAreaField, SubmitField
 
-    class FormularzKomentarza(FlaskForm):
-        komentarz = TextAreaField('Komentarz do studenta')
-        zatwierdz = SubmitField('Zatwierdź zgłoszenie')
-        odrzuc    = SubmitField('Wymagane poprawki')
+    class CommentForm(FlaskForm):
+        comment    = TextAreaField('Komentarz do studenta')
+        zatwierdz  = SubmitField('Zatwierdź zgłoszenie')
+        odrzuc     = SubmitField('Wymagane poprawki')
 
-    form = FormularzKomentarza()
+    form = CommentForm()
 
     if form.validate_on_submit():
         from core.uslugi.workflow import ZapisFSM, IllegalTransitionError
 
         try:
             with ZapisFSM.lock(id) as fsm:
-                komentarz = form.komentarz.data or ''
+                comment = form.comment.data or ''
                 if form.zatwierdz.data:
-                    fsm.zatwierdz_przez_uopz(actor_id=current_user.id, comment=komentarz)
+                    fsm.zatwierdz_przez_uopz(actor_id=current_user.id, comment=comment)
                     flash('Zgłoszenie zostało zatwierdzone!', 'success')
                 elif form.odrzuc.data:
-                    fsm.zadaj_poprawki(actor_id=current_user.id, comment=komentarz)
+                    fsm.zadaj_poprawki(actor_id=current_user.id, comment=comment)
                     flash('Wysłano prośbę o poprawki do studenta.', 'info')
                 db.session.commit()
         except IllegalTransitionError as e:

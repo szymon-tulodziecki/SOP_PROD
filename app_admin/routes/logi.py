@@ -8,7 +8,7 @@ from sqlalchemy import desc
 
 logi_bp = Blueprint('logi', __name__)
 
-_ETYKIETY = {
+_LABELS = {
     'ADMIN_KOMENTARZ':        'Komentarz admina',
     'UOPZ_KOMENTARZ':         'Komentarz UOPZ',
     'POWIADOMIENIE_STUDENTA':  'Powiadomienie studenta',
@@ -20,37 +20,37 @@ _ETYKIETY = {
 @login_required
 @wymaga_roli(UserRole.ADMIN)
 def lista_logow():
-    strona   = request.args.get('strona', 1, type=int)
-    typ      = request.args.get('typ', '')
-    szukaj   = request.args.get('szukaj', '').strip()
+    page              = request.args.get('strona', 1, type=int)
+    event_type_filter = request.args.get('typ', '')
+    search_query      = request.args.get('szukaj', '').strip()
 
     q = ProcessEvent.query.order_by(desc(ProcessEvent.executed_at))
 
-    if typ:
+    if event_type_filter:
         try:
-            q = q.filter(ProcessEvent.event_type == EventType(typ))
+            q = q.filter(ProcessEvent.event_type == EventType(event_type_filter))
         except ValueError:
             pass
 
-    if szukaj:
+    if search_query:
         from core.modele.praktyki import InternshipEnrollment
         from core.modele.uzytkownicy import User as UserModel
         q = q.join(ProcessEvent.enrollment).join(
             UserModel, InternshipEnrollment.student_id == UserModel.id
         ).filter(
             db.or_(
-                UserModel.first_name.ilike(f'%{szukaj}%'),
-                UserModel.last_name.ilike(f'%{szukaj}%'),
+                UserModel.first_name.ilike(f'%{search_query}%'),
+                UserModel.last_name.ilike(f'%{search_query}%'),
             )
         )
 
-    zdarzenia = q.paginate(page=strona, per_page=30, error_out=False)
+    events = q.paginate(page=page, per_page=30, error_out=False)
 
     return render_template(
         'logi/index.html',
-        zdarzenia=zdarzenia,
-        etykiety=_ETYKIETY,
-        typy_zdarzen=[e.value for e in EventType],
-        aktywny_typ=typ,
-        szukaj=szukaj,
+        events=events,
+        labels=_LABELS,
+        event_types=[e.value for e in EventType],
+        active_type=event_type_filter,
+        search_query=search_query,
     )

@@ -13,9 +13,9 @@ from core.extensions import db
 from core.autoryzacja import wymaga_roli
 from core.repozytoria import RepozytoriumZapisow, RepozytoriumEfektow, RepozytoriumOcen
 
-_repo_zapisow = RepozytoriumZapisow()
-_repo_efektow = RepozytoriumEfektow()
-_repo_ocen    = RepozytoriumOcen()
+_repo_enrollments = RepozytoriumZapisow()
+_repo_outcomes    = RepozytoriumEfektow()
+_repo_assessments = RepozytoriumOcen()
 
 evaluation_bp = Blueprint('evaluation', __name__)
 
@@ -46,35 +46,35 @@ def lista_ocen():
     from core.modele.praktyki import InternshipPath
     _PATH_B_VALS = ('EMPLOYMENT', 'OWN_BUSINESS')
 
-    def _is_path_b(zapis):
-        pt = zapis.path_type
+    def _is_path_b(enrollment):
+        pt  = enrollment.path_type
         val = pt.value if hasattr(pt, 'value') else str(pt)
         return val in _PATH_B_VALS
 
-    zapisy  = _repo_zapisow.aktywne_i_zakonczone(supervisor_id=uopz_id)
+    enrollments = _repo_enrollments.aktywne_i_zakonczone(supervisor_id=uopz_id)
 
     from datetime import date, timedelta
 
-    zapisy_z_deadlinami = []
-    for zapis in zapisy:
-        deadline = None
-        dni_do_deadline = None
-        przekroczony = False
-        is_path_b = _is_path_b(zapis)
+    enrollments_with_deadlines = []
+    for enrollment in enrollments:
+        deadline      = None
+        days_to_deadline = None
+        overdue       = False
+        is_path_b     = _is_path_b(enrollment)
 
-        if zapis.end_date and zapis.status == EnrollmentStatus.COMPLETED:
-            deadline = zapis.end_date + timedelta(days=7)
-            dni_do_deadline = (deadline - date.today()).days
-            przekroczony = dni_do_deadline < 0
+        if enrollment.end_date and enrollment.status == EnrollmentStatus.COMPLETED:
+            deadline         = enrollment.end_date + timedelta(days=7)
+            days_to_deadline = (deadline - date.today()).days
+            overdue          = days_to_deadline < 0
 
-        zapisy_z_deadlinami.append({
-            'zapis': zapis,
-            'deadline': deadline,
-            'dni_do_deadline': dni_do_deadline,
-            'przekroczony': przekroczony,
-            'w_trakcie': zapis.status == EnrollmentStatus.IN_PROGRESS,
-            'zakonczona': zapis.status == EnrollmentStatus.COMPLETED,
-            'is_path_b': is_path_b,
+        enrollments_with_deadlines.append({
+            'zapis':          enrollment,
+            'deadline':       deadline,
+            'dni_do_deadline': days_to_deadline,
+            'przekroczony':   overdue,
+            'w_trakcie':      enrollment.status == EnrollmentStatus.IN_PROGRESS,
+            'zakonczona':     enrollment.status == EnrollmentStatus.COMPLETED,
+            'is_path_b':      is_path_b,
         })
 
     def _ma_oceny(p):
@@ -87,37 +87,37 @@ def lista_ocen():
                 and fg.report_grade is not None and fg.workplace_grade is not None)
 
     # path B IN_PROGRESS also appear — UOPZ grades them immediately after Director approves
-    zakonczone = [z for z in zapisy_z_deadlinami
-                  if z['zakonczona'] or (z['w_trakcie'] and z['is_path_b'])]
+    completed_list = [z for z in enrollments_with_deadlines
+                      if z['zakonczona'] or (z['w_trakcie'] and z['is_path_b'])]
 
-    for z in zakonczone:
+    for z in completed_list:
         z['oceniony'] = _ma_oceny(z['zapis'])
 
     # nieocenieni pierwsi, potem ocenieni
-    zakonczone.sort(key=lambda z: z['oceniony'])
+    completed_list.sort(key=lambda z: z['oceniony'])
 
-    filtr = request.args.get('filtr')
-    if filtr == 'nieocenione':
-        widoczne = [z for z in zakonczone if not z['oceniony']]
-    elif filtr == 'ocenione':
-        widoczne = [z for z in zakonczone if z['oceniony']]
+    filter_val = request.args.get('filtr')
+    if filter_val == 'nieocenione':
+        visible = [z for z in completed_list if not z['oceniony']]
+    elif filter_val == 'ocenione':
+        visible = [z for z in completed_list if z['oceniony']]
     else:
-        widoczne = zakonczone
+        visible = completed_list
 
     return render_template('evaluation/lista_ocen.html',
-                           widoczne=widoczne,
-                           zakonczone=zakonczone,
-                           filtr=filtr)
+                           widoczne=visible,
+                           zakonczone=completed_list,
+                           filtr=filter_val)
 
 @evaluation_bp.route('/zapis/<uuid:id>/karta_ocen', methods=['GET', 'POST'])
 @wymaga_roli(UserRole.ADMIN, UserRole.UOPZ)
 def ocen_praktyke(id):
-    zapis = db.session.get(InternshipEnrollment, id) or abort(404)
+    enrollment = db.session.get(InternshipEnrollment, id) or abort(404)
 
     if request.method == 'POST':
         from core.uslugi.ocenianie import GradeFormData
 
-        dane = GradeFormData(
+        grade_data = GradeFormData(
             report_grade                 = _parse_grade(request.form.get('ocena_sprawozdania', '')),
             supervisor_grade             = _parse_grade(request.form.get('ocena_uopz', '')),
             workplace_grade              = _parse_grade(request.form.get('ocena_zopz', '')),
@@ -135,85 +135,85 @@ def ocen_praktyke(id):
             finalize                     = bool(request.form.get('zakoncz')),
         )
 
-        wynik = SerwisOceniania.zapisz_oceny(zapis, dane)
+        result = SerwisOceniania.zapisz_oceny(enrollment, grade_data)
 
-        if not wynik.success:
-            flash(wynik.error_message, 'danger')
-            return redirect(url_for('evaluation.ocen_praktyke', id=zapis.id))
+        if not result.success:
+            flash(result.error_message, 'danger')
+            return redirect(url_for('evaluation.ocen_praktyke', id=enrollment.id))
 
         db.session.commit()
-        if dane.finalize:
+        if grade_data.finalize:
             flash('Oceny zostały zatwierdzone.', 'success')
             return redirect(url_for('evaluation.lista_ocen'))
         flash('Oceny zostały zapisane.', 'success')
-        return redirect(url_for('evaluation.ocen_praktyke', id=zapis.id))
+        return redirect(url_for('evaluation.ocen_praktyke', id=enrollment.id))
 
     from flask_wtf import FlaskForm
     from core.modele.uzytkownicy import UniversityMentor, Administrator
-    pracownicy = db.session.execute(
+    staff = db.session.execute(
         db.select(UniversityMentor).filter_by(is_active=True).order_by(
             UniversityMentor.last_name, UniversityMentor.first_name)
     ).scalars().all()
     csrf_form = FlaskForm()
     return render_template('evaluation/karta_ocen.html',
-                           zapis=zapis, practically=zapis,
-                           pracownicy=pracownicy,
+                           zapis=enrollment, practically=enrollment,
+                           pracownicy=staff,
                            csrf_form=csrf_form)
 
 @evaluation_bp.route('/zapis/<uuid:id>/sprawozdanie', methods=['GET'])
 @wymaga_roli(UserRole.ADMIN, UserRole.UOPZ)
 def podglad_sprawozdania(id):
-    zapis = db.session.get(InternshipEnrollment, id) or abort(404)
-    return render_template('evaluation/podglad_sprawozdania.html', zapis=zapis)
+    enrollment = db.session.get(InternshipEnrollment, id) or abort(404)
+    return render_template('evaluation/podglad_sprawozdania.html', zapis=enrollment)
 
 @evaluation_bp.route('/zapis/<uuid:id>', methods=['GET', 'POST'])
 @wymaga_roli(UserRole.ADMIN, UserRole.UOPZ)
 def ocen_zapis(id):
-    zapis  = db.session.get(InternshipEnrollment, id) or abort(404)
-    efekty = _repo_efektow.wszystkie()
+    enrollment          = db.session.get(InternshipEnrollment, id) or abort(404)
+    outcomes            = _repo_outcomes.wszystkie()
 
-    istniejace = {
+    existing_assessments = {
         str(o.learning_outcome_id): o
-        for o in _repo_ocen.dla_zapisu(id)
+        for o in _repo_assessments.dla_zapisu(id)
     }
 
     if request.method == 'POST':
-        for efekt in efekty:
-            wynik_str = request.form.get(f'wynik_{efekt.id}')
-            uwagi     = request.form.get(f'uwagi_{efekt.id}', '').strip()
-            if not wynik_str:
+        for outcome in outcomes:
+            result_str = request.form.get(f'wynik_{outcome.id}')
+            notes      = request.form.get(f'uwagi_{outcome.id}', '').strip()
+            if not result_str:
                 continue
             try:
-                wynik = AssessmentResult[wynik_str]
+                result = AssessmentResult[result_str]
             except KeyError:
                 continue
-            ocena = istniejace.get(str(efekt.id))
-            if ocena:
-                ocena.result = wynik
-                ocena.notes  = uwagi or None
+            assessment = existing_assessments.get(str(outcome.id))
+            if assessment:
+                assessment.result = result
+                assessment.notes  = notes or None
             else:
                 db.session.add(OutcomeAssessment(
                     id                  = uuid.uuid4(),
-                    enrollment_id       = zapis.id,
-                    learning_outcome_id = efekt.id,
-                    result              = wynik,
-                    notes               = uwagi or None,
+                    enrollment_id       = enrollment.id,
+                    learning_outcome_id = outcome.id,
+                    result              = result,
+                    notes               = notes or None,
                 ))
         db.session.commit()
         flash('Oceny zostały zapisane.', 'success')
         return redirect(url_for('evaluation.ocen_zapis', id=id))
 
     return render_template('evaluation/formularz_ocen.html',
-                           zapis=zapis, efekty=efekty, istniejace=istniejace)
+                           zapis=enrollment, efekty=outcomes, istniejace=existing_assessments)
 
 @evaluation_bp.route('/zapis/<uuid:id>/zakoncz', methods=['POST'])
 @wymaga_roli(UserRole.ADMIN, UserRole.UOPZ)
 def zakoncz_zapis(id):
-    zapis = db.session.get(InternshipEnrollment, id) or abort(404)
+    enrollment = db.session.get(InternshipEnrollment, id) or abort(404)
     from core.uslugi.workflow import ZapisFSM
-    ZapisFSM(zapis).zakoncz()
+    ZapisFSM(enrollment).zakoncz()
     db.session.commit()
-    flash(f'Praktyka studenta {zapis.student.first_name} {zapis.student.last_name} została zakończona.', 'success')
+    flash(f'Praktyka studenta {enrollment.student.first_name} {enrollment.student.last_name} została zakończona.', 'success')
     return redirect(url_for('evaluation.lista_ocen'))
 
 @evaluation_bp.route('/zapis/<uuid:id>/protokol', methods=['GET'])
@@ -224,65 +224,64 @@ def generuj_protokol(id):
     from flask import make_response, current_app
     from datetime import date
 
-    zapis = db.session.get(InternshipEnrollment, id) or abort(404)
-    ok = zapis.final_grades
-    sp = zapis.examination
-    if not (ok and ok.supervisor_grade):
+    enrollment    = db.session.get(InternshipEnrollment, id) or abort(404)
+    final_grades  = enrollment.final_grades
+    examination   = enrollment.examination
+    if not (final_grades and final_grades.supervisor_grade):
         flash('Protokół dostępny dopiero po wystawieniu oceny UOPZ.', 'warning')
         return redirect(url_for('evaluation.ocen_praktyke', id=id))
 
-    s = zapis.student
-    tex_url = current_app.config.get('TEX_SERVICE_URL', 'http://tex-service:5002')
-    dm = zapis.workplace_details
-    firma_nazwa = (zapis.firma.name if zapis.firma else (dm.company_name if dm else None)) or ''
+    student         = enrollment.student
+    tex_url         = current_app.config.get('TEX_SERVICE_URL', 'http://tex-service:5002')
+    workplace_details = enrollment.workplace_details
+    company_name    = (enrollment.firma.name if enrollment.firma else (workplace_details.company_name if workplace_details else None)) or ''
 
     def _f(v):
         return float(v) if v is not None else None
 
-    ctx = {
+    context = {
         'zapis': {
-            'firma_nazwa':          firma_nazwa,
-            'termin_od':            zapis.start_date.strftime('%d.%m.%Y') if zapis.start_date else '',
-            'termin_do':            zapis.end_date.strftime('%d.%m.%Y') if zapis.end_date else '',
-            'ocena_sprawozdania':   _f(ok.report_grade if ok else None),
-            'ocena_uopz':           _f(ok.supervisor_grade if ok else None),
-            'ocena_zopz':           _f(ok.workplace_grade if ok else None),
-            'sprawdzian_pytanie_1': sp.question_1 if sp else None,
-            'sprawdzian_ocena_1':   _f(sp.grade_1 if sp else None),
-            'sprawdzian_pytanie_2': sp.question_2 if sp else None,
-            'sprawdzian_ocena_2':   _f(sp.grade_2 if sp else None),
-            'sprawdzian_pytanie_3': sp.question_3 if sp else None,
-            'sprawdzian_ocena_3':   _f(sp.grade_3 if sp else None),
-            'uopz': {'first_name': zapis.uopz.first_name, 'last_name': zapis.uopz.last_name} if zapis.uopz else None,
-            'komisja_przewodniczacy': sp.commission_chair    if sp else None,
-            'komisja_czlonek_2':      sp.commission_member_2 if sp else None,
-            'komisja_czlonek_3':      sp.commission_member_3 if sp else None,
+            'firma_nazwa':          company_name,
+            'termin_od':            enrollment.start_date.strftime('%d.%m.%Y') if enrollment.start_date else '',
+            'termin_do':            enrollment.end_date.strftime('%d.%m.%Y') if enrollment.end_date else '',
+            'ocena_sprawozdania':   _f(final_grades.report_grade if final_grades else None),
+            'ocena_uopz':           _f(final_grades.supervisor_grade if final_grades else None),
+            'ocena_zopz':           _f(final_grades.workplace_grade if final_grades else None),
+            'sprawdzian_pytanie_1': examination.question_1 if examination else None,
+            'sprawdzian_ocena_1':   _f(examination.grade_1 if examination else None),
+            'sprawdzian_pytanie_2': examination.question_2 if examination else None,
+            'sprawdzian_ocena_2':   _f(examination.grade_2 if examination else None),
+            'sprawdzian_pytanie_3': examination.question_3 if examination else None,
+            'sprawdzian_ocena_3':   _f(examination.grade_3 if examination else None),
+            'uopz': {'first_name': enrollment.uopz.first_name, 'last_name': enrollment.uopz.last_name} if enrollment.uopz else None,
+            'komisja_przewodniczacy': examination.commission_chair    if examination else None,
+            'komisja_czlonek_2':      examination.commission_member_2 if examination else None,
+            'komisja_czlonek_3':      examination.commission_member_3 if examination else None,
         },
         'student': {
-            'imie': s.first_name, 'nazwisko': s.last_name,
-            'first_name': s.first_name, 'last_name': s.last_name,
-            'nr_albumu': s.album_number or '', 'album_number': s.album_number or '',
-            'kierunek': getattr(s, 'field_of_study', 'Informatyka') or 'Informatyka',
+            'imie': student.first_name, 'nazwisko': student.last_name,
+            'first_name': student.first_name, 'last_name': student.last_name,
+            'nr_albumu': student.album_number or '', 'album_number': student.album_number or '',
+            'kierunek': getattr(student, 'field_of_study', 'Informatyka') or 'Informatyka',
         },
-        'specjalnosc': getattr(s, 'specialization', '') or getattr(zapis, 'specialization', '') or '',
+        'specjalnosc': getattr(student, 'specialization', '') or getattr(enrollment, 'specialization', '') or '',
         'praktyka': {
-            'rok_uczelniany': zapis.internship.academic_year if zapis.internship else '',
-            'semestr':        zapis.internship.semester      if zapis.internship else '',
-            'wymiar_godzin':  zapis.internship.required_hours if zapis.internship else 960,
+            'rok_uczelniany': enrollment.internship.academic_year if enrollment.internship else '',
+            'semestr':        enrollment.internship.semester      if enrollment.internship else '',
+            'wymiar_godzin':  enrollment.internship.required_hours if enrollment.internship else 960,
         },
         'data_egzaminu': date.today().strftime('%d.%m.%Y'),
     }
     try:
         r = httpx.post(f'{tex_url}/generuj',
-                       json={'template': 'zal8_protokol.tex.j2', 'context': ctx, 'filename': 'zal8_protokol.pdf'},
+                       json={'template': 'zal8_protokol.tex.j2', 'context': context, 'filename': 'zal8_protokol.pdf'},
                        timeout=60)
         if r.status_code == 200:
-            import unicodedata
             from urllib.parse import quote
-            full_name = f"zal8_protokol_{s.last_name}.pdf"
-            ascii_fb = (unicodedata.normalize('NFKD', full_name)
+            full_name = f"zal8_protokol_{student.last_name}.pdf"
+            ascii_fb  = (unicodedata.normalize('NFKD', full_name)
                         .encode('ascii', 'ignore').decode('ascii').strip() or 'zal8_protokol.pdf')
-            utf8_enc = quote(full_name, safe='')
+            utf8_enc  = quote(full_name, safe='')
             resp = make_response(r.content)
             resp.headers['Content-Type'] = 'application/pdf'
             resp.headers['Content-Disposition'] = (

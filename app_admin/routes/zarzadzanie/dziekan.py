@@ -31,10 +31,10 @@ from .formularze import *
 @zarzadzanie_bp.route('/dziekan')
 @wymaga_roli(UserRole.ADMIN, UserRole.DYREKTOR)
 def dziekan_lista():
-    strona    = request.args.get('page', 1, type=int)
-    wnioski   = _repo_zapisow.wnioski_dziekana_strona(strona=strona)
-    csrf_form = FlaskForm()
-    return render_template('zarzadzanie/dziekan/lista.html', wnioski=wnioski, csrf_form=csrf_form)
+    page         = request.args.get('page', 1, type=int)
+    applications = _repo_zapisow.wnioski_dziekana_strona(strona=page)
+    csrf_form    = FlaskForm()
+    return render_template('zarzadzanie/dziekan/lista.html', wnioski=applications, csrf_form=csrf_form)
 
 
 @zarzadzanie_bp.route('/dziekan/<uuid:id>/decyzja', methods=['GET', 'POST'])
@@ -44,20 +44,20 @@ def dziekan_decyzja(id):
     from wtforms import TextAreaField, SelectField, SubmitField
     from wtforms.validators import DataRequired, Optional
 
-    zapis = db.session.get(InternshipEnrollment, id) or abort(404)
+    enrollment = db.session.get(InternshipEnrollment, id) or abort(404)
 
-    if zapis.status != EnrollmentStatus.DIRECTOR_APPROVAL:
+    if enrollment.status != EnrollmentStatus.DIRECTOR_APPROVAL:
         flash('Wniosek nie wymaga decyzji Dyrektora Instytutu.', 'warning')
         return redirect(url_for('zarzadzanie.dziekan_lista'))
 
-    class FormularzDyrektora(FlaskForm):
-        komentarz = TextAreaField('Komentarz dyrektora', validators=[Optional()])
+    class DirectorForm(FlaskForm):
+        comment = TextAreaField('Komentarz dyrektora', validators=[Optional()])
 
-    form = FormularzDyrektora()
+    form = DirectorForm()
 
     if form.validate_on_submit():
-        decyzja = request.form.get('decyzja')
-        if decyzja not in ('APPROVED', 'REJECTED'):
+        decision = request.form.get('decyzja')
+        if decision not in ('APPROVED', 'REJECTED'):
             flash('Wybierz decyzję (jeden z dwóch przycisków).', 'warning')
         else:
             from core.uslugi.workflow import ZapisFSM, IllegalTransitionError
@@ -67,14 +67,14 @@ def dziekan_decyzja(id):
                         flash('Wniosek zmienił status podczas przetwarzania — spróbuj ponownie.', 'warning')
                         return redirect(url_for('zarzadzanie.dziekan_lista'))
 
-                    komentarz = form.komentarz.data or ''
-                    if decyzja == 'APPROVED':
-                        fsm.zatwierdz_przez_dyrektora(actor_id=current_user.id, comment=komentarz)
+                    comment = form.comment.data or ''
+                    if decision == 'APPROVED':
+                        fsm.zatwierdz_przez_dyrektora(actor_id=current_user.id, comment=comment)
                         flash('Wniosek zatwierdzony przez Dyrektora Instytutu. Student może kontynuować praktykę.', 'success')
                     else:
                         from core.modele.praktyki import EventType
                         fsm.odrzuc(actor_id=current_user.id,
-                                   comment=f"Dyrektor nie wyraził zgody: {komentarz}",
+                                   comment=f"Dyrektor nie wyraził zgody: {comment}",
                                    event_type=EventType.DIRECTOR_DECISION)
                         flash('Wniosek odrzucony przez Dyrektora Instytutu.', 'warning')
 
@@ -83,17 +83,17 @@ def dziekan_decyzja(id):
                 flash(str(e), 'danger')
             return redirect(url_for('zarzadzanie.dziekan_lista'))
 
-    dokumenty = (
+    documents = (
         db.session.query(UploadedDocument)
         .filter_by(enrollment_id=id, is_deleted=False)
         .order_by(UploadedDocument.uploaded_at.desc())
         .all()
     )
-    efekty = LearningOutcome.query.order_by(LearningOutcome.id).all()
-    oceny_komisji = {
+    outcomes            = LearningOutcome.query.order_by(LearningOutcome.id).all()
+    committee_evaluations = {
         e.learning_outcome_id: e
         for e in CommitteeOutcomeEvaluation.query.filter_by(enrollment_id=id).all()
     }
     return render_template('zarzadzanie/dziekan/decyzja.html',
-                           form=form, zapis=zapis, dokumenty=dokumenty,
-                           efekty=efekty, oceny_komisji=oceny_komisji)
+                           form=form, zapis=enrollment, dokumenty=documents,
+                           efekty=outcomes, oceny_komisji=committee_evaluations)

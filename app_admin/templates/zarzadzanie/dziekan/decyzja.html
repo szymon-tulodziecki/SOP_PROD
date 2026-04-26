@@ -246,11 +246,11 @@
             {{ form.hidden_tag() }}
 
             <div style="margin-bottom: 1.25rem;">
-              {{ form.komentarz.label(class="pole-formularza__etykieta", style="display: block; margin-bottom: 0.4rem;") }}
-              {{ form.komentarz(class="pole-formularza__textarea", rows="6",
+              {{ form.comment.label(class="pole-formularza__etykieta", style="display: block; margin-bottom: 0.4rem;") }}
+              {{ form.comment(class="pole-formularza__textarea", rows="6",
                  placeholder="Uzasadnienie decyzji widoczne dla studenta i w dokumentacji (opcjonalne)…",
                  style="width: 100%; box-sizing: border-box; resize: vertical;") }}
-              {% for error in form.komentarz.errors %}
+              {% for error in form.comment.errors %}
                 <span class="pole-formularza__blad">{{ error }}</span>
               {% endfor %}
             </div>
