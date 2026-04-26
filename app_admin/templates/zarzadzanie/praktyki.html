@@ -1,10 +1,10 @@
-{% extends "layouts/base_panel.html" %}
+﻿{% extends "layouts/base_panel.html" %}
 {% block tytul %}Lista praktyk{% endblock %}
 {% block naglowek %}Praktyki{% endblock %}
 
 {% block naglowek_akcje %}
 <div style="display: flex; gap: 0.5rem;">
-  {% if current_user.rola and current_user.rola.value == 'ADMIN' %}
+  {% if current_user.role and current_user.role.value == 'ADMIN' %}
   <a href="{{ url_for('zarzadzanie.nowa_praktyka') }}" class="przycisk przycisk--glowny">
     <span aria-hidden="true">+</span> Nowa praktyka
   </a>
@@ -42,7 +42,7 @@
             {% endif %}
           </td>
           <td style="white-space: nowrap;">
-            {% if current_user.rola and current_user.rola.value == 'ADMIN' %}
+            {% if current_user.role and current_user.role.value == 'ADMIN' %}
             <div style="display: flex; gap: 0.375rem;">
               <form method="POST"
                     action="{{ url_for('zarzadzanie.przelacz_aktywnosc_praktyki', id=p.id) }}"

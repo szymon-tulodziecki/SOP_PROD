@@ -1,4 +1,4 @@
-{% extends "layouts/base_panel.html" %}
+﻿{% extends "layouts/base_panel.html" %}
 
 {% block tytul %}Weryfikacja wniosku — {{ zapis.student.first_name }} {{ zapis.student.last_name }}{% endblock %}
 {% block naglowek %}Weryfikacja wniosku komisji{% endblock %}
@@ -112,7 +112,7 @@
             </div>
             <div class="pole-info">
               <div class="pole-info__etykieta">Specjalność</div>
-              <div class="pole-info__wartosc">{{ zapis.specjalnosc or '—' }}</div>
+              <div class="pole-info__wartosc">{{ zapis.specialization or '—' }}</div>
             </div>
           </div>
         </div>

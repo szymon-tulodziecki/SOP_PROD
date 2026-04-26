@@ -1,4 +1,4 @@
-"""
+﻿"""
 app_student/routes/dokumenty.py
 """
 
@@ -11,14 +11,14 @@ from flask import (Blueprint, abort, send_file, jsonify, request,
                    render_template)
 from flask_login import login_required, current_user
 
-from core.extensions import db, limiter
-from core.modele import InternshipEnrollment, EnrollmentStatus
+from core.extensions import limiter
+from core.modele import EnrollmentStatus
 from core.uslugi.dokumenty import (
     DOC_CONFIG, STATIC_TEMPLATES, rozwiaz_dokumenty, buduj_kontekst,
 )
-from core.repozytoria import RepozytoriumZapisow
+from core.repozytoria import EnrollmentRepository
 
-_repo_zapisow = RepozytoriumZapisow()
+_repo_zapisow = EnrollmentRepository()
 
 logger = logging.getLogger(__name__)
 documents_bp = Blueprint('documents', __name__)
@@ -83,7 +83,7 @@ def pobierz_dynamiczny(zapis_id, typ):
     if typ not in DOC_CONFIG:
         abort(404)
 
-    zapis = db.session.get(InternshipEnrollment, zapis_id)
+    zapis = _repo_zapisow.znajdz_po_id(zapis_id)
     if not zapis or zapis.student_id != current_user.id:
         abort(404)
 

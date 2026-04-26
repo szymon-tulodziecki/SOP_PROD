@@ -1,4 +1,4 @@
-"""celery_app.py
+﻿"""celery_app.py
 Konfiguracja Celery i taski generowania PDF.
 
 WZORZEC: minimalna aplikacja Flask dla workera z QueuePool + dispose po fork().
@@ -146,11 +146,10 @@ def generate_pdf_dziennik(self, enrollment_id: str) -> dict:
     from pathlib import Path
     import httpx
 
-    from core.extensions import db
-    from core.modele import InternshipEnrollment
     from core.uslugi.dokumenty import buduj_kontekst
+    from core.repozytoria import EnrollmentRepository
 
-    enrollment = db.session.get(InternshipEnrollment, uuid.UUID(enrollment_id))
+    enrollment = EnrollmentRepository().znajdz_po_id(uuid.UUID(enrollment_id))
     if not enrollment:
         raise EnrollmentNotFound(f'Enrollment {enrollment_id} not found')
 

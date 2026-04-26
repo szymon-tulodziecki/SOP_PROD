@@ -1,7 +1,7 @@
-{% extends "layouts/base_panel.html" %}
+﻿{% extends "layouts/base_panel.html" %}
 
 {% block tytul %}Karta Ocen Praktyki{% endblock %}
-{% block naglowek %}Ocena praktyki — {{ zapis.student.imie }} {{ zapis.student.nazwisko }}{% endblock %}
+{% block naglowek %}Ocena praktyki — {{ zapis.student.first_name }} {{ zapis.student.last_name }}{% endblock %}
 
 {% block naglowek_akcje %}
 <a href="{{ url_for('evaluation.lista_ocen') }}" class="przycisk przycisk--drugorzedny">Powrót do listy</a>
@@ -16,7 +16,7 @@
   <div class="karta" style="margin-bottom: 2rem; border-left: 4px solid {% if is_path_b %}#d97706{% else %}var(--kolor-akcent){% endif %};">
     <div class="karta__tresc" style="display: flex; justify-content: space-between; align-items: center;">
       <div>
-        <h2 style="font-size: 1.1rem; margin-bottom: 0.25rem;">{{ zapis.student.imie }} {{ zapis.student.nazwisko }}</h2>
+        <h2 style="font-size: 1.1rem; margin-bottom: 0.25rem;">{{ zapis.student.first_name }} {{ zapis.student.last_name }}</h2>
         <p style="color: var(--kolor-tekst-drugor); font-size: 0.9rem;">
           {% if is_path_b %}
           {{ path_label }} — Uznanie efektów · {{ zapis.firma_nazwa or 'Brak nazwy firmy' }}

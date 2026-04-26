@@ -1,4 +1,4 @@
-from flask import Flask
+﻿from flask import Flask
 from jinja2 import select_autoescape
 from core.extensions import db, login_manager, csrf, limiter
 from core.error_handlers import register_error_handlers
@@ -64,12 +64,12 @@ def create_app():
     def inject_aktywny_zapis():
         from flask_login import current_user
         from core.modele import EnrollmentStatus
-        from core.repozytoria import RepozytoriumZapisow
+        from core.repozytoria import EnrollmentRepository
         info = {'ma_aktywny': False, 'sciezka': None, 'status': None}
         wymaga_uwagi = False
         try:
             if current_user.is_authenticated:
-                _repo = RepozytoriumZapisow()
+                _repo = EnrollmentRepository()
                 z = _repo.aktywny_dla_studenta(current_user.id, [
                     EnrollmentStatus.IN_PROGRESS, EnrollmentStatus.COMPLETED,
                     EnrollmentStatus.COMMISSION_REVIEW, EnrollmentStatus.DIRECTOR_APPROVAL,

@@ -1,4 +1,4 @@
-"""core/repozytoria/praktyki.py
+﻿"""core/repozytoria/praktyki.py
 
 Repozytoria edycji praktyk i zapisów studentów.
 """
@@ -21,7 +21,7 @@ from core.modele.praktyki import (
 )
 
 
-class RepozytoriumPraktyk:
+class InternshipRepository:
     """Dostęp do edycji praktyk (rok akademicki / semestr)."""
 
     def znajdz_po_id(self, praktyka_id: uuid.UUID) -> Optional[Internship]:
@@ -78,7 +78,7 @@ class RepozytoriumPraktyk:
         db.session.delete(praktyka)
 
 
-class RepozytoriumZapisow:
+class EnrollmentRepository:
     """Dostęp do zapisów studentów na edycje praktyk."""
 
     def znajdz_po_id(self, zapis_id: uuid.UUID) -> Optional[InternshipEnrollment]:
@@ -455,6 +455,30 @@ class RepozytoriumZapisow:
         db.session.add(zapis)
         db.session.flush()
         return zapis
+
+    def znajdz_odrzucony(self, student_id, internship_id) -> Optional[InternshipEnrollment]:
+        return (
+            db.session.query(InternshipEnrollment)
+            .filter_by(student_id=student_id, internship_id=internship_id,
+                       status=EnrollmentStatus.REJECTED)
+            .first()
+        )
+
+    def usun_zdarzenia_zapisu(self, enrollment_id) -> None:
+        db.session.query(ProcessEvent).filter_by(enrollment_id=enrollment_id).delete()
+
+    def zapisz_harmonogram(self, wiersze: list) -> None:
+        db.session.add_all(wiersze)
+
+    def ostatnie_zdarzenie(self, enrollment_id, event_type=None,
+                           decision=None) -> Optional[ProcessEvent]:
+        q = (db.session.query(ProcessEvent)
+             .filter_by(enrollment_id=enrollment_id))
+        if event_type is not None:
+            q = q.filter(ProcessEvent.event_type == event_type)
+        if decision is not None:
+            q = q.filter(ProcessEvent.decision == decision)
+        return q.order_by(ProcessEvent.executed_at.desc()).first()
 
     def usun(self, zapis: InternshipEnrollment) -> None:
         db.session.delete(zapis)

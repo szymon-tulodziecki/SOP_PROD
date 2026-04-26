@@ -20,8 +20,8 @@
     {% for p in dostepne %}
     {% set zapis_info = zapisy_data.get(p.id|string) %}
     {% set jest_zwrocone = zapis_info and zapis_info.zwrocone %}
-    {% set jest_odrzucone = zapis_info and zapis_info.status == 'REJECTED' %}
-    <div class="karta" style="{% if jest_zwrocone or jest_odrzucone %}border-left: 4px solid #dc2626;{% endif %}">
+    {% set jest_odrzucone = zapis_info and zapis_info.jest_odrzucone %}
+    <div class="karta" style="{% if zapis_info and zapis_info.border_alert %}border-left: 4px solid #dc2626;{% endif %}">
       <div class="karta__tresc" style="display:flex; flex-direction:column; gap:0.75rem;">
 
         {# Wiersz główny: nazwa + akcje #}
@@ -42,7 +42,7 @@
               <span style="display:inline-flex;align-items:center;gap:0.35rem;background:#fef2f2;color:#dc2626;border:1px solid #fecaca;border-radius:0.375rem;padding:0.25rem 0.6rem;font-size:0.8rem;font-weight:700;">
                 ! Wymaga poprawek
               </span>
-              {% if zapis_info.sciezka == 'STANDARD' %}
+              {% if zapis_info.is_standard %}
                 <a href="{{ url_for('praktyki.kreator_firma', zapis_id=zapis_info.id) }}" class="przycisk przycisk--maly przycisk--glowny">Edytuj zgłoszenie</a>
               {% elif zapis_info.sciezka in ('EMPLOYMENT', 'OWN_BUSINESS') %}
                 <a href="{{ url_for('praktyki.kreator_wniosek', zapis_id=zapis_info.id) }}" class="przycisk przycisk--maly przycisk--glowny">Edytuj zgłoszenie</a>
@@ -52,7 +52,7 @@
               <a href="{{ url_for('praktyki.szczegoly_zgloszenia', id=zapis_info.id) }}" class="przycisk przycisk--maly przycisk--drugorzedny">Szczegóły</a>
             {% elif zapis_info.status == 'PENDING' %}
               <span class="status status--draft">Nieukończone</span>
-              {% if zapis_info.sciezka == 'STANDARD' %}
+              {% if zapis_info.is_standard %}
                 <a href="{{ url_for('praktyki.kreator_firma', zapis_id=zapis_info.id) }}" class="przycisk przycisk--maly przycisk--glowny">Kontynuuj zgłoszenie</a>
               {% elif zapis_info.sciezka in ('EMPLOYMENT', 'OWN_BUSINESS') %}
                 <a href="{{ url_for('praktyki.kreator_wniosek', zapis_id=zapis_info.id) }}" class="przycisk przycisk--maly przycisk--glowny">Kontynuuj zgłoszenie</a>
@@ -65,15 +65,15 @@
               </span>
               <a href="{{ url_for('praktyki.szczegoly_zgloszenia', id=zapis_info.id) }}" class="przycisk przycisk--maly przycisk--drugorzedny">Szczegóły</a>
             {% else %}
-              <span class="status status--{% if zapis_info.status == 'AWAITING_APPROVAL' %}planned{% elif zapis_info.status == 'IN_PROGRESS' %}completed{% elif zapis_info.status == 'COMPLETED' %}completed{% elif zapis_info.status == 'REJECTED' %}draft{% endif %}">
-                {% if zapis_info.status == 'IN_PROGRESS' and zapis_info.sciezka in ('EMPLOYMENT', 'OWN_BUSINESS') %}
+              <span class="status status--{{ zapis_info.status_css_class }}">
+                {% if zapis_info.status == 'IN_PROGRESS' and not zapis_info.is_standard %}
                   W rozpatrzeniu
                 {% else %}
-                  {{ tlumacz_status(zapis_info.status) }}
+                  {{ zapis_info.status_label }}
                 {% endif %}
               </span>
               <a href="{{ url_for('praktyki.szczegoly_zgloszenia', id=zapis_info.id) }}" class="przycisk przycisk--maly przycisk--drugorzedny">Szczegóły</a>
-              {% if zapis_info.status == 'IN_PROGRESS' and zapis_info.sciezka == 'STANDARD' %}
+              {% if zapis_info.status == 'IN_PROGRESS' and zapis_info.is_standard %}
               <form method="POST" action="{{ url_for('praktyki.zakoncz_praktyke', id=zapis_info.id) }}" style="display:inline;">
                 {{ csrf_form.hidden_tag() }}
                 <button type="submit" class="przycisk przycisk--maly przycisk--glowny"

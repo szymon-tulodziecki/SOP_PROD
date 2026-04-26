@@ -432,7 +432,7 @@ def buduj_kontekst(zapis, typ: str) -> dict:
         wszystkie_efekty = db.session.query(LearningOutcome).order_by(LearningOutcome.id).all()
         oceny_map = {
             e.learning_outcome_id: e
-            for e in CommitteeOutcomeEvaluation.query.filter_by(enrollment_id=zapis.id).all()
+            for e in db.session.query(CommitteeOutcomeEvaluation).filter_by(enrollment_id=zapis.id).all()
         }
         gender = _g(s, 'gender', '') or ''
         if gender == 'M':

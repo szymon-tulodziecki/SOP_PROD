@@ -1,4 +1,4 @@
-import uuid
+﻿import uuid
 from flask import (Blueprint, render_template, redirect, url_for, flash, request, abort)
 from flask_login import login_required
 from flask_wtf import FlaskForm
@@ -6,12 +6,12 @@ from flask_wtf import FlaskForm
 from core.modele import Company, EnrollmentStatus, UserRole
 from core.extensions import db
 from core.autoryzacja import wymaga_roli
-from core.repozytoria import RepozytoriumFirm
+from core.repozytoria import CompanyRepository
 
 from . import zarzadzanie_bp
 from .formularze import CompanyForm
 
-_repo_firm = RepozytoriumFirm()
+_repo_firm = CompanyRepository()
 
 _AKTYWNE_STATUSY = [
     EnrollmentStatus.AWAITING_APPROVAL, EnrollmentStatus.IN_PROGRESS,
@@ -53,7 +53,7 @@ def dodaj_firme():
             city    = form.city.data.strip()       if form.city.data       else None,
             tax_id  = form.vat_number.data.strip() if form.vat_number.data else None,
         )
-        db.session.add(firma)
+        _repo_firm.zapisz(firma)
         db.session.commit()
         flash('Firma została dodana do systemu.', 'success')
         return redirect(url_for('zarzadzanie.lista_firm'))

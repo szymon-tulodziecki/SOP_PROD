@@ -1,4 +1,4 @@
-{% extends "layouts/base_panel.html" %}
+﻿{% extends "layouts/base_panel.html" %}
 
 {% block tytul %}Szczegóły praktyki{% endblock %}
 {% block naglowek %}Szczegóły praktyki{% endblock %}
@@ -6,7 +6,7 @@
 {% block naglowek_akcje %}
 <div class="akcje-panelu">
   <a href="{{ url_for('zarzadzanie.lista_praktyk') }}" class="przycisk przycisk--drugorzedny">Powrót do listy</a>
-  {% if current_user.rola.value in ['ADMIN', 'UOPZ'] %}
+  {% if current_user.role.value in ['ADMIN', 'UOPZ'] %}
   <a href="{{ url_for('evaluation.ocen_praktyke', id=praktyka.id) }}" class="przycisk przycisk--glowny">Oceń / Egzaminuj</a>
   <a href="{{ url_for('evaluation.podglad_sprawozdania', id=praktyka.id) }}" class="przycisk przycisk--drugorzedny">Zobacz Sprawozdanie</a>
   <a href="{{ url_for('journal.podglad', id=praktyka.id) }}" class="przycisk przycisk--drugorzedny">Zobacz Dziennik</a>
@@ -30,8 +30,8 @@
         <dl style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
           <div>
             <dt style="font-size: 0.8rem; color: var(--kolor-tekst-drugor); margin-bottom: 0.25rem;">Student</dt>
-            <dd style="font-weight: 600;">{{ praktyka.student.imie }} {{ praktyka.student.nazwisko }}</dd>
-            <dd style="font-size: 0.9rem;">Album: {{ praktyka.student.numer_albumu or '-' }}</dd>
+            <dd style="font-weight: 600;">{{ praktyka.student.first_name }} {{ praktyka.student.last_name }}</dd>
+            <dd style="font-size: 0.9rem;">Album: {{ praktyka.student.album_number or '-' }}</dd>
           </div>
           <div>
             <dt style="font-size: 0.8rem; color: var(--kolor-tekst-drugor); margin-bottom: 0.25rem;">Zakład pracy</dt>
@@ -79,11 +79,11 @@
       <div class="karta__tresc">
         <div style="margin-bottom: 1.5rem;">
           <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--kolor-tekst-drugor); margin-bottom: 0.5rem;">Uczelniany (UOPZ)</div>
-          <div style="font-weight: 600;">{{ praktyka.uopz.imie }} {{ praktyka.uopz.nazwisko }}</div>
+          <div style="font-weight: 600;">{{ praktyka.uopz.first_name }} {{ praktyka.uopz.last_name }}</div>
         </div>
         <div>
           <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--kolor-tekst-drugor); margin-bottom: 0.5rem;">Zakładowy (ZOPZ)</div>
-          <div style="font-weight: 600;">{{ praktyka.zopz.imie }} {{ praktyka.zopz.nazwisko }}</div>
+          <div style="font-weight: 600;">{{ praktyka.zopz.first_name }} {{ praktyka.zopz.last_name }}</div>
         </div>
       </div>
     </section>

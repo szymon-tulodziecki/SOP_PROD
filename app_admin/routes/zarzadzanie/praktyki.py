@@ -1,4 +1,4 @@
-import uuid
+﻿import uuid
 import csv
 import io
 import datetime
@@ -19,15 +19,15 @@ from core.uslugi import UslugaUzytkownikow as _UslugaUzytkownikow
 _serwis_uzytkownikow = _UslugaUzytkownikow()
 from core.autoryzacja import wymaga_roli
 from core.uslugi.workflow import ZapisFSM, IllegalTransitionError
-from core.repozytoria import (RepozytoriumPraktyk, RepozytoriumZapisow,
-                               RepozytoriumUzytkownikow, RepozytoriumEfektow,
-                               RepozytoriumDokumentowStudenta)
+from core.repozytoria import (InternshipRepository, EnrollmentRepository,
+                               UserRepository, OutcomeRepository,
+                               StudentDocumentRepository)
 
-_repo_praktyk = RepozytoriumPraktyk()
-_repo_zapisow = RepozytoriumZapisow()
-_repo_uzytk   = RepozytoriumUzytkownikow()
-_repo_efektow = RepozytoriumEfektow()
-_repo_docs    = RepozytoriumDokumentowStudenta()
+_repo_praktyk = InternshipRepository()
+_repo_zapisow = EnrollmentRepository()
+_repo_uzytk   = UserRepository()
+_repo_efektow = OutcomeRepository()
+_repo_docs    = StudentDocumentRepository()
 
 from . import zarzadzanie_bp
 from .formularze import *
@@ -63,7 +63,7 @@ def nowa_praktyka():
             required_hours = required_hours,
             status         = InternshipStatus.INACTIVE,
         )
-        db.session.add(p)
+        _repo_praktyk.zapisz(p)
         db.session.commit()
         flash('Internship została utworzona.', 'success')
         return redirect(url_for('zarzadzanie.lista_praktyk'))
@@ -73,7 +73,7 @@ def nowa_praktyka():
 @zarzadzanie_bp.route('/praktyki/<uuid:id>/aktywnosc', methods=['POST'])
 @wymaga_roli(UserRole.ADMIN)
 def przelacz_aktywnosc_praktyki(id):
-    p = db.session.get(Internship, id) or abort(404)
+    p = _repo_praktyk.znajdz_po_id(id) or abort(404)
     p.status = InternshipStatus.INACTIVE if p.status == InternshipStatus.ACTIVE else InternshipStatus.ACTIVE
     db.session.commit()
     stan = 'aktywowana' if p.status == InternshipStatus.ACTIVE else 'dezaktywowana'
@@ -106,7 +106,7 @@ def lista_zgloszen():
 @zarzadzanie_bp.route('/zgloszenia/<uuid:id>/przypisz-uopz', methods=['GET', 'POST'])
 @wymaga_roli(UserRole.ADMIN)
 def przypisz_uopz(id):
-    enrollment = db.session.get(InternshipEnrollment, id) or abort(404)
+    enrollment = _repo_zapisow.znajdz_po_id(id) or abort(404)
     form       = FormularzPrzypiszUOPZ()
     uopz_list  = _repo_uzytk.aktywni_uopz()
     form.uopz_id.choices = [('', '--- brak ---')] + [(str(u.id), f"{u.first_name} {u.last_name}") for u in uopz_list]
@@ -134,7 +134,7 @@ def przypisz_uopz(id):
 @zarzadzanie_bp.route('/zgloszenia/<uuid:id>/szczegoly', methods=['GET', 'POST'])
 @wymaga_roli(UserRole.ADMIN, UserRole.UOPZ, UserRole.KOMISJA, UserRole.DYREKTOR)
 def szczegoly_zgloszenia(id):
-    enrollment = db.session.get(InternshipEnrollment, id) or abort(404)
+    enrollment = _repo_zapisow.znajdz_po_id(id) or abort(404)
 
     if current_user.role == UserRole.UOPZ and enrollment.supervisor_id != current_user.id:
         abort(403)
@@ -230,14 +230,14 @@ def moje_zgloszenia():
 @wymaga_roli(UserRole.ADMIN)
 def usun_praktyke(id):
     from datetime import datetime, timezone
-    p    = db.session.get(Internship, id) or abort(404)
+    p    = _repo_praktyk.znajdz_po_id(id) or abort(404)
     opis = f'{p.academic_year} ({p.semester})'
     if p.enrollments:
         p.deleted_at = datetime.now(timezone.utc)
         db.session.commit()
         flash(f'Praktyka {opis} została dezaktywowana i zostanie trwale usunięta po 7 dniach. Możesz ją przywrócić.', 'warning')
     else:
-        db.session.delete(p)
+        _repo_praktyk.usun(p)
         db.session.commit()
         flash(f'Praktyka {opis} została trwale usunięta (brak zapisanych studentów).', 'success')
     return redirect(url_for('zarzadzanie.lista_praktyk'))
@@ -246,7 +246,7 @@ def usun_praktyke(id):
 @zarzadzanie_bp.route('/praktyki/<uuid:id>/przywroc', methods=['POST'])
 @wymaga_roli(UserRole.ADMIN)
 def przywroc_praktyke(id):
-    p = db.session.get(Internship, id) or abort(404)
+    p = _repo_praktyk.znajdz_po_id(id) or abort(404)
     opis = f'{p.academic_year} ({p.semester})'
     p.deleted_at = None
     db.session.commit()

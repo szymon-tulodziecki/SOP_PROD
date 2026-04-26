@@ -1,4 +1,4 @@
-"""
+﻿"""
 app_admin/routes/ocenianie.py
 Oceny efektów uczenia się — operuje na InternshipEnrollment (enrollment).
 Przemianowano z evaluation.py.
@@ -11,13 +11,14 @@ from core.modele import (InternshipEnrollment, OutcomeAssessment, LearningOutcom
                     UserRole, AssessmentResult)
 from core.extensions import db
 from core.autoryzacja import wymaga_roli
-from core.repozytoria import RepozytoriumEfektow, RepozytoriumOcen
+from core.repozytoria import OutcomeRepository, AssessmentRepository, EnrollmentRepository, UserRepository
 from core.uslugi.workflow import ZapisFSM
 from core.uslugi.ocenianie import GradeFormData
-from core.modele.uzytkownicy import UniversityMentor
 
-_repo_outcomes    = RepozytoriumEfektow()
-_repo_assessments = RepozytoriumOcen()
+_repo_outcomes    = OutcomeRepository()
+_repo_assessments = AssessmentRepository()
+_repo_zapisow     = EnrollmentRepository()
+_repo_uzytk       = UserRepository()
 
 evaluation_bp = Blueprint('evaluation', __name__)
 
@@ -53,7 +54,7 @@ def lista_ocen():
 @evaluation_bp.route('/zapis/<uuid:id>/karta_ocen', methods=['GET', 'POST'])
 @wymaga_roli(UserRole.ADMIN, UserRole.UOPZ)
 def ocen_praktyke(id):
-    enrollment = db.session.get(InternshipEnrollment, id) or abort(404)
+    enrollment = _repo_zapisow.znajdz_po_id(id) or abort(404)
 
     if request.method == 'POST':
         grade_data = GradeFormData(
@@ -88,10 +89,7 @@ def ocen_praktyke(id):
         return redirect(url_for('evaluation.ocen_praktyke', id=enrollment.id))
 
     from flask_wtf import FlaskForm
-    staff = db.session.execute(
-        db.select(UniversityMentor).filter_by(is_active=True).order_by(
-            UniversityMentor.last_name, UniversityMentor.first_name)
-    ).scalars().all()
+    staff = _repo_uzytk.aktywni_mentorzy()
     csrf_form = FlaskForm()
     return render_template('evaluation/karta_ocen.html',
                            zapis=enrollment, practically=enrollment,
@@ -101,13 +99,13 @@ def ocen_praktyke(id):
 @evaluation_bp.route('/zapis/<uuid:id>/sprawozdanie', methods=['GET'])
 @wymaga_roli(UserRole.ADMIN, UserRole.UOPZ)
 def podglad_sprawozdania(id):
-    enrollment = db.session.get(InternshipEnrollment, id) or abort(404)
+    enrollment = _repo_zapisow.znajdz_po_id(id) or abort(404)
     return render_template('evaluation/podglad_sprawozdania.html', zapis=enrollment)
 
 @evaluation_bp.route('/zapis/<uuid:id>', methods=['GET', 'POST'])
 @wymaga_roli(UserRole.ADMIN, UserRole.UOPZ)
 def ocen_zapis(id):
-    enrollment          = db.session.get(InternshipEnrollment, id) or abort(404)
+    enrollment = _repo_zapisow.znajdz_po_id(id) or abort(404)
     outcomes            = _repo_outcomes.wszystkie()
 
     existing_assessments = {
@@ -130,7 +128,7 @@ def ocen_zapis(id):
                 assessment.result = result
                 assessment.notes  = notes or None
             else:
-                db.session.add(OutcomeAssessment(
+                _repo_assessments.zapisz(OutcomeAssessment(
                     id                  = uuid.uuid4(),
                     enrollment_id       = enrollment.id,
                     learning_outcome_id = outcome.id,
@@ -147,7 +145,7 @@ def ocen_zapis(id):
 @evaluation_bp.route('/zapis/<uuid:id>/zakoncz', methods=['POST'])
 @wymaga_roli(UserRole.ADMIN, UserRole.UOPZ)
 def zakoncz_zapis(id):
-    enrollment = db.session.get(InternshipEnrollment, id) or abort(404)
+    enrollment = _repo_zapisow.znajdz_po_id(id) or abort(404)
     ZapisFSM(enrollment).zakoncz()
     db.session.commit()
     flash(f'Praktyka studenta {enrollment.student.first_name} {enrollment.student.last_name} została zakończona.', 'success')
@@ -163,7 +161,7 @@ def generuj_protokol(id):
     from flask import make_response, current_app
     from core.uslugi.dokumenty import buduj_kontekst
 
-    enrollment = db.session.get(InternshipEnrollment, id) or abort(404)
+    enrollment = _repo_zapisow.znajdz_po_id(id) or abort(404)
     if not (enrollment.final_grades and enrollment.final_grades.supervisor_grade):
         flash('Protokół dostępny dopiero po wystawieniu oceny UOPZ.', 'warning')
         return redirect(url_for('evaluation.ocen_praktyke', id=id))

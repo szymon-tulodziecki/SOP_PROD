@@ -1,4 +1,4 @@
-{% extends "layouts/base_panel.html" %}
+﻿{% extends "layouts/base_panel.html" %}
 {% block tytul %}Dokumenty – {{ student.first_name }} {{ student.last_name }}{% endblock %}
 {% block naglowek %}Dokumenty studenta{% endblock %}
 
@@ -24,8 +24,8 @@
           <div style="font-size: 1.1rem; font-weight: 600;">{{ student.first_name }} {{ student.last_name }}</div>
           <div style="font-size: 0.85rem; color: var(--kolor-tekst-drugor); margin-top: 0.2rem;">
             Nr albumu: <strong>{{ student.album_number or '—' }}</strong>
-            {% if student.kierunek %} · {{ student.kierunek }}{% endif %}
-            {% if student.tryb_studiow %} ({{ {'full-time': 'Stacjonarne', 'part-time': 'Niestacjonarne'}.get(student.tryb_studiow, student.tryb_studiow) }}){% endif %}
+            {% if student.field_of_study %} · {{ student.field_of_study }}{% endif %}
+            {% if student.study_mode %} ({{ {'full-time': 'Stacjonarne', 'part-time': 'Niestacjonarne'}.get(student.study_mode, student.study_mode) }}){% endif %}
             {% if uopz %} · Opiekun: {{ uopz.first_name }} {{ uopz.last_name }}{% endif %}
           </div>
         </div>

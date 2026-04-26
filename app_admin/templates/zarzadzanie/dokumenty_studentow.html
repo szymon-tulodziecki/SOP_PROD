@@ -1,4 +1,4 @@
-{% extends "layouts/base_panel.html" %}
+﻿{% extends "layouts/base_panel.html" %}
 {% block tytul %}Dokumenty studentów{% endblock %}
 {% block naglowek %}Dokumenty studentów{% endblock %}
 
@@ -60,8 +60,8 @@
           </td>
           <td>{{ s.album_number or '—' }}</td>
           <td>
-            <div style="font-size: 0.875rem;">{{ s.kierunek or '—' }}</div>
-            {% if s.tryb_studiow %}<div style="font-size: 0.78rem; color: var(--kolor-tekst-drugor);">{{ {'full-time': 'Stacjonarne', 'part-time': 'Niestacjonarne'}.get(s.tryb_studiow, s.tryb_studiow) }}</div>{% endif %}
+            <div style="font-size: 0.875rem;">{{ s.field_of_study or '—' }}</div>
+            {% if s.study_mode %}<div style="font-size: 0.78rem; color: var(--kolor-tekst-drugor);">{{ {'full-time': 'Stacjonarne', 'part-time': 'Niestacjonarne'}.get(s.study_mode, s.study_mode) }}</div>{% endif %}
           </td>
           <td style="font-size: 0.875rem;">
             {% if wpis.uopz %}{{ wpis.uopz.first_name }} {{ wpis.uopz.last_name }}{% else %}<span style="color: var(--kolor-tekst-trzeciorzed);">—</span>{% endif %}

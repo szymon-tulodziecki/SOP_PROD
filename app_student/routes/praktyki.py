@@ -1,4 +1,4 @@
-import uuid
+﻿import uuid
 import datetime
 from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, make_response
 from flask_wtf import FlaskForm
@@ -12,18 +12,18 @@ from core.modele import (Internship, InternshipEnrollment, InternshipStatus, Enr
                          InternshipPath, LearningOutcome, InternshipSchedule, Company,
                          IndividualProgram, DocumentStatus, UploadedDocument,
                          WorkplaceDetails, PathJustification)
-from core.modele.praktyki import ProcessEvent, EventType
+from core.modele.praktyki import EventType
 from core.uslugi.workflow import ZapisFSM, IllegalTransitionError
 from core.uslugi.praktyki import UslugaPraktyk
-from core.repozytoria import (RepozytoriumPraktyk, RepozytoriumZapisow,
-                               RepozytoriumEfektow, RepozytoriumFirm,
-                               RepozytoriumDokumentowStudenta)
+from core.repozytoria import (InternshipRepository, EnrollmentRepository,
+                               OutcomeRepository, CompanyRepository,
+                               StudentDocumentRepository)
 
-_repo_praktyk = RepozytoriumPraktyk()
-_repo_zapisow = RepozytoriumZapisow()
-_repo_efektow = RepozytoriumEfektow()
-_repo_firm    = RepozytoriumFirm()
-_repo_docs    = RepozytoriumDokumentowStudenta()
+_repo_praktyk = InternshipRepository()
+_repo_zapisow = EnrollmentRepository()
+_repo_efektow = OutcomeRepository()
+_repo_firm    = CompanyRepository()
+_repo_docs    = StudentDocumentRepository()
 
 praktyki_bp = Blueprint('praktyki', __name__)
 
@@ -113,7 +113,7 @@ class FormularzWniosek(FlaskForm):
 @login_required
 def kreator_sciezka(id):
     """Krok 1: Wybór ścieżki."""
-    praktyka = db.session.get(Internship, id)
+    praktyka = _repo_praktyk.znajdz_po_id(id)
     if not praktyka:
         flash('Praktyka niedostępna.', 'danger')
         return redirect(url_for('praktyki.lista'))
@@ -123,11 +123,7 @@ def kreator_sciezka(id):
     # Jeśli jedyny istniejący zapis to REJECTED, traktujemy go jak nowy (reset)
     odrzucony = None
     if not istniejacy:
-        odrzucony = db.session.query(InternshipEnrollment).filter_by(
-            student_id=current_user.id,
-            internship_id=id,
-            status=EnrollmentStatus.REJECTED,
-        ).first()
+        odrzucony = _repo_zapisow.znajdz_odrzucony(current_user.id, id)
 
     form = FormularzSciezka()
 
@@ -137,12 +133,12 @@ def kreator_sciezka(id):
         elif odrzucony:
             zapis = odrzucony
             zapis.status = EnrollmentStatus.PENDING
-            db.session.query(ProcessEvent).filter_by(enrollment_id=zapis.id).delete()
+            _repo_zapisow.usun_zdarzenia_zapisu(zapis.id)
         else:
             zapis = InternshipEnrollment(id=uuid.uuid4(), internship_id=id,
                                    student_id=current_user.id, status=EnrollmentStatus.PENDING,
                                    supervisor_id=getattr(current_user, 'supervisor_id', None))
-            db.session.add(zapis)
+            _repo_zapisow.zapisz(zapis)
 
         zapis.track_type = InternshipPath(form.track_type.data)
 
@@ -171,7 +167,7 @@ def kreator_sciezka(id):
 @login_required
 def kreator_firma(zapis_id):
     """Krok 2A: Dane zakładu + ZOPZ (ścieżka A)."""
-    zapis = db.session.get(InternshipEnrollment, zapis_id)
+    zapis = _repo_zapisow.znajdz_po_id(zapis_id)
     if not zapis or zapis.student_id != current_user.id or zapis.track_type != InternshipPath.STANDARD:
         abort(404)
 
@@ -257,7 +253,7 @@ def kreator_firma(zapis_id):
 @login_required
 def kreator_wniosek(zapis_id):
     """Krok 2B/C: Wniosek dla ścieżek B i C."""
-    zapis = db.session.get(InternshipEnrollment, zapis_id)
+    zapis = _repo_zapisow.znajdz_po_id(zapis_id)
     if not zapis or zapis.student_id != current_user.id:
         abort(404)
     if zapis.track_type == InternshipPath.STANDARD:
@@ -314,7 +310,7 @@ def lista():
 @praktyki_bp.route('/zgloszenie/<uuid:id>/zakoncz', methods=['POST'])
 @login_required
 def zakoncz_praktyke(id):
-    zapis = db.session.get(InternshipEnrollment, id)
+    zapis = _repo_zapisow.znajdz_po_id(id)
     if not zapis or zapis.student_id != current_user.id:
         abort(404)
     if zapis.status != EnrollmentStatus.IN_PROGRESS:
@@ -345,7 +341,7 @@ def zapisz_krok1(id):
 @praktyki_bp.route('/zgloszenie/<uuid:id>/krok2', methods=['GET', 'POST'])
 @login_required
 def zapisz_krok2(id):
-    zapis = db.session.get(InternshipEnrollment, id)
+    zapis = _repo_zapisow.znajdz_po_id(id)
     if not zapis or zapis.student_id != current_user.id:
         abort(404)
         
@@ -375,7 +371,7 @@ def zapisz_krok2(id):
                     days_count=dni
                 ))
                 
-        db.session.add_all(nowe_wiersze)
+        _repo_zapisow.zapisz_harmonogram(nowe_wiersze)
         db.session.commit()
 
         return redirect(url_for('praktyki.potwierdz_wyslanie', id=zapis.id))
@@ -402,7 +398,7 @@ def zapisz_krok2(id):
 @praktyki_bp.route('/zgloszenie/<uuid:id>/potwierdz-wyslanie', methods=['GET'])
 @login_required
 def potwierdz_wyslanie(id):
-    zapis = db.session.get(InternshipEnrollment, id)
+    zapis = _repo_zapisow.znajdz_po_id(id)
     if not zapis or zapis.student_id != current_user.id:
         abort(404)
     if zapis.status not in (EnrollmentStatus.PENDING, EnrollmentStatus.REVISION_REQUIRED):
@@ -415,7 +411,7 @@ def potwierdz_wyslanie(id):
 @praktyki_bp.route('/zgloszenie/<uuid:id>/wyslij', methods=['POST'])
 @login_required
 def wyslij_do_zatwierdzenia(id):
-    zapis = db.session.get(InternshipEnrollment, id)
+    zapis = _repo_zapisow.znajdz_po_id(id)
     if not zapis or zapis.student_id != current_user.id:
         abort(404)
     if zapis.status not in (EnrollmentStatus.PENDING, EnrollmentStatus.REVISION_REQUIRED):
@@ -436,7 +432,7 @@ def wyslij_do_zatwierdzenia(id):
 @login_required
 def szczegoly_zgloszenia(id):
     """Szczegóły zgłoszenia studenta wraz z komentarzami UOPZ"""
-    zapis = db.session.get(InternshipEnrollment, id)
+    zapis = _repo_zapisow.znajdz_po_id(id)
     if not zapis or zapis.student_id != current_user.id:
         abort(404)
 
@@ -458,12 +454,8 @@ def szczegoly_zgloszenia(id):
     from flask_wtf import FlaskForm
     komentarz_komisji = None
     if zapis.status == EnrollmentStatus.REVISION_REQUIRED:
-        ev = (
-            db.session.query(ProcessEvent)
-            .filter_by(enrollment_id=id, event_type=EventType.COMMITTEE_DECISION)
-            .filter(ProcessEvent.decision == 'PARTIALLY_APPROVED')
-            .order_by(ProcessEvent.executed_at.desc())
-            .first()
+        ev = _repo_zapisow.ostatnie_zdarzenie(
+            id, event_type=EventType.COMMITTEE_DECISION, decision='PARTIALLY_APPROVED'
         )
         komentarz_komisji = ev.comment if ev else None
 
@@ -478,7 +470,7 @@ def szczegoly_zgloszenia(id):
 @login_required
 def resubmit_zgloszenia(id):
     """Student ponownie wysyła zgłoszenie po poprawkach."""
-    zapis = db.session.get(InternshipEnrollment, id)
+    zapis = _repo_zapisow.znajdz_po_id(id)
     if not zapis or zapis.student_id != current_user.id:
         abort(404)
     if zapis.status not in (EnrollmentStatus.AWAITING_APPROVAL, EnrollmentStatus.REVISION_REQUIRED):

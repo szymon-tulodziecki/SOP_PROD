@@ -66,8 +66,8 @@
                 {% endif %}
               </td>
               <td>
-                <span class="status status--{{ z.status.value|lower|replace('_', '-') }}">
-                  {{ tlumacz_status(z.status.value) }}
+                <span class="status status--{{ z.status_css_class }}">
+                  {{ z.status_label }}
                 </span>
                 {% if z.uopz %}
                 <div style="font-size: 0.7rem; color: var(--kolor-tekst-drugor); margin-top: 0.25rem;">

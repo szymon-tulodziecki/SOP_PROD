@@ -24,20 +24,20 @@
     <div class="sidebar__uzytkownik" aria-label="Zalogowany użytkownik">
       <div class="sidebar__uzytkownik-avatar" aria-hidden="true">
         {% if current_user.is_authenticated %}
-            {{ current_user.imie[0] }}{{ current_user.nazwisko[0] }}
+            {{ current_user.first_name[0] }}{{ current_user.last_name[0] }}
         {% else %}
             ??
         {% endif %}
       </div>
       <div class="sidebar__uzytkownik-info">
         {% if current_user.is_authenticated %}
-        <span class="sidebar__uzytkownik-imie">{{ current_user.imie }} {{ current_user.nazwisko }}</span>
+        <span class="sidebar__uzytkownik-imie">{{ current_user.first_name }} {{ current_user.last_name }}</span>
         <span class="sidebar__uzytkownik-rola">
-          {% if current_user.rola %}
-            {% if current_user.rola.value == 'ADMIN' %}Administrator
-            {% elif current_user.rola.value == 'UOPZ' %}Opiekun uczelniany (UOPZ)
-            {% elif current_user.rola.value == 'KOMISJA' %}Przewodniczący Komisji
-            {% elif current_user.rola.value == 'DYREKTOR' %}Dyrektor Instytutu
+          {% if current_user.role %}
+            {% if current_user.role.value == 'ADMIN' %}Administrator
+            {% elif current_user.role.value == 'UOPZ' %}Opiekun uczelniany (UOPZ)
+            {% elif current_user.role.value == 'KOMISJA' %}Przewodniczący Komisji
+            {% elif current_user.role.value == 'DYREKTOR' %}Dyrektor Instytutu
             {% endif %}
           {% endif %}
         </span>
@@ -54,13 +54,13 @@
         </a>
       </li>
       <li class="sidebar__menu-sekcja" aria-hidden="true">Praktyki</li>
-      {% if current_user.is_authenticated and current_user.rola %}
+      {% if current_user.is_authenticated and current_user.role %}
       <li class="sidebar__menu-pozycja">
-        {% if current_user.rola.value == 'ADMIN' %}
+        {% if current_user.role.value == 'ADMIN' %}
         <a href="{{ url_for('zarzadzanie.lista_zgloszen') }}" class="sidebar__link {% if 'zgloszenia' in (request.endpoint or '') %}sidebar__link--aktywny{% endif %}" {% if 'zgloszenia' in (request.endpoint or '') %}aria-current="page"{% endif %}>
           <span class="sidebar__ikona" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10,9 9,9 8,9"/></svg></span> Zgłoszenia studentów{% if nav_oczekujace %} <span style="display:inline-flex;align-items:center;justify-content:center;background:#ef4444;color:white;border-radius:9999px;min-width:1.25rem;height:1.25rem;font-size:0.65rem;font-weight:700;padding:0 0.25rem;margin-left:0.35rem;">{{ nav_oczekujace }}</span>{% endif %}
         </a>
-        {% elif current_user.rola.value == 'UOPZ' %}
+        {% elif current_user.role.value == 'UOPZ' %}
         <a href="{{ url_for('zarzadzanie.moje_zgloszenia') }}" class="sidebar__link {% if 'moje_zgloszenia' in (request.endpoint or '') %}sidebar__link--aktywny{% endif %}" {% if 'moje_zgloszenia' in (request.endpoint or '') %}aria-current="page"{% endif %}>
           <span class="sidebar__ikona" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10,9 9,9 8,9"/></svg></span> Moje zgłoszenia
         </a>
@@ -72,7 +72,7 @@
           <span class="sidebar__ikona" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="15" y2="16"/></svg></span> Wszystkie praktyki
         </a>
       </li>
-      {% if current_user.is_authenticated and current_user.rola and current_user.rola.value in ['ADMIN', 'UOPZ'] %}
+      {% if current_user.is_authenticated and current_user.role and current_user.role.value in ['ADMIN', 'UOPZ'] %}
       <li class="sidebar__menu-pozycja">
         <a href="{{ url_for('evaluation.lista_ocen') }}" class="sidebar__link {% if 'evaluation' in (request.endpoint or '') %}sidebar__link--aktywny{% endif %}" {% if 'evaluation' in (request.endpoint or '') %}aria-current="page"{% endif %}>
           <span class="sidebar__ikona" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span> Oceny i efekty{% if nav_do_oceny %} <span style="display:inline-flex;align-items:center;justify-content:center;background:#ef4444;color:white;border-radius:9999px;min-width:1.25rem;height:1.25rem;font-size:0.65rem;font-weight:700;padding:0 0.25rem;margin-left:0.35rem;">{{ nav_do_oceny }}</span>{% endif %}
@@ -89,7 +89,7 @@
           <span class="sidebar__ikona" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></span> Dokumenty studentów
         </a>
       </li>
-      {% if current_user.is_authenticated and current_user.rola and current_user.rola.value in ['ADMIN', 'KOMISJA'] %}
+      {% if current_user.is_authenticated and current_user.role and current_user.role.value in ['ADMIN', 'KOMISJA'] %}
       <li class="sidebar__menu-sekcja" aria-hidden="true">Weryfikacja</li>
       <li class="sidebar__menu-pozycja">
         <a href="{{ url_for('zarzadzanie.komisja_lista') }}" class="sidebar__link {% if 'komisja' in (request.endpoint or '') %}sidebar__link--aktywny{% endif %}" {% if 'komisja' in (request.endpoint or '') %}aria-current="page"{% endif %}>
@@ -97,7 +97,7 @@
         </a>
       </li>
       {% endif %}
-      {% if current_user.is_authenticated and current_user.rola and current_user.rola.value in ['ADMIN', 'DYREKTOR'] %}
+      {% if current_user.is_authenticated and current_user.role and current_user.role.value in ['ADMIN', 'DYREKTOR'] %}
       <li class="sidebar__menu-sekcja" aria-hidden="true">Decyzje</li>
       <li class="sidebar__menu-pozycja">
         <a href="{{ url_for('zarzadzanie.dziekan_lista') }}" class="sidebar__link {% if 'dziekan' in (request.endpoint or '') %}sidebar__link--aktywny{% endif %}" {% if 'dziekan' in (request.endpoint or '') %}aria-current="page"{% endif %}>
@@ -105,7 +105,7 @@
         </a>
       </li>
       {% endif %}
-      {% if current_user.is_authenticated and current_user.rola and current_user.rola.value == 'ADMIN' %}
+      {% if current_user.is_authenticated and current_user.role and current_user.role.value == 'ADMIN' %}
       <li class="sidebar__menu-sekcja" aria-hidden="true">Zarządzanie</li>
       <li class="sidebar__menu-pozycja">
         <a href="{{ url_for('zarzadzanie.lista_uzytkownikow') }}" class="sidebar__link {% if 'uzytkownik' in (request.endpoint or '') %}sidebar__link--aktywny{% endif %}" {% if 'uzytkownik' in (request.endpoint or '') %}aria-current="page"{% endif %}>

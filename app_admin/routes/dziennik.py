@@ -1,4 +1,4 @@
-"""
+﻿"""
 app_admin/routes/dziennik.py
 Monitor dzienników praktyk — podgląd wpisów, wykrywanie przerw, generowanie PDF.
 """
@@ -8,12 +8,12 @@ from flask import Blueprint, render_template, request, abort, send_file
 from flask_login import login_required, current_user
 
 from core.modele import UserRole
-from core.repozytoria import RepozytoriumZapisow, RepozytoriumWpisow
+from core.repozytoria import EnrollmentRepository, JournalRepository
 
 journal_bp = Blueprint('journal', __name__)
 
-_repo_enrollments = RepozytoriumZapisow()
-_repo_entries     = RepozytoriumWpisow()
+_repo_enrollments = EnrollmentRepository()
+_repo_entries     = JournalRepository()
 
 
 def _detect_gaps(entries, threshold_days=3):

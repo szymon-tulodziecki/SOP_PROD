@@ -1,15 +1,15 @@
-from flask import Blueprint, render_template
+﻿from flask import Blueprint, render_template
 from flask_login import login_required, current_user
 from core.modele import UserRole, EnrollmentStatus
-from core.repozytoria import RepozytoriumZapisow, RepozytoriumPraktyk, RepozytoriumUzytkownikow
+from core.repozytoria import EnrollmentRepository, InternshipRepository, UserRepository
 from core.uslugi import SerwisOceniania
 from flask_wtf import FlaskForm
 
 dashboard_bp = Blueprint('dashboard', __name__)
 
-_repo_zapisow    = RepozytoriumZapisow()
-_repo_praktyk    = RepozytoriumPraktyk()
-_repo_uzytk      = RepozytoriumUzytkownikow()
+_repo_zapisow    = EnrollmentRepository()
+_repo_praktyk    = InternshipRepository()
+_repo_uzytk      = UserRepository()
 
 
 @dashboard_bp.route('/', methods=['GET'])

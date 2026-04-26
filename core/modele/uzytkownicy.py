@@ -50,22 +50,13 @@ class User(UserMixin, db.Model):
     require_password_change  = db.Column(db.Boolean, default=True)
     created_at               = db.Column(db.DateTime, server_default=db.func.now())
 
+    @property
+    def role_label(self) -> str:
+        from core.tlumaczenia import tlumacz_role
+        return tlumacz_role(self.role.value if self.role else '')
+
     def get_id(self) -> str:
         return str(self.id)
-
-    # Flask-Login requires `is_active` as a property — already a column, works fine.
-
-    @property
-    def imie(self):
-        return self.first_name
-
-    @property
-    def nazwisko(self):
-        return self.last_name
-
-    @property
-    def rola(self):
-        return self.role
 
     def __repr__(self) -> str:
         return f'<User {self.email} ({self.role})>'
@@ -89,31 +80,6 @@ class Student(User):
         'polymorphic_identity': UserRole.STUDENT,
         'inherit_condition': id == User.__table__.c.id,
     }
-
-    # Backward-compat shims used in routes/templates that haven't been updated yet
-    @property
-    def numer_albumu(self):
-        return self.album_number
-
-    @property
-    def plec(self):
-        return self.gender
-
-    @property
-    def kierunek(self):
-        return self.field_of_study
-
-    @property
-    def specjalnosc(self):
-        return self.specialization
-
-    @property
-    def tryb_studiow(self):
-        return self.study_mode
-
-    @property
-    def uopz_id(self):
-        return self.supervisor_id
 
     def __repr__(self) -> str:
         return f'<Student {self.email} album={self.album_number}>'
@@ -157,7 +123,3 @@ class DyrektorUser(User):
     id = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id', ondelete='CASCADE'), primary_key=True)
 
 
-# ── Backward-compat aliases (remove after all routes migrated) ────────────────
-Uzytkownik        = User
-RolaUzytkownika   = UserRole
-OpikunUczelniany  = UniversityMentor

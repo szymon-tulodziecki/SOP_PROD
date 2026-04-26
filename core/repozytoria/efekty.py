@@ -1,11 +1,11 @@
-"""core/repozytoria/efekty.py — Repozytorium efektów uczenia się."""
+﻿"""core/repozytoria/efekty.py — Repozytorium efektów uczenia się."""
 from __future__ import annotations
 
 from core.extensions import db
 from core.modele.dziennik import LearningOutcome
 
 
-class RepozytoriumEfektow:
+class OutcomeRepository:
     """Jedyne miejsce zapytań ORM dotyczących tabeli efektów uczenia się."""
 
     def wszystkie(self) -> list[LearningOutcome]:

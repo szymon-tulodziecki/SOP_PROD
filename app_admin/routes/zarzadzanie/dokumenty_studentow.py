@@ -1,4 +1,4 @@
-"""
+﻿"""
 app_admin/routes/zarzadzanie/dokumenty_studentow.py
 Lista dokumentów studentów – widok dla ADMIN i UOPZ.
 """
@@ -13,14 +13,14 @@ from flask_login import login_required, current_user
 
 from core.modele import EnrollmentStatus, UserRole
 from core.uslugi.dokumenty import DOC_CONFIG, STATIC_TEMPLATES, rozwiaz_dokumenty, buduj_kontekst
-from core.repozytoria import RepozytoriumUzytkownikow, RepozytoriumZapisow
+from core.repozytoria import UserRepository, EnrollmentRepository
 
 from . import zarzadzanie_bp
 
 logger = logging.getLogger(__name__)
 
-_repo_uzytk   = RepozytoriumUzytkownikow()
-_repo_zapisow = RepozytoriumZapisow()
+_repo_uzytk   = UserRepository()
+_repo_zapisow = EnrollmentRepository()
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -77,10 +77,10 @@ def dokumenty_studentow():
     studenci_info = []
     for s in studenci_page.items:
         uopz = None
-        if s.uopz_id:
-            if s.uopz_id not in uopz_cache:
-                uopz_cache[s.uopz_id] = _repo_uzytk.znajdz_po_id(s.uopz_id)
-            uopz = uopz_cache[s.uopz_id]
+        if s.supervisor_id:
+            if s.supervisor_id not in uopz_cache:
+                uopz_cache[s.supervisor_id] = _repo_uzytk.znajdz_po_id(s.supervisor_id)
+            uopz = uopz_cache[s.supervisor_id]
         studenci_info.append({
             'student': s,
             'uopz':    uopz,
@@ -100,9 +100,7 @@ def dokumenty_studentow():
 @zarzadzanie_bp.route('/dokumenty/student/<uuid:student_id>')
 @login_required
 def dokumenty_studenta(student_id):
-    from core.modele import Student
-    from core.extensions import db
-    student = db.session.get(Student, student_id) or abort(404)
+    student = _repo_uzytk.znajdz_po_id(student_id) or abort(404)
 
     aktywne_statusy = [
         EnrollmentStatus.AWAITING_APPROVAL,
@@ -118,7 +116,7 @@ def dokumenty_studenta(student_id):
         is_enrollment_supervisor = any(z.supervisor_id == current_user.id for z in zapisy)
         if not (is_student_supervisor or is_enrollment_supervisor):
             abort(403)
-    uopz   = _repo_uzytk.znajdz_po_id(student.uopz_id) if student.uopz_id else None
+    uopz   = _repo_uzytk.znajdz_po_id(student.supervisor_id) if student.supervisor_id else None
 
     dokumenty_list = [
         {'zapis': z, 'docs': rozwiaz_dokumenty(z), 'sciezka': _sciezka(z)}

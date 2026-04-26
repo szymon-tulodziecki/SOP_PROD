@@ -1,4 +1,4 @@
-import uuid
+﻿import uuid
 import datetime
 from flask import (Blueprint, render_template, redirect, url_for,
                    flash, request, abort)
@@ -14,9 +14,9 @@ from core.extensions import db
 from core.uslugi import UslugaUzytkownikow as _UslugaUzytkownikow
 _serwis_uzytkownikow = _UslugaUzytkownikow()
 from core.autoryzacja import wymaga_roli
-from core.repozytoria import RepozytoriumUzytkownikow
+from core.repozytoria import UserRepository
 
-_repo_uzytk = RepozytoriumUzytkownikow()
+_repo_uzytk = UserRepository()
 
 from . import zarzadzanie_bp
 from .formularze import (StudentForm, StudentEditForm, StaffForm,
@@ -70,7 +70,7 @@ def nowy_student():
 @zarzadzanie_bp.route('/uzytkownicy/<uuid:id>/edytuj-student', methods=['GET', 'POST'])
 @wymaga_roli(UserRole.ADMIN)
 def edytuj_studenta(id):
-    u    = db.session.get(User, id) or abort(404)
+    u    = _repo_uzytk.znajdz_po_id(id) or abort(404)
     form = StudentEditForm(user_id=id, obj=u)
     uopz_list = _repo_uzytk.aktywni_uopz()
     form.uopz_id.choices = [(str(x.id), f"{x.first_name} {x.last_name}") for x in uopz_list]
@@ -111,7 +111,7 @@ def nowy_pracownik():
             require_password_change = False,
             is_active               = True,
         )
-        db.session.add(u)
+        _repo_uzytk.zapisz(u)
         db.session.commit()
         flash(
             f'Konto {u.first_name} {u.last_name} [{u.role.value}] utworzone. '
@@ -143,7 +143,7 @@ def import_csv():
 @zarzadzanie_bp.route('/uzytkownicy/<uuid:id>/aktywnosc', methods=['POST'])
 @wymaga_roli(UserRole.ADMIN)
 def przelacz_aktywnosc(id):
-    u = db.session.get(User, id) or abort(404)
+    u = _repo_uzytk.znajdz_po_id(id) or abort(404)
     if str(u.id) == str(current_user.id):
         flash('Nie możesz dezaktywować własnego konta.', 'danger')
         return redirect(url_for('zarzadzanie.lista_uzytkownikow'))
@@ -157,12 +157,12 @@ def przelacz_aktywnosc(id):
 @zarzadzanie_bp.route('/uzytkownicy/<uuid:id>/usun', methods=['POST'])
 @wymaga_roli(UserRole.ADMIN)
 def usun_uzytkownika(id):
-    u = db.session.get(User, id) or abort(404)
+    u = _repo_uzytk.znajdz_po_id(id) or abort(404)
     if str(u.id) == str(current_user.id):
         flash('Nie możesz usunąć własnego konta.', 'danger')
         return redirect(url_for('zarzadzanie.lista_uzytkownikow'))
     full_name = f'{u.first_name} {u.last_name}'
-    db.session.delete(u)
+    _repo_uzytk.usun(u)
     db.session.commit()
     flash(f'Konto {full_name} zostało trwale usunięte.', 'success')
     return redirect(url_for('zarzadzanie.lista_uzytkownikow'))

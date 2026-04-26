@@ -457,6 +457,54 @@ class InternshipEnrollment(db.Model):
     def is_completed_or_in_progress(self) -> bool:
         return self.status in (EnrollmentStatus.IN_PROGRESS, EnrollmentStatus.COMPLETED)
 
+    @property
+    def is_in_progress(self) -> bool:
+        return self.status == EnrollmentStatus.IN_PROGRESS
+
+    @property
+    def is_pending(self) -> bool:
+        return self.status == EnrollmentStatus.PENDING
+
+    @property
+    def is_revision_required(self) -> bool:
+        return self.status == EnrollmentStatus.REVISION_REQUIRED
+
+    @property
+    def final_grade_is_passing(self) -> bool | None:
+        """None gdy brak oceny, True gdy >= 3.0, False gdy < 3.0."""
+        if self.final_grade is None:
+            return None
+        return float(self.final_grade) >= 3.0
+
+    @property
+    def is_custom_company(self) -> bool:
+        """True gdy firma nie pochodzi z bazy (student wpisał ją ręcznie)."""
+        return not self.company_id
+
+    @property
+    def firma_ma_umowe(self) -> bool:
+        """True gdy firma posiada stałą umowę z uczelnią."""
+        return bool(self.firma and self.firma.has_standing_agreement)
+
+    @property
+    def moze_pobrac_wydruki(self) -> bool:
+        """True gdy zalogowane godziny osiągnęły wymagany wymiar."""
+        if not self.internship or not self.internship.required_hours:
+            return False
+        return (self.total_hours_logged or 0) >= self.internship.required_hours
+
+    @property
+    def status_css_class(self) -> str:
+        """Fragment klasy CSS dla statusu zapisu, np. 'draft' → 'status--draft'."""
+        from core.tlumaczenia import status_css_class as _css
+        return _css(self.status.value if self.status else '')
+
+    @property
+    def status_label(self) -> str:
+        """Polska etykieta statusu zapisu."""
+        from core.tlumaczenia import tlumacz_status
+        return tlumacz_status(self.status.value if self.status else '')
+
     # Legacy computed grade aliases
     @hybrid_property
     def ocena_e(self):

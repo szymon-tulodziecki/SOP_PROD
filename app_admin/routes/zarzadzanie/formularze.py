@@ -1,4 +1,4 @@
-import uuid
+﻿import uuid
 import csv
 import io
 import datetime
@@ -8,9 +8,9 @@ from wtforms import StringField, SelectField
 from wtforms.validators import DataRequired, Email, Length, Optional, ValidationError
 
 from core.modele import User, Student
-from core.repozytoria import RepozytoriumUzytkownikow
+from core.repozytoria import UserRepository
 
-_repo_uzytk = RepozytoriumUzytkownikow()
+_repo_uzytk = UserRepository()
 
 
 # ── Formularze ────────────────────────────────────────────────────────────────

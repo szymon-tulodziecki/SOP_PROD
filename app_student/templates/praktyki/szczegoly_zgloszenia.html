@@ -7,14 +7,10 @@
 {% endblock %}
 
 {% block tresc %}
-{% set st = zapis.status.value %}
-{% set sciezka = zapis.track_type.value %}
 {% set dm = zapis.workplace_details %}
 {% set uz = zapis.path_justification %}
 
-
-{# ── Pre-oblicz kolory paska ── #}
-{% if sciezka == 'STANDARD' %}
+{% if zapis.is_standard %}
 
   <div style="max-width: 800px; margin: 0 auto;">
 
@@ -46,7 +42,7 @@
   <div class="karta" style="margin-bottom:1rem;">
     <div class="karta__naglowek"><h2 class="karta__tytul">Zakład pracy</h2></div>
     <div class="karta__tresc">
-      {% if zapis.company_id and zapis.firma %}
+      {% if not zapis.is_custom_company and zapis.firma %}
       <div class="pole-formularza" style="margin-bottom:1rem;">
         <label class="pole-formularza__etykieta">Jak znalazłeś/-aś miejsce praktyki?</label>
         <input class="pole-formularza__input" type="text" readonly value="Uczelnia kieruje do zakładu (firma ma umowę z ANS)">
@@ -168,7 +164,7 @@
   </div>
   {% endif %}
 
-  {% if st in ('IN_PROGRESS', 'COMPLETED') %}
+  {% if zapis.is_completed_or_in_progress %}
   <div class="karta">
     <div class="karta__tresc" style="display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;">
       <div>

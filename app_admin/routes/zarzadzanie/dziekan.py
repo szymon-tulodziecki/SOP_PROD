@@ -1,4 +1,4 @@
-import uuid
+﻿import uuid
 import csv
 import io
 import datetime
@@ -21,9 +21,12 @@ _serwis_uzytkownikow = _UslugaUzytkownikow()
 from core.autoryzacja import wymaga_roli
 from core.uslugi.workflow import ZapisFSM, IllegalTransitionError
 from core.modele.praktyki import EventType
-from core.repozytoria import RepozytoriumZapisow
+from core.repozytoria import EnrollmentRepository, StudentDocumentRepository, OutcomeRepository, AssessmentRepository
 
-_repo_zapisow = RepozytoriumZapisow()
+_repo_zapisow = EnrollmentRepository()
+_repo_docs    = StudentDocumentRepository()
+_repo_efektow = OutcomeRepository()
+_repo_ocen    = AssessmentRepository()
 
 from . import zarzadzanie_bp
 from .formularze import *
@@ -42,7 +45,7 @@ def dziekan_lista():
 @zarzadzanie_bp.route('/dziekan/<uuid:id>/decyzja', methods=['GET', 'POST'])
 @wymaga_roli(UserRole.ADMIN, UserRole.DYREKTOR)
 def dziekan_decyzja(id):
-    enrollment = db.session.get(InternshipEnrollment, id) or abort(404)
+    enrollment = _repo_zapisow.znajdz_po_id(id) or abort(404)
 
     if enrollment.status != EnrollmentStatus.DIRECTOR_APPROVAL:
         flash('Wniosek nie wymaga decyzji Dyrektora Instytutu.', 'warning')
@@ -79,17 +82,9 @@ def dziekan_decyzja(id):
                 flash(str(e), 'danger')
             return redirect(url_for('zarzadzanie.dziekan_lista'))
 
-    documents = (
-        db.session.query(UploadedDocument)
-        .filter_by(enrollment_id=id, is_deleted=False)
-        .order_by(UploadedDocument.uploaded_at.desc())
-        .all()
-    )
-    outcomes            = LearningOutcome.query.order_by(LearningOutcome.id).all()
-    committee_evaluations = {
-        e.learning_outcome_id: e
-        for e in CommitteeOutcomeEvaluation.query.filter_by(enrollment_id=id).all()
-    }
+    documents             = _repo_docs.dokumenty_zapisu(id)
+    outcomes              = _repo_efektow.wszystkie()
+    committee_evaluations = _repo_ocen.dla_komisji_dict(id)
     return render_template('zarzadzanie/dziekan/decyzja.html',
                            form=form, zapis=enrollment, dokumenty=documents,
                            efekty=outcomes, oceny_komisji=committee_evaluations)

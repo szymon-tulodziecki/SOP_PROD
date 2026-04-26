@@ -1,4 +1,4 @@
-import os
+﻿import os
 
 from flask import Flask
 from jinja2 import select_autoescape
@@ -87,10 +87,10 @@ def create_app():
         try:
             from flask_login import current_user
             if current_user.is_authenticated:
-                from core.repozytoria import RepozytoriumZapisow
+                from core.repozytoria import EnrollmentRepository
                 from core.modele import UserRole
                 uopz_id = current_user.id if current_user.role == UserRole.UOPZ else None
-                counts.update(RepozytoriumZapisow().liczniki_nav(supervisor_id=uopz_id))
+                counts.update(EnrollmentRepository().liczniki_nav(supervisor_id=uopz_id))
         except Exception as exc:
             app.logger.warning("inject_nav_counts error: %s", exc)
         return counts

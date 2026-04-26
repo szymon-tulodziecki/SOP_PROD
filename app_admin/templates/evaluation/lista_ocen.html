@@ -59,7 +59,7 @@
           <td style="text-align:center;">{{ p.exam_grade or '—' }}</td>
           <td style="text-align:center;">
             {% if p.final_grade is not none %}
-            <strong style="font-size:1.05rem; color:{% if p.final_grade >= 3.0 %}var(--kolor-sukces){% else %}var(--kolor-blad){% endif %};">
+            <strong style="font-size:1.05rem; color:{% if p.final_grade_is_passing %}var(--kolor-sukces){% else %}var(--kolor-blad){% endif %};">
               {{ "%.1f"|format(p.final_grade) }}
             </strong>
             {% else %}—{% endif %}

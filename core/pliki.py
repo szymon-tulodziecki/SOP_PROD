@@ -23,6 +23,10 @@ from flask_login import login_required, current_user
 from core.modele import InternshipEnrollment, UserRole, UploadedDocument
 from core.extensions import db, limiter
 from core.szyfrowanie import zaszyfruj_strumieniowo, odszyfruj_strumieniowo
+from core.repozytoria import EnrollmentRepository, StudentDocumentRepository
+
+_repo_enrollments = EnrollmentRepository()
+_repo_docs        = StudentDocumentRepository()
 
 
 # ── Fileserver ────────────────────────────────────────────────────────────────
@@ -159,7 +163,7 @@ def stworz_blueprint_pliki(
     @login_required
     @limiter.limit("30 per hour")
     def upload_document(enrollment_id):
-        zapis = db.session.get(InternshipEnrollment, enrollment_id)
+        zapis = _repo_enrollments.znajdz_po_id(enrollment_id)
         if not zapis or not _sprawdz(zapis):
             abort(403)
 
@@ -226,7 +230,7 @@ def stworz_blueprint_pliki(
                 mime_type         = content_type,
                 uploaded_by_id    = current_user.id,
             )
-            db.session.add(doc)
+            _repo_docs.zapisz(doc)
             db.session.commit()
 
             return jsonify({
@@ -243,7 +247,7 @@ def stworz_blueprint_pliki(
     @uploads_bp.route('/document/<uuid:document_id>/download', methods=['GET'])
     @login_required
     def download_document(document_id):
-        doc = db.session.get(UploadedDocument, document_id)
+        doc = _repo_docs.znajdz_po_id(document_id)
         if not doc:
             abort(404)
         zapis = doc.enrollment
@@ -273,7 +277,7 @@ def stworz_blueprint_pliki(
     @uploads_bp.route('/document/<uuid:document_id>/delete', methods=['POST'])
     @login_required
     def delete_document(document_id):
-        doc = db.session.get(UploadedDocument, document_id)
+        doc = _repo_docs.znajdz_po_id(document_id)
         if not doc:
             return jsonify({'error': 'Nie znaleziono dokumentu'}), 404
 
@@ -293,17 +297,11 @@ def stworz_blueprint_pliki(
     @uploads_bp.route('/enrollment/<uuid:enrollment_id>/documents', methods=['GET'])
     @login_required
     def list_documents(enrollment_id):
-        zapis = db.session.get(InternshipEnrollment, enrollment_id)
+        zapis = _repo_enrollments.znajdz_po_id(enrollment_id)
         if not zapis or not _sprawdz(zapis):
             abort(403)
 
-        docs = (
-            db.session.execute(
-                db.select(UploadedDocument)
-                .filter_by(enrollment_id=enrollment_id)
-                .order_by(UploadedDocument.uploaded_at.desc())
-            ).scalars().all()
-        )
+        docs = _repo_docs.dokumenty_zapisu_posortowane(enrollment_id)
 
         return jsonify([{
             'id':                str(d.id),

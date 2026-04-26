@@ -1,4 +1,4 @@
-"""core/repozytoria/uzytkownicy.py
+﻿"""core/repozytoria/uzytkownicy.py
 
 Repozytorium użytkowników — jedyne miejsce zapytań ORM
 dotyczących tabeli `uzytkownicy` i jej podtabel JTI.
@@ -16,7 +16,7 @@ from core.modele.praktyki import InternshipEnrollment
 import uuid as _uuid
 
 
-class RepozytoriumUzytkownikow:
+class UserRepository:
     """Dostęp do danych użytkowników systemu."""
 
     # ── Wyszukiwanie ──────────────────────────────────────────────────────────
@@ -69,6 +69,16 @@ class RepozytoriumUzytkownikow:
             .filter_by(role=UserRole.UOPZ, is_active=True)
             .order_by(User.last_name, User.first_name)
             .all()
+        )
+
+    def aktywni_mentorzy(self) -> list[UniversityMentor]:
+        """Lista aktywnych pracowników (UniversityMentor) posortowana po nazwisku."""
+        return (
+            db.session.execute(
+                db.select(UniversityMentor)
+                .filter_by(is_active=True)
+                .order_by(UniversityMentor.last_name, UniversityMentor.first_name)
+            ).scalars().all()
         )
 
     def liczba_aktywnych_studentow(self) -> int:

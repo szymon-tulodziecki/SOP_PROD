@@ -1,4 +1,4 @@
-"""core/uslugi/uzytkownicy.py
+﻿"""core/uslugi/uzytkownicy.py
 
 User account management service.
 """
@@ -13,14 +13,14 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 from core.extensions import db
 from core.modele.uzytkownicy import UserRole, User, Student, Administrator, UniversityMentor
-from core.repozytoria.uzytkownicy import RepozytoriumUzytkownikow
+from core.repozytoria.uzytkownicy import UserRepository
 
 
 class UslugaUzytkownikow:
     """Business logic for user accounts."""
 
-    def __init__(self, repozytorium: Optional[RepozytoriumUzytkownikow] = None) -> None:
-        self._repo = repozytorium or RepozytoriumUzytkownikow()
+    def __init__(self, repozytorium: Optional[UserRepository] = None) -> None:
+        self._repo = repozytorium or UserRepository()
 
     # ── Authentication ────────────────────────────────────────────────────────
 
@@ -198,5 +198,5 @@ class UslugaUzytkownikow:
     # ── Repository access ─────────────────────────────────────────────────────
 
     @property
-    def repozytorium(self) -> RepozytoriumUzytkownikow:
+    def repozytorium(self) -> UserRepository:
         return self._repo

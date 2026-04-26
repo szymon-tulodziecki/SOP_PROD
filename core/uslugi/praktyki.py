@@ -1,4 +1,4 @@
-"""core/uslugi/praktyki.py
+﻿"""core/uslugi/praktyki.py
 
 Internship and enrollment management service.
 """
@@ -19,7 +19,7 @@ from core.modele.praktyki import (
     ProcessEvent,
     InternshipReport,
 )
-from core.repozytoria.praktyki import RepozytoriumPraktyk, RepozytoriumZapisow
+from core.repozytoria.praktyki import InternshipRepository, EnrollmentRepository
 
 
 class UslugaPraktyk:
@@ -27,11 +27,11 @@ class UslugaPraktyk:
 
     def __init__(
         self,
-        repo_praktyk: Optional[RepozytoriumPraktyk] = None,
-        repo_zapisow: Optional[RepozytoriumZapisow] = None,
+        repo_praktyk: Optional[InternshipRepository] = None,
+        repo_zapisow: Optional[EnrollmentRepository] = None,
     ) -> None:
-        self._praktyki = repo_praktyk or RepozytoriumPraktyk()
-        self._zapisy   = repo_zapisow  or RepozytoriumZapisow()
+        self._praktyki = repo_praktyk or InternshipRepository()
+        self._zapisy   = repo_zapisow  or EnrollmentRepository()
 
     # ── Internship editions ───────────────────────────────────────────────────
 
@@ -266,11 +266,19 @@ class UslugaPraktyk:
             )
             komentarz_odrzucenia = ev.comment if ev else None
 
+        jest_odrzucone = zapis.status == EnrollmentStatus.REJECTED
+        border_alert   = zwrocone or jest_odrzucone
+
         return {
             'id':                   str(zapis.id),
             'status':               zapis.status.value,
+            'status_css_class':     zapis.status_css_class,
+            'status_label':         zapis.status_label,
             'sciezka':              sciezka,
+            'is_standard':          sciezka == 'STANDARD',
             'zwrocone':             zwrocone,
+            'jest_odrzucone':       jest_odrzucone,
+            'border_alert':         border_alert,
             'komentarz_zwrotny':    komentarz_komisji or komentarz_admina or komentarz_uopz or '',
             'komentarz_odrzucenia': komentarz_odrzucenia or '',
             'wymaga_uwagi': (
@@ -283,9 +291,9 @@ class UslugaPraktyk:
     # ── Repository access ─────────────────────────────────────────────────────
 
     @property
-    def praktyki(self) -> RepozytoriumPraktyk:
+    def praktyki(self) -> InternshipRepository:
         return self._praktyki
 
     @property
-    def zapisy(self) -> RepozytoriumZapisow:
+    def zapisy(self) -> EnrollmentRepository:
         return self._zapisy

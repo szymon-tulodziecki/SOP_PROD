@@ -1,4 +1,4 @@
-"""core/repozytoria/firmy.py — Repozytorium firm / zakładów pracy."""
+﻿"""core/repozytoria/firmy.py — Repozytorium firm / zakładów pracy."""
 from __future__ import annotations
 
 import uuid
@@ -8,7 +8,7 @@ from core.extensions import db
 from core.modele import Company, InternshipEnrollment, EnrollmentStatus
 
 
-class RepozytoriumFirm:
+class CompanyRepository:
     """Jedyne miejsce zapytań ORM dotyczących tabeli firm."""
 
     def znajdz_po_id(self, firma_id: uuid.UUID) -> Optional[Company]:

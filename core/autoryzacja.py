@@ -1,4 +1,4 @@
-"""
+﻿"""
 core/autoryzacja.py
 Kanoniczny moduł autoryzacji — Microsoft Entra ID (OAuth 2.0 / OIDC).
 
@@ -24,6 +24,9 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from core.modele import User, UserRole
 from core.extensions import db, limiter
+from core.repozytoria import UserRepository
+
+_repo_uzytk = UserRepository()
 
 
 # ── Formularz zmiany hasła (zachowany dla kont technicznych) ─────────────────
@@ -169,7 +172,7 @@ def stworz_blueprint_auth(
 
         # Znajdź użytkownika w bazie po e-mailu
         try:
-            uzytkownik = db.session.query(User).filter_by(email=ms_email).first()
+            uzytkownik = _repo_uzytk.znajdz_po_emailu(ms_email)
         except SQLAlchemyError:
             current_app.logger.exception('Błąd bazy danych podczas logowania MS')
             flash('Błąd połączenia z bazą danych.', 'danger')

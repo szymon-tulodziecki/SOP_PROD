@@ -31,7 +31,7 @@
       <div style="font-weight: 600;">
         {% if item.przekroczony %}
           Przekroczony deadline oceny: {{ item.zapis.student.last_name }} {{ item.zapis.student.first_name }}
-        {% elif item.dni_do_deadline == 0 %}
+        {% elif item.deadline_is_today %}
           Dziś ostatni dzień oceny: {{ item.zapis.student.last_name }} {{ item.zapis.student.first_name }}
         {% else %}
           Pilna ocena za {{ item.dni_do_deadline }} dni: {{ item.zapis.student.last_name }} {{ item.zapis.student.first_name }}
@@ -102,12 +102,12 @@
               <td>{{ z.student.first_name }} {{ z.student.last_name }}</td>
               <td>{{ z.praktyka.academic_year }} ({{ z.praktyka.semester }})</td>
               <td>
-                <span class="status status--{{ z.status.value|lower|replace('_', '-') }}">
-                  {{ tlumacz_status(z.status.value) }}
+                <span class="status status--{{ z.status_css_class }}">
+                  {{ z.status_label }}
                 </span>
               </td>
               <td style="text-align:right;">
-                {% if z.status.value == 'PENDING' %}
+                {% if z.is_pending %}
                 <form method="POST" action="{{ url_for('zarzadzanie.potwierdz_zapis', id=z.id) }}" style="display:inline;">
                   {{ csrf_form.hidden_tag() }}
                   <button type="submit" class="przycisk przycisk--drugorzedny przycisk--maly" onclick="return confirm('Potwierdzić ten zapis?')">Zatwierdź</button>

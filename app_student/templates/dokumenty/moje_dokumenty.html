@@ -37,9 +37,7 @@
           {% else %}Działalność gospodarcza{% endif %}
         </div>
       </div>
-      <span class="status {% if wpis.zapis.status.value == 'COMPLETED' %}status--zakonczona{% else %}status--aktywna{% endif %}">
-        {% if wpis.zapis.status.value == 'COMPLETED' %}Zakończona{% else %}W trakcie{% endif %}
-      </span>
+      <span class="status status--{{ wpis.zapis.status_css_class }}">{{ wpis.zapis.status_label }}</span>
     </div>
     <div class="karta__tresc">
       <div style="display: grid; gap: 0.6rem;">

@@ -1,4 +1,4 @@
-"""core/repozytoria/wpisy.py — Repozytorium wpisów dziennika praktyk."""
+﻿"""core/repozytoria/wpisy.py — Repozytorium wpisów dziennika praktyk."""
 from __future__ import annotations
 
 from typing import Optional
@@ -8,7 +8,7 @@ from core.extensions import db
 from core.modele.dziennik import JournalEntry
 
 
-class RepozytoriumWpisow:
+class JournalRepository:
     """Jedyne miejsce zapytań ORM dotyczących tabeli wpisów dziennika."""
 
     def dla_zapisu(self, enrollment_id, malejaco: bool = True,
@@ -51,6 +51,12 @@ class RepozytoriumWpisow:
             .filter_by(enrollment_id=enrollment_id, entry_date=data)
             .first()
         )
+
+    def znajdz_po_id(self, wpis_id) -> Optional[JournalEntry]:
+        return db.session.get(JournalEntry, wpis_id)
+
+    def usun(self, wpis: JournalEntry) -> None:
+        db.session.delete(wpis)
 
     def zapisz(self, wpis: JournalEntry) -> JournalEntry:
         db.session.add(wpis)

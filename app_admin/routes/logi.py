@@ -1,12 +1,13 @@
-from flask import Blueprint, render_template, request
+﻿from flask import Blueprint, render_template, request
 from flask_login import login_required
 from core.autoryzacja import wymaga_roli
 from core.modele import UserRole
-from core.modele.praktyki import ProcessEvent, EventType
-from core.extensions import db
-from sqlalchemy import desc
+from core.modele.praktyki import EventType
+from core.repozytoria import LogRepository
 
 logi_bp = Blueprint('logi', __name__)
+
+_repo_logow = LogRepository()
 
 _LABELS = {
     'ADMIN_KOMENTARZ':        'Komentarz admina',
@@ -24,27 +25,11 @@ def lista_logow():
     event_type_filter = request.args.get('typ', '')
     search_query      = request.args.get('szukaj', '').strip()
 
-    q = ProcessEvent.query.order_by(desc(ProcessEvent.executed_at))
-
-    if event_type_filter:
-        try:
-            q = q.filter(ProcessEvent.event_type == EventType(event_type_filter))
-        except ValueError:
-            pass
-
-    if search_query:
-        from core.modele.praktyki import InternshipEnrollment
-        from core.modele.uzytkownicy import User as UserModel
-        q = q.join(ProcessEvent.enrollment).join(
-            UserModel, InternshipEnrollment.student_id == UserModel.id
-        ).filter(
-            db.or_(
-                UserModel.first_name.ilike(f'%{search_query}%'),
-                UserModel.last_name.ilike(f'%{search_query}%'),
-            )
-        )
-
-    events = q.paginate(page=page, per_page=30, error_out=False)
+    events = _repo_logow.wszystkie_zdarzenia(
+        filtr_typ=event_type_filter or None,
+        szukaj_user=search_query,
+        strona=page,
+    )
 
     return render_template(
         'logi/index.html',

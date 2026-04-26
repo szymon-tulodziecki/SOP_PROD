@@ -1,4 +1,4 @@
-import uuid
+﻿import uuid
 from datetime import date
 
 from flask import Blueprint, render_template, redirect, url_for, flash, request
@@ -8,13 +8,13 @@ from wtforms import StringField, SelectMultipleField, TextAreaField
 from wtforms.validators import DataRequired, ValidationError
 from wtforms.widgets import ListWidget, CheckboxInput
 
-from core.modele import InternshipEnrollment, JournalEntry, LearningOutcome, EnrollmentStatus
+from core.modele import JournalEntry, EnrollmentStatus
 from core.extensions import db
-from core.repozytoria import RepozytoriumZapisow, RepozytoriumEfektow, RepozytoriumWpisow
+from core.repozytoria import EnrollmentRepository, OutcomeRepository, JournalRepository
 
-_repo_zapisow = RepozytoriumZapisow()
-_repo_efektow = RepozytoriumEfektow()
-_repo_wpisow  = RepozytoriumWpisow()
+_repo_zapisow = EnrollmentRepository()
+_repo_efektow = OutcomeRepository()
+_repo_wpisow  = JournalRepository()
 
 dziennik_bp = Blueprint('dziennik', __name__)
 
@@ -75,9 +75,11 @@ def index():
 
     wpisy = _repo_wpisow.dla_zapisu(zapis.id, data_od=data_od, data_do=data_do)
     csrf_form = FlaskForm()
+    entries_progress_percent = min(int(len(wpisy) / 120 * 100), 100)
     return render_template('dziennik/index.html', zapis=zapis, wpisy=wpisy,
                            jakikolwiek=zapis, csrf_form=csrf_form,
-                           data_od=data_od, data_do=data_do)
+                           data_od=data_od, data_do=data_do,
+                           entries_progress_percent=entries_progress_percent)
 
 
 @dziennik_bp.route('/nowy', methods=['GET', 'POST'])
@@ -122,7 +124,7 @@ def nowy_wpis():
             description      = form.opis.data.strip(),
             learning_outcomes = wybrane_efekty,
         )
-        db.session.add(wpis)
+        _repo_wpisow.zapisz(wpis)
         db.session.commit()
         flash(f'Wpis z dnia {data.strftime("%d.%m.%Y")} został dodany ({godziny} h).', 'success')
         return redirect(url_for('dziennik.index'))
@@ -136,12 +138,12 @@ def nowy_wpis():
 @dziennik_bp.route('/edytuj/<uuid:wpis_id>', methods=['GET', 'POST'])
 @login_required
 def edytuj_wpis(wpis_id):
-    wpis = db.session.get(JournalEntry, wpis_id)
+    wpis = _repo_wpisow.znajdz_po_id(wpis_id)
     if not wpis:
         from flask import abort
         abort(404)
 
-    zapis = db.session.get(InternshipEnrollment, wpis.enrollment_id)
+    zapis = _repo_zapisow.znajdz_po_id(wpis.enrollment_id)
     if not zapis or zapis.student_id != current_user.id:
         from flask import abort
         abort(403)
@@ -175,15 +177,15 @@ def edytuj_wpis(wpis_id):
 @dziennik_bp.route('/usun/<uuid:wpis_id>', methods=['POST'])
 @login_required
 def usun_wpis(wpis_id):
-    wpis = db.session.get(JournalEntry, wpis_id)
+    wpis = _repo_wpisow.znajdz_po_id(wpis_id)
     if not wpis:
         from flask import abort
         abort(404)
-    zapis = db.session.get(InternshipEnrollment, wpis.enrollment_id)
+    zapis = _repo_zapisow.znajdz_po_id(wpis.enrollment_id)
     if not zapis or zapis.student_id != current_user.id:
         from flask import abort
         abort(403)
-    db.session.delete(wpis)
+    _repo_wpisow.usun(wpis)
     db.session.commit()
     flash('Wpis został usunięty.', 'success')
     return redirect(url_for('dziennik.index'))

@@ -1,4 +1,4 @@
-{% extends "layouts/base_panel.html" %}
+﻿{% extends "layouts/base_panel.html" %}
 
 {% block tytul %}Egzamin praktyki{% endblock %}
 {% block naglowek %}Protokół egzaminacyjny{% endblock %}
@@ -14,7 +14,7 @@
   <div class="karta" style="margin-bottom: 2rem; border-left: 4px solid var(--kolor-akcent);">
     <div class="karta__tresc" style="display: flex; justify-content: space-between; align-items: center;">
       <div>
-        <h2 style="font-size: 1.1rem; margin-bottom: 0.25rem;">{{ praktyka.student.imie }} {{ praktyka.student.nazwisko }}</h2>
+        <h2 style="font-size: 1.1rem; margin-bottom: 0.25rem;">{{ praktyka.student.first_name }} {{ praktyka.student.last_name }}</h2>
         <p style="color: var(--kolor-tekst-drugor); font-size: 0.9rem;">
           Zakład: {{ praktyka.zaklad.nazwa }} | Godziny: {{ praktyka.lacznie_godzin }} / 160 h
         </p>

@@ -1,11 +1,11 @@
-{% extends "layouts/base_panel.html" %}
+﻿{% extends "layouts/base_panel.html" %}
 
 {% block tytul %}Zakłady pracy{% endblock %}
 {% block naglowek %}Zakłady pracy{% endblock %}
 
 {% block naglowek_akcje %}
 <div style="display: flex; gap: 0.5rem; align-items: center;">
-  {% if current_user.rola.value in ['ADMIN', 'UOPZ'] %}
+  {% if current_user.role.value in ['ADMIN', 'UOPZ'] %}
   <a href="{{ url_for('zarzadzanie.nowy_zaklad') }}" class="przycisk przycisk--glowny">
     <span aria-hidden="true">+</span> Dodaj zakład
   </a>

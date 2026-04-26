@@ -43,25 +43,20 @@
           <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--kolor-tekst-drugor); margin-bottom: 0.25rem;">Godziny</div>
           <div style="font-weight: 700; font-size: 1.2rem; color: var(--kolor-glowny);">{{ zapis.total_hours_logged }} / {{ zapis.praktyka.required_hours }} h</div>
           <div class="pasek-postep" style="margin-top: 0.5rem; margin-bottom: 1rem;">
-            {% set proc_h = 0 %}
-            {% if zapis and zapis.praktyka and zapis.praktyka.required_hours > 0 %}
-              {% set proc_h = [(zapis.total_hours_logged / zapis.praktyka.required_hours * 100)|int, 100]|min %}
-            {% endif %}
-            <div class="pasek-postep__wypelnienie{% if proc_h >= 100 %} pasek-postep__wypelnienie--zakonczony{% endif %}" style="width: {{ proc_h }}%;"></div>
+            <div class="pasek-postep__wypelnienie{% if zapis.progress_percent >= 100 %} pasek-postep__wypelnienie--zakonczony{% endif %}" style="width: {{ zapis.progress_percent }}%;"></div>
           </div>
           
           <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--kolor-tekst-drugor); margin-bottom: 0.25rem;">Dni</div>
           <div style="font-weight: 700; font-size: 1.2rem; color: var(--kolor-glowny);">{{ wpisy | length }} / 120 dni</div>
           <div class="pasek-postep" style="margin-top: 0.5rem;">
-            {% set proc_d = [(wpisy | length / 120 * 100)|int, 100]|min %}
-            <div class="pasek-postep__wypelnienie{% if proc_d >= 100 %} pasek-postep__wypelnienie--zakonczony{% endif %}" style="width: {{ proc_d }}%;"></div>
+            <div class="pasek-postep__wypelnienie{% if entries_progress_percent >= 100 %} pasek-postep__wypelnienie--zakonczony{% endif %}" style="width: {{ entries_progress_percent }}%;"></div>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  {% if zapis.total_hours_logged >= zapis.praktyka.required_hours %}
+  {% if zapis.moze_pobrac_wydruki %}
   <div class="karta" style="margin-bottom: 1.5rem; border-left: 4px solid #dc2626;">
     <div class="karta__naglowek" style="justify-content:center; text-align:center;">
       <h2 class="karta__tytul">⚠ Dokumenty końcowe praktyki</h2>
@@ -83,7 +78,7 @@
       </p>
       <div style="display:flex; gap:0.75rem; justify-content:center; flex-wrap:wrap;">
         <a href="{{ url_for('documents.moje_dokumenty') }}" class="przycisk przycisk--drugorzedny">Generuj dokumenty →</a>
-        {% if zapis.status.value == 'IN_PROGRESS' %}
+        {% if zapis.is_in_progress %}
         <form method="POST" action="{{ url_for('praktyki.zakoncz_praktyke', id=zapis.id) }}" style="display:inline;">
           {{ csrf_form.hidden_tag() }}
           <button type="submit" class="przycisk przycisk--glowny"

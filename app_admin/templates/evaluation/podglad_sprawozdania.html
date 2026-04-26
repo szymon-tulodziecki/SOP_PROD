@@ -1,7 +1,7 @@
-{% extends "layouts/base_panel.html" %}
+﻿{% extends "layouts/base_panel.html" %}
 
 {% block tytul %}Podgląd Sprawozdania{% endblock %}
-{% block naglowek %}Sprawozdanie: {{ zapis.student.imie }} {{ zapis.student.nazwisko }}{% endblock %}
+{% block naglowek %}Sprawozdanie: {{ zapis.student.first_name }} {{ zapis.student.last_name }}{% endblock %}
 
 {% block naglowek_akcje %}
 <a href="{{ url_for('zarzadzanie.szczegoly_praktyki', id=zapis.internship_id) }}" class="przycisk przycisk--drugorzedny">Powrót do szczegółów</a>

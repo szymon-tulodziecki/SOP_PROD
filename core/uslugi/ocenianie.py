@@ -1,4 +1,4 @@
-"""
+﻿"""
 core/uslugi/ocenianie.py
 
 Usługa oceniania praktyk.
@@ -130,7 +130,12 @@ class SerwisOceniania:
             deadline         = enrollment.end_date + timedelta(days=7)
             days_to_deadline = (deadline - date.today()).days
             overdue          = days_to_deadline < 0
-        return {'deadline': deadline, 'dni_do_deadline': days_to_deadline, 'przekroczony': overdue}
+        return {
+            'deadline':         deadline,
+            'dni_do_deadline':  days_to_deadline,
+            'przekroczony':     overdue,
+            'deadline_is_today': days_to_deadline == 0 if days_to_deadline is not None else False,
+        }
 
     @staticmethod
     def get_pilne_oceny(uopz_id=None) -> list[dict]:
@@ -192,8 +197,8 @@ class SerwisOceniania:
         Returns:
             {'widoczne': [...], 'zakonczone': [...], 'filtr': filtr}
         """
-        from core.repozytoria import RepozytoriumZapisow
-        enrollments = RepozytoriumZapisow().aktywne_i_zakonczone(supervisor_id=supervisor_id)
+        from core.repozytoria import EnrollmentRepository
+        enrollments = EnrollmentRepository().aktywne_i_zakonczone(supervisor_id=supervisor_id)
 
         def _ma_oceny(enrollment) -> bool:
             fg = enrollment.final_grades

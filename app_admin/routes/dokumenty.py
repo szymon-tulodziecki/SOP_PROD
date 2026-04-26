@@ -1,4 +1,4 @@
-import uuid
+﻿import uuid
 import json
 import time
 
@@ -16,12 +16,12 @@ from pathlib import Path
 from core.modele import InternshipEnrollment, DocumentAuditLog, UserRole
 from core.extensions import db, limiter
 from core.autoryzacja import wymaga_roli
-from core.repozytoria import RepozytoriumZapisow, RepozytoriumLogow
+from core.repozytoria import EnrollmentRepository, LogRepository
 from core.uslugi.dokumenty import buduj_kontekst
 from celery_app import generuj_pdf_z_szablonu, celery
 
-_repo_enrollments = RepozytoriumZapisow()
-_repo_logs        = RepozytoriumLogow()
+_repo_enrollments = EnrollmentRepository()
+_repo_logs        = LogRepository()
 
 import logging
 logger = logging.getLogger(__name__)
@@ -43,7 +43,7 @@ DOCUMENTS = {
 }
 
 def log_audit(enrollment_id, doc_type, action, details=""):
-    db.session.add(DocumentAuditLog(
+    _repo_logs.zapisz_log(DocumentAuditLog(
         id=uuid.uuid4(),
         user_id=current_user.id,
         enrollment_id=enrollment_id,

@@ -1,4 +1,4 @@
-import uuid
+﻿import uuid
 import csv
 import io
 import datetime
@@ -20,10 +20,13 @@ from core.uslugi import UslugaUzytkownikow as _UslugaUzytkownikow, SerwisKomisji
 _serwis_uzytkownikow = _UslugaUzytkownikow()
 from core.autoryzacja import wymaga_roli
 from core.uslugi.workflow import ZapisFSM, IllegalTransitionError
-from core.repozytoria import RepozytoriumZapisow, RepozytoriumDokumentowStudenta
+from core.repozytoria import (EnrollmentRepository, StudentDocumentRepository,
+                               OutcomeRepository, AssessmentRepository)
 
-_repo_zapisow = RepozytoriumZapisow()
-_repo_docs    = RepozytoriumDokumentowStudenta()
+_repo_zapisow = EnrollmentRepository()
+_repo_docs    = StudentDocumentRepository()
+_repo_efektow = OutcomeRepository()
+_repo_ocen    = AssessmentRepository()
 
 from . import zarzadzanie_bp
 from .formularze import *
@@ -42,7 +45,7 @@ def komisja_lista():
 @zarzadzanie_bp.route('/komisja/<uuid:id>/weryfikuj', methods=['GET', 'POST'])
 @wymaga_roli(UserRole.ADMIN, UserRole.KOMISJA)
 def komisja_weryfikuj(id):
-    enrollment = db.session.get(InternshipEnrollment, id) or abort(404)
+    enrollment = _repo_zapisow.znajdz_po_id(id) or abort(404)
 
     if enrollment.status not in (EnrollmentStatus.COMMISSION_REVIEW, EnrollmentStatus.AWAITING_APPROVAL, EnrollmentStatus.REVISION_REQUIRED):
         flash('Wniosek nie wymaga weryfikacji komisji.', 'warning')
@@ -52,7 +55,7 @@ def komisja_weryfikuj(id):
         comment = TextAreaField('Komentarz ogólny komisji', validators=[Optional()])
 
     form    = CommitteeForm()
-    outcomes = LearningOutcome.query.order_by(LearningOutcome.id).all()
+    outcomes = _repo_efektow.wszystkie()
 
     ACTIVE_STATUSES = (EnrollmentStatus.COMMISSION_REVIEW, EnrollmentStatus.AWAITING_APPROVAL)
 
@@ -64,7 +67,7 @@ def komisja_weryfikuj(id):
         committee_opinion = request.form.get('opinia')
         if committee_opinion not in ('APPROVED', 'PARTIALLY_APPROVED', 'REJECTED'):
             flash('Wybierz opinię komisji (jeden z trzech przycisków).', 'warning')
-            existing_evaluations = {e.learning_outcome_id: e for e in CommitteeOutcomeEvaluation.query.filter_by(enrollment_id=id).all()}
+            existing_evaluations = _repo_ocen.dla_komisji_dict(id)
             documents            = _repo_docs.dla_zapisu_studenta(id, enrollment.student_id)
             return render_template('zarzadzanie/komisja/weryfikuj.html',
                                    form=form, zapis=enrollment, dokumenty=documents,
@@ -75,7 +78,7 @@ def komisja_weryfikuj(id):
         if errors:
             for err in errors:
                 flash(err, 'danger')
-            existing_evaluations = {e.learning_outcome_id: e for e in CommitteeOutcomeEvaluation.query.filter_by(enrollment_id=id).all()}
+            existing_evaluations = _repo_ocen.dla_komisji_dict(id)
             documents            = _repo_docs.dla_zapisu_studenta(id, enrollment.student_id)
             return render_template('zarzadzanie/komisja/weryfikuj.html',
                                    form=form, zapis=enrollment, dokumenty=documents,
@@ -88,19 +91,12 @@ def komisja_weryfikuj(id):
                     return redirect(url_for('zarzadzanie.komisja_lista'))
 
                 for outcome_id, result_val, notes_val in evaluations:
-                    existing = CommitteeOutcomeEvaluation.query.filter_by(
-                        enrollment_id=id, learning_outcome_id=outcome_id
-                    ).first()
-                    if existing:
-                        existing.result = AssessmentResult(result_val)
-                        existing.notes  = notes_val or None
-                    else:
-                        db.session.add(CommitteeOutcomeEvaluation(
-                            enrollment_id=id,
-                            learning_outcome_id=outcome_id,
-                            result=AssessmentResult(result_val),
-                            notes=notes_val or None,
-                        ))
+                    _repo_ocen.zapisz_ocene_komisji(
+                        enrollment_id=id,
+                        outcome_id=outcome_id,
+                        result=AssessmentResult(result_val),
+                        notes=notes_val or None,
+                    )
 
                 comment = form.comment.data or ''
                 fsm.wyslij_do_dyrektora(decision=committee_opinion, actor_id=current_user.id, comment=comment)
@@ -116,7 +112,7 @@ def komisja_weryfikuj(id):
             flash(str(e), 'danger')
         return redirect(url_for('zarzadzanie.komisja_lista'))
 
-    existing_evaluations = {e.learning_outcome_id: e for e in CommitteeOutcomeEvaluation.query.filter_by(enrollment_id=id).all()}
+    existing_evaluations = _repo_ocen.dla_komisji_dict(id)
     documents            = _repo_docs.dla_zapisu_studenta(id, enrollment.student_id)
     return render_template('zarzadzanie/komisja/weryfikuj.html',
                            form=form, zapis=enrollment, dokumenty=documents,

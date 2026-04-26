@@ -1,7 +1,7 @@
-{% extends "layouts/base_panel.html" %}
+﻿{% extends "layouts/base_panel.html" %}
 
 {% block tytul %}Dokumenty i Załączniki{% endblock %}
-{% block naglowek %}Generowanie dokumentów: {{ zapis.student.imie }} {{ zapis.student.nazwisko }}{% endblock %}
+{% block naglowek %}Generowanie dokumentów: {{ zapis.student.first_name }} {{ zapis.student.last_name }}{% endblock %}
 
 {% block naglowek_akcje %}
 <a href="{{ url_for('zarzadzanie.szczegoly_praktyki', id=zapis.internship_id) }}" class="przycisk przycisk--drugorzedny">Powrót do szczegółów</a>
@@ -53,7 +53,7 @@
             <strong style="color: var(--kolor-tekst);">{{ log.action }}</strong> — <span style="font-family: monospace;">{{ log.document_type }}</span>
             <br>
             <span style="color: var(--kolor-tekst-drugor);">
-              {{ log.created_at.strftime('%Y-%m-%d %H:%M') }} | Kto: {{ log.user.imie if log.user else 'System' }}
+              {{ log.created_at.strftime('%Y-%m-%d %H:%M') }} | Kto: {{ log.user.first_name if log.user else 'System' }}
             </span>
             {% if log.details %}
             <div style="font-style: italic; margin-top: 0.25rem;">{{ log.details }}</div>

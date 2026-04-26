@@ -1,4 +1,4 @@
-{% extends "layouts/base_panel.html" %}
+﻿{% extends "layouts/base_panel.html" %}
 {% block tytul %}Logi systemowe{% endblock %}
 {% block naglowek %}Logi systemowe{% endblock %}
 
@@ -54,7 +54,7 @@
             {{ z.executed_at.strftime('%Y-%m-%d %H:%M') if z.executed_at else '—' }}
           </td>
           <td>
-            {% set rola = z.executed_by.rola.value if z.executed_by and z.executed_by.rola else '' %}
+            {% set rola = z.executed_by.role.value if z.executed_by and z.executed_by.role else '' %}
             {% if z.event_type.value == 'DYREKTOR_DECYZJA' %}
               {% set label = 'Decyzja Dyrektora' %}{% set cls = 'status--zakonczona' %}
             {% elif z.event_type.value == 'KOMISJA_DECYZJA' and rola == 'KOMISJA' %}
@@ -72,13 +72,13 @@
           </td>
           <td>
             {% if z.enrollment and z.enrollment.student %}
-              {{ z.enrollment.student.imie }} {{ z.enrollment.student.nazwisko }}
+              {{ z.enrollment.student.first_name }} {{ z.enrollment.student.last_name }}
             {% else %}—{% endif %}
           </td>
           <td style="font-size:0.85rem;">
             {% if z.executed_by %}
-              {{ z.executed_by.imie }} {{ z.executed_by.nazwisko }}
-              <div style="font-size:0.75rem; color:var(--kolor-tekst-trzeciorzed);">{{ z.executed_by.rola.value if z.executed_by.rola else '' }}</div>
+              {{ z.executed_by.first_name }} {{ z.executed_by.last_name }}
+              <div style="font-size:0.75rem; color:var(--kolor-tekst-trzeciorzed);">{{ z.executed_by.role_label }}</div>
             {% else %}—{% endif %}
           </td>
           <td>

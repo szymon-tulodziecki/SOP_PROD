@@ -1,4 +1,4 @@
-import uuid
+﻿import uuid
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
 from flask_wtf import FlaskForm
@@ -7,9 +7,9 @@ from wtforms.validators import DataRequired, Optional
 
 from core.extensions import db
 from core.modele import InternshipEnrollment, InternshipReport, EnrollmentStatus, InternshipPath
-from core.repozytoria import RepozytoriumZapisow
+from core.repozytoria import EnrollmentRepository
 
-_repo_zapisow = RepozytoriumZapisow()
+_repo_zapisow = EnrollmentRepository()
 
 sprawozdania_bp = Blueprint('sprawozdania', __name__)
 
@@ -50,7 +50,7 @@ def index():
         )
         db.session.add(nowe_spr)
         db.session.commit()
-        zapis = db.session.get(InternshipEnrollment, zapis.id)
+        zapis = _repo_zapisow.znajdz_po_id(zapis.id)
 
     # Wybierz formularz i szablon wg ścieżki
     sciezka = zapis.path_type.value if zapis.path_type else 'STANDARD'
