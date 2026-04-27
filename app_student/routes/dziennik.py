@@ -18,6 +18,9 @@ _repo_wpisow  = JournalRepository()
 
 dziennik_bp = Blueprint('dziennik', __name__)
 
+_ROUTE_INDEX  = 'dziennik.index'
+_TPL_NOWY_WPIS = 'dziennik/nowy_wpis.html'
+
 
 class FormularzWpisu(FlaskForm):
     data_wpisu    = StringField('Data', validators=[DataRequired()])
@@ -88,7 +91,7 @@ def nowy_wpis():
     zapis = _aktywny_zapis()
     if not zapis:
         flash('Nie masz aktywnej praktyki. Skontaktuj się z opiekunem.', 'danger')
-        return redirect(url_for('dziennik.index'))
+        return redirect(url_for(_ROUTE_INDEX))
 
     efekty = _repo_efektow.wszystkie()
     efekty_opisy = {str(e.id): f'{e.kod}: {e.description}' for e in efekty}
@@ -103,7 +106,7 @@ def nowy_wpis():
         duplikat = _repo_wpisow.znajdz_duplikat(zapis.id, data)
         if duplikat:
             flash('Wpis na ten dzień już istnieje. Możesz go edytować.', 'danger')
-            return render_template('dziennik/nowy_wpis.html', form=form, zapis=zapis, efekty_opisy=efekty_opisy)
+            return render_template(_TPL_NOWY_WPIS, form=form, zapis=zapis, efekty_opisy=efekty_opisy)
 
         godziny = int(form.liczba_godzin.data)
         wymagane = zapis.praktyka.required_hours
@@ -114,7 +117,7 @@ def nowy_wpis():
                 flash(f'Osiągnięto wymagany limit {wymagane} h. Nie można dodać więcej wpisów.', 'danger')
             else:
                 flash(f'Możesz dodać maksymalnie {pozostalo} h (limit: {wymagane} h). Zmniejsz liczbę godzin.', 'danger')
-            return render_template('dziennik/nowy_wpis.html', form=form, zapis=zapis, efekty_opisy=efekty_opisy)
+            return render_template(_TPL_NOWY_WPIS, form=form, zapis=zapis, efekty_opisy=efekty_opisy)
         wybrane_efekty = _repo_efektow.po_ids([int(i) for i in form.efekty_ids.data])
         wpis = JournalEntry(
             id               = uuid.uuid4(),
@@ -127,12 +130,12 @@ def nowy_wpis():
         _repo_wpisow.zapisz(wpis)
         db.session.commit()
         flash(f'Wpis z dnia {data.strftime("%d.%m.%Y")} został dodany ({godziny} h).', 'success')
-        return redirect(url_for('dziennik.index'))
+        return redirect(url_for(_ROUTE_INDEX))
 
     if request.method == 'GET':
         form.data_wpisu.data = date.today().isoformat()
 
-    return render_template('dziennik/nowy_wpis.html', form=form, zapis=zapis, efekty_opisy=efekty_opisy)
+    return render_template(_TPL_NOWY_WPIS, form=form, zapis=zapis, efekty_opisy=efekty_opisy)
 
 
 @dziennik_bp.route('/edytuj/<uuid:wpis_id>', methods=['GET', 'POST'])
@@ -163,7 +166,7 @@ def edytuj_wpis(wpis_id):
         wpis.learning_outcomes = _repo_efektow.po_ids([int(i) for i in form.efekty_ids.data])
         db.session.commit()
         flash('Wpis został zaktualizowany.', 'success')
-        return redirect(url_for('dziennik.index'))
+        return redirect(url_for(_ROUTE_INDEX))
 
     if request.method == 'GET':
         form.data_wpisu.data    = wpis.entry_date.isoformat()
@@ -171,7 +174,7 @@ def edytuj_wpis(wpis_id):
         form.opis.data          = wpis.description
         form.efekty_ids.data    = [str(e.id) for e in wpis.efekty_uczenia]
 
-    return render_template('dziennik/nowy_wpis.html', form=form, zapis=zapis, edycja=True, wpis=wpis, efekty_opisy=efekty_opisy)
+    return render_template(_TPL_NOWY_WPIS, form=form, zapis=zapis, edycja=True, wpis=wpis, efekty_opisy=efekty_opisy)
 
 
 @dziennik_bp.route('/usun/<uuid:wpis_id>', methods=['POST'])
@@ -188,4 +191,4 @@ def usun_wpis(wpis_id):
     _repo_wpisow.usun(wpis)
     db.session.commit()
     flash('Wpis został usunięty.', 'success')
-    return redirect(url_for('dziennik.index'))
+    return redirect(url_for(_ROUTE_INDEX))

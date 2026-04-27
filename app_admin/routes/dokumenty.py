@@ -1,14 +1,4 @@
 ﻿import uuid
-import json
-import time
-
-try:
-    # Przy gevent workerze monkeypatching jest aktywny — używamy gevent.sleep,
-    # które oddaje procesor innym greenletom zamiast blokować wątek OS.
-    # Przy sync workerze (testy, dev) fallback na time.sleep.
-    from gevent import sleep as _sleep
-except ImportError:
-    from time import sleep as _sleep
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, abort, send_file, current_app, Response
 from flask_login import login_required, current_user
 from pathlib import Path
@@ -17,7 +7,7 @@ from core.modele import InternshipEnrollment, DocumentAuditLog, UserRole
 from core.extensions import db, limiter
 from core.autoryzacja import wymaga_roli
 from core.repozytoria import EnrollmentRepository, LogRepository
-from core.uslugi.dokumenty import buduj_kontekst
+from core.uslugi.dokumenty import buduj_kontekst, sse_pdf_status
 from celery_app import generuj_pdf_z_szablonu, celery
 
 _repo_enrollments = EnrollmentRepository()
@@ -104,42 +94,10 @@ _SSE_MAX_SECONDS = 30    # po tym czasie klient powinien przełączyć się na p
 @documents_bp.route('/stream/<task_id>', methods=['GET'])
 @wymaga_roli(UserRole.ADMIN, UserRole.UOPZ)
 def stream_status(task_id):
-    """Server-Sent Events — status generowania PDF.
-
-    Strumień jest automatycznie zamykany po _SSE_MAX_SECONDS sekund,
-    co chroni wątki serwera przed blokadą przez osierocone połączenia
-    (np. po zamknięciu karty przez użytkownika).
-    """
+    """Server-Sent Events — status generowania PDF."""
     def generate():
-        deadline = time.monotonic() + _SSE_MAX_SECONDS
-        try:
-            while time.monotonic() < deadline:
-                try:
-                    task = celery.AsyncResult(task_id)
-                    if task.state == 'SUCCESS':
-                        res = task.result
-                        if isinstance(res, dict) and res.get('status') == 'error':
-                            data = {'status': 'FAILURE', 'error': res.get('message', 'Nieznany błąd')}
-                        else:
-                            data = {'status': 'SUCCESS',
-                                    'download_url': url_for('documents.pobierz_pdf', task_id=task_id)}
-                        yield f"data: {json.dumps(data)}\n\n"
-                        return
-                    elif task.state == 'FAILURE':
-                        yield f"data: {json.dumps({'status': 'FAILURE', 'error': str(task.info)})}\n\n"
-                        return
-                    else:
-                        yield f"data: {json.dumps({'status': task.state})}\n\n"
-                except GeneratorExit:
-                    return
-                except Exception as exc:
-                    logger.error("SSE stream error for task %s: %s", task_id, exc)
-                    yield f"data: {json.dumps({'status': 'FAILURE', 'error': str(exc)})}\n\n"
-                    return
-                _sleep(1)
-        finally:
-            # Wysyłamy zamknięcie — klient może zareagować komunikatem timeout
-            yield f"data: {json.dumps({'status': 'TIMEOUT'})}\n\n"
+        dl_url = url_for('documents.pobierz_pdf', task_id=task_id)
+        yield from sse_pdf_status(task_id, dl_url, celery, _SSE_MAX_SECONDS)
 
     return Response(generate(), mimetype='text/event-stream',
                     headers={'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no'})

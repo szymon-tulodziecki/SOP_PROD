@@ -12,6 +12,7 @@ from sqlalchemy.dialects.postgresql import UUID
 
 from core.extensions import db
 
+_FK_USERS = 'users.id'
 
 # ── Enums ─────────────────────────────────────────────────────────────────────
 
@@ -68,13 +69,13 @@ class Student(User):
     """Student-specific data — `students` table."""
     __tablename__ = 'students'
 
-    id             = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id', ondelete='CASCADE'), primary_key=True)
+    id             = db.Column(UUID(as_uuid=True), db.ForeignKey(_FK_USERS, ondelete='CASCADE'), primary_key=True)
     album_number   = db.Column(db.String(20),  nullable=True)
     gender         = db.Column(db.String(1),   nullable=True)   # 'M' or 'F'
     field_of_study = db.Column(db.String(100), nullable=True)
     specialization = db.Column(db.String(100), nullable=True)
     study_mode     = db.Column(db.String(20),  nullable=True)   # 'full-time'/'part-time'
-    supervisor_id  = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
+    supervisor_id  = db.Column(UUID(as_uuid=True), db.ForeignKey(_FK_USERS, ondelete='SET NULL'), nullable=True)
 
     __mapper_args__ = {
         'polymorphic_identity': UserRole.STUDENT,
@@ -90,7 +91,7 @@ class Administrator(User):
     __tablename__ = 'administrators'
     __mapper_args__ = {'polymorphic_identity': UserRole.ADMIN}
 
-    id = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id', ondelete='CASCADE'), primary_key=True)
+    id = db.Column(UUID(as_uuid=True), db.ForeignKey(_FK_USERS, ondelete='CASCADE'), primary_key=True)
 
     def __repr__(self) -> str:
         return f'<Administrator {self.email}>'
@@ -101,7 +102,7 @@ class UniversityMentor(User):
     __tablename__ = 'university_mentors'
     __mapper_args__ = {'polymorphic_identity': UserRole.UOPZ}
 
-    id = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id', ondelete='CASCADE'), primary_key=True)
+    id = db.Column(UUID(as_uuid=True), db.ForeignKey(_FK_USERS, ondelete='CASCADE'), primary_key=True)
 
     def __repr__(self) -> str:
         return f'<UniversityMentor {self.email}>'
@@ -112,7 +113,7 @@ class KomisjaUser(User):
     __tablename__ = 'komisja_users'
     __mapper_args__ = {'polymorphic_identity': UserRole.KOMISJA}
 
-    id = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id', ondelete='CASCADE'), primary_key=True)
+    id = db.Column(UUID(as_uuid=True), db.ForeignKey(_FK_USERS, ondelete='CASCADE'), primary_key=True)
 
 
 class DyrektorUser(User):
@@ -120,6 +121,6 @@ class DyrektorUser(User):
     __tablename__ = 'dyrektor_users'
     __mapper_args__ = {'polymorphic_identity': UserRole.DYREKTOR}
 
-    id = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id', ondelete='CASCADE'), primary_key=True)
+    id = db.Column(UUID(as_uuid=True), db.ForeignKey(_FK_USERS, ondelete='CASCADE'), primary_key=True)
 
 

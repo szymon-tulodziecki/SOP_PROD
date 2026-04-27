@@ -55,7 +55,7 @@
       <div>
         <div style="font-weight: 600;">
           {{ zapis.praktyka.academic_year if zapis.praktyka else '—' }}
-          {% if zapis.praktyka %} · Semestr {{ zapis.praktyka.semester }}{% endif %}
+          {% if zapis.praktyka %} · Semestr {{ zapis.praktyka.semester_label }}{% endif %}
         </div>
         <div style="font-size: 0.82rem; color: var(--kolor-tekst-drugor); margin-top: 0.2rem;">
           {% if zapis.firma %}{{ zapis.firma.name }}

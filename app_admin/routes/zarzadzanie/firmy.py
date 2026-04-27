@@ -13,6 +13,9 @@ from .formularze import CompanyForm
 
 _repo_firm = CompanyRepository()
 
+_ROUTE_LISTA_FIRM = 'zarzadzanie.lista_firm'
+_TPL_FORMULARZ    = 'zarzadzanie/firmy/formularz.html'
+
 _AKTYWNE_STATUSY = [
     EnrollmentStatus.AWAITING_APPROVAL, EnrollmentStatus.IN_PROGRESS,
     EnrollmentStatus.COMMISSION_REVIEW, EnrollmentStatus.DIRECTOR_APPROVAL,
@@ -38,13 +41,13 @@ def dodaj_firme():
     if form.validate_on_submit():
         if _repo_firm.znajdz_po_nazwie_aktywna(form.name.data.strip()):
             flash('Firma o tej nazwie już istnieje w systemie.', 'error')
-            return render_template('zarzadzanie/firmy/formularz.html', form=form, tryb='dodaj')
+            return render_template(_TPL_FORMULARZ, form=form, tryb='dodaj')
 
         if form.vat_number.data and form.vat_number.data.strip():
             existing_by_vat = _repo_firm.znajdz_po_nip_aktywna(form.vat_number.data.strip())
             if existing_by_vat:
                 flash(f'Firma z numerem NIP/KRS "{form.vat_number.data.strip()}" już istnieje ({existing_by_vat.name}).', 'error')
-                return render_template('zarzadzanie/firmy/formularz.html', form=form, tryb='dodaj')
+                return render_template(_TPL_FORMULARZ, form=form, tryb='dodaj')
 
         firma = Company(
             id      = uuid.uuid4(),
@@ -56,9 +59,9 @@ def dodaj_firme():
         _repo_firm.zapisz(firma)
         db.session.commit()
         flash('Firma została dodana do systemu.', 'success')
-        return redirect(url_for('zarzadzanie.lista_firm'))
+        return redirect(url_for(_ROUTE_LISTA_FIRM))
 
-    return render_template('zarzadzanie/firmy/formularz.html', form=form, tryb='dodaj')
+    return render_template(_TPL_FORMULARZ, form=form, tryb='dodaj')
 
 
 @zarzadzanie_bp.route('/firmy/<uuid:id>/edytuj', methods=['GET', 'POST'])
@@ -70,13 +73,13 @@ def edytuj_firme(id):
     if form.validate_on_submit():
         if _repo_firm.znajdz_po_nazwie_aktywna(form.name.data.strip(), pominij_id=firma.id):
             flash('Firma o tej nazwie już istnieje w systemie.', 'error')
-            return render_template('zarzadzanie/firmy/formularz.html', form=form, tryb='edytuj', firma=firma)
+            return render_template(_TPL_FORMULARZ, form=form, tryb='edytuj', firma=firma)
 
         if form.vat_number.data and form.vat_number.data.strip():
             existing_by_vat = _repo_firm.znajdz_po_nip_aktywna(form.vat_number.data.strip(), pominij_id=firma.id)
             if existing_by_vat:
                 flash(f'Firma z NIP/KRS "{form.vat_number.data.strip()}" już istnieje ({existing_by_vat.name}).', 'error')
-                return render_template('zarzadzanie/firmy/formularz.html', form=form, tryb='edytuj', firma=firma)
+                return render_template(_TPL_FORMULARZ, form=form, tryb='edytuj', firma=firma)
 
         firma.name    = form.name.data.strip()
         firma.address = form.address.data.strip()    if form.address.data    else None
@@ -84,9 +87,9 @@ def edytuj_firme(id):
         firma.tax_id  = form.vat_number.data.strip() if form.vat_number.data else None
         db.session.commit()
         flash('Dane firmy zostały zaktualizowane.', 'success')
-        return redirect(url_for('zarzadzanie.lista_firm'))
+        return redirect(url_for(_ROUTE_LISTA_FIRM))
 
-    return render_template('zarzadzanie/firmy/formularz.html', form=form, tryb='edytuj', firma=firma)
+    return render_template(_TPL_FORMULARZ, form=form, tryb='edytuj', firma=firma)
 
 
 @zarzadzanie_bp.route('/firmy/<uuid:id>/usun', methods=['POST'])
@@ -96,12 +99,12 @@ def usun_firme(id):
     total_internships  = _repo_firm.liczba_praktyk(firma.id)
     if total_internships > 0:
         flash(f'Nie można usunąć firmy - ma {total_internships} praktyk w historii.', 'error')
-        return redirect(url_for('zarzadzanie.lista_firm'))
+        return redirect(url_for(_ROUTE_LISTA_FIRM))
     company_name = firma.name
     _repo_firm.usun(firma)
     db.session.commit()
     flash(f'Firma "{company_name}" została trwale usunięta z systemu.', 'success')
-    return redirect(url_for('zarzadzanie.lista_firm'))
+    return redirect(url_for(_ROUTE_LISTA_FIRM))
 
 
 @zarzadzanie_bp.route('/firmy/<uuid:id>/przelacz-aktywnosc', methods=['POST'])
@@ -113,7 +116,7 @@ def przelacz_aktywnosc_firmy(id):
         active_internships = _repo_firm.liczba_aktywnych_praktyk(firma.id, _AKTYWNE_STATUSY)
         if active_internships > 0:
             flash(f'Nie można dezaktywować firmy - ma {active_internships} aktywnych praktyk.', 'error')
-            return redirect(url_for('zarzadzanie.lista_firm'))
+            return redirect(url_for(_ROUTE_LISTA_FIRM))
         firma.is_active = False
         flash('Firma została dezaktywowana.', 'success')
     else:
@@ -121,4 +124,4 @@ def przelacz_aktywnosc_firmy(id):
         flash('Firma została aktywowana.', 'success')
 
     db.session.commit()
-    return redirect(url_for('zarzadzanie.lista_firm'))
+    return redirect(url_for(_ROUTE_LISTA_FIRM))

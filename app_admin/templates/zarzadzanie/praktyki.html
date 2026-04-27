@@ -31,7 +31,7 @@
         {% for p in praktyki.items %}
         <tr>
           <td style="font-weight: 500;">{{ p.academic_year }}</td>
-          <td>{{ p.semester | capitalize }}</td>
+          <td>{{ p.semester_label }}</td>
           <td>{{ p.required_hours }} h</td>
           <td>{{ p.zapisy | length }}</td>
           <td>
@@ -60,7 +60,7 @@
                 {{ csrf_form.hidden_tag() }}
                 <button type="submit"
                         class="przycisk przycisk--niebezpieczny przycisk--maly"
-                        onclick="return confirm('UWAGA: Czy na pewno chcesz trwale usunąć praktykę {{ p.academic_year }} ({{ p.semester }})?\n\nUsuną się wszystkie zapisy studentów i dokumenty. Tej operacji nie można cofnąć!')">
+                        onclick="return confirm('UWAGA: Czy na pewno chcesz trwale usunąć praktykę {{ p.academic_year }} ({{ p.semester_label }})?\n\nUsuną się wszystkie zapisy studentów i dokumenty. Tej operacji nie można cofnąć!')">
                   Usuń
                 </button>
               </form>
@@ -119,7 +119,7 @@
         {% set dni_pozostale = ((p.deleted_at.timestamp() + 7*86400 - now().timestamp()) / 86400) | int %}
         <tr>
           <td style="font-weight: 500;">{{ p.academic_year }}</td>
-          <td>{{ p.semester | capitalize }}</td>
+          <td>{{ p.semester_label }}</td>
           <td>{{ p.deleted_at.strftime('%d.%m.%Y %H:%M') }}</td>
           <td>
             {% if dni_pozostale <= 1 %}

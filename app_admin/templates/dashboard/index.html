@@ -100,7 +100,7 @@
             {% for z in ostatnie_zapisy %}
             <tr>
               <td>{{ z.student.first_name }} {{ z.student.last_name }}</td>
-              <td>{{ z.praktyka.academic_year }} ({{ z.praktyka.semester }})</td>
+              <td>{{ z.praktyka.academic_year }} ({{ z.praktyka.semester_label }})</td>
               <td>
                 <span class="status status--{{ z.status_css_class }}">
                   {{ z.status_label }}

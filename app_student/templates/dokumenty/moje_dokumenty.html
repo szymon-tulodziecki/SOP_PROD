@@ -28,7 +28,7 @@
   <div class="karta" style="margin-bottom: 1.5rem;">
     <div class="karta__naglowek">
       <div>
-        <div style="font-weight: 600;">{{ wpis.zapis.praktyka.academic_year }} · Semestr {{ wpis.zapis.praktyka.semester }}</div>
+        <div style="font-weight: 600;">{{ wpis.zapis.praktyka.academic_year }} · Semestr {{ wpis.zapis.praktyka.semester_label }}</div>
         <div style="font-size: 0.85rem; color: var(--kolor-tekst-drugor); margin-top: 0.25rem;">
           {% if wpis.zapis.firma %}{{ wpis.zapis.firma.name }}{% elif wpis.zapis.firma_nazwa %}{{ wpis.zapis.firma_nazwa }}{% endif %}
           · Ścieżka:

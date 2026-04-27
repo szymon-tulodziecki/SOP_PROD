@@ -26,17 +26,12 @@ COPY templates/ ./templates/
 # Konfiguracja bezpieczeństwa TeX: openin_any=p, openout_any=p, shell_escape=f
 # Plik jest kopiowany do katalogu przeszukiwanego przez kpsewhich TEXMFLOCAL.
 COPY texmf.cnf /etc/texmf/texmf.d/99-security.cnf
-RUN update-updmap --quiet 2>/dev/null || true && \
-    texhash 2>/dev/null || true
-
-# Weryfikacja wersji LuaLaTeX — wymagana >= 1.17.0 (naprawa CVE-2023-32700).
-# Jeśli wersja jest za stara, build się nie powiedzie.
-RUN lualatex --version | head -1 && python3 check_lualatex_version.py
-
-# Bezpieczeństwo: dedykowany nieuprzywilejowany użytkownik (nie root).
-# LuaLaTeX potrzebuje /tmp do plików pomocniczych — tmpfs montowany
-# jest w docker-compose, więc chown /tmp nie jest wymagany.
-RUN addgroup --system appgroup \
+# Konfiguracja TeX + weryfikacja wersji LuaLaTeX (>= 1.17.0, CVE-2023-32700) + użytkownik nieuprzywilejowany
+RUN update-updmap --quiet 2>/dev/null || true \
+    && texhash 2>/dev/null || true \
+    && lualatex --version | head -1 \
+    && python3 check_lualatex_version.py \
+    && addgroup --system appgroup \
     && adduser --system --ingroup appgroup --no-create-home appuser \
     && chown -R appuser:appgroup /app
 

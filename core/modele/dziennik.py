@@ -8,6 +8,10 @@ import enum
 from sqlalchemy.dialects.postgresql import UUID
 from core.extensions import db
 
+_FK_JOURNAL_ENTRIES  = 'journal_entries.id'
+_FK_LEARNING_OUTCOMES = 'learning_outcomes.id'
+_FK_ENROLLMENTS      = 'internship_enrollments.id'
+
 
 class AssessmentResult(enum.Enum):
     ACHIEVED            = 'ACHIEVED'
@@ -38,13 +42,13 @@ entry_outcomes = db.Table(
     db.Column(
         'entry_id',
         UUID(as_uuid=True),
-        db.ForeignKey('journal_entries.id', ondelete='CASCADE'),
+        db.ForeignKey(_FK_JOURNAL_ENTRIES, ondelete='CASCADE'),
         primary_key=True,
     ),
     db.Column(
         'outcome_id',
         db.Integer,
-        db.ForeignKey('learning_outcomes.id'),
+        db.ForeignKey(_FK_LEARNING_OUTCOMES),
         primary_key=True,
     ),
 )
@@ -55,7 +59,7 @@ class JournalEntry(db.Model):
     __tablename__ = 'journal_entries'
 
     id             = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    enrollment_id  = db.Column(UUID(as_uuid=True), db.ForeignKey('internship_enrollments.id', ondelete='CASCADE'), nullable=False)
+    enrollment_id  = db.Column(UUID(as_uuid=True), db.ForeignKey(_FK_ENROLLMENTS, ondelete='CASCADE'), nullable=False)
     entry_date     = db.Column(db.Date,    nullable=False)
     duration_hours = db.Column(db.Integer, nullable=False)
     description    = db.Column(db.Text,    nullable=False)
@@ -89,8 +93,8 @@ class OutcomeAssessment(db.Model):
     __tablename__ = 'outcome_assessments'
 
     id                 = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    enrollment_id      = db.Column(UUID(as_uuid=True), db.ForeignKey('internship_enrollments.id', ondelete='CASCADE'), nullable=False)
-    learning_outcome_id = db.Column(db.Integer, db.ForeignKey('learning_outcomes.id'), nullable=False)
+    enrollment_id      = db.Column(UUID(as_uuid=True), db.ForeignKey(_FK_ENROLLMENTS, ondelete='CASCADE'), nullable=False)
+    learning_outcome_id = db.Column(db.Integer, db.ForeignKey(_FK_LEARNING_OUTCOMES), nullable=False)
     result             = db.Column(
         db.Enum(AssessmentResult, name='assessment_result', values_callable=lambda e: [x.value for x in e]),
         nullable=False,
@@ -130,8 +134,8 @@ class CommitteeOutcomeEvaluation(db.Model):
     __tablename__ = 'committee_outcome_evaluations'
 
     id                  = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    enrollment_id       = db.Column(UUID(as_uuid=True), db.ForeignKey('internship_enrollments.id', ondelete='CASCADE'), nullable=False)
-    learning_outcome_id = db.Column(db.Integer, db.ForeignKey('learning_outcomes.id'), nullable=False)
+    enrollment_id       = db.Column(UUID(as_uuid=True), db.ForeignKey(_FK_ENROLLMENTS, ondelete='CASCADE'), nullable=False)
+    learning_outcome_id = db.Column(db.Integer, db.ForeignKey(_FK_LEARNING_OUTCOMES), nullable=False)
     result              = db.Column(
         db.Enum(AssessmentResult, name='assessment_result', values_callable=lambda e: [x.value for x in e]),
         nullable=False,

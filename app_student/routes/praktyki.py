@@ -27,6 +27,10 @@ _repo_docs    = StudentDocumentRepository()
 
 praktyki_bp = Blueprint('praktyki', __name__)
 
+_ROUTE_LISTA        = 'praktyki.lista'
+_ROUTE_SZCZEGOLY    = 'praktyki.szczegoly_zgloszenia'
+_TPL_KR2A           = 'kreator/krok2a_firma.html'
+
 
 # ═══════════════════════════════════════════════════════════
 # NOWE FORMULARZE KREATORA
@@ -116,7 +120,7 @@ def kreator_sciezka(id):
     praktyka = _repo_praktyk.znajdz_po_id(id)
     if not praktyka:
         flash('Praktyka niedostępna.', 'danger')
-        return redirect(url_for('praktyki.lista'))
+        return redirect(url_for(_ROUTE_LISTA))
 
     istniejacy = _repo_zapisow.pending_dla_studenta_i_praktyki(current_user.id, id)
 
@@ -163,6 +167,55 @@ def kreator_sciezka(id):
     return render_template('kreator/krok1_sciezka.html', form=form, praktyka=praktyka, istniejacy=istniejacy)
 
 
+def _save_company_from_form(form, zapis, dm) -> str | None:
+    """Saves company data from form to zapis and dm. Returns error string or None."""
+    if not form.ubezpieczenie_nw.data:
+        return 'Ubezpieczenie NW jest wymagane.'
+    if form.firma_typ.data == 'database':
+        if not form.firma_id.data:
+            return 'Wybierz firmę z listy.'
+        zapis.company_id = form.firma_id.data
+        dm.company_name = dm.company_address = dm.company_city = None
+        dm.company_tax_id = dm.authorized_person = dm.authorized_person_position = None
+    else:
+        if not form.firma_nazwa.data or not form.firma_adres.data or not form.firma_miasto.data:
+            return 'Podaj nazwę, adres i miasto firmy.'
+        zapis.company_id = None
+        dm.company_name                  = form.firma_nazwa.data
+        dm.company_address               = form.firma_adres.data
+        dm.company_zip                   = form.firma_kod_pocztowy.data or None
+        dm.company_city                  = form.firma_miasto.data
+        dm.company_tax_id                = form.firma_nip_krs.data
+        dm.authorized_person             = form.firma_upowazniony_osoba.data
+        dm.authorized_person_position    = form.firma_upowazniony_stanowisko.data
+    if not form.zopz_imie_nazwisko.data or not form.zopz_email.data:
+        return 'Podaj imię/nazwisko i email opiekuna zakładowego (ZOPZ).'
+    dm.workplace_mentor_name     = form.zopz_imie_nazwisko.data
+    dm.workplace_mentor_position = form.zopz_stanowisko.data
+    dm.workplace_mentor_phone    = form.zopz_telefon.data
+    dm.workplace_mentor_email    = form.zopz_email.data
+    return None
+
+
+def _populate_firma_form_from_zapis(form, zapis, dm) -> None:
+    form.termin_od.data        = zapis.start_date
+    form.termin_do.data        = zapis.end_date
+    form.ubezpieczenie_nw.data = zapis.accident_insurance
+    form.firma_typ.data = 'database' if zapis.company_id else 'custom'
+    form.firma_id.data  = str(zapis.company_id) if zapis.company_id else ''
+    form.firma_nazwa.data                  = dm.company_name                  if dm else None
+    form.firma_adres.data                  = dm.company_address               if dm else None
+    form.firma_kod_pocztowy.data           = dm.company_zip                   if dm else None
+    form.firma_miasto.data                 = dm.company_city                  if dm else None
+    form.firma_nip_krs.data                = dm.company_tax_id                if dm else None
+    form.firma_upowazniony_osoba.data      = dm.authorized_person             if dm else None
+    form.firma_upowazniony_stanowisko.data = dm.authorized_person_position    if dm else None
+    form.zopz_imie_nazwisko.data = dm.workplace_mentor_name     if dm else None
+    form.zopz_stanowisko.data    = dm.workplace_mentor_position  if dm else None
+    form.zopz_telefon.data       = dm.workplace_mentor_phone     if dm else None
+    form.zopz_email.data         = dm.workplace_mentor_email     if dm else None
+
+
 @praktyki_bp.route('/zgloszenie/<uuid:zapis_id>/kreator/firma', methods=['GET', 'POST'])
 @login_required
 def kreator_firma(zapis_id):
@@ -176,10 +229,6 @@ def kreator_firma(zapis_id):
     form.firma_id.choices = [('', '--- Wybierz firmę ---')] + [(str(f.id), f.name) for f in firmy_list]
 
     if form.validate_on_submit():
-        if not form.ubezpieczenie_nw.data:
-            flash('Ubezpieczenie NW jest wymagane.', 'danger')
-            return render_template('kreator/krok2a_firma.html', form=form, zapis=zapis, firmy_list=firmy_list)
-
         zapis.start_date         = form.termin_od.data
         zapis.end_date           = form.termin_do.data
         zapis.accident_insurance = True
@@ -189,64 +238,24 @@ def kreator_firma(zapis_id):
         if dm not in db.session:
             db.session.add(dm)
 
-        if form.firma_typ.data == 'database':
-            if not form.firma_id.data:
-                flash('Wybierz firmę z listy.', 'danger')
-                return render_template('kreator/krok2a_firma.html', form=form, zapis=zapis, firmy_list=firmy_list)
-            zapis.company_id = form.firma_id.data
-            dm.company_name = dm.company_address = dm.company_city = None
-            dm.company_tax_id = dm.authorized_person = dm.authorized_person_position = None
-        else:
-            if not form.firma_nazwa.data or not form.firma_adres.data or not form.firma_miasto.data:
-                flash('Podaj nazwę, adres i miasto firmy.', 'danger')
-                return render_template('kreator/krok2a_firma.html', form=form, zapis=zapis, firmy_list=firmy_list)
-            zapis.company_id = None
-            dm.company_name                  = form.firma_nazwa.data
-            dm.company_address               = form.firma_adres.data
-            dm.company_zip                   = form.firma_kod_pocztowy.data or None
-            dm.company_city                  = form.firma_miasto.data
-            dm.company_tax_id                = form.firma_nip_krs.data
-            dm.authorized_person             = form.firma_upowazniony_osoba.data
-            dm.authorized_person_position    = form.firma_upowazniony_stanowisko.data
+        err = _save_company_from_form(form, zapis, dm)
+        if err:
+            flash(err, 'danger')
+            return render_template(_TPL_KR2A, form=form, zapis=zapis, firmy_list=firmy_list)
 
-        if not form.zopz_imie_nazwisko.data or not form.zopz_email.data:
-            flash('Podaj imię/nazwisko i email opiekuna zakładowego (ZOPZ).', 'danger')
-            return render_template('kreator/krok2a_firma.html', form=form, zapis=zapis, firmy_list=firmy_list)
-
-        dm.workplace_mentor_name     = form.zopz_imie_nazwisko.data
-        dm.workplace_mentor_position = form.zopz_stanowisko.data
-        dm.workplace_mentor_phone    = form.zopz_telefon.data
-        dm.workplace_mentor_email    = form.zopz_email.data
         byl_status = zapis.status
         db.session.commit()
         if byl_status == EnrollmentStatus.AWAITING_APPROVAL:
             ZapisFSM(zapis).wyslij_do_komisji()
             db.session.commit()
             flash('Dane zaktualizowane i zgłoszenie odesłane do komisji.', 'success')
-            return redirect(url_for('praktyki.szczegoly_zgloszenia', id=zapis.id))
-        # PENDING i REVISION_REQUIRED → harmonogram → wyślij
+            return redirect(url_for(_ROUTE_SZCZEGOLY, id=zapis.id))
         return redirect(url_for('praktyki.zapisz_krok2', id=zapis.id))
 
     if request.method == 'GET':
-        dm = zapis.workplace_details
-        form.termin_od.data        = zapis.start_date
-        form.termin_do.data        = zapis.end_date
-        form.ubezpieczenie_nw.data = zapis.accident_insurance
-        form.firma_typ.data = 'database' if zapis.company_id else 'custom'
-        form.firma_id.data  = str(zapis.company_id) if zapis.company_id else ''
-        form.firma_nazwa.data                  = dm.company_name                  if dm else None
-        form.firma_adres.data                  = dm.company_address               if dm else None
-        form.firma_kod_pocztowy.data           = dm.company_zip                   if dm else None
-        form.firma_miasto.data                 = dm.company_city                  if dm else None
-        form.firma_nip_krs.data                = dm.company_tax_id                if dm else None
-        form.firma_upowazniony_osoba.data      = dm.authorized_person             if dm else None
-        form.firma_upowazniony_stanowisko.data = dm.authorized_person_position    if dm else None
-        form.zopz_imie_nazwisko.data = dm.workplace_mentor_name     if dm else None
-        form.zopz_stanowisko.data    = dm.workplace_mentor_position  if dm else None
-        form.zopz_telefon.data       = dm.workplace_mentor_phone     if dm else None
-        form.zopz_email.data         = dm.workplace_mentor_email     if dm else None
+        _populate_firma_form_from_zapis(form, zapis, zapis.workplace_details)
 
-    return render_template('kreator/krok2a_firma.html', form=form, zapis=zapis, firmy_list=firmy_list)
+    return render_template(_TPL_KR2A, form=form, zapis=zapis, firmy_list=firmy_list)
 
 
 @praktyki_bp.route('/zgloszenie/<uuid:zapis_id>/kreator/wniosek', methods=['GET', 'POST'])
@@ -315,19 +324,19 @@ def zakoncz_praktyke(id):
         abort(404)
     if zapis.status != EnrollmentStatus.IN_PROGRESS:
         flash('Praktykę można zakończyć tylko gdy jest w trakcie realizacji.', 'warning')
-        return redirect(url_for('praktyki.lista'))
+        return redirect(url_for(_ROUTE_LISTA))
 
     path_val = zapis.path_type.value if hasattr(zapis.path_type, 'value') else str(zapis.path_type)
     if path_val == 'STANDARD':
         ok, msg = UslugaPraktyk.waliduj_mozliwosc_zakonczenia(zapis)
         if not ok:
             flash(msg, 'danger')
-            return redirect(url_for('praktyki.lista'))
+            return redirect(url_for(_ROUTE_LISTA))
 
     ZapisFSM(zapis).zakoncz()
     db.session.commit()
     flash('Praktyka została zakończona. Dokumenty końcowe są dostępne w zakładce Moje Dokumenty.', 'success')
-    return redirect(url_for('praktyki.lista'))
+    return redirect(url_for(_ROUTE_LISTA))
 
 
 @praktyki_bp.route('/<uuid:id>/zapisz/krok1', methods=['GET'])
@@ -402,7 +411,7 @@ def potwierdz_wyslanie(id):
     if not zapis or zapis.student_id != current_user.id:
         abort(404)
     if zapis.status not in (EnrollmentStatus.PENDING, EnrollmentStatus.REVISION_REQUIRED):
-        return redirect(url_for('praktyki.szczegoly_zgloszenia', id=id))
+        return redirect(url_for(_ROUTE_SZCZEGOLY, id=id))
     from flask_wtf import FlaskForm
     csrf_form = FlaskForm()
     return render_template('kreator/potwierdz_wyslanie.html', zapis=zapis, csrf_form=csrf_form)
@@ -416,7 +425,7 @@ def wyslij_do_zatwierdzenia(id):
         abort(404)
     if zapis.status not in (EnrollmentStatus.PENDING, EnrollmentStatus.REVISION_REQUIRED):
         flash('Zgłoszenie zostało już wysłane.', 'info')
-        return redirect(url_for('praktyki.szczegoly_zgloszenia', id=id))
+        return redirect(url_for(_ROUTE_SZCZEGOLY, id=id))
     from core.uslugi.workflow import ZapisFSM
     fsm = ZapisFSM(zapis)
     if zapis.path_type and zapis.path_type.value in ('EMPLOYMENT', 'OWN_BUSINESS'):
@@ -425,7 +434,7 @@ def wyslij_do_zatwierdzenia(id):
         fsm.wyslij_do_akceptacji()
     db.session.commit()
     flash('Zgłoszenie zostało przesłane.', 'success')
-    return redirect(url_for('praktyki.lista'))
+    return redirect(url_for(_ROUTE_LISTA))
 
 
 @praktyki_bp.route('/zgloszenie/<uuid:id>/szczegoly', methods=['GET'])
@@ -475,7 +484,7 @@ def resubmit_zgloszenia(id):
         abort(404)
     if zapis.status not in (EnrollmentStatus.AWAITING_APPROVAL, EnrollmentStatus.REVISION_REQUIRED):
         flash('Zgłoszenie nie może być ponownie wysłane w tym statusie.', 'warning')
-        return redirect(url_for('praktyki.szczegoly_zgloszenia', id=id))
+        return redirect(url_for(_ROUTE_SZCZEGOLY, id=id))
     try:
         with ZapisFSM.lock(id) as fsm:
             if zapis.status == EnrollmentStatus.REVISION_REQUIRED:
@@ -485,8 +494,8 @@ def resubmit_zgloszenia(id):
             db.session.commit()
     except IllegalTransitionError as e:
         flash(str(e), 'danger')
-        return redirect(url_for('praktyki.szczegoly_zgloszenia', id=id))
+        return redirect(url_for(_ROUTE_SZCZEGOLY, id=id))
     flash('Zgłoszenie zostało ponownie wysłane do weryfikacji komisji.', 'success')
-    return redirect(url_for('praktyki.szczegoly_zgloszenia', id=id))
+    return redirect(url_for(_ROUTE_SZCZEGOLY, id=id))
 
 

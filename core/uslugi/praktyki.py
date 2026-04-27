@@ -22,6 +22,17 @@ from core.modele.praktyki import (
 from core.repozytoria.praktyki import InternshipRepository, EnrollmentRepository
 
 
+def _last_event_comment(enrollment_id, event_type, decision: str) -> str | None:
+    ev = (
+        db.session.query(ProcessEvent)
+        .filter_by(enrollment_id=enrollment_id, event_type=event_type)
+        .filter(ProcessEvent.decision == decision)
+        .order_by(ProcessEvent.executed_at.desc())
+        .first()
+    )
+    return ev.comment if ev else None
+
+
 class UslugaPraktyk:
     """Business logic for internship editions and enrollment processing."""
 
@@ -244,27 +255,14 @@ class UslugaPraktyk:
         in_review = zapis.status in (EnrollmentStatus.COMMISSION_REVIEW, EnrollmentStatus.DIRECTOR_APPROVAL)
         zwrocone = (zwrocone_a or zwrocone_bc or zwrocone_komisja) and not in_review
 
-        komentarz_komisji = None
-        if zwrocone_komisja:
-            ev = (
-                db.session.query(ProcessEvent)
-                .filter_by(enrollment_id=zapis.id, event_type=EventType.COMMITTEE_DECISION)
-                .filter(ProcessEvent.decision == 'PARTIALLY_APPROVED')
-                .order_by(ProcessEvent.executed_at.desc())
-                .first()
-            )
-            komentarz_komisji = ev.comment if ev else None
-
-        komentarz_odrzucenia = None
-        if zapis.status == EnrollmentStatus.REJECTED:
-            ev = (
-                db.session.query(ProcessEvent)
-                .filter_by(enrollment_id=zapis.id)
-                .filter(ProcessEvent.decision == 'REJECTED')
-                .order_by(ProcessEvent.executed_at.desc())
-                .first()
-            )
-            komentarz_odrzucenia = ev.comment if ev else None
+        komentarz_komisji = (
+            _last_event_comment(zapis.id, EventType.COMMITTEE_DECISION, 'PARTIALLY_APPROVED')
+            if zwrocone_komisja else None
+        )
+        komentarz_odrzucenia = (
+            _last_event_comment(zapis.id, EventType.COMMITTEE_DECISION, 'REJECTED')
+            if zapis.status == EnrollmentStatus.REJECTED else None
+        )
 
         jest_odrzucone = zapis.status == EnrollmentStatus.REJECTED
         border_alert   = zwrocone or jest_odrzucone

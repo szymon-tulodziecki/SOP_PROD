@@ -28,6 +28,9 @@ from core.repozytoria import UserRepository
 
 _repo_uzytk = UserRepository()
 
+_ROUTE_LOGIN     = 'auth.logowanie'
+_ROUTE_DASHBOARD = 'dashboard.index'
+
 
 # ── Formularz zmiany hasła (zachowany dla kont technicznych) ─────────────────
 
@@ -74,6 +77,89 @@ def _msal_app():
 _MS_SCOPES = ['User.Read']
 
 
+# ── Pomocnicze — callback Microsoft ──────────────────────────────────────────
+
+def _acquire_token(code: str) -> dict | None:
+    """Wymienia kod OAuth na token; zwraca None przy błędzie komunikacji."""
+    try:
+        result = _msal_app().acquire_token_by_authorization_code(
+            code         = code,
+            scopes       = _MS_SCOPES,
+            redirect_uri = url_for('auth.ms_callback', _external=True),
+        )
+        return result
+    except Exception:
+        current_app.logger.exception('Błąd wymiany kodu OAuth na token')
+        return None
+
+
+def _resolve_user(ms_email: str, dozwolone_role):
+    """Zwraca krotkę (user, error_msg) — dokładnie jedno z nich jest None."""
+    try:
+        uzytkownik = _repo_uzytk.znajdz_po_emailu(ms_email)
+    except SQLAlchemyError:
+        current_app.logger.exception('Błąd bazy danych podczas logowania MS')
+        return None, 'Błąd połączenia z bazą danych.'
+
+    if not uzytkownik or not uzytkownik.is_active:
+        current_app.logger.info('Próba logowania nieznanego konta MS: %s', ms_email)
+        return None, (
+            'Twoje konto Microsoft nie jest zarejestrowane w systemie. '
+            'Skontaktuj się z administratorem.'
+        )
+
+    if dozwolone_role and uzytkownik.role not in dozwolone_role:
+        return None, 'Twoje konto nie ma dostępu do tego panelu.'
+
+    return uzytkownik, None
+
+
+def _ms_callback_handler(dozwolone_role):
+    """Shared logic for the /ms-callback route — extracted to reduce nesting."""
+    expected_state = session.pop('oauth_state', None)
+    if not expected_state or request.args.get('state') != expected_state:
+        current_app.logger.warning('OAuth state mismatch — możliwy atak CSRF')
+        flash('Błąd bezpieczeństwa logowania. Spróbuj ponownie.', 'danger')
+        return redirect(url_for(_ROUTE_LOGIN))
+
+    if 'error' in request.args:
+        error_desc = request.args.get('error_description', request.args['error'])
+        current_app.logger.warning('Microsoft OAuth error: %s', error_desc)
+        flash('Logowanie przez Microsoft nie powiodło się.', 'danger')
+        return redirect(url_for(_ROUTE_LOGIN))
+
+    code = request.args.get('code')
+    if not code:
+        flash('Brak kodu autoryzacyjnego od Microsoft.', 'danger')
+        return redirect(url_for(_ROUTE_LOGIN))
+
+    result = _acquire_token(code)
+    if result is None:
+        flash('Błąd komunikacji z Microsoft. Spróbuj ponownie.', 'danger')
+        return redirect(url_for(_ROUTE_LOGIN))
+
+    if 'error' in result:
+        current_app.logger.warning('Token error: %s — %s',
+                                   result.get('error'), result.get('error_description'))
+        flash('Nie udało się uzyskać tokenu od Microsoft.', 'danger')
+        return redirect(url_for(_ROUTE_LOGIN))
+
+    ms_email = (result.get('id_token_claims', {}).get('preferred_username') or '').lower().strip()
+    if not ms_email:
+        flash('Nie udało się odczytać adresu e-mail z konta Microsoft.', 'danger')
+        return redirect(url_for(_ROUTE_LOGIN))
+
+    uzytkownik, err = _resolve_user(ms_email, dozwolone_role)
+    if err:
+        flash(err, 'danger')
+        return redirect(url_for(_ROUTE_LOGIN))
+
+    login_user(uzytkownik, remember=False)
+    current_app.logger.info('Zalogowano przez Microsoft: %s (rola: %s)', ms_email, uzytkownik.role)
+    next_page = session.pop('oauth_next', None)
+    return redirect(next_page if next_page and next_page.startswith('/') else url_for(_ROUTE_DASHBOARD))
+
+
 # ── Fabryka blueprintu ────────────────────────────────────────────────────────
 
 def stworz_blueprint_auth(
@@ -89,7 +175,7 @@ def stworz_blueprint_auth(
     @auth_bp.route('/logowanie', methods=['GET'])
     def logowanie():
         if current_user.is_authenticated:
-            return redirect(url_for('dashboard.index'))
+            return redirect(url_for(_ROUTE_DASHBOARD))
         return render_template(template_logowania)
 
     # ── Krok 1: przekieruj do Microsoft ──────────────────────────────────────
@@ -98,7 +184,7 @@ def stworz_blueprint_auth(
     @limiter.limit("20 per minute")
     def ms_login():
         if current_user.is_authenticated:
-            return redirect(url_for('dashboard.index'))
+            return redirect(url_for(_ROUTE_DASHBOARD))
 
         state = secrets.token_urlsafe(32)
         session['oauth_state'] = state
@@ -116,7 +202,7 @@ def stworz_blueprint_auth(
         except Exception:
             current_app.logger.exception('Błąd budowania URL autoryzacji Microsoft')
             flash('Błąd konfiguracji logowania. Skontaktuj się z administratorem.', 'danger')
-            return redirect(url_for('auth.logowanie'))
+            return redirect(url_for(_ROUTE_LOGIN))
 
         return redirect(auth_url)
 
@@ -125,81 +211,7 @@ def stworz_blueprint_auth(
     @auth_bp.route('/ms-callback', methods=['GET'])
     @limiter.limit("20 per minute")
     def ms_callback():
-        # Weryfikacja stanu CSRF
-        expected_state = session.pop('oauth_state', None)
-        if not expected_state or request.args.get('state') != expected_state:
-            current_app.logger.warning('OAuth state mismatch — możliwy atak CSRF')
-            flash('Błąd bezpieczeństwa logowania. Spróbuj ponownie.', 'danger')
-            return redirect(url_for('auth.logowanie'))
-
-        # Microsoft zwrócił błąd (np. użytkownik anulował)
-        if 'error' in request.args:
-            error_desc = request.args.get('error_description', request.args['error'])
-            current_app.logger.warning('Microsoft OAuth error: %s', error_desc)
-            flash('Logowanie przez Microsoft nie powiodło się.', 'danger')
-            return redirect(url_for('auth.logowanie'))
-
-        code = request.args.get('code')
-        if not code:
-            flash('Brak kodu autoryzacyjnego od Microsoft.', 'danger')
-            return redirect(url_for('auth.logowanie'))
-
-        # Wymiana kodu na token
-        try:
-            result = _msal_app().acquire_token_by_authorization_code(
-                code         = code,
-                scopes       = _MS_SCOPES,
-                redirect_uri = url_for('auth.ms_callback', _external=True),
-            )
-        except Exception:
-            current_app.logger.exception('Błąd wymiany kodu OAuth na token')
-            flash('Błąd komunikacji z Microsoft. Spróbuj ponownie.', 'danger')
-            return redirect(url_for('auth.logowanie'))
-
-        if 'error' in result:
-            current_app.logger.warning('Token error: %s — %s',
-                                       result.get('error'),
-                                       result.get('error_description'))
-            flash('Nie udało się uzyskać tokenu od Microsoft.', 'danger')
-            return redirect(url_for('auth.logowanie'))
-
-        claims = result.get('id_token_claims', {})
-        ms_email = (claims.get('preferred_username') or '').lower().strip()
-
-        if not ms_email:
-            flash('Nie udało się odczytać adresu e-mail z konta Microsoft.', 'danger')
-            return redirect(url_for('auth.logowanie'))
-
-        # Znajdź użytkownika w bazie po e-mailu
-        try:
-            uzytkownik = _repo_uzytk.znajdz_po_emailu(ms_email)
-        except SQLAlchemyError:
-            current_app.logger.exception('Błąd bazy danych podczas logowania MS')
-            flash('Błąd połączenia z bazą danych.', 'danger')
-            return redirect(url_for('auth.logowanie'))
-
-        if not uzytkownik or not uzytkownik.is_active:
-            current_app.logger.info('Próba logowania nieznanego konta MS: %s', ms_email)
-            flash(
-                'Twoje konto Microsoft nie jest zarejestrowane w systemie. '
-                'Skontaktuj się z administratorem.',
-                'danger',
-            )
-            return redirect(url_for('auth.logowanie'))
-
-        # Weryfikacja roli
-        if dozwolone_role and uzytkownik.role not in dozwolone_role:
-            flash('Twoje konto nie ma dostępu do tego panelu.', 'danger')
-            return redirect(url_for('auth.logowanie'))
-
-        login_user(uzytkownik, remember=False)
-        current_app.logger.info('Zalogowano przez Microsoft: %s (rola: %s)',
-                                ms_email, uzytkownik.role)
-
-        next_page = session.pop('oauth_next', None)
-        return redirect(
-            next_page if next_page and next_page.startswith('/') else url_for('dashboard.index')
-        )
+        return _ms_callback_handler(dozwolone_role)
 
     # ── Wylogowanie ───────────────────────────────────────────────────────────
 
@@ -229,7 +241,7 @@ def stworz_blueprint_auth(
             current_user.require_password_change = False
             db.session.commit()
             flash('Hasło zostało zmienione.', 'success')
-            return redirect(url_for('dashboard.index'))
+            return redirect(url_for(_ROUTE_DASHBOARD))
         return render_template(template_zmiany_hasla, form=form)
 
     return auth_bp

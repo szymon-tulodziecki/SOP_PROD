@@ -18,6 +18,8 @@ from core.repozytoria import UserRepository
 
 _repo_uzytk = UserRepository()
 
+_ROUTE_LISTA_UZYTKOWNIKOW = 'zarzadzanie.lista_uzytkownikow'
+
 from . import zarzadzanie_bp
 from .formularze import (StudentForm, StudentEditForm, StaffForm,
                           CsvImportForm, CompanyForm, InternshipForm)
@@ -63,7 +65,7 @@ def nowy_student():
             f'zostało utworzone. Student może się teraz zalogować przez Microsoft ({u.email}).',
             'success'
         )
-        return redirect(url_for('zarzadzanie.lista_uzytkownikow'))
+        return redirect(url_for(_ROUTE_LISTA_UZYTKOWNIKOW))
     return render_template('zarzadzanie/formularz_studenta.html', form=form, uzytkownik=None)
 
 
@@ -92,7 +94,7 @@ def edytuj_studenta(id):
         u.study_mode     = form.study_mode.data     or None
         db.session.commit()
         flash('Dane studenta zostały zaktualizowane.', 'success')
-        return redirect(url_for('zarzadzanie.lista_uzytkownikow'))
+        return redirect(url_for(_ROUTE_LISTA_UZYTKOWNIKOW))
     return render_template('zarzadzanie/formularz_studenta.html', form=form, uzytkownik=u)
 
 
@@ -118,7 +120,7 @@ def nowy_pracownik():
             f'Użytkownik może się zalogować przez Microsoft ({u.email}).',
             'success'
         )
-        return redirect(url_for('zarzadzanie.lista_uzytkownikow'))
+        return redirect(url_for(_ROUTE_LISTA_UZYTKOWNIKOW))
     return render_template('zarzadzanie/formularz_pracownika.html', form=form, uzytkownik=None)
 
 
@@ -146,12 +148,12 @@ def przelacz_aktywnosc(id):
     u = _repo_uzytk.znajdz_po_id(id) or abort(404)
     if str(u.id) == str(current_user.id):
         flash('Nie możesz dezaktywować własnego konta.', 'danger')
-        return redirect(url_for('zarzadzanie.lista_uzytkownikow'))
+        return redirect(url_for(_ROUTE_LISTA_UZYTKOWNIKOW))
     u.is_active = not u.is_active
     db.session.commit()
     status_label = 'aktywowane' if u.is_active else 'dezaktywowane'
     flash(f'Konto {u.first_name} {u.last_name} zostało {status_label}.', 'success')
-    return redirect(url_for('zarzadzanie.lista_uzytkownikow'))
+    return redirect(url_for(_ROUTE_LISTA_UZYTKOWNIKOW))
 
 
 @zarzadzanie_bp.route('/uzytkownicy/<uuid:id>/usun', methods=['POST'])
@@ -160,9 +162,9 @@ def usun_uzytkownika(id):
     u = _repo_uzytk.znajdz_po_id(id) or abort(404)
     if str(u.id) == str(current_user.id):
         flash('Nie możesz usunąć własnego konta.', 'danger')
-        return redirect(url_for('zarzadzanie.lista_uzytkownikow'))
+        return redirect(url_for(_ROUTE_LISTA_UZYTKOWNIKOW))
     full_name = f'{u.first_name} {u.last_name}'
     _repo_uzytk.usun(u)
     db.session.commit()
     flash(f'Konto {full_name} zostało trwale usunięte.', 'success')
-    return redirect(url_for('zarzadzanie.lista_uzytkownikow'))
+    return redirect(url_for(_ROUTE_LISTA_UZYTKOWNIKOW))

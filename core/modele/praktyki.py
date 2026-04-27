@@ -93,6 +93,12 @@ class Internship(db.Model):
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     deleted_at = db.Column(db.DateTime, nullable=True, default=None)
 
+    _SEMESTER_LABELS = {'winter': 'Zimowy', 'summer': 'Letni'}
+
+    @property
+    def semester_label(self) -> str:
+        return self._SEMESTER_LABELS.get((self.semester or '').lower(), self.semester or '')
+
     enrollments = db.relationship(
         'InternshipEnrollment', backref='internship',
         lazy='select', cascade=_CASCADE_DELETE, passive_deletes=True,
@@ -106,8 +112,8 @@ class InternshipEnrollment(db.Model):
 
     id            = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     internship_id = db.Column(UUID(as_uuid=True), db.ForeignKey('internships.id',  ondelete='CASCADE'), nullable=False)
-    student_id    = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id',        ondelete='CASCADE'), nullable=False)
-    supervisor_id = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id',        ondelete=_ON_SET_NULL), nullable=True)
+    student_id    = db.Column(UUID(as_uuid=True), db.ForeignKey(_FK_USERS,        ondelete='CASCADE'), nullable=False)
+    supervisor_id = db.Column(UUID(as_uuid=True), db.ForeignKey(_FK_USERS,        ondelete=_ON_SET_NULL), nullable=True)
     company_id    = db.Column(UUID(as_uuid=True), db.ForeignKey('companies.id',    ondelete=_ON_SET_NULL), nullable=True)
 
     status = db.Column(
@@ -522,7 +528,7 @@ class WorkplaceDetails(db.Model):
     __tablename__ = 'workplace_details'
 
     id            = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    enrollment_id = db.Column(UUID(as_uuid=True), db.ForeignKey('internship_enrollments.id', ondelete='CASCADE'), nullable=False, unique=True)
+    enrollment_id = db.Column(UUID(as_uuid=True), db.ForeignKey(_FK_ENROLLMENTS, ondelete='CASCADE'), nullable=False, unique=True)
 
     company_name                = db.Column(db.String(255), nullable=True)
     company_address             = db.Column(db.String(255), nullable=True)
@@ -630,7 +636,7 @@ class PathJustification(db.Model):
     __tablename__ = 'path_justifications'
 
     id            = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    enrollment_id = db.Column(UUID(as_uuid=True), db.ForeignKey('internship_enrollments.id', ondelete='CASCADE'), nullable=False, unique=True)
+    enrollment_id = db.Column(UUID(as_uuid=True), db.ForeignKey(_FK_ENROLLMENTS, ondelete='CASCADE'), nullable=False, unique=True)
     justification      = db.Column(db.Text,        nullable=True)
     attachments        = db.Column(db.Text,        nullable=True)
     employment_subtype = db.Column(db.String(20),  nullable=True)  # 'WORK' or 'INTERNSHIP'
@@ -664,7 +670,7 @@ class Examination(db.Model):
     __tablename__ = 'examinations'
 
     id            = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    enrollment_id = db.Column(UUID(as_uuid=True), db.ForeignKey('internship_enrollments.id', ondelete='CASCADE'), nullable=False, unique=True)
+    enrollment_id = db.Column(UUID(as_uuid=True), db.ForeignKey(_FK_ENROLLMENTS, ondelete='CASCADE'), nullable=False, unique=True)
 
     question_1 = db.Column(db.Text,          nullable=True)
     grade_1    = db.Column(db.Numeric(3, 1), nullable=True)
@@ -714,7 +720,7 @@ class FinalGrades(db.Model):
     __tablename__ = 'final_grades'
 
     id            = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    enrollment_id = db.Column(UUID(as_uuid=True), db.ForeignKey('internship_enrollments.id', ondelete='CASCADE'), nullable=False, unique=True)
+    enrollment_id = db.Column(UUID(as_uuid=True), db.ForeignKey(_FK_ENROLLMENTS, ondelete='CASCADE'), nullable=False, unique=True)
 
     report_grade                  = db.Column(db.Numeric(3, 1), nullable=True)
     supervisor_grade              = db.Column(db.Numeric(3, 1), nullable=True)
@@ -755,14 +761,14 @@ class ProcessEvent(db.Model):
     __tablename__ = 'process_events'
 
     id            = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    enrollment_id = db.Column(UUID(as_uuid=True), db.ForeignKey('internship_enrollments.id', ondelete='CASCADE'), nullable=False)
+    enrollment_id = db.Column(UUID(as_uuid=True), db.ForeignKey(_FK_ENROLLMENTS, ondelete='CASCADE'), nullable=False)
     event_type    = db.Column(
         db.Enum(EventType, name='event_type', values_callable=lambda e: [x.value for x in e]),
         nullable=False,
     )
     decision       = db.Column(db.String(20), nullable=True)   # 'APPROVED' / 'REJECTED'
     comment        = db.Column(db.Text,       nullable=True)
-    executed_by_id = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id', ondelete=_ON_SET_NULL), nullable=True)
+    executed_by_id = db.Column(UUID(as_uuid=True), db.ForeignKey(_FK_USERS, ondelete=_ON_SET_NULL), nullable=True)
     executed_at    = db.Column(db.DateTime,   server_default=db.func.now())
 
     enrollment   = db.relationship('InternshipEnrollment', back_populates='process_events')
@@ -803,7 +809,7 @@ class InternshipSchedule(db.Model):
     __tablename__ = 'internship_schedules'
 
     id                  = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    enrollment_id       = db.Column(UUID(as_uuid=True), db.ForeignKey('internship_enrollments.id', ondelete='CASCADE'), nullable=False)
+    enrollment_id       = db.Column(UUID(as_uuid=True), db.ForeignKey(_FK_ENROLLMENTS, ondelete='CASCADE'), nullable=False)
     learning_outcome_id = db.Column('outcome_id', db.Integer, db.ForeignKey('learning_outcomes.id'), nullable=False)
     department_name     = db.Column(db.String(255), nullable=False)
     example_tasks       = db.Column(db.Text,        nullable=False)
@@ -862,7 +868,7 @@ class InternshipReport(db.Model):
     __tablename__ = 'internship_reports'
 
     id                   = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    enrollment_id        = db.Column(UUID(as_uuid=True), db.ForeignKey('internship_enrollments.id', ondelete='CASCADE'), nullable=False, unique=True)
+    enrollment_id        = db.Column(UUID(as_uuid=True), db.ForeignKey(_FK_ENROLLMENTS, ondelete='CASCADE'), nullable=False, unique=True)
     workplace_description = db.Column(db.Text,     nullable=True)
     analysis             = db.Column(db.Text,      nullable=True)
     skills               = db.Column(db.Text,      nullable=True)
@@ -902,7 +908,7 @@ class IndividualProgram(db.Model):
     __tablename__ = 'individual_programs'
 
     id                       = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    enrollment_id            = db.Column(UUID(as_uuid=True), db.ForeignKey('internship_enrollments.id', ondelete='CASCADE'), nullable=False, unique=True)
+    enrollment_id            = db.Column(UUID(as_uuid=True), db.ForeignKey(_FK_ENROLLMENTS, ondelete='CASCADE'), nullable=False, unique=True)
     status                   = db.Column(db.String(30), nullable=False, default='DRAFT')
     approved_by_supervisor   = db.Column(db.Boolean,   default=False)
     approved_at              = db.Column(db.DateTime,   nullable=True)
@@ -934,7 +940,7 @@ class DocumentNumber(db.Model):
     __tablename__ = 'document_numbers'
 
     id            = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    enrollment_id = db.Column(UUID(as_uuid=True), db.ForeignKey('internship_enrollments.id', ondelete='CASCADE'), nullable=False)
+    enrollment_id = db.Column(UUID(as_uuid=True), db.ForeignKey(_FK_ENROLLMENTS, ondelete='CASCADE'), nullable=False)
     document_type = db.Column(db.String(50),  nullable=False)
     number        = db.Column(db.String(100), nullable=False)
     generated_at  = db.Column(db.DateTime,   server_default=db.func.now())

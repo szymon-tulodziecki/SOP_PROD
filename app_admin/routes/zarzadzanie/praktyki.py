@@ -29,8 +29,11 @@ _repo_uzytk   = UserRepository()
 _repo_efektow = OutcomeRepository()
 _repo_docs    = StudentDocumentRepository()
 
+_ROUTE_LISTA_PRAKTYK  = 'zarzadzanie.lista_praktyk'
+_ROUTE_LISTA_ZGLOSZEN = 'zarzadzanie.lista_zgloszen'
+
 from . import zarzadzanie_bp
-from .formularze import *
+from .formularze import InternshipForm
 
 # ── Praktyki ──────────────────────────────────────────────────────────────────
 
@@ -66,7 +69,7 @@ def nowa_praktyka():
         _repo_praktyk.zapisz(p)
         db.session.commit()
         flash('Internship została utworzona.', 'success')
-        return redirect(url_for('zarzadzanie.lista_praktyk'))
+        return redirect(url_for(_ROUTE_LISTA_PRAKTYK))
     return render_template('zarzadzanie/formularz_praktyki.html', form=form)
 
 
@@ -78,7 +81,7 @@ def przelacz_aktywnosc_praktyki(id):
     db.session.commit()
     stan = 'aktywowana' if p.status == InternshipStatus.ACTIVE else 'dezaktywowana'
     flash(f'Praktyka {p.academic_year} ({p.semester}) została {stan}.', 'success')
-    return redirect(url_for('zarzadzanie.lista_praktyk'))
+    return redirect(url_for(_ROUTE_LISTA_PRAKTYK))
 
 
 # ── Zgłoszenia studentów ──────────────────────────────────────────────────────
@@ -123,7 +126,7 @@ def przypisz_uopz(id):
                 flash(str(e), 'danger')
         else:
             flash('Nie wybrano opiekuna.', 'warning')
-        return redirect(url_for('zarzadzanie.lista_zgloszen'))
+        return redirect(url_for(_ROUTE_LISTA_ZGLOSZEN))
 
     if request.method == 'GET':
         form.uopz_id.data = str(enrollment.supervisor_id) if enrollment.supervisor_id else ''
@@ -164,7 +167,7 @@ def szczegoly_zgloszenia(id):
                 db.session.commit()
         except IllegalTransitionError as e:
             flash(str(e), 'danger')
-        return redirect(url_for('zarzadzanie.lista_zgloszen'))
+        return redirect(url_for(_ROUTE_LISTA_ZGLOSZEN))
 
     uploaded_docs = _repo_docs.dla_zapisu_studenta(id, enrollment.student_id)
 
@@ -183,7 +186,7 @@ def zatwierdz_zaklad(id):
         flash('Zakład zatwierdzony. Internship rozpoczęła się.', 'success')
     except IllegalTransitionError as e:
         flash(str(e), 'danger')
-    return redirect(url_for('zarzadzanie.lista_zgloszen'))
+    return redirect(url_for(_ROUTE_LISTA_ZGLOSZEN))
 
 
 @zarzadzanie_bp.route('/zgloszenia/<uuid:id>/potwierdz', methods=['POST'])
@@ -240,7 +243,7 @@ def usun_praktyke(id):
         _repo_praktyk.usun(p)
         db.session.commit()
         flash(f'Praktyka {opis} została trwale usunięta (brak zapisanych studentów).', 'success')
-    return redirect(url_for('zarzadzanie.lista_praktyk'))
+    return redirect(url_for(_ROUTE_LISTA_PRAKTYK))
 
 
 @zarzadzanie_bp.route('/praktyki/<uuid:id>/przywroc', methods=['POST'])
@@ -251,6 +254,6 @@ def przywroc_praktyke(id):
     p.deleted_at = None
     db.session.commit()
     flash(f'Praktyka {opis} została przywrócona.', 'success')
-    return redirect(url_for('zarzadzanie.lista_praktyk'))
+    return redirect(url_for(_ROUTE_LISTA_PRAKTYK))
 
 

@@ -28,8 +28,9 @@ _repo_docs    = StudentDocumentRepository()
 _repo_efektow = OutcomeRepository()
 _repo_ocen    = AssessmentRepository()
 
+_ROUTE_DZIEKAN_LISTA = 'zarzadzanie.dziekan_lista'
+
 from . import zarzadzanie_bp
-from .formularze import *
 
 # ── Dyrektor Instytutu ────────────────────────────────────────────────────────
 
@@ -49,7 +50,7 @@ def dziekan_decyzja(id):
 
     if enrollment.status != EnrollmentStatus.DIRECTOR_APPROVAL:
         flash('Wniosek nie wymaga decyzji Dyrektora Instytutu.', 'warning')
-        return redirect(url_for('zarzadzanie.dziekan_lista'))
+        return redirect(url_for(_ROUTE_DZIEKAN_LISTA))
 
     class DirectorForm(FlaskForm):
         comment = TextAreaField('Komentarz dyrektora', validators=[Optional()])
@@ -65,7 +66,7 @@ def dziekan_decyzja(id):
                 with ZapisFSM.lock(id) as fsm:
                     if fsm.zapis.status != EnrollmentStatus.DIRECTOR_APPROVAL:
                         flash('Wniosek zmienił status podczas przetwarzania — spróbuj ponownie.', 'warning')
-                        return redirect(url_for('zarzadzanie.dziekan_lista'))
+                        return redirect(url_for(_ROUTE_DZIEKAN_LISTA))
 
                     comment = form.comment.data or ''
                     if decision == 'APPROVED':
@@ -80,7 +81,7 @@ def dziekan_decyzja(id):
                     db.session.commit()
             except IllegalTransitionError as e:
                 flash(str(e), 'danger')
-            return redirect(url_for('zarzadzanie.dziekan_lista'))
+            return redirect(url_for(_ROUTE_DZIEKAN_LISTA))
 
     documents             = _repo_docs.dokumenty_zapisu(id)
     outcomes              = _repo_efektow.wszystkie()

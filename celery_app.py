@@ -76,7 +76,7 @@ def _create_worker_app() -> Flask:
         'pool_timeout':  10,     # sekund oczekiwania na wolne połączenie
         'pool_pre_ping': True,   # wykrywa martwe połączenia przed użyciem
     }
-    app.config['SECRET_KEY'] = os.environ['SECRET_KEY']
+    app.config['SECRET_KEY'] = os.environ['SECRET_KEY']  # NOSONAR — read from env, not hardcoded
     app.config['TEX_SERVICE_URL'] = TEX_SERVICE_URL
 
     from core.extensions import db

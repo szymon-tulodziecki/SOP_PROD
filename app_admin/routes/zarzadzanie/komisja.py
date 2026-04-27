@@ -28,8 +28,10 @@ _repo_docs    = StudentDocumentRepository()
 _repo_efektow = OutcomeRepository()
 _repo_ocen    = AssessmentRepository()
 
+_ROUTE_KOMISJA_LISTA = 'zarzadzanie.komisja_lista'
+_TPL_WERYFIKUJ       = 'zarzadzanie/komisja/weryfikuj.html'
+
 from . import zarzadzanie_bp
-from .formularze import *
 
 # ── Komisja weryfikująca ──────────────────────────────────────────────────────
 
@@ -49,7 +51,7 @@ def komisja_weryfikuj(id):
 
     if enrollment.status not in (EnrollmentStatus.COMMISSION_REVIEW, EnrollmentStatus.AWAITING_APPROVAL, EnrollmentStatus.REVISION_REQUIRED):
         flash('Wniosek nie wymaga weryfikacji komisji.', 'warning')
-        return redirect(url_for('zarzadzanie.komisja_lista'))
+        return redirect(url_for(_ROUTE_KOMISJA_LISTA))
 
     class CommitteeForm(FlaskForm):
         comment = TextAreaField('Komentarz ogólny komisji', validators=[Optional()])
@@ -59,36 +61,34 @@ def komisja_weryfikuj(id):
 
     ACTIVE_STATUSES = (EnrollmentStatus.COMMISSION_REVIEW, EnrollmentStatus.AWAITING_APPROVAL)
 
+    def _render_weryfikuj():
+        ev  = _repo_ocen.dla_komisji_dict(id)
+        doc = _repo_docs.dla_zapisu_studenta(id, enrollment.student_id)
+        return render_template(_TPL_WERYFIKUJ, form=form, zapis=enrollment,
+                               dokumenty=doc, efekty=outcomes, istniejace=ev)
+
     if form.validate_on_submit():
         if enrollment.status not in ACTIVE_STATUSES:
             flash('Wniosek nie jest w stanie umożliwiającym decyzję komisji.', 'warning')
-            return redirect(url_for('zarzadzanie.komisja_lista'))
+            return redirect(url_for(_ROUTE_KOMISJA_LISTA))
 
         committee_opinion = request.form.get('opinia')
         if committee_opinion not in ('APPROVED', 'PARTIALLY_APPROVED', 'REJECTED'):
             flash('Wybierz opinię komisji (jeden z trzech przycisków).', 'warning')
-            existing_evaluations = _repo_ocen.dla_komisji_dict(id)
-            documents            = _repo_docs.dla_zapisu_studenta(id, enrollment.student_id)
-            return render_template('zarzadzanie/komisja/weryfikuj.html',
-                                   form=form, zapis=enrollment, dokumenty=documents,
-                                   efekty=outcomes, istniejace=existing_evaluations)
+            return _render_weryfikuj()
 
         errors, evaluations = SerwisKomisji.waliduj_oceny_efektow(outcomes, request.form)
 
         if errors:
             for err in errors:
                 flash(err, 'danger')
-            existing_evaluations = _repo_ocen.dla_komisji_dict(id)
-            documents            = _repo_docs.dla_zapisu_studenta(id, enrollment.student_id)
-            return render_template('zarzadzanie/komisja/weryfikuj.html',
-                                   form=form, zapis=enrollment, dokumenty=documents,
-                                   efekty=outcomes, istniejace=existing_evaluations)
+            return _render_weryfikuj()
 
         try:
             with ZapisFSM.lock(id) as fsm:
                 if fsm.zapis.status not in ACTIVE_STATUSES:
                     flash('Wniosek zmienił status podczas przetwarzania — spróbuj ponownie.', 'warning')
-                    return redirect(url_for('zarzadzanie.komisja_lista'))
+                    return redirect(url_for(_ROUTE_KOMISJA_LISTA))
 
                 for outcome_id, result_val, notes_val in evaluations:
                     _repo_ocen.zapisz_ocene_komisji(
@@ -110,10 +110,6 @@ def komisja_weryfikuj(id):
             flash(f'{_LABELS[committee_opinion]} — wniosek przekazany do Dyrektora Instytutu.', 'success')
         except IllegalTransitionError as e:
             flash(str(e), 'danger')
-        return redirect(url_for('zarzadzanie.komisja_lista'))
+        return redirect(url_for(_ROUTE_KOMISJA_LISTA))
 
-    existing_evaluations = _repo_ocen.dla_komisji_dict(id)
-    documents            = _repo_docs.dla_zapisu_studenta(id, enrollment.student_id)
-    return render_template('zarzadzanie/komisja/weryfikuj.html',
-                           form=form, zapis=enrollment, dokumenty=documents,
-                           efekty=outcomes, istniejace=existing_evaluations)
+    return _render_weryfikuj()

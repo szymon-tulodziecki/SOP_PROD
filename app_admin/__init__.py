@@ -23,9 +23,9 @@ def create_app():
     app.register_blueprint(core_bp)
 
     app.jinja_options = app.jinja_options.copy()
-    app.jinja_options.update(dict(
-        autoescape=select_autoescape(['html', 'xml'])
-    ))
+    app.jinja_options.update({
+        'autoescape': select_autoescape(['html', 'xml'])
+    })
 
     # Configure file-based logging so exceptions are captured when console is silent
     logs_dir = Path(app.root_path) / 'logs'
@@ -98,12 +98,12 @@ def create_app():
     @app.context_processor
     def inject_now():
         from datetime import datetime
-        return dict(now=datetime.utcnow)
+        return {'now': datetime.utcnow}
 
     @app.context_processor
     def inject_tlumacz():
         from core.tlumaczenia import tlumacz_status
-        return dict(tlumacz_status=tlumacz_status)
+        return {'tlumacz_status': tlumacz_status}
 
 
     return app

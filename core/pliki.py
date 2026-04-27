@@ -20,8 +20,12 @@ from werkzeug.utils import secure_filename
 from flask import Blueprint, request, jsonify, Response, abort, url_for
 from flask_login import login_required, current_user
 
+import logging
+
 from core.modele import InternshipEnrollment, UserRole, UploadedDocument
 from core.extensions import db, limiter
+
+logger = logging.getLogger(__name__)
 from core.szyfrowanie import zaszyfruj_strumieniowo, odszyfruj_strumieniowo
 from core.repozytoria import EnrollmentRepository, StudentDocumentRepository
 
@@ -146,16 +150,138 @@ def _sprawdz_dostep_do_zapisu(zapis: InternshipEnrollment) -> bool:
     return current_user.role in (UserRole.ADMIN, UserRole.KOMISJA, UserRole.DYREKTOR)
 
 
+# ── Przetwarzanie uploadu ─────────────────────────────────────────────────────
+
+def _przetworz_plik(file, document_type: str, enrollment_id, user_id) -> UploadedDocument:
+    """Waliduje, szyfruje i wysyła plik na fileserver; zwraca niezapisany UploadedDocument."""
+    file.seek(0, os.SEEK_END)
+    file_size = file.tell()
+    file.seek(0)
+
+    if file_size > MAX_FILE_SIZE:
+        raise ValueError(f'Plik zbyt duży (max {MAX_FILE_SIZE // (1024 * 1024)} MB)')
+    if not _dozwolony_plik(file.filename, file.content_type):
+        raise ValueError('Niedozwolony typ pliku')
+
+    original_filename = secure_filename(file.filename)
+    if not original_filename:
+        raise ValueError('Nieprawidłowa nazwa pliku')
+
+    file_ext        = Path(original_filename).suffix.lower()
+    stored_filename = f"{uuid.uuid4().hex}{file_ext}"
+
+    header = file.read(4096)
+    if not _weryfikuj_magic_bytes(header):   # raises MagicBytesError on unavailability
+        raise ValueError('Niedozwolony format pliku (weryfikacja binarna)')
+
+    def _chunks():
+        yield header
+        while chunk := file.read(64 * 1024):
+            yield chunk
+
+    _fs_put(stored_filename, zaszyfruj_strumieniowo(_chunks()))
+
+    return UploadedDocument(
+        enrollment_id     = enrollment_id,
+        document_type     = document_type,
+        original_filename = original_filename,
+        stored_filename   = stored_filename,
+        file_path         = stored_filename,
+        file_size         = file_size,
+        mime_type         = file.content_type,
+        uploaded_by_id    = user_id,
+    )
+
+
+# ── Handlery blueprintu (poza fabryką — redukuje cognitive complexity) ────────
+
+def _handle_upload(enrollment_id, sprawdz):
+    zapis = _repo_enrollments.znajdz_po_id(enrollment_id)
+    if not zapis or not sprawdz(zapis):
+        abort(403)
+    if 'file' not in request.files:
+        return jsonify({'error': 'Brak pliku'}), 400
+    file          = request.files['file']
+    document_type = request.form.get('document_type', '').strip()
+    if not file.filename or not document_type:
+        return jsonify({'error': 'Brak pliku lub typu dokumentu'}), 400
+    try:
+        doc = _przetworz_plik(file, document_type, enrollment_id, current_user.id)
+    except MagicBytesError as exc:
+        logger.error("Magic bytes check failed: %s", exc)
+        return jsonify({'error': 'Weryfikacja formatu pliku chwilowo niedostępna.'}), 503
+    except ValueError as exc:
+        return jsonify({'error': str(exc)}), 400
+    except Exception as exc:
+        return jsonify({'error': f'Błąd podczas zapisywania: {str(exc)}'}), 500
+    try:
+        _repo_docs.zapisz(doc)
+        db.session.commit()
+    except Exception as exc:
+        db.session.rollback()
+        return jsonify({'error': f'Błąd podczas zapisywania: {str(exc)}'}), 500
+    return jsonify({'success': True, 'document_id': str(doc.id),
+                    'filename': doc.original_filename, 'size': doc.file_size})
+
+
+def _handle_download(document_id, sprawdz):
+    doc = _repo_docs.znajdz_po_id(document_id)
+    if not doc:
+        abort(404)
+    if not doc.enrollment or not sprawdz(doc.enrollment):
+        abort(403)
+    try:
+        encrypted = _fs_get(doc.file_path)
+    except httpx.HTTPStatusError as e:
+        abort(404 if e.response.status_code == 404 else 500)
+    except Exception:
+        abort(500)
+    plain = b''.join(odszyfruj_strumieniowo(iter([encrypted])))
+    return Response(plain, mimetype=doc.mime_type, headers={
+        'Content-Disposition': f'attachment; filename="{doc.original_filename}"',
+        'X-Content-Type-Options': 'nosniff',
+    })
+
+
+def _handle_delete(document_id, sprawdz):
+    doc = _repo_docs.znajdz_po_id(document_id)
+    if not doc:
+        return jsonify({'error': 'Nie znaleziono dokumentu'}), 404
+    if not doc.enrollment or not sprawdz(doc.enrollment):
+        abort(403)
+    try:
+        _fs_delete(doc.file_path)
+        doc.is_deleted = True
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+
+def _handle_list(enrollment_id, sprawdz):
+    zapis = _repo_enrollments.znajdz_po_id(enrollment_id)
+    if not zapis or not sprawdz(zapis):
+        abort(403)
+    docs = _repo_docs.dokumenty_zapisu_posortowane(enrollment_id)
+    return jsonify([{
+        'id':                str(d.id),
+        'document_type':     d.document_type,
+        'original_filename': d.original_filename,
+        'file_size':         d.file_size,
+        'mime_type':         d.mime_type,
+        'uploaded_at':       d.uploaded_at.isoformat(),
+        'uploaded_by':       (f"{d.uploaded_by.first_name} {d.uploaded_by.last_name}"
+                              if d.uploaded_by else None),
+        'download_url':      url_for('uploads.download_document', document_id=d.id),
+        'delete_url':        url_for('uploads.delete_document',   document_id=d.id),
+    } for d in docs])
+
+
 # ── Fabryka blueprintu ────────────────────────────────────────────────────────
 
-def stworz_blueprint_pliki(
-    sprawdzacz_dostepu=None,
-) -> Blueprint:
-    """
-    Tworzy blueprint 'uploads' ze scentralizowaną logiką bezpieczeństwa.
-
-    sprawdzacz_dostepu — callable(zapis) → bool; None = domyślna logika RBAC.
-    """
+def stworz_blueprint_pliki(sprawdzacz_dostepu=None) -> Blueprint:
+    """Tworzy blueprint 'uploads' ze scentralizowaną logiką bezpieczeństwa."""
     uploads_bp = Blueprint('uploads', __name__)
     _sprawdz = sprawdzacz_dostepu or _sprawdz_dostep_do_zapisu
 
@@ -163,157 +289,21 @@ def stworz_blueprint_pliki(
     @login_required
     @limiter.limit("30 per hour")
     def upload_document(enrollment_id):
-        zapis = _repo_enrollments.znajdz_po_id(enrollment_id)
-        if not zapis or not _sprawdz(zapis):
-            abort(403)
-
-        if 'file' not in request.files:
-            return jsonify({'error': 'Brak pliku'}), 400
-
-        file          = request.files['file']
-        document_type = request.form.get('document_type', '').strip()
-
-        if not file.filename or not document_type:
-            return jsonify({'error': 'Brak pliku lub typu dokumentu'}), 400
-
-        # ── Walidacja rozmiaru ────────────────────────────────────────────────
-        file.seek(0, os.SEEK_END)
-        file_size = file.tell()
-        file.seek(0)
-
-        if file_size > MAX_FILE_SIZE:
-            return jsonify({'error': f'Plik zbyt duży (max {MAX_FILE_SIZE // (1024*1024)} MB)'}), 400
-
-        # ── Walidacja MIME + rozszerzenia ─────────────────────────────────────
-        content_type = file.content_type
-        if not _dozwolony_plik(file.filename, content_type):
-            return jsonify({'error': 'Niedozwolony typ pliku'}), 400
-
-        try:
-            original_filename = secure_filename(file.filename)
-            if not original_filename:
-                return jsonify({'error': 'Nieprawidłowa nazwa pliku'}), 400
-
-            file_ext        = Path(original_filename).suffix.lower()
-            stored_filename = f"{uuid.uuid4().hex}{file_ext}"
-
-            # Wczytaj nagłówek do weryfikacji magic bytes, resztę strumieniuj
-            header = file.read(4096)
-
-            # ── Warstwa 2: magic bytes (niefałszowalna weryfikacja formatu) ──
-            try:
-                magic_ok = _weryfikuj_magic_bytes(header)
-            except MagicBytesError as exc:
-                import logging
-                logging.getLogger(__name__).error("Magic bytes check failed: %s", exc)
-                return jsonify({'error': 'Weryfikacja formatu pliku chwilowo niedostępna.'}), 503
-            if not magic_ok:
-                return jsonify({'error': 'Niedozwolony format pliku (weryfikacja binarna)'}), 400
-
-            def _chunks():
-                yield header
-                while True:
-                    chunk = file.read(64 * 1024)
-                    if not chunk:
-                        break
-                    yield chunk
-
-            _fs_put(stored_filename, zaszyfruj_strumieniowo(_chunks()))
-
-            doc = UploadedDocument(
-                enrollment_id     = enrollment_id,
-                document_type     = document_type,
-                original_filename = original_filename,
-                stored_filename   = stored_filename,
-                file_path         = stored_filename,   # filename only, not a local path
-                file_size         = file_size,
-                mime_type         = content_type,
-                uploaded_by_id    = current_user.id,
-            )
-            _repo_docs.zapisz(doc)
-            db.session.commit()
-
-            return jsonify({
-                'success':     True,
-                'document_id': str(doc.id),
-                'filename':    original_filename,
-                'size':        file_size,
-            })
-
-        except Exception as e:
-            db.session.rollback()
-            return jsonify({'error': f'Błąd podczas zapisywania: {str(e)}'}), 500
+        return _handle_upload(enrollment_id, _sprawdz)
 
     @uploads_bp.route('/document/<uuid:document_id>/download', methods=['GET'])
     @login_required
     def download_document(document_id):
-        doc = _repo_docs.znajdz_po_id(document_id)
-        if not doc:
-            abort(404)
-        zapis = doc.enrollment
-        if not zapis or not _sprawdz(zapis):
-            abort(403)
-
-        # Streaming: pobieramy cały zaszyfrowany plik z fileservera i deszyfrujemy
-        # w pamięci — eliminuje wyciek kontekstu przy strumieniowaniu przez generator.
-        try:
-            encrypted = _fs_get(doc.file_path)
-        except httpx.HTTPStatusError as e:
-            abort(404 if e.response.status_code == 404 else 500)
-        except Exception:
-            abort(500)
-
-        plain = b''.join(odszyfruj_strumieniowo(iter([encrypted])))
-
-        return Response(
-            plain,
-            mimetype=doc.mime_type,
-            headers={
-                'Content-Disposition': f'attachment; filename="{doc.original_filename}"',
-                'X-Content-Type-Options': 'nosniff',
-            },
-        )
+        return _handle_download(document_id, _sprawdz)
 
     @uploads_bp.route('/document/<uuid:document_id>/delete', methods=['POST'])
     @login_required
     def delete_document(document_id):
-        doc = _repo_docs.znajdz_po_id(document_id)
-        if not doc:
-            return jsonify({'error': 'Nie znaleziono dokumentu'}), 404
-
-        zapis = doc.enrollment
-        if not zapis or not _sprawdz(zapis):
-            abort(403)
-
-        try:
-            _fs_delete(doc.file_path)
-            doc.is_deleted = True
-            db.session.commit()
-            return jsonify({'success': True})
-        except Exception as e:
-            db.session.rollback()
-            return jsonify({'error': str(e)}), 500
+        return _handle_delete(document_id, _sprawdz)
 
     @uploads_bp.route('/enrollment/<uuid:enrollment_id>/documents', methods=['GET'])
     @login_required
     def list_documents(enrollment_id):
-        zapis = _repo_enrollments.znajdz_po_id(enrollment_id)
-        if not zapis or not _sprawdz(zapis):
-            abort(403)
-
-        docs = _repo_docs.dokumenty_zapisu_posortowane(enrollment_id)
-
-        return jsonify([{
-            'id':                str(d.id),
-            'document_type':     d.document_type,
-            'original_filename': d.original_filename,
-            'file_size':         d.file_size,
-            'mime_type':         d.mime_type,
-            'uploaded_at':       d.uploaded_at.isoformat(),
-            'uploaded_by':       (f"{d.uploaded_by.first_name} {d.uploaded_by.last_name}"
-                                  if d.uploaded_by else None),
-            'download_url':      url_for('uploads.download_document', document_id=d.id),
-            'delete_url':        url_for('uploads.delete_document',   document_id=d.id),
-        } for d in docs])
+        return _handle_list(enrollment_id, _sprawdz)
 
     return uploads_bp

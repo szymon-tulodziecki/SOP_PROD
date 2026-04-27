@@ -14,7 +14,7 @@ from flask_login import login_required, current_user
 from core.extensions import limiter
 from core.modele import EnrollmentStatus
 from core.uslugi.dokumenty import (
-    DOC_CONFIG, STATIC_TEMPLATES, rozwiaz_dokumenty, buduj_kontekst,
+    DOC_CONFIG, STATIC_TEMPLATES, rozwiaz_dokumenty, buduj_kontekst, waliduj_kompletnosc,
 )
 from core.repozytoria import EnrollmentRepository
 
@@ -22,6 +22,8 @@ _repo_zapisow = EnrollmentRepository()
 
 logger = logging.getLogger(__name__)
 documents_bp = Blueprint('documents', __name__)
+
+_MIME_PDF = 'application/pdf'
 
 
 def _get_tex_url() -> str:
@@ -66,7 +68,7 @@ def pobierz_staly(doc_key):
         )
         if response.status_code == 200:
             pdf_response = make_response(response.content)
-            pdf_response.headers['Content-Type'] = 'application/pdf'
+            pdf_response.headers['Content-Type'] = _MIME_PDF
             pdf_response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
             return pdf_response
         flash('Błąd generowania dokumentu.', 'error')
@@ -105,7 +107,7 @@ def pobierz_dynamiczny(zapis_id, typ):
                         .encode('ascii', 'ignore').decode('ascii').strip() or 'dokument.pdf')
             utf8_enc = quote(full, safe='')
             pdf_response = make_response(response.content)
-            pdf_response.headers['Content-Type'] = 'application/pdf'
+            pdf_response.headers['Content-Type'] = _MIME_PDF
             pdf_response.headers['Content-Disposition'] = (
                 f"attachment; filename=\"{ascii_fb}\"; filename*=UTF-8''{utf8_enc}"
             )
@@ -133,14 +135,7 @@ def generuj(doc_type: str):
     if not zapis:
         return jsonify({'error': 'Nie znaleziono zapisu na praktykę.'}), 404
 
-    # Walidacja kompletności danych
-    warnings = []
-    if not (zapis.firma_nazwa or (zapis.firma and zapis.firma.name)):
-        warnings.append('Nazwa firmy')
-    if not (zapis.firma_adres or (zapis.firma and zapis.firma.address)):
-        warnings.append('Adres firmy')
-    if doc_type == 'ZAL_6' and not getattr(zapis, 'wpisy_dziennika', None):
-        warnings.append('Brak wpisów w dzienniku')
+    warnings = waliduj_kompletnosc(zapis, doc_type)
 
     if warnings and not force:
         return jsonify({
@@ -163,7 +158,7 @@ def generuj(doc_type: str):
 
         return send_file(
             io.BytesIO(resp.content),
-            mimetype='application/pdf',
+            mimetype=_MIME_PDF,
             as_attachment=True,
             download_name=filename,
         )

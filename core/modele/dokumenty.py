@@ -8,6 +8,8 @@ import enum
 from sqlalchemy.dialects.postgresql import UUID
 from core.extensions import db
 
+_ON_SET_NULL = 'SET NULL'
+
 
 class DocumentStatus(enum.Enum):
     DRAFT             = 'DRAFT'
@@ -21,8 +23,8 @@ class DocumentAuditLog(db.Model):
     __tablename__ = 'document_audit_logs'
 
     id             = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id        = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id',                  ondelete='SET NULL'), nullable=True)
-    enrollment_id  = db.Column(UUID(as_uuid=True), db.ForeignKey('internship_enrollments.id', ondelete='SET NULL'), nullable=True)
+    user_id        = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id',                  ondelete=_ON_SET_NULL), nullable=True)
+    enrollment_id  = db.Column(UUID(as_uuid=True), db.ForeignKey('internship_enrollments.id', ondelete=_ON_SET_NULL), nullable=True)
     document_type  = db.Column(db.String(50),  nullable=False)
     action         = db.Column(db.String(50),  nullable=False)
     details        = db.Column(db.Text,        nullable=True)
@@ -67,7 +69,7 @@ class UploadedDocument(db.Model):
     __tablename__ = 'uploaded_documents'
 
     id                  = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    enrollment_id       = db.Column(UUID(as_uuid=True), db.ForeignKey('internship_enrollments.id', ondelete='SET NULL'), nullable=True)
+    enrollment_id       = db.Column(UUID(as_uuid=True), db.ForeignKey('internship_enrollments.id', ondelete=_ON_SET_NULL), nullable=True)
     document_type       = db.Column(db.String(50),  nullable=False)
     original_filename   = db.Column(db.String(255), nullable=False)
     stored_filename     = db.Column(db.String(255), nullable=False)
@@ -75,7 +77,7 @@ class UploadedDocument(db.Model):
     file_size           = db.Column(db.Integer,     nullable=False)
     mime_type           = db.Column(db.String(100), nullable=False)
     uploaded_at         = db.Column(db.DateTime,    server_default=db.func.now())
-    uploaded_by_id      = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
+    uploaded_by_id      = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id', ondelete=_ON_SET_NULL), nullable=True)
     is_deleted          = db.Column(db.Boolean,     nullable=False, default=False, server_default='false')
 
     enrollment   = db.relationship('InternshipEnrollment', backref=db.backref('uploaded_documents', passive_deletes=True))

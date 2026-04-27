@@ -12,6 +12,10 @@ from core.repozytoria import UserRepository
 
 _repo_uzytk = UserRepository()
 
+_LABEL_UOPZ        = _LABEL_UOPZ
+_ERR_EMAIL_EXISTS  = 'Konto z tym e-mailem już istnieje.'
+_ERR_ALBUM_EXISTS  = 'Student z tym nr albumu już istnieje.'
+
 
 # ── Formularze ────────────────────────────────────────────────────────────────
 
@@ -24,17 +28,17 @@ class StudentForm(FlaskForm):
     field_of_study  = StringField('Kierunek studiów', validators=[Optional(), Length(max=100)])
     specialization  = StringField('Specjalność', validators=[Optional(), Length(max=100)])
     study_mode      = SelectField('Tryb studiów', choices=[('', '--- Wybierz ---'), ('stacjonarne', 'Stacjonarne'), ('niestacjonarne', 'Niestacjonarne')], validators=[Optional()])
-    uopz_id         = SelectField('Opiekun uczelniany (UOPZ)', choices=[], validators=[DataRequired(message='Wybierz opiekuna UOPZ.')])
+    uopz_id         = SelectField(_LABEL_UOPZ, choices=[], validators=[DataRequired(message='Wybierz opiekuna UOPZ.')])
 
     def validate_email(self, field):
         u = _repo_uzytk.znajdz_po_emailu(field.data.lower().strip())
         if u:
-            raise ValidationError('Konto z tym e-mailem już istnieje.')
+            raise ValidationError(_ERR_EMAIL_EXISTS)
 
     def validate_album_number(self, field):
         s = _repo_uzytk.znajdz_studenta_po_albumie(field.data.strip())
         if s:
-            raise ValidationError('Student z tym nr albumu już istnieje.')
+            raise ValidationError(_ERR_ALBUM_EXISTS)
 
 
 class StudentEditForm(StudentForm):
@@ -45,12 +49,12 @@ class StudentEditForm(StudentForm):
     def validate_email(self, field):
         u = _repo_uzytk.znajdz_po_emailu(field.data.lower().strip())
         if u and str(u.id) != str(self._uid):
-            raise ValidationError('Konto z tym e-mailem już istnieje.')
+            raise ValidationError(_ERR_EMAIL_EXISTS)
 
     def validate_album_number(self, field):
         s = _repo_uzytk.znajdz_studenta_po_albumie(field.data.strip())
         if s and str(s.id) != str(self._uid):
-            raise ValidationError('Student z tym nr albumu już istnieje.')
+            raise ValidationError(_ERR_ALBUM_EXISTS)
 
 
 class StaffForm(FlaskForm):
@@ -58,14 +62,14 @@ class StaffForm(FlaskForm):
     last_name  = StringField('Nazwisko', validators=[DataRequired(), Length(max=100)])
     email      = StringField('E-mail',   validators=[DataRequired(), Email(), Length(max=255)])
     role       = SelectField('Rola', choices=[
-        ('UOPZ',  'Opiekun uczelniany (UOPZ)'),
+        ('UOPZ',  _LABEL_UOPZ),
         ('ADMIN', 'Administrator'),
     ], validators=[DataRequired()])
 
     def validate_email(self, field):
         u = _repo_uzytk.znajdz_po_emailu(field.data.lower().strip())
         if u:
-            raise ValidationError('Konto z tym e-mailem już istnieje.')
+            raise ValidationError(_ERR_EMAIL_EXISTS)
 
 
 class CsvImportForm(FlaskForm):
@@ -73,7 +77,7 @@ class CsvImportForm(FlaskForm):
         DataRequired(),
         FileAllowed(['csv'], 'Tylko pliki CSV.')
     ])
-    uopz_id = SelectField('Opiekun uczelniany (UOPZ)', choices=[], validators=[DataRequired(message='Wybierz opiekuna UOPZ.')])
+    uopz_id = SelectField(_LABEL_UOPZ, choices=[], validators=[DataRequired(message='Wybierz opiekuna UOPZ.')])
 
 
 class CompanyForm(FlaskForm):

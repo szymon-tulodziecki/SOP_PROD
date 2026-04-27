@@ -115,6 +115,57 @@ class UslugaUzytkownikow:
 
     # ── Bulk import ──────────────────────────────────────────────────────────
 
+    @staticmethod
+    def _parse_csv_row(row_number: int, row: dict) -> tuple[dict | None, str | None]:
+        """Parses one CSV row. Returns (parsed_dict, None) or (None, error_msg)."""
+        first_name     = (row.get('imie')         or row.get('Imię')        or '').strip()
+        last_name      = (row.get('nazwisko')      or row.get('Nazwisko')    or '').strip()
+        email          = (row.get('email')         or row.get('Email')       or '').strip().lower()
+        album_number   = (row.get('numer_albumu')  or row.get('Nr albumu')   or '').strip()
+        gender         = (row.get('plec')          or row.get('Płeć')        or '').strip().upper() or None
+        field_of_study = (row.get('kierunek')      or row.get('Kierunek')    or '').strip() or None
+        specialization = (row.get('specjalnosc')   or row.get('Specjalność') or '').strip() or None
+        study_mode     = (row.get('tryb_studiow')  or row.get('Tryb')        or '').strip().lower() or None
+
+        if not all([first_name, last_name, email, album_number, gender, field_of_study, study_mode]):
+            return None, (
+                f'Wiersz {row_number}: brakujące dane '
+                f'(wymagane: imie, nazwisko, email, numer_albumu, plec, kierunek, tryb_studiow)'
+            )
+        return {
+            'row_number': row_number,
+            'first_name': first_name, 'last_name': last_name,
+            'email': email, 'album_number': album_number, 'gender': gender,
+            'field_of_study': field_of_study, 'specialization': specialization,
+            'study_mode': study_mode,
+        }, None
+
+    def _create_student_from_row(self, r: dict, uopz_id,
+                                  existing_emails: set, existing_albums: set) -> str | None:
+        """Creates one student from parsed row. Returns error string or None on success."""
+        if r['email'] in existing_emails or r['album_number'] in existing_albums:
+            return f"Wiersz {r['row_number']}: {r['email']} lub nr {r['album_number']} już istnieje"
+        try:
+            self.utworz_studenta(
+                email          = r['email'],
+                haslo          = '',
+                imie           = r['first_name'],
+                nazwisko       = r['last_name'],
+                numer_albumu   = r['album_number'],
+                gender         = r['gender'],
+                field_of_study = r['field_of_study'],
+                specialization = r['specialization'],
+                study_mode     = r['study_mode'],
+                supervisor_id  = uuid.UUID(uopz_id) if uopz_id else None,
+                require_password_change=False,
+                commit=False,
+            )
+            existing_emails.add(r['email'])
+            existing_albums.add(r['album_number'])
+            return None
+        except Exception as e:
+            return f"Wiersz {r['row_number']}: {e}"
+
     def importuj_z_csv(self, content: str, uopz_id, commit: bool = True) -> dict:
         """Parsuje CSV, waliduje wiersze, tworzy konta studentów.
 
@@ -127,67 +178,27 @@ class UslugaUzytkownikow:
         csv_rows: list[dict] = []
 
         for row_number, row in enumerate(reader, start=2):
-            first_name     = (row.get('imie')         or row.get('Imię')        or '').strip()
-            last_name      = (row.get('nazwisko')      or row.get('Nazwisko')    or '').strip()
-            email          = (row.get('email')         or row.get('Email')       or '').strip().lower()
-            album_number   = (row.get('numer_albumu')  or row.get('Nr albumu')   or '').strip()
-            gender         = (row.get('plec')          or row.get('Płeć')        or '').strip().upper() or None
-            field_of_study = (row.get('kierunek')      or row.get('Kierunek')    or '').strip() or None
-            specialization = (row.get('specjalnosc')   or row.get('Specjalność') or '').strip() or None
-            study_mode     = (row.get('tryb_studiow')  or row.get('Tryb')        or '').strip().lower() or None
-
-            if not all([first_name, last_name, email, album_number, gender, field_of_study, study_mode]):
-                errors.append(
-                    f'Wiersz {row_number}: brakujące dane '
-                    f'(wymagane: imie, nazwisko, email, numer_albumu, plec, kierunek, tryb_studiow)'
-                )
+            parsed, err = self._parse_csv_row(row_number, row)
+            if err:
+                errors.append(err)
                 skipped += 1
-                continue
-
-            csv_rows.append({
-                'row_number': row_number,
-                'first_name': first_name, 'last_name': last_name,
-                'email': email, 'album_number': album_number, 'gender': gender,
-                'field_of_study': field_of_study, 'specialization': specialization,
-                'study_mode': study_mode,
-            })
+            else:
+                csv_rows.append(parsed)
 
         if csv_rows:
             all_emails = [r['email'] for r in csv_rows]
             all_albums = [r['album_number'] for r in csv_rows]
             existing   = self._repo.znajdz_istniejace_po_email_lub_albumie(all_emails, all_albums)
-
-            existing_emails = {row.email for row in existing}
-            existing_albums = {row.album_number for row in existing if row.album_number}
+            existing_emails = {u.email for u in existing}
+            existing_albums = {u.album_number for u in existing if u.album_number}
 
             for r in csv_rows:
-                if r['email'] in existing_emails or r['album_number'] in existing_albums:
-                    errors.append(
-                        f"Wiersz {r['row_number']}: {r['email']} lub nr {r['album_number']} już istnieje"
-                    )
+                err = self._create_student_from_row(r, uopz_id, existing_emails, existing_albums)
+                if err:
+                    errors.append(err)
                     skipped += 1
-                    continue
-                try:
-                    self.utworz_studenta(
-                        email          = r['email'],
-                        haslo          = '',
-                        imie           = r['first_name'],
-                        nazwisko       = r['last_name'],
-                        numer_albumu   = r['album_number'],
-                        gender         = r['gender'],
-                        field_of_study = r['field_of_study'],
-                        specialization = r['specialization'],
-                        study_mode     = r['study_mode'],
-                        supervisor_id  = uuid.UUID(uopz_id) if uopz_id else None,
-                        require_password_change=False,
-                        commit=False,
-                    )
-                    existing_emails.add(r['email'])
-                    existing_albums.add(r['album_number'])
+                else:
                     created += 1
-                except Exception as e:
-                    errors.append(f"Wiersz {r['row_number']}: {e}")
-                    skipped += 1
 
             if commit and created:
                 from core.extensions import db as _db

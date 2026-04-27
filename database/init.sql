@@ -99,7 +99,8 @@ CREATE TABLE internships (
     semester       VARCHAR(10) NOT NULL,   -- 'winter' / 'summer'
     required_hours INTEGER NOT NULL DEFAULT 160,
     status         internship_status NOT NULL DEFAULT 'INACTIVE',
-    created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    deleted_at     TIMESTAMP DEFAULT NULL
 );
 
 -- ============================================================

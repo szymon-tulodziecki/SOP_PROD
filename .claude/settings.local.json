@@ -24,7 +24,12 @@
       "Bash(docker restart sop_student *)",
       "Bash(docker restart sop_admin *)",
       "Bash(docker restart *)",
-      "Bash(docker run *)"
+      "Bash(docker run *)",
+      "Bash(git -C /c/Users/Szymon/Desktop/Repozytoria/SOP log --all --oneline -- \".env\")",
+      "Bash(git -C /c/Users/Szymon/Desktop/Repozytoria/SOP log --all --oneline -- \"app_admin/.env\")",
+      "Bash(curl -s -u admin:adminadmin \"http://localhost:9000/api/issues/search?componentKeys=sop&resolved=false&ps=1\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('Total issues:', d.get\\('total', 'N/A'\\)\\)\")",
+      "Bash(curl *)"
     ]
   }
 }

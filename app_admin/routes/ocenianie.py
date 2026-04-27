@@ -22,6 +22,8 @@ _repo_uzytk       = UserRepository()
 
 evaluation_bp = Blueprint('evaluation', __name__)
 
+_ROUTE_OCEN = 'evaluation.ocen_praktyke'
+
 
 def _parse_grade(val: str):
     """Konwertuje ocenę z formularza na float, obsługując przecinki i kropki."""
@@ -79,14 +81,14 @@ def ocen_praktyke(id):
 
         if not result.success:
             flash(result.error_message, 'danger')
-            return redirect(url_for('evaluation.ocen_praktyke', id=enrollment.id))
+            return redirect(url_for(_ROUTE_OCEN, id=enrollment.id))
 
         db.session.commit()
         if grade_data.finalize:
             flash('Oceny zostały zatwierdzone.', 'success')
             return redirect(url_for('evaluation.lista_ocen'))
         flash('Oceny zostały zapisane.', 'success')
-        return redirect(url_for('evaluation.ocen_praktyke', id=enrollment.id))
+        return redirect(url_for(_ROUTE_OCEN, id=enrollment.id))
 
     from flask_wtf import FlaskForm
     staff = _repo_uzytk.aktywni_mentorzy()
@@ -164,7 +166,7 @@ def generuj_protokol(id):
     enrollment = _repo_zapisow.znajdz_po_id(id) or abort(404)
     if not (enrollment.final_grades and enrollment.final_grades.supervisor_grade):
         flash('Protokół dostępny dopiero po wystawieniu oceny UOPZ.', 'warning')
-        return redirect(url_for('evaluation.ocen_praktyke', id=id))
+        return redirect(url_for(_ROUTE_OCEN, id=id))
 
     context  = buduj_kontekst(enrollment, 'ZAL_8')
     student  = enrollment.student
@@ -189,4 +191,4 @@ def generuj_protokol(id):
         flash(f'Błąd generowania protokołu: {r.text[:200]}', 'danger')
     except Exception as e:
         flash(f'Błąd połączenia z tex-service: {str(e)}', 'danger')
-    return redirect(url_for('evaluation.ocen_praktyke', id=id))
+    return redirect(url_for(_ROUTE_OCEN, id=id))

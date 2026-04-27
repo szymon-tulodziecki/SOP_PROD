@@ -74,7 +74,7 @@ def lista_dziennikow():
             'alert':          alert,
         })
 
-    return render_template('journal/lista.html', dane=rows, zapisy=paginated_enrollments)
+    return render_template('journal/lista.html', dane=rows, paginated_enrollments=paginated_enrollments)
 
 
 @journal_bp.route('/zapis/<uuid:id>', methods=['GET'])

@@ -5,6 +5,19 @@ from core.error_handlers import register_error_handlers
 from app_student.config import config_dict
 
 
+def _check_needs_attention(enrollments) -> bool:
+    from core.modele import EnrollmentStatus
+    for z in enrollments:
+        s = z.status
+        if s == EnrollmentStatus.PENDING and (z.admin_comments or z.supervisor_comments):
+            return True
+        if s == EnrollmentStatus.AWAITING_APPROVAL and z.supervisor_comments:
+            return True
+        if s in (EnrollmentStatus.REVISION_REQUIRED, EnrollmentStatus.REJECTED):
+            return True
+    return False
+
+
 def create_app():
     from pathlib import Path as _Path
     from flask import Blueprint as _Blueprint
@@ -19,9 +32,9 @@ def create_app():
     )
     app.register_blueprint(core_bp)
     app.jinja_options = app.jinja_options.copy()
-    app.jinja_options.update(dict(
-        autoescape=select_autoescape(['html', 'xml'])
-    ))
+    app.jinja_options.update({
+        'autoescape': select_autoescape(['html', 'xml'])
+    })
     env = __import__('os').environ.get('FLASK_ENV', 'development')
     app.config.from_object(config_dict.get(env, config_dict['default']))
 
@@ -87,19 +100,7 @@ def create_app():
                     EnrollmentStatus.REVISION_REQUIRED,
                     EnrollmentStatus.REJECTED,
                 ])
-                for z in zapisy_do_sprawdzenia:
-                    if z.status == EnrollmentStatus.PENDING and (z.admin_comments or z.supervisor_comments):
-                        wymaga_uwagi = True
-                        break
-                    if z.status == EnrollmentStatus.AWAITING_APPROVAL and z.supervisor_comments:
-                        wymaga_uwagi = True
-                        break
-                    if z.status == EnrollmentStatus.REVISION_REQUIRED:
-                        wymaga_uwagi = True
-                        break
-                    if z.status == EnrollmentStatus.REJECTED:
-                        wymaga_uwagi = True
-                        break
+                wymaga_uwagi = _check_needs_attention(zapisy_do_sprawdzenia)
         except Exception:
             pass
         return {'aktywny_zapis_info': info, 'nav_wymaga_uwagi': wymaga_uwagi}
