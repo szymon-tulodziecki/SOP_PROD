@@ -8,7 +8,7 @@
 {% endblock %}
 
 {% block tresc %}
-<div style="max-width: 1400px; margin: 0 auto;">
+<div class="u-csp-137">
 
   {% if wnioski.items %}
   <div class="karta">
@@ -17,22 +17,22 @@
         <table class="tabela">
           <thead>
             <tr>
-              <th style="width: 25%;">Student</th>
-              <th style="width: 15%;">Ścieżka</th>
-              <th style="width: 25%;">Firma/Działalność</th>
-              <th style="width: 12%;">Data zgłoszenia</th>
-              <th style="width: 10%;">Dokumenty</th>
-              <th style="width: 13%; text-align: center;">Akcje</th>
+              <th class="u-csp-127">Student</th>
+              <th class="u-csp-129">Ścieżka</th>
+              <th class="u-csp-127">Firma/Działalność</th>
+              <th class="u-csp-130">Data zgłoszenia</th>
+              <th class="u-csp-125">Dokumenty</th>
+              <th class="u-csp-197">Akcje</th>
             </tr>
           </thead>
           <tbody>
             {% for wniosek in wnioski.items %}
             <tr>
               <td>
-                <div style="font-weight: 600;">{{ wniosek.student.first_name }} {{ wniosek.student.last_name }}</div>
-                <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor);">{{ wniosek.student.email or 'Brak email' }}</div>
+                <div class="u-csp-141">{{ wniosek.student.first_name }} {{ wniosek.student.last_name }}</div>
+                <div class="u-csp-146">{{ wniosek.student.email or 'Brak email' }}</div>
                 {% if wniosek.student.album_number %}
-                <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor);">Album: {{ wniosek.student.album_number }}</div>
+                <div class="u-csp-146">Album: {{ wniosek.student.album_number }}</div>
                 {% endif %}
               </td>
               <td>
@@ -40,32 +40,32 @@
                   B — Uznanie efektów
                 </span>
                 {% if wniosek.status.value == 'REVISION_REQUIRED' %}
-                <br><span class="status status--draft" style="margin-top:0.25rem; font-size:0.72rem;">Czeka na poprawki studenta</span>
+                <br><span class="status status--draft u-csp-198">Czeka na poprawki studenta</span>
                 {% endif %}
               </td>
               <td>
-                <div style="font-weight: 600;">{{ wniosek.firma_nazwa or 'Nie podano' }}</div>
+                <div class="u-csp-141">{{ wniosek.firma_nazwa or 'Nie podano' }}</div>
                 {% if wniosek.firma_miasto %}
-                <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor);">{{ wniosek.firma_miasto }}</div>
+                <div class="u-csp-146">{{ wniosek.firma_miasto }}</div>
                 {% endif %}
                 {% if wniosek.track_type.value != 'STANDARD' %}
-                <div style="font-size: 0.75rem; color: var(--kolor-info); margin-top: 0.25rem;">
+                <div class="u-csp-148">
                   B — Uznanie efektów
                 </div>
                 {% endif %}
               </td>
-              <td style="font-size: 0.85rem;">
+              <td class="u-csp-150">
                 {{ wniosek.enrolled_at.strftime('%d.%m.%Y') if wniosek.enrolled_at else '-' }}
-                <div style="font-size: 0.7rem; color: var(--kolor-tekst-drugor);">
+                <div class="u-csp-151">
                   {{ wniosek.enrolled_at.strftime('%H:%M') if wniosek.enrolled_at else '' }}
                 </div>
               </td>
-              <td style="text-align: center;">
-                <span class="badge badge--neutral" style="font-size: 0.8rem;">
+              <td class="u-csp-152">
+                <span class="badge badge--neutral u-csp-199">
                   {{ wniosek.uploaded_documents | length }} plików
                 </span>
               </td>
-              <td style="text-align: center;">
+              <td class="u-csp-152">
                 {% if wniosek.status.value == 'REVISION_REQUIRED' %}
                 <a href="{{ url_for('zarzadzanie.komisja_weryfikuj', id=wniosek.id) }}"
                    class="przycisk przycisk--maly przycisk--drugorzedny">
@@ -113,13 +113,13 @@
 
   {% else %}
   <div class="karta">
-    <div class="karta__tresc" style="text-align: center; padding: 3rem 2rem;">
-      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color: var(--kolor-tekst-drugor); margin-bottom: 1rem;">
+    <div class="karta__tresc u-csp-200">
+      <svg class="u-csp-201" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
         <path d="M9 12l2 2 4-4"/>
         <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9c.83 0 1.63.11 2.38.32"/>
       </svg>
-      <h3 style="margin-bottom: 0.5rem;">Brak wniosków do weryfikacji</h3>
-      <p style="color: var(--kolor-tekst-drugor); margin-bottom: 0;">
+      <h3 class="u-csp-045">Brak wniosków do weryfikacji</h3>
+      <p class="u-csp-202">
         Wszystkie wnioski zostały już przetworzone lub nie ma nowych zgłoszeń.
       </p>
     </div>

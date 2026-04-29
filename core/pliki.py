@@ -3,11 +3,8 @@ core/pliki.py
 Kanoniczny moduł obsługi przesyłania plików — jeden dla całej platformy SOP.
 
 Rejestracja w aplikacji:
-    from core.pliki import stworz_blueprint_pliki, SprawdzaczDostepuPliku
-    app.register_blueprint(stworz_blueprint_pliki(
-        sprawdzacz=SprawdzaczDostepuPliku.tylko_student,
-        url_prefix='/uploads',
-    ))
+    from core.pliki import create_files_blueprint
+    app.register_blueprint(create_files_blueprint(), url_prefix='/uploads')
 
 Centralny punkt wszystkich zabezpieczeń: walidacja MIME, rozszerzeń,
 rozmiaru, secure_filename oraz ochrona przed Path Traversal.
@@ -26,8 +23,9 @@ from core.modele import InternshipEnrollment, UserRole, UploadedDocument
 from core.extensions import db, limiter
 
 logger = logging.getLogger(__name__)
-from core.szyfrowanie import zaszyfruj_strumieniowo, odszyfruj_strumieniowo
+from core.szyfrowanie import decrypt_stream, encrypt_stream
 from core.repozytoria import EnrollmentRepository, StudentDocumentRepository
+from core.secrets import get_secret
 
 _repo_enrollments = EnrollmentRepository()
 _repo_docs        = StudentDocumentRepository()
@@ -36,7 +34,7 @@ _repo_docs        = StudentDocumentRepository()
 # ── Fileserver ────────────────────────────────────────────────────────────────
 
 FILESERVER_URL = os.environ.get('FILESERVER_URL', 'http://fileserver:5003')
-FILESERVER_KEY = os.environ.get('FILESERVER_API_KEY', '')
+FILESERVER_KEY = get_secret('fileserver_api_key')
 
 
 def _fs_headers():
@@ -102,7 +100,7 @@ _MAGIC_ALLOWED: frozenset[str] = frozenset({
 })
 
 
-def _dozwolony_plik(filename: str, content_type: str) -> bool:
+def _is_file_allowed(filename: str, content_type: str) -> bool:
     """Warstwa 1: walidacja rozszerzenia + nagłówka HTTP Content-Type."""
     if not filename:
         return False
@@ -114,7 +112,7 @@ class MagicBytesError(RuntimeError):
     """Rzucany gdy weryfikacja magic bytes jest niemożliwa do przeprowadzenia."""
 
 
-def _weryfikuj_magic_bytes(raw_bytes: bytes) -> bool:
+def _verify_magic_bytes(raw_bytes: bytes) -> bool:
     """Warstwa 2: weryfikacja rzeczywistego formatu przez analizę magic bytes.
 
     Używa python-magic (libmagic), która analizuje sygnaturę binarną pliku
@@ -141,18 +139,18 @@ def _weryfikuj_magic_bytes(raw_bytes: bytes) -> bool:
     return detected in _MAGIC_ALLOWED
 
 
-def _sprawdz_dostep_do_zapisu(zapis: InternshipEnrollment) -> bool:
+def _can_access_enrollment(enrollment: InternshipEnrollment) -> bool:
     """Domyślna kontrola dostępu: student widzi tylko swoje, admin/uopz/komisja/dyrektor wszystko."""
     if current_user.role == UserRole.STUDENT:
-        return zapis.student_id == current_user.id
+        return enrollment.student_id == current_user.id
     if current_user.role == UserRole.UOPZ:
-        return zapis.supervisor_id == current_user.id
+        return enrollment.supervisor_id == current_user.id
     return current_user.role in (UserRole.ADMIN, UserRole.KOMISJA, UserRole.DYREKTOR)
 
 
 # ── Przetwarzanie uploadu ─────────────────────────────────────────────────────
 
-def _przetworz_plik(file, document_type: str, enrollment_id, user_id) -> UploadedDocument:
+def _process_upload_file(file, document_type: str, enrollment_id, user_id) -> UploadedDocument:
     """Waliduje, szyfruje i wysyła plik na fileserver; zwraca niezapisany UploadedDocument."""
     file.seek(0, os.SEEK_END)
     file_size = file.tell()
@@ -160,7 +158,7 @@ def _przetworz_plik(file, document_type: str, enrollment_id, user_id) -> Uploade
 
     if file_size > MAX_FILE_SIZE:
         raise ValueError(f'Plik zbyt duży (max {MAX_FILE_SIZE // (1024 * 1024)} MB)')
-    if not _dozwolony_plik(file.filename, file.content_type):
+    if not _is_file_allowed(file.filename, file.content_type):
         raise ValueError('Niedozwolony typ pliku')
 
     original_filename = secure_filename(file.filename)
@@ -171,7 +169,7 @@ def _przetworz_plik(file, document_type: str, enrollment_id, user_id) -> Uploade
     stored_filename = f"{uuid.uuid4().hex}{file_ext}"
 
     header = file.read(4096)
-    if not _weryfikuj_magic_bytes(header):   # raises MagicBytesError on unavailability
+    if not _verify_magic_bytes(header):   # raises MagicBytesError on unavailability
         raise ValueError('Niedozwolony format pliku (weryfikacja binarna)')
 
     def _chunks():
@@ -179,7 +177,7 @@ def _przetworz_plik(file, document_type: str, enrollment_id, user_id) -> Uploade
         while chunk := file.read(64 * 1024):
             yield chunk
 
-    _fs_put(stored_filename, zaszyfruj_strumieniowo(_chunks()))
+    _fs_put(stored_filename, encrypt_stream(_chunks()))
 
     return UploadedDocument(
         enrollment_id     = enrollment_id,
@@ -195,9 +193,9 @@ def _przetworz_plik(file, document_type: str, enrollment_id, user_id) -> Uploade
 
 # ── Handlery blueprintu (poza fabryką — redukuje cognitive complexity) ────────
 
-def _handle_upload(enrollment_id, sprawdz):
-    zapis = _repo_enrollments.znajdz_po_id(enrollment_id)
-    if not zapis or not sprawdz(zapis):
+def _handle_upload(enrollment_id, access_checker):
+    enrollment = _repo_enrollments.znajdz_po_id(enrollment_id)
+    if not enrollment or not access_checker(enrollment):
         abort(403)
     if 'file' not in request.files:
         return jsonify({'error': 'Brak pliku'}), 400
@@ -206,7 +204,7 @@ def _handle_upload(enrollment_id, sprawdz):
     if not file.filename or not document_type:
         return jsonify({'error': 'Brak pliku lub typu dokumentu'}), 400
     try:
-        doc = _przetworz_plik(file, document_type, enrollment_id, current_user.id)
+        doc = _process_upload_file(file, document_type, enrollment_id, current_user.id)
     except MagicBytesError as exc:
         logger.error("Magic bytes check failed: %s", exc)
         return jsonify({'error': 'Weryfikacja formatu pliku chwilowo niedostępna.'}), 503
@@ -224,11 +222,11 @@ def _handle_upload(enrollment_id, sprawdz):
                     'filename': doc.original_filename, 'size': doc.file_size})
 
 
-def _handle_download(document_id, sprawdz):
+def _handle_download(document_id, access_checker):
     doc = _repo_docs.znajdz_po_id(document_id)
     if not doc:
         abort(404)
-    if not doc.enrollment or not sprawdz(doc.enrollment):
+    if not doc.enrollment or not access_checker(doc.enrollment):
         abort(403)
     try:
         encrypted = _fs_get(doc.file_path)
@@ -236,18 +234,18 @@ def _handle_download(document_id, sprawdz):
         abort(404 if e.response.status_code == 404 else 500)
     except Exception:
         abort(500)
-    plain = b''.join(odszyfruj_strumieniowo(iter([encrypted])))
+    plain = b''.join(decrypt_stream(iter([encrypted])))
     return Response(plain, mimetype=doc.mime_type, headers={
         'Content-Disposition': f'attachment; filename="{doc.original_filename}"',
         'X-Content-Type-Options': 'nosniff',
     })
 
 
-def _handle_delete(document_id, sprawdz):
+def _handle_delete(document_id, access_checker):
     doc = _repo_docs.znajdz_po_id(document_id)
     if not doc:
         return jsonify({'error': 'Nie znaleziono dokumentu'}), 404
-    if not doc.enrollment or not sprawdz(doc.enrollment):
+    if not doc.enrollment or not access_checker(doc.enrollment):
         abort(403)
     try:
         _fs_delete(doc.file_path)
@@ -259,9 +257,9 @@ def _handle_delete(document_id, sprawdz):
         return jsonify({'error': str(e)}), 500
 
 
-def _handle_list(enrollment_id, sprawdz):
-    zapis = _repo_enrollments.znajdz_po_id(enrollment_id)
-    if not zapis or not sprawdz(zapis):
+def _handle_list(enrollment_id, access_checker):
+    enrollment = _repo_enrollments.znajdz_po_id(enrollment_id)
+    if not enrollment or not access_checker(enrollment):
         abort(403)
     docs = _repo_docs.dokumenty_zapisu_posortowane(enrollment_id)
     return jsonify([{
@@ -280,30 +278,30 @@ def _handle_list(enrollment_id, sprawdz):
 
 # ── Fabryka blueprintu ────────────────────────────────────────────────────────
 
-def stworz_blueprint_pliki(sprawdzacz_dostepu=None) -> Blueprint:
+def create_files_blueprint(access_checker=None) -> Blueprint:
     """Tworzy blueprint 'uploads' ze scentralizowaną logiką bezpieczeństwa."""
     uploads_bp = Blueprint('uploads', __name__)
-    _sprawdz = sprawdzacz_dostepu or _sprawdz_dostep_do_zapisu
+    checker = access_checker or _can_access_enrollment
 
     @uploads_bp.route('/enrollment/<uuid:enrollment_id>/upload', methods=['POST'])
     @login_required
     @limiter.limit("30 per hour")
     def upload_document(enrollment_id):
-        return _handle_upload(enrollment_id, _sprawdz)
+        return _handle_upload(enrollment_id, checker)
 
     @uploads_bp.route('/document/<uuid:document_id>/download', methods=['GET'])
     @login_required
     def download_document(document_id):
-        return _handle_download(document_id, _sprawdz)
+        return _handle_download(document_id, checker)
 
     @uploads_bp.route('/document/<uuid:document_id>/delete', methods=['POST'])
     @login_required
     def delete_document(document_id):
-        return _handle_delete(document_id, _sprawdz)
+        return _handle_delete(document_id, checker)
 
     @uploads_bp.route('/enrollment/<uuid:enrollment_id>/documents', methods=['GET'])
     @login_required
     def list_documents(enrollment_id):
-        return _handle_list(enrollment_id, _sprawdz)
+        return _handle_list(enrollment_id, checker)
 
     return uploads_bp

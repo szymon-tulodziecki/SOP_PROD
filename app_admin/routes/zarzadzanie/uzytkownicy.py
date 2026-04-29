@@ -1,141 +1,143 @@
-﻿import uuid
-import datetime
-from flask import (Blueprint, render_template, redirect, url_for,
-                   flash, request, abort)
-from flask_login import login_required, current_user
+import uuid
+
+from flask import abort, flash, redirect, render_template, request, url_for
+from flask_login import current_user, login_required
 from flask_wtf import FlaskForm
-from flask_wtf.file import FileField, FileAllowed
-from wtforms import StringField, SelectField
-from wtforms.validators import DataRequired, Email, Length, Optional, ValidationError
 
-from core.modele import (User, Student, Internship, InternshipEnrollment, InternshipSchedule, LearningOutcome,
-                    UserRole, InternshipStatus, EnrollmentStatus, UploadedDocument, Company)
+from core.autoryzacja import roles_required
 from core.extensions import db
-from core.uslugi import UslugaUzytkownikow as _UslugaUzytkownikow
-_serwis_uzytkownikow = _UslugaUzytkownikow()
-from core.autoryzacja import wymaga_roli
+from core.modele import User, UserRole
 from core.repozytoria import UserRepository
-
-_repo_uzytk = UserRepository()
-
-_ROUTE_LISTA_UZYTKOWNIKOW = 'zarzadzanie.lista_uzytkownikow'
+from core.uslugi import UserService
 
 from . import zarzadzanie_bp
-from .formularze import (StudentForm, StudentEditForm, StaffForm,
-                          CsvImportForm, CompanyForm, InternshipForm)
+from .formularze import CsvImportForm, StaffForm, StudentEditForm, StudentForm
 
-# ── Użytkownicy ───────────────────────────────────────────────────────────────
+user_service = UserService()
+user_repository = UserRepository()
+
+USER_LIST_ENDPOINT = 'zarzadzanie.lista_uzytkownikow'
+
 
 @zarzadzanie_bp.route('/uzytkownicy')
 @login_required
 def lista_uzytkownikow():
-    page         = request.args.get('strona', 1, type=int)
+    page = request.args.get('strona', 1, type=int)
     search_query = request.args.get('szukaj', '').strip()
-    role_filter  = request.args.get('rola', '').strip()
+    role_filter = request.args.get('rola', '').strip()
 
-    users = _repo_uzytk.szukaj_strona(szukaj=search_query, filtr_rola=role_filter, strona=page)
+    users = user_repository.search_page(search=search_query, role_filter=role_filter, page=page)
     csrf_form = FlaskForm()
-    return render_template('zarzadzanie/uzytkownicy.html',
-                           uzytkownicy=users,
-                           csrf_form=csrf_form)
+    return render_template(
+        'zarzadzanie/uzytkownicy.html',
+        uzytkownicy=users,
+        csrf_form=csrf_form,
+    )
 
 
 @zarzadzanie_bp.route('/uzytkownicy/nowy-student', methods=['GET', 'POST'])
-@wymaga_roli(UserRole.ADMIN)
+@roles_required(UserRole.ADMIN)
 def nowy_student():
-    form      = StudentForm()
-    uopz_list = _repo_uzytk.aktywni_uopz()
-    form.uopz_id.choices = [(str(u.id), f"{u.first_name} {u.last_name}") for u in uopz_list]
+    form = StudentForm()
+    supervisors = user_repository.active_uopz()
+    form.uopz_id.choices = [(str(user.id), f"{user.first_name} {user.last_name}") for user in supervisors]
+
     if form.validate_on_submit():
-        u = _serwis_uzytkownikow.utworz_studenta(
-            email          = form.email.data.lower().strip(),
-            haslo          = '',
-            imie           = form.first_name.data,
-            nazwisko       = form.last_name.data,
-            numer_albumu   = form.album_number.data,
-            gender         = form.gender.data          or None,
-            field_of_study = form.field_of_study.data  or None,
-            specialization = form.specialization.data  or None,
-            study_mode     = form.study_mode.data      or None,
-            supervisor_id  = form.uopz_id.data         or None,
+        student = user_service.create_student(
+            email=form.email.data.lower().strip(),
+            password='',
+            first_name=form.first_name.data,
+            last_name=form.last_name.data,
+            album_number=form.album_number.data,
+            gender=form.gender.data or None,
+            field_of_study=form.field_of_study.data or None,
+            specialization=form.specialization.data or None,
+            study_mode=form.study_mode.data or None,
+            supervisor_id=form.uopz_id.data or None,
             require_password_change=False,
         )
         flash(
-            f'Konto studenta {u.first_name} {u.last_name} (nr alb. {u.album_number}) '
-            f'zostało utworzone. Student może się teraz zalogować przez Microsoft ({u.email}).',
-            'success'
+            f'Konto studenta {student.first_name} {student.last_name} (nr alb. {student.album_number}) '
+            f'zostało utworzone. Student może się teraz zalogować przez Microsoft ({student.email}).',
+            'success',
         )
-        return redirect(url_for(_ROUTE_LISTA_UZYTKOWNIKOW))
+        return redirect(url_for(USER_LIST_ENDPOINT))
+
     return render_template('zarzadzanie/formularz_studenta.html', form=form, uzytkownik=None)
 
 
 @zarzadzanie_bp.route('/uzytkownicy/<uuid:id>/edytuj-student', methods=['GET', 'POST'])
-@wymaga_roli(UserRole.ADMIN)
+@roles_required(UserRole.ADMIN)
 def edytuj_studenta(id):
-    u    = _repo_uzytk.znajdz_po_id(id) or abort(404)
-    form = StudentEditForm(user_id=id, obj=u)
-    uopz_list = _repo_uzytk.aktywni_uopz()
-    form.uopz_id.choices = [(str(x.id), f"{x.first_name} {x.last_name}") for x in uopz_list]
+    student = user_repository.find_by_id(id) or abort(404)
+    form = StudentEditForm(user_id=id, obj=student)
+    supervisors = user_repository.active_uopz()
+    form.uopz_id.choices = [(str(user.id), f"{user.first_name} {user.last_name}") for user in supervisors]
 
     if request.method == 'GET':
-        form.first_name.data   = u.first_name
-        form.last_name.data    = u.last_name
-        form.email.data        = u.email
-        form.album_number.data = u.album_number
+        form.first_name.data = student.first_name
+        form.last_name.data = student.last_name
+        form.email.data = student.email
+        form.album_number.data = student.album_number
 
     if form.validate_on_submit():
-        u.first_name     = form.first_name.data.strip()
-        u.last_name      = form.last_name.data.strip()
-        u.email          = form.email.data.lower().strip()
-        u.album_number   = form.album_number.data.strip()
-        u.gender         = form.gender.data         or None
-        u.field_of_study = form.field_of_study.data or None
-        u.specialization = form.specialization.data or None
-        u.study_mode     = form.study_mode.data     or None
+        student.first_name = form.first_name.data.strip()
+        student.last_name = form.last_name.data.strip()
+        student.email = form.email.data.lower().strip()
+        student.album_number = form.album_number.data.strip()
+        student.gender = form.gender.data or None
+        student.field_of_study = form.field_of_study.data or None
+        student.specialization = form.specialization.data or None
+        student.study_mode = form.study_mode.data or None
         db.session.commit()
         flash('Dane studenta zostały zaktualizowane.', 'success')
-        return redirect(url_for(_ROUTE_LISTA_UZYTKOWNIKOW))
-    return render_template('zarzadzanie/formularz_studenta.html', form=form, uzytkownik=u)
+        return redirect(url_for(USER_LIST_ENDPOINT))
+
+    return render_template('zarzadzanie/formularz_studenta.html', form=form, uzytkownik=student)
 
 
 @zarzadzanie_bp.route('/uzytkownicy/nowy-pracownik', methods=['GET', 'POST'])
-@wymaga_roli(UserRole.ADMIN)
+@roles_required(UserRole.ADMIN)
 def nowy_pracownik():
     form = StaffForm()
+
     if form.validate_on_submit():
-        u = User(
-            id                      = uuid.uuid4(),
-            first_name              = form.first_name.data.strip(),
-            last_name               = form.last_name.data.strip(),
-            email                   = form.email.data.lower().strip(),
-            role                    = UserRole[form.role.data],
-            password_hash           = '',
-            require_password_change = False,
-            is_active               = True,
+        user = User(
+            id=uuid.uuid4(),
+            first_name=form.first_name.data.strip(),
+            last_name=form.last_name.data.strip(),
+            email=form.email.data.lower().strip(),
+            role=UserRole[form.role.data],
+            password_hash='',
+            require_password_change=False,
+            is_active=True,
         )
-        _repo_uzytk.zapisz(u)
+        user_repository.save(user)
         db.session.commit()
         flash(
-            f'Konto {u.first_name} {u.last_name} [{u.role.value}] utworzone. '
-            f'Użytkownik może się zalogować przez Microsoft ({u.email}).',
-            'success'
+            f'Konto {user.first_name} {user.last_name} [{user.role.value}] utworzone. '
+            f'Użytkownik może się zalogować przez Microsoft ({user.email}).',
+            'success',
         )
-        return redirect(url_for(_ROUTE_LISTA_UZYTKOWNIKOW))
+        return redirect(url_for(USER_LIST_ENDPOINT))
+
     return render_template('zarzadzanie/formularz_pracownika.html', form=form, uzytkownik=None)
 
 
 @zarzadzanie_bp.route('/uzytkownicy/import-csv', methods=['GET', 'POST'])
-@wymaga_roli(UserRole.ADMIN)
+@roles_required(UserRole.ADMIN)
 def import_csv():
-    form      = CsvImportForm()
-    uopz_list = _repo_uzytk.aktywni_uopz()
-    form.uopz_id.choices = [('', '— wybierz —')] + [(str(u.id), f"{u.first_name} {u.last_name}") for u in uopz_list]
+    form = CsvImportForm()
+    supervisors = user_repository.active_uopz()
+    form.uopz_id.choices = [('', '— wybierz —')] + [
+        (str(user.id), f"{user.first_name} {user.last_name}") for user in supervisors
+    ]
     results = None
 
     if form.validate_on_submit():
         content = form.file.data.read().decode('utf-8-sig')
-        uopz_id = form.uopz_id.data or None
-        results = _serwis_uzytkownikow.importuj_z_csv(content, uopz_id)
+        supervisor_id = form.uopz_id.data or None
+        results = user_service.import_from_csv(content, supervisor_id)
         if results['created']:
             flash(f'Import zakończony: {results["created"]} kont utworzonych.', 'success')
 
@@ -143,28 +145,30 @@ def import_csv():
 
 
 @zarzadzanie_bp.route('/uzytkownicy/<uuid:id>/aktywnosc', methods=['POST'])
-@wymaga_roli(UserRole.ADMIN)
+@roles_required(UserRole.ADMIN)
 def przelacz_aktywnosc(id):
-    u = _repo_uzytk.znajdz_po_id(id) or abort(404)
-    if str(u.id) == str(current_user.id):
+    user = user_repository.find_by_id(id) or abort(404)
+    if str(user.id) == str(current_user.id):
         flash('Nie możesz dezaktywować własnego konta.', 'danger')
-        return redirect(url_for(_ROUTE_LISTA_UZYTKOWNIKOW))
-    u.is_active = not u.is_active
+        return redirect(url_for(USER_LIST_ENDPOINT))
+
+    user.is_active = not user.is_active
     db.session.commit()
-    status_label = 'aktywowane' if u.is_active else 'dezaktywowane'
-    flash(f'Konto {u.first_name} {u.last_name} zostało {status_label}.', 'success')
-    return redirect(url_for(_ROUTE_LISTA_UZYTKOWNIKOW))
+    status_label = 'aktywowane' if user.is_active else 'dezaktywowane'
+    flash(f'Konto {user.first_name} {user.last_name} zostało {status_label}.', 'success')
+    return redirect(url_for(USER_LIST_ENDPOINT))
 
 
 @zarzadzanie_bp.route('/uzytkownicy/<uuid:id>/usun', methods=['POST'])
-@wymaga_roli(UserRole.ADMIN)
+@roles_required(UserRole.ADMIN)
 def usun_uzytkownika(id):
-    u = _repo_uzytk.znajdz_po_id(id) or abort(404)
-    if str(u.id) == str(current_user.id):
+    user = user_repository.find_by_id(id) or abort(404)
+    if str(user.id) == str(current_user.id):
         flash('Nie możesz usunąć własnego konta.', 'danger')
-        return redirect(url_for(_ROUTE_LISTA_UZYTKOWNIKOW))
-    full_name = f'{u.first_name} {u.last_name}'
-    _repo_uzytk.usun(u)
+        return redirect(url_for(USER_LIST_ENDPOINT))
+
+    full_name = f'{user.first_name} {user.last_name}'
+    user_repository.delete(user)
     db.session.commit()
     flash(f'Konto {full_name} zostało trwale usunięte.', 'success')
-    return redirect(url_for(_ROUTE_LISTA_UZYTKOWNIKOW))
+    return redirect(url_for(USER_LIST_ENDPOINT))

@@ -1,10 +1,10 @@
-﻿{% extends "layouts/base_panel.html" %}
+{% extends "layouts/base_panel.html" %}
 
 {% block tytul %}Zakłady pracy{% endblock %}
 {% block naglowek %}Zakłady pracy{% endblock %}
 
 {% block naglowek_akcje %}
-<div style="display: flex; gap: 0.5rem; align-items: center;">
+<div class="u-csp-028">
   {% if current_user.role.value in ['ADMIN', 'UOPZ'] %}
   <a href="{{ url_for('zarzadzanie.nowy_zaklad') }}" class="przycisk przycisk--glowny">
     <span aria-hidden="true">+</span> Dodaj zakład
@@ -40,8 +40,8 @@
           {% for z in zaklady.items %}
           <tr>
             <td>
-              <div style="font-weight: 600;">{{ z.nazwa }}</div>
-              <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor);">{{ z.adres }}</div>
+              <div class="u-csp-141">{{ z.nazwa }}</div>
+              <div class="u-csp-146">{{ z.adres }}</div>
             </td>
             <td>{{ z.miasto or '-' }}</td>
             <td>{{ z.nip_krs or '-' }}</td>

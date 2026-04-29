@@ -1,4 +1,4 @@
-﻿{% extends "layouts/base_panel.html" %}
+{% extends "layouts/base_panel.html" %}
 {% block tytul %}Logi systemowe{% endblock %}
 {% block naglowek %}Logi systemowe{% endblock %}
 
@@ -7,14 +7,14 @@
 {% endblock %}
 
 {% block tresc %}
-<div class="karta" style="margin-bottom:1rem;">
+<div class="karta u-mb-1">
   <div class="karta__tresc">
-    <form method="GET" style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:flex-end;">
-      <div class="pole-formularza" style="flex:1; min-width:180px; margin:0;">
+    <form method="GET" class="u-flex--gap-05 u-csp-096">
+      <div class="pole-formularza u-csp-097">
         <label class="pole-formularza__etykieta" for="szukaj">Student</label>
         <input id="szukaj" name="szukaj" class="pole-formularza__input" value="{{ search_query }}" placeholder="Imię lub nazwisko…">
       </div>
-      <div class="pole-formularza" style="min-width:200px; margin:0;">
+      <div class="pole-formularza u-csp-098">
         <label class="pole-formularza__etykieta" for="typ">Typ zdarzenia</label>
         <select id="typ" name="typ" class="pole-formularza__input">
           <option value="">— wszystkie —</option>
@@ -23,7 +23,7 @@
           {% endfor %}
         </select>
       </div>
-      <div style="display:flex; gap:0.5rem; align-self:flex-end;">
+      <div class="u-flex--gap-05 u-csp-099">
         <button type="submit" class="przycisk przycisk--drugorzedny">Filtruj</button>
         {% if search_query or active_type %}
         <a href="{{ url_for('logi.lista_logow') }}" class="przycisk przycisk--drugorzedny">Wyczyść</a>
@@ -50,7 +50,7 @@
       <tbody>
         {% for z in events.items %}
         <tr>
-          <td style="white-space:nowrap; font-size:0.82rem; color:var(--kolor-tekst-drugor);">
+          <td class="u-nowrap u-meta">
             {{ z.executed_at.strftime('%Y-%m-%d %H:%M') if z.executed_at else '—' }}
           </td>
           <td>
@@ -75,10 +75,10 @@
               {{ z.enrollment.student.first_name }} {{ z.enrollment.student.last_name }}
             {% else %}—{% endif %}
           </td>
-          <td style="font-size:0.85rem;">
+          <td class="u-fs-sm">
             {% if z.executed_by %}
               {{ z.executed_by.first_name }} {{ z.executed_by.last_name }}
-              <div style="font-size:0.75rem; color:var(--kolor-tekst-trzeciorzed);">{{ z.executed_by.role_label }}</div>
+              <div class="u-tekst-trzeciorzed u-fs-xs">{{ z.executed_by.role_label }}</div>
             {% else %}—{% endif %}
           </td>
           <td>
@@ -90,7 +90,7 @@
               <span class="status status--odrzucona">Odrzucone</span>
             {% else %}—{% endif %}
           </td>
-          <td style="font-size:0.82rem; max-width:280px; word-break:break-word;">
+          <td class="u-meta u-csp-100">
             {{ z.comment or '—' }}
           </td>
           <td>

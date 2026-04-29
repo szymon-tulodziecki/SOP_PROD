@@ -1,16 +1,16 @@
-﻿{% extends "layouts/base_panel.html" %}
+{% extends "layouts/base_panel.html" %}
 
 {% block tytul %}Szczegóły zgłoszenia — {{ zapis.student.first_name }} {{ zapis.student.last_name }}{% endblock %}
 {% block naglowek %}Szczegóły zgłoszenia{% endblock %}
 
 {% block naglowek_akcje %}
-<div style="display: flex; gap: 0.5rem; align-items: center;">
+<div class="u-flex--gap-05">
   <a href="{{ url_for('zarzadzanie.lista_zgloszen') }}" class="przycisk przycisk--drugorzedny">← Powrót do listy</a>
 </div>
 {% endblock %}
 
 {% block tresc %}
-<div style="max-width: 1200px; margin: 0 auto;">
+<div class="u-csp-076">
 
   {# ── Karta identyfikacyjna zgłoszenia ── #}
   {% set status_val = zapis.status.value %}
@@ -52,49 +52,49 @@
     {% set status_label = status_val %}
   {% endif %}
 
-  <div style="background: var(--kolor-biale); border-radius: var(--promien-duzy); border-top: 4px solid {{ border_color }}; box-shadow: var(--cien-karta); margin-bottom: 2rem; overflow: hidden;">
-    <div style="padding: 1.75rem 2rem; display: grid; grid-template-columns: auto 1fr auto; gap: 2rem; align-items: center;">
+  <div class="u-enrollment-hero {% if status_val == 'PENDING' %}u-enrollment-hero--pending{% elif status_val == 'AWAITING_APPROVAL' %}u-enrollment-hero--awaiting{% elif status_val == 'COMMISSION_REVIEW' %}u-enrollment-hero--commission{% elif status_val == 'DIRECTOR_APPROVAL' %}u-enrollment-hero--director{% elif status_val == 'IN_PROGRESS' %}u-enrollment-hero--progress{% elif status_val == 'COMPLETED' %}u-enrollment-hero--completed{% elif status_val == 'REJECTED' %}u-enrollment-hero--rejected{% else %}u-enrollment-hero--default{% endif %}">
+    <div class="u-csp-102">
 
       {# Awatar inicjałowy #}
-      <div style="width: 56px; height: 56px; border-radius: 50%; background: var(--kolor-glowny); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; font-weight: 700; flex-shrink: 0; letter-spacing: 0.5px;">
+      <div class="u-csp-103">
         {{ zapis.student.first_name[0] }}{{ zapis.student.last_name[0] }}
       </div>
 
       {# Dane studenta i praktyki #}
-      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; min-width: 0;">
+      <div class="u-csp-104">
         <div>
-          <div style="font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--kolor-tekst-trzeciorzed); margin-bottom: 0.35rem;">Student</div>
-          <div style="font-weight: 700; font-size: 1rem; color: var(--kolor-tekst);">{{ zapis.student.first_name }} {{ zapis.student.last_name }}</div>
-          <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor); margin-top: 0.15rem;">{{ zapis.student.email }}</div>
+          <div class="u-etykieta">Student</div>
+          <div class="u-csp-105">{{ zapis.student.first_name }} {{ zapis.student.last_name }}</div>
+          <div class="u-meta u-csp-106">{{ zapis.student.email }}</div>
           {% if zapis.student.album_number %}
-          <div style="font-size: 0.75rem; color: var(--kolor-tekst-trzeciorzed);">nr alb. {{ zapis.student.album_number }}</div>
+          <div class="u-fs-xs u-tekst-trzeciorzed">nr alb. {{ zapis.student.album_number }}</div>
           {% endif %}
         </div>
         <div>
-          <div style="font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--kolor-tekst-trzeciorzed); margin-bottom: 0.35rem;">Rok akademicki</div>
-          <div style="font-weight: 600; color: var(--kolor-tekst);">{{ zapis.praktyka.academic_year }}</div>
-          <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor);">Semestr {{ zapis.praktyka.semester_label }}</div>
+          <div class="u-etykieta">Rok akademicki</div>
+          <div class="u-wartosc">{{ zapis.praktyka.academic_year }}</div>
+          <div class="u-meta">Semestr {{ zapis.praktyka.semester_label }}</div>
         </div>
         <div>
-          <div style="font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--kolor-tekst-trzeciorzed); margin-bottom: 0.35rem;">Ścieżka</div>
-          <div style="font-weight: 600; color: var(--kolor-tekst);">
+          <div class="u-etykieta">Ścieżka</div>
+          <div class="u-wartosc">
             {% if zapis.track_type.value == 'STANDARD' %}A — Standardowa
             {% else %}B — Uznanie efektów{% endif %}
           </div>
         </div>
         <div>
-          <div style="font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--kolor-tekst-trzeciorzed); margin-bottom: 0.35rem;">Data zgłoszenia</div>
-          <div style="font-weight: 600; color: var(--kolor-tekst);">{{ zapis.enrolled_at.strftime('%d.%m.%Y') if zapis.enrolled_at else '—' }}</div>
-          <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor);">{{ zapis.enrolled_at.strftime('%H:%M') if zapis.enrolled_at else '' }}</div>
+          <div class="u-etykieta">Data zgłoszenia</div>
+          <div class="u-wartosc">{{ zapis.enrolled_at.strftime('%d.%m.%Y') if zapis.enrolled_at else '—' }}</div>
+          <div class="u-meta">{{ zapis.enrolled_at.strftime('%H:%M') if zapis.enrolled_at else '' }}</div>
         </div>
       </div>
 
       {# Odznaka statusu #}
-      <div style="text-align: right; flex-shrink: 0;">
-        <span class="status {{ status_cls }}" style="font-size: 0.75rem; padding: 0.4rem 1rem;">{{ status_label }}</span>
+      <div class="u-ta-center u-csp-107">
+        <span class="status {{ status_cls }} u-csp-108">{{ status_label }}</span>
         {% if zapis.uopz %}
-        <div style="margin-top: 0.75rem; font-size: 0.75rem; color: var(--kolor-tekst-trzeciorzed); text-align: right;">
-          UOPZ: <strong style="color: var(--kolor-tekst-drugor);">{{ zapis.uopz.first_name }} {{ zapis.uopz.last_name }}</strong>
+        <div class="u-fs-xs u-tekst-trzeciorzed u-ta-center u-csp-109">
+          UOPZ: <strong class="u-tekst-drugor">{{ zapis.uopz.first_name }} {{ zapis.uopz.last_name }}</strong>
         </div>
         {% endif %}
       </div>
@@ -104,10 +104,10 @@
   </div>
 
   {# ── Główna siatka treści ── #}
-  <div style="display: grid; grid-template-columns: 1fr 480px; gap: 1.5rem; align-items: start;">
+  <div class="u-csp-160">
 
     {# ═══ LEWA KOLUMNA ═══ #}
-    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+    <div class="u-flex--col-15">
 
       {# Dane podstawowe #}
       <div class="karta">
@@ -115,7 +115,7 @@
           <h3 class="karta__tytul">Dane podstawowe</h3>
         </div>
         <div class="karta__tresc">
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
+          <div class="u-grid-2-lg">
             <div class="pole-info">
               <div class="pole-info__etykieta">Ścieżka praktyki</div>
               <div class="pole-info__wartosc">
@@ -132,7 +132,7 @@
               <div class="pole-info__etykieta">Termin praktyki</div>
               <div class="pole-info__wartosc">
                 {{ zapis.start_date.strftime('%d.%m.%Y') if zapis.start_date else 'Brak' }}
-                <span style="color: var(--kolor-tekst-trzeciorzed); margin: 0 0.25rem;">→</span>
+                <span class="u-tekst-trzeciorzed u-csp-161">→</span>
                 {{ zapis.end_date.strftime('%d.%m.%Y') if zapis.end_date else 'Brak' }}
               </div>
             </div>
@@ -140,13 +140,13 @@
               <div class="pole-info__etykieta">Ubezpieczenie NW</div>
               <div class="pole-info__wartosc">
                 {% if zapis.accident_insurance %}
-                  <span style="color: var(--kolor-sukces); display: inline-flex; align-items: center; gap: 0.35rem;">
-                    <span style="width: 8px; height: 8px; border-radius: 50%; background: currentColor; display: inline-block;"></span>
+                  <span class="u-tekst-sukces u-csp-162">
+                    <span class="u-dot"></span>
                     Potwierdzone
                   </span>
                 {% else %}
-                  <span style="color: var(--kolor-blad); display: inline-flex; align-items: center; gap: 0.35rem;">
-                    <span style="width: 8px; height: 8px; border-radius: 50%; background: currentColor; display: inline-block;"></span>
+                  <span class="u-csp-163">
+                    <span class="u-dot"></span>
                     Nie potwierdzone
                   </span>
                 {% endif %}
@@ -165,10 +165,10 @@
           <h3 class="karta__tytul">Zakład pracy</h3>
         </div>
         <div class="karta__tresc">
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
+          <div class="u-grid-2-lg">
             <div class="pole-info">
               <div class="pole-info__etykieta">Nazwa firmy</div>
-              <div class="pole-info__wartosc" style="font-weight: 600;">{{ zapis.firma_nazwa or '—' }}</div>
+              <div class="pole-info__wartosc u-fw-600">{{ zapis.firma_nazwa or '—' }}</div>
             </div>
             <div class="pole-info">
               <div class="pole-info__etykieta">NIP / KRS</div>
@@ -182,12 +182,12 @@
               <div class="pole-info__etykieta">Miasto</div>
               <div class="pole-info__wartosc">{{ zapis.firma_miasto or '—' }}</div>
             </div>
-            <div class="pole-info" style="grid-column: 1 / -1;">
+            <div class="pole-info u-csp-164">
               <div class="pole-info__etykieta">Przedstawiciel firmy</div>
               <div class="pole-info__wartosc">
                 {{ zapis.firma_upowazniony_osoba or '—' }}
                 {% if zapis.firma_upowazniony_stanowisko %}
-                  <span style="color: var(--kolor-tekst-drugor); font-weight: 400;"> · {{ zapis.firma_upowazniony_stanowisko }}</span>
+                  <span class="u-tekst-drugor u-fw-500"> · {{ zapis.firma_upowazniony_stanowisko }}</span>
                 {% endif %}
               </div>
             </div>
@@ -201,10 +201,10 @@
           <h3 class="karta__tytul">Opiekun zakładowy (ZOPZ)</h3>
         </div>
         <div class="karta__tresc">
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
+          <div class="u-grid-2-lg">
             <div class="pole-info">
               <div class="pole-info__etykieta">Imię i nazwisko</div>
-              <div class="pole-info__wartosc" style="font-weight: 600;">{{ zapis.zopz_imie_nazwisko or '—' }}</div>
+              <div class="pole-info__wartosc u-fw-600">{{ zapis.zopz_imie_nazwisko or '—' }}</div>
             </div>
             <div class="pole-info">
               <div class="pole-info__etykieta">Stanowisko</div>
@@ -224,56 +224,54 @@
 
       {# Harmonogram #}
       <div class="karta">
-        <div class="karta__naglowek" style="display: flex; justify-content: space-between; align-items: center;">
+        <div class="karta__naglowek">
           <h3 class="karta__tytul">Harmonogram praktyki</h3>
           {% set suma_dni = namespace(wartosc=0) %}
           {% for e in efekty %}
             {% set h = harmonogram_dict.get(e.id) %}
             {% if h and h.liczba_dni > 0 %}{% set suma_dni.wartosc = suma_dni.wartosc + h.liczba_dni %}{% endif %}
           {% endfor %}
-          <span class="status {% if suma_dni.wartosc > 120 %}status--draft" style="background:#fee2e2;color:var(--kolor-blad){% elif suma_dni.wartosc < 100 %}status--in-progress{% else %}status--completed{% endif %}">
+          <span class="status {% if suma_dni.wartosc > 120 %}status--draft u-status-danger{% elif suma_dni.wartosc < 100 %}status--in-progress{% else %}status--completed{% endif %}">
             {{ suma_dni.wartosc }} / 120 dni
           </span>
         </div>
-        <div class="karta__tresc" style="padding: 0;">
+        <div class="karta__tresc u-p-0">
           <div class="tabela-wrapper">
             <table class="tabela">
               <thead>
                 <tr>
-                  <th style="width: 4%; text-align: center;">Nr</th>
-                  <th style="width: 38%;">Efekt uczenia się</th>
-                  <th style="width: 25%;">Dział / Jednostka</th>
-                  <th style="width: 25%;">Przykładowe zadania</th>
-                  <th style="width: 8%; text-align: center;">Dni</th>
+                  <th class="u-w-25 u-ta-center u-csp-165">Nr</th>
+                  <th class="u-csp-166">Efekt uczenia się</th>
+                  <th class="u-w-25">Dział / Jednostka</th>
+                  <th class="u-w-25">Przykładowe zadania</th>
+                  <th class="u-ta-center u-csp-167">Dni</th>
                 </tr>
               </thead>
               <tbody>
                 {% for e in efekty %}
                 {% set h = harmonogram_dict.get(e.id) %}
                 {% set brak = not h or h.liczba_dni == 0 %}
-                <tr {% if brak %}style="opacity: 0.55;"{% endif %}>
-                  <td style="text-align: center; font-weight: 600; color: var(--kolor-tekst-trzeciorzed); font-size: 0.8rem;">{{ '%02d'|format(e.id) }}</td>
-                  <td style="font-size: 0.82rem; line-height: 1.45;">{{ e.description }}</td>
-                  <td style="font-size: 0.85rem;">
+                <tr class="{% if brak %}u-row-muted{% endif %}">
+                  <td class="u-ta-center u-fw-600 u-tekst-trzeciorzed u-fs-xxs">{{ '%02d'|format(e.id) }}</td>
+                  <td class="u-csp-168">{{ e.description }}</td>
+                  <td class="u-fs-sm">
                     {% if h and h.nazwa_dzialu %}{{ h.nazwa_dzialu }}
-                    {% else %}<span style="color: var(--kolor-tekst-trzeciorzed); font-style: italic;">Nie przypisano</span>{% endif %}
+                    {% else %}<span class="u-tekst-trzeciorzed u-csp-169">Nie przypisano</span>{% endif %}
                   </td>
-                  <td style="font-size: 0.85rem;">
+                  <td class="u-fs-sm">
                     {% if h and h.przykladowe_prace %}{{ h.przykladowe_prace }}
-                    {% else %}<span style="color: var(--kolor-tekst-trzeciorzed); font-style: italic;">Nie podano</span>{% endif %}
+                    {% else %}<span class="u-tekst-trzeciorzed u-csp-169">Nie podano</span>{% endif %}
                   </td>
-                  <td style="text-align: center; font-weight: 700; font-size: 0.95rem;
-                    color: {% if brak %}var(--kolor-tekst-trzeciorzed){% else %}var(--kolor-glowny){% endif %};">
+                  <td class="u-ta-center u-fw-600 u-day-value {% if brak %}u-day-value--missing{% endif %}">
                     {{ h.liczba_dni if h else 0 }}
                   </td>
                 </tr>
                 {% endfor %}
               </tbody>
               <tfoot>
-                <tr style="background: var(--kolor-tlo);">
-                  <td colspan="4" style="text-align: right; font-weight: 600; padding-right: 1rem; font-size: 0.85rem; color: var(--kolor-tekst-drugor);">Suma dni:</td>
-                  <td style="text-align: center; font-weight: 700; font-size: 1.05rem;
-                    color: {% if suma_dni.wartosc > 120 %}var(--kolor-blad){% elif suma_dni.wartosc < 100 %}#92400e{% else %}var(--kolor-sukces){% endif %};">
+                <tr class="u-bg-tlo">
+                  <td colspan="4" class="u-fw-600 u-fs-sm u-tekst-drugor u-csp-170">Suma dni:</td>
+                  <td class="u-ta-center u-fw-600 u-day-total {% if suma_dni.wartosc > 120 %}u-day-total--high{% elif suma_dni.wartosc < 100 %}u-day-total--low{% else %}u-day-total--ok{% endif %}">
                     {{ suma_dni.wartosc }}
                   </td>
                 </tr>
@@ -281,11 +279,11 @@
             </table>
           </div>
           {% if suma_dni.wartosc > 120 %}
-          <div style="margin: 1rem 1.5rem; padding: 0.75rem 1rem; background: #fee2e2; border-radius: var(--promien); color: var(--kolor-blad); font-size: 0.85rem; display: flex; gap: 0.5rem; align-items: flex-start;">
+          <div class="u-csp-171">
             <strong>Przekroczono limit 120 dni.</strong> Harmonogram wymaga korekty przed zatwierdzeniem.
           </div>
           {% elif suma_dni.wartosc < 100 %}
-          <div style="margin: 1rem 1.5rem; padding: 0.75rem 1rem; background: #fef3c7; border-radius: var(--promien); color: #92400e; font-size: 0.85rem; display: flex; gap: 0.5rem; align-items: flex-start;">
+          <div class="u-csp-172">
             <strong>Niewystarczająca liczba dni (min. 100).</strong> Harmonogram wymaga uzupełnienia.
           </div>
           {% endif %}
@@ -299,16 +297,16 @@
           <h3 class="karta__tytul">Dane pracodawcy / działalności</h3>
         </div>
         <div class="karta__tresc">
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
+          <div class="u-grid-2-lg">
             <div class="pole-info">
               <div class="pole-info__etykieta">Nazwa firmy / działalności</div>
-              <div class="pole-info__wartosc" style="font-weight: 600;">{{ zapis.firma_nazwa or '—' }}</div>
+              <div class="pole-info__wartosc u-fw-600">{{ zapis.firma_nazwa or '—' }}</div>
             </div>
             <div class="pole-info">
               <div class="pole-info__etykieta">Stanowisko / zakres obowiązków</div>
               <div class="pole-info__wartosc">{{ zapis.zopz_stanowisko or '—' }}</div>
             </div>
-            <div class="pole-info" style="grid-column: 1 / -1;">
+            <div class="pole-info u-csp-164">
               <div class="pole-info__etykieta">Adres</div>
               <div class="pole-info__wartosc">{{ zapis.firma_adres or '—' }}{% if zapis.firma_miasto %}, {{ zapis.firma_miasto }}{% endif %}</div>
             </div>
@@ -322,39 +320,39 @@
           <h3 class="karta__tytul">Uzasadnienie wniosku</h3>
         </div>
         <div class="karta__tresc">
-          <p style="white-space: pre-line; font-size: 0.9rem; line-height: 1.7; color: var(--kolor-tekst);">{{ zapis.uzasadnienie_sciezki }}</p>
+          <p class="u-csp-173">{{ zapis.uzasadnienie_sciezki }}</p>
         </div>
       </div>
       {% endif %}
 
-      {% if zapis.decyzja_komisji or zapis.decyzja_dziekana %}
+      {% if zapis.decyzja_komisji or zapis.decyzja_dyrektora %}
       <div class="karta">
         <div class="karta__naglowek">
           <h3 class="karta__tytul">Decyzje</h3>
         </div>
-        <div class="karta__tresc" style="display: flex; flex-direction: column; gap: 1rem;">
+        <div class="karta__tresc u-flex--col">
           {% if zapis.decyzja_komisji %}
-          <div style="padding: 1rem; border: 1px solid var(--kolor-ramka); border-radius: var(--promien); background: var(--kolor-tlo);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-              <span style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--kolor-tekst-trzeciorzed);">Komisja ds. praktyk</span>
-              <span class="status {% if zapis.decyzja_komisji == 'APPROVED' %}status--completed{% elif zapis.decyzja_komisji == 'REJECTED' %}status--draft" style="background:#fee2e2;color:var(--kolor-blad){% else %}status--in-progress{% endif %}">
+          <div class="u-ramka">
+            <div class="u-flex--between-mb">
+              <span class="u-etykieta u-csp-174">Komisja ds. praktyk</span>
+              <span class="status {% if zapis.decyzja_komisji == 'APPROVED' %}status--completed{% elif zapis.decyzja_komisji == 'REJECTED' %}status--draft u-status-danger{% else %}status--in-progress{% endif %}">
                 {% if zapis.decyzja_komisji == 'APPROVED' %}Zatwierdzono
                 {% elif zapis.decyzja_komisji == 'PARTIALLY_APPROVED' %}Częściowo zatwierdzono
                 {% else %}Odrzucono{% endif %}
               </span>
             </div>
-            {% if zapis.komentarze_komisji %}<p style="font-size: 0.85rem; color: var(--kolor-tekst-drugor); line-height: 1.5; margin: 0;">{{ zapis.komentarze_komisji }}</p>{% endif %}
+            {% if zapis.komentarze_komisji %}<p class="u-opis">{{ zapis.komentarze_komisji }}</p>{% endif %}
           </div>
           {% endif %}
-          {% if zapis.decyzja_dziekana %}
-          <div style="padding: 1rem; border: 1px solid var(--kolor-ramka); border-radius: var(--promien); background: var(--kolor-tlo);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-              <span style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--kolor-tekst-trzeciorzed);">Dyrektor IIS</span>
-              <span class="status {% if zapis.decyzja_dziekana == 'APPROVED' %}status--completed{% else %}status--draft" style="background:#fee2e2;color:var(--kolor-blad){% endif %}">
-                {{ 'Zatwierdzono' if zapis.decyzja_dziekana == 'APPROVED' else 'Odrzucono' }}
+          {% if zapis.decyzja_dyrektora %}
+          <div class="u-ramka">
+            <div class="u-flex--between-mb">
+              <span class="u-etykieta u-csp-174">Dyrektor IIS</span>
+              <span class="status {% if zapis.decyzja_dyrektora == 'APPROVED' %}status--completed{% else %}status--draft u-status-danger{% endif %}">
+                {{ 'Zatwierdzono' if zapis.decyzja_dyrektora == 'APPROVED' else 'Odrzucono' }}
               </span>
             </div>
-            {% if zapis.komentarze_dziekana %}<p style="font-size: 0.85rem; color: var(--kolor-tekst-drugor); line-height: 1.5; margin: 0;">{{ zapis.komentarze_dziekana }}</p>{% endif %}
+            {% if zapis.komentarze_dyrektora %}<p class="u-opis">{{ zapis.komentarze_dyrektora }}</p>{% endif %}
           </div>
           {% endif %}
         </div>
@@ -367,17 +365,17 @@
       <div class="karta">
         <div class="karta__naglowek">
           <h3 class="karta__tytul">Załączniki studenta</h3>
-          <span style="font-size: 0.75rem; font-weight: 400; color: var(--kolor-tekst-trzeciorzed);">{{ uploaded_docs|length }} plik{% if uploaded_docs|length != 1 %}i{% endif %}</span>
+          <span class="u-fs-xs u-fw-500 u-tekst-trzeciorzed">{{ uploaded_docs|length }} plik{% if uploaded_docs|length != 1 %}i{% endif %}</span>
         </div>
-        <div class="karta__tresc" style="display: flex; flex-direction: column; gap: 0.5rem;">
+        <div class="karta__tresc u-flex--col-05">
           {% for dok in uploaded_docs %}
-          <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; border: 1px solid var(--kolor-ramka); border-radius: var(--promien); background: var(--kolor-tlo); transition: border-color 0.15s;">
-            <div style="min-width: 0;">
-              <div style="font-weight: 600; font-size: 0.875rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ dok.original_filename }}</div>
-              <div style="font-size: 0.75rem; color: var(--kolor-tekst-trzeciorzed); margin-top: 0.15rem;">{{ dok.document_type }} · {{ dok.uploaded_at.strftime('%d.%m.%Y, %H:%M') }}</div>
+          <div class="u-ramka u-csp-175">
+            <div class="u-csp-116">
+              <div class="u-fw-600 u-csp-117">{{ dok.original_filename }}</div>
+              <div class="u-fs-xs u-tekst-trzeciorzed u-csp-106">{{ dok.document_type }} · {{ dok.uploaded_at.strftime('%d.%m.%Y, %H:%M') }}</div>
             </div>
             <a href="{{ url_for('uploads.download_document', document_id=dok.id) }}"
-               class="przycisk przycisk--maly przycisk--drugorzedny" style="flex-shrink: 0; margin-left: 1rem;">Pobierz</a>
+               class="przycisk przycisk--maly przycisk--drugorzedny u-csp-118">Pobierz</a>
           </div>
           {% endfor %}
         </div>
@@ -387,8 +385,7 @@
     </div>
 
     {# ═══ PRAWA KOLUMNA ═══ #}
-    <div style="display: flex; flex-direction: column; gap: 1.5rem; position: sticky; top: 1.5rem;">
-
+    <div class="u-flex--col-15 u-csp-119">
 
       {# Panel decyzji #}
       {% if zapis.status.value in ['PENDING', 'AWAITING_APPROVAL'] %}
@@ -400,17 +397,16 @@
           <form method="POST">
             {{ form.hidden_tag() }}
 
-            <div style="margin-bottom: 1.25rem;">
-              <label class="pole-formularza__etykieta" style="display: block; margin-bottom: 0.4rem;">Komentarz do studenta <span style="font-weight: 400; color: var(--kolor-tekst-trzeciorzed);">(opcjonalny)</span></label>
-              {{ form.comment(class="pole-formularza__textarea", rows="7", placeholder="Uwagi widoczne dla studenta w panelu praktyk…", style="width: 100%; box-sizing: border-box;") }}
+            <div class="u-mb-1 u-csp-121">
+              <label class="pole-formularza__etykieta u-csp-176">Komentarz do studenta <span class="u-fw-500 u-tekst-trzeciorzed">(opcjonalny)</span></label>
+              {{ form.comment(class="pole-formularza__textarea u-form-full", rows="7", placeholder="Uwagi widoczne dla studenta w panelu praktyk…") }}
             </div>
 
-            <div style="border-top: 1px solid var(--kolor-ramka); padding-top: 1.25rem; display: flex; flex-direction: column; gap: 0.625rem;">
-              {{ form.zatwierdz(class="przycisk przycisk--glowny", style="width: 100%; justify-content: center; text-align: center;") }}
-              {{ form.odrzuc(class="przycisk przycisk--ostrzezenie", style="width: 100%; justify-content: center; text-align: center;") }}
+            <div class="u-flex--col u-csp-122">
+              {{ form.zatwierdz(class="przycisk przycisk--glowny u-w-full u-flex--center") }}
+              {{ form.odrzuc(class="przycisk przycisk--ostrzezenie u-w-full u-flex--center") }}
               <a href="{{ url_for('zarzadzanie.lista_zgloszen') }}"
-                 class="przycisk przycisk--drugorzedny"
-                 style="width: 100%; justify-content: center; text-align: center;">Anuluj</a>
+                 class="przycisk przycisk--drugorzedny u-w-full u-flex--center">Anuluj</a>
             </div>
 
           </form>
@@ -421,10 +417,10 @@
 
       {# Czeka na poprawki studenta #}
       <div class="karta">
-        <div class="karta__tresc" style="text-align: center; padding: 2rem 1.5rem;">
-          <div style="width: 48px; height: 48px; border-radius: 50%; background: #fef2f2; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; font-size: 1.35rem; color: #dc2626;">!</div>
-          <div style="font-weight: 700; color: #991b1b; font-size: 1rem; margin-bottom: 0.4rem;">Oczekiwanie na poprawki studenta</div>
-          <div style="color: var(--kolor-tekst-drugor); font-size: 0.875rem; line-height: 1.5;">Zgłoszenie zostało zwrócone do studenta. Po nadesłaniu poprawek pojawi się tu ponownie do zatwierdzenia.</div>
+        <div class="karta__tresc u-stan-pusty--sm">
+          <div class="u-csp-177">!</div>
+          <div class="u-fw-600 u-csp-178">Oczekiwanie na poprawki studenta</div>
+          <div class="u-tekst-drugor u-csp-179">Zgłoszenie zostało zwrócone do studenta. Po nadesłaniu poprawek pojawi się tu ponownie do zatwierdzenia.</div>
         </div>
       </div>
 
@@ -432,25 +428,25 @@
 
       {# Stan po zatwierdzeniu #}
       <div class="karta">
-        <div class="karta__tresc" style="text-align: center; padding: 2rem 1.5rem;">
-          <div style="width: 48px; height: 48px; border-radius: 50%; background: #d1fae5; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; font-size: 1.35rem; color: var(--kolor-sukces);">✓</div>
-          <div style="font-weight: 700; color: var(--kolor-sukces); font-size: 1rem; margin-bottom: 0.4rem;">Zgłoszenie zatwierdzone</div>
-          <div style="color: var(--kolor-tekst-drugor); font-size: 0.875rem; line-height: 1.5;">Praktyka jest w trakcie realizacji przez studenta.</div>
+        <div class="karta__tresc u-stan-pusty--sm">
+          <div class="u-csp-180">✓</div>
+          <div class="u-fw-600 u-tekst-sukces u-csp-181">Zgłoszenie zatwierdzone</div>
+          <div class="u-tekst-drugor u-csp-179">Praktyka jest w trakcie realizacji przez studenta.</div>
         </div>
       </div>
       {% endif %}
 
       {# Historia decyzji #}
-      {% if zapis.decyzja_komisji or zapis.decyzja_dziekana %}
+      {% if zapis.decyzja_komisji or zapis.decyzja_dyrektora %}
       <div class="karta">
         <div class="karta__naglowek">
           <h3 class="karta__tytul">Historia decyzji</h3>
         </div>
-        <div class="karta__tresc" style="display: flex; flex-direction: column; gap: 1rem;">
+        <div class="karta__tresc u-flex--col">
           {% if zapis.decyzja_komisji %}
-          <div style="padding: 1rem; border: 1px solid var(--kolor-ramka); border-radius: var(--promien); background: var(--kolor-tlo);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-              <span style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--kolor-tekst-trzeciorzed);">Komisja ds. praktyk</span>
+          <div class="u-ramka">
+            <div class="u-flex--between-mb">
+              <span class="u-etykieta u-csp-174">Komisja ds. praktyk</span>
               <span class="status {% if zapis.decyzja_komisji == 'APPROVED' %}status--completed{% elif zapis.decyzja_komisji == 'PARTIALLY_APPROVED' %}status--in-progress{% else %}status--odrzucona{% endif %}">
                 {% if zapis.decyzja_komisji == 'APPROVED' %}Opinia pozytywna
                 {% elif zapis.decyzja_komisji == 'PARTIALLY_APPROVED' %}Opinia częściowo pozytywna
@@ -458,20 +454,20 @@
               </span>
             </div>
             {% if zapis.komentarze_komisji %}
-            <p style="font-size: 0.85rem; color: var(--kolor-tekst-drugor); line-height: 1.5; margin: 0;">{{ zapis.komentarze_komisji }}</p>
+            <p class="u-opis">{{ zapis.komentarze_komisji }}</p>
             {% endif %}
           </div>
           {% endif %}
-          {% if zapis.decyzja_dziekana %}
-          <div style="padding: 1rem; border: 1px solid var(--kolor-ramka); border-radius: var(--promien); background: var(--kolor-tlo);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-              <span style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--kolor-tekst-trzeciorzed);">Dyrektor IIS</span>
-              <span class="status {% if zapis.decyzja_dziekana == 'APPROVED' %}status--completed{% else %}status--odrzucona{% endif %}">
-                {{ 'Zatwierdzone' if zapis.decyzja_dziekana == 'APPROVED' else 'Odrzucone' }}
+          {% if zapis.decyzja_dyrektora %}
+          <div class="u-ramka">
+            <div class="u-flex--between-mb">
+              <span class="u-etykieta u-csp-174">Dyrektor IIS</span>
+              <span class="status {% if zapis.decyzja_dyrektora == 'APPROVED' %}status--completed{% else %}status--odrzucona{% endif %}">
+                {{ 'Zatwierdzone' if zapis.decyzja_dyrektora == 'APPROVED' else 'Odrzucone' }}
               </span>
             </div>
-            {% if zapis.komentarze_dziekana %}
-            <p style="font-size: 0.85rem; color: var(--kolor-tekst-drugor); line-height: 1.5; margin: 0;">{{ zapis.komentarze_dziekana }}</p>
+            {% if zapis.komentarze_dyrektora %}
+            <p class="u-opis">{{ zapis.komentarze_dyrektora }}</p>
             {% endif %}
           </div>
           {% endif %}
@@ -484,20 +480,4 @@
   </div>
 
 </div>
-
-<style>
-.pole-info__etykieta {
-  font-size: 0.7rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--kolor-tekst-trzeciorzed);
-  margin-bottom: 0.3rem;
-}
-.pole-info__wartosc {
-  font-size: 0.9rem;
-  color: var(--kolor-tekst);
-  line-height: 1.45;
-}
-</style>
 {% endblock %}

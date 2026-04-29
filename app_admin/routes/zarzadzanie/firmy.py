@@ -1,127 +1,136 @@
-﻿import uuid
-from flask import (Blueprint, render_template, redirect, url_for, flash, request, abort)
-from flask_login import login_required
+import uuid
+
+from flask import abort, flash, redirect, render_template, request, url_for
 from flask_wtf import FlaskForm
 
-from core.modele import Company, EnrollmentStatus, UserRole
+from core.autoryzacja import roles_required
 from core.extensions import db
-from core.autoryzacja import wymaga_roli
+from core.modele import Company, EnrollmentStatus, UserRole
 from core.repozytoria import CompanyRepository
 
 from . import zarzadzanie_bp
 from .formularze import CompanyForm
 
-_repo_firm = CompanyRepository()
+company_repository = CompanyRepository()
 
-_ROUTE_LISTA_FIRM = 'zarzadzanie.lista_firm'
-_TPL_FORMULARZ    = 'zarzadzanie/firmy/formularz.html'
+COMPANY_LIST_ROUTE = 'zarzadzanie.lista_firm'
+COMPANY_FORM_TEMPLATE = 'zarzadzanie/firmy/formularz.html'
 
-_AKTYWNE_STATUSY = [
-    EnrollmentStatus.AWAITING_APPROVAL, EnrollmentStatus.IN_PROGRESS,
-    EnrollmentStatus.COMMISSION_REVIEW, EnrollmentStatus.DIRECTOR_APPROVAL,
+ACTIVE_ENROLLMENT_STATUSES = [
+    EnrollmentStatus.AWAITING_APPROVAL,
+    EnrollmentStatus.IN_PROGRESS,
+    EnrollmentStatus.COMMISSION_REVIEW,
+    EnrollmentStatus.DIRECTOR_APPROVAL,
 ]
 
 
+def _check_company_uniqueness(form, exclude_id=None) -> str | None:
+    company_name = form.name.data.strip()
+    if company_repository.find_active_by_name(company_name, exclude_id=exclude_id):
+        return 'Company o tej nazwie już istnieje w systemie.'
+
+    tax_id = form.vat_number.data.strip() if form.vat_number.data else ''
+    if tax_id:
+        existing_company = company_repository.find_active_by_tax_id(tax_id, exclude_id=exclude_id)
+        if existing_company:
+            return f'Company z NIP/KRS "{tax_id}" już istnieje ({existing_company.name}).'
+    return None
+
+
 @zarzadzanie_bp.route('/firmy')
-@wymaga_roli(UserRole.ADMIN)
+@roles_required(UserRole.ADMIN)
 def lista_firm():
-    page         = request.args.get('page', 1, type=int)
+    page = request.args.get('page', 1, type=int)
     search_query = request.args.get('szukaj', '').strip()
     status = request.args.get('status', 'wszystkie')
 
-    companies = _repo_firm.lista_strona(szukaj=search_query, status=status, strona=page)
+    companies = company_repository.paginated_list(search=search_query, status=status, page=page)
     csrf_form = FlaskForm()
     return render_template('zarzadzanie/firmy/lista.html', firmy=companies, csrf_form=csrf_form)
 
 
 @zarzadzanie_bp.route('/firmy/dodaj', methods=['GET', 'POST'])
-@wymaga_roli(UserRole.ADMIN)
+@roles_required(UserRole.ADMIN)
 def dodaj_firme():
     form = CompanyForm()
     if form.validate_on_submit():
-        if _repo_firm.znajdz_po_nazwie_aktywna(form.name.data.strip()):
-            flash('Firma o tej nazwie już istnieje w systemie.', 'error')
-            return render_template(_TPL_FORMULARZ, form=form, tryb='dodaj')
+        error_message = _check_company_uniqueness(form)
+        if error_message:
+            flash(error_message, 'error')
+            return render_template(COMPANY_FORM_TEMPLATE, form=form, tryb='dodaj')
 
-        if form.vat_number.data and form.vat_number.data.strip():
-            existing_by_vat = _repo_firm.znajdz_po_nip_aktywna(form.vat_number.data.strip())
-            if existing_by_vat:
-                flash(f'Firma z numerem NIP/KRS "{form.vat_number.data.strip()}" już istnieje ({existing_by_vat.name}).', 'error')
-                return render_template(_TPL_FORMULARZ, form=form, tryb='dodaj')
-
-        firma = Company(
-            id      = uuid.uuid4(),
-            name    = form.name.data.strip(),
-            address = form.address.data.strip()    if form.address.data    else None,
-            city    = form.city.data.strip()       if form.city.data       else None,
-            tax_id  = form.vat_number.data.strip() if form.vat_number.data else None,
+        company = Company(
+            id=uuid.uuid4(),
+            name=form.name.data.strip(),
+            address=form.address.data.strip() if form.address.data else None,
+            city=form.city.data.strip() if form.city.data else None,
+            tax_id=form.vat_number.data.strip() if form.vat_number.data else None,
         )
-        _repo_firm.zapisz(firma)
+        company_repository.save(company)
         db.session.commit()
-        flash('Firma została dodana do systemu.', 'success')
-        return redirect(url_for(_ROUTE_LISTA_FIRM))
+        flash('Company została dodana do systemu.', 'success')
+        return redirect(url_for(COMPANY_LIST_ROUTE))
 
-    return render_template(_TPL_FORMULARZ, form=form, tryb='dodaj')
+    return render_template(COMPANY_FORM_TEMPLATE, form=form, tryb='dodaj')
 
 
 @zarzadzanie_bp.route('/firmy/<uuid:id>/edytuj', methods=['GET', 'POST'])
-@wymaga_roli(UserRole.ADMIN)
+@roles_required(UserRole.ADMIN)
 def edytuj_firme(id):
-    firma = _repo_firm.znajdz_po_id(id) or abort(404)
-    form  = CompanyForm(obj=firma)
+    company = company_repository.find_by_id(id) or abort(404)
+    form = CompanyForm(obj=company)
 
     if form.validate_on_submit():
-        if _repo_firm.znajdz_po_nazwie_aktywna(form.name.data.strip(), pominij_id=firma.id):
-            flash('Firma o tej nazwie już istnieje w systemie.', 'error')
-            return render_template(_TPL_FORMULARZ, form=form, tryb='edytuj', firma=firma)
+        error_message = _check_company_uniqueness(form, exclude_id=company.id)
+        if error_message:
+            flash(error_message, 'error')
+            return render_template(COMPANY_FORM_TEMPLATE, form=form, tryb='edytuj', firma=company)
 
-        if form.vat_number.data and form.vat_number.data.strip():
-            existing_by_vat = _repo_firm.znajdz_po_nip_aktywna(form.vat_number.data.strip(), pominij_id=firma.id)
-            if existing_by_vat:
-                flash(f'Firma z NIP/KRS "{form.vat_number.data.strip()}" już istnieje ({existing_by_vat.name}).', 'error')
-                return render_template(_TPL_FORMULARZ, form=form, tryb='edytuj', firma=firma)
-
-        firma.name    = form.name.data.strip()
-        firma.address = form.address.data.strip()    if form.address.data    else None
-        firma.city    = form.city.data.strip()       if form.city.data       else None
-        firma.tax_id  = form.vat_number.data.strip() if form.vat_number.data else None
+        company.name = form.name.data.strip()
+        company.address = form.address.data.strip() if form.address.data else None
+        company.city = form.city.data.strip() if form.city.data else None
+        company.tax_id = form.vat_number.data.strip() if form.vat_number.data else None
         db.session.commit()
         flash('Dane firmy zostały zaktualizowane.', 'success')
-        return redirect(url_for(_ROUTE_LISTA_FIRM))
+        return redirect(url_for(COMPANY_LIST_ROUTE))
 
-    return render_template(_TPL_FORMULARZ, form=form, tryb='edytuj', firma=firma)
+    return render_template(COMPANY_FORM_TEMPLATE, form=form, tryb='edytuj', firma=company)
 
 
 @zarzadzanie_bp.route('/firmy/<uuid:id>/usun', methods=['POST'])
-@wymaga_roli(UserRole.ADMIN)
+@roles_required(UserRole.ADMIN)
 def usun_firme(id):
-    firma              = _repo_firm.znajdz_po_id(id) or abort(404)
-    total_internships  = _repo_firm.liczba_praktyk(firma.id)
-    if total_internships > 0:
-        flash(f'Nie można usunąć firmy - ma {total_internships} praktyk w historii.', 'error')
-        return redirect(url_for(_ROUTE_LISTA_FIRM))
-    company_name = firma.name
-    _repo_firm.usun(firma)
+    company = company_repository.find_by_id(id) or abort(404)
+    internship_count = company_repository.count_internships(company.id)
+    if internship_count > 0:
+        flash(f'Nie można usunąć firmy - ma {internship_count} praktyk w historii.', 'error')
+        return redirect(url_for(COMPANY_LIST_ROUTE))
+
+    company_name = company.name
+    company_repository.delete(company)
     db.session.commit()
-    flash(f'Firma "{company_name}" została trwale usunięta z systemu.', 'success')
-    return redirect(url_for(_ROUTE_LISTA_FIRM))
+    flash(f'Company "{company_name}" została trwale usunięta z systemu.', 'success')
+    return redirect(url_for(COMPANY_LIST_ROUTE))
 
 
 @zarzadzanie_bp.route('/firmy/<uuid:id>/przelacz-aktywnosc', methods=['POST'])
-@wymaga_roli(UserRole.ADMIN)
+@roles_required(UserRole.ADMIN)
 def przelacz_aktywnosc_firmy(id):
-    firma = _repo_firm.znajdz_po_id(id) or abort(404)
+    company = company_repository.find_by_id(id) or abort(404)
 
-    if firma.is_active:
-        active_internships = _repo_firm.liczba_aktywnych_praktyk(firma.id, _AKTYWNE_STATUSY)
+    if company.is_active:
+        active_internships = company_repository.count_active_internships(
+            company.id,
+            ACTIVE_ENROLLMENT_STATUSES,
+        )
         if active_internships > 0:
             flash(f'Nie można dezaktywować firmy - ma {active_internships} aktywnych praktyk.', 'error')
-            return redirect(url_for(_ROUTE_LISTA_FIRM))
-        firma.is_active = False
-        flash('Firma została dezaktywowana.', 'success')
+            return redirect(url_for(COMPANY_LIST_ROUTE))
+        company.is_active = False
+        flash('Company została dezaktywowana.', 'success')
     else:
-        firma.is_active = True
-        flash('Firma została aktywowana.', 'success')
+        company.is_active = True
+        flash('Company została aktywowana.', 'success')
 
     db.session.commit()
-    return redirect(url_for(_ROUTE_LISTA_FIRM))
+    return redirect(url_for(COMPANY_LIST_ROUTE))

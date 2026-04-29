@@ -1,19 +1,19 @@
-{% extends "layouts/base_student.html" %}
+﻿{% extends "layouts/base_student.html" %}
 {% block tytul %}Kreator praktyki — Wniosek{% endblock %}
 {% block naglowek %}Rejestracja praktyki{% endblock %}
 
 {% block tresc %}
-<div style="max-width: 700px; margin: 0 auto;">
+<div class="u-csp-327">
 
   <!-- Pasek postępu -->
-  <div style="display: flex; gap: 0.5rem; margin-bottom: 2rem; align-items: center;">
-    <div style="flex:1; text-align:center; padding:0.5rem; background:#d1fae5; color:#065f46; border-radius:0.375rem; font-size:0.85rem;">Ścieżka B</div>
-    <div style="color:#d1d5db;">›</div>
-    <div style="flex:1; text-align:center; padding:0.5rem; background:#3b82f6; color:white; border-radius:0.375rem; font-weight:600; font-size:0.85rem;">2. Wniosek</div>
-    <div style="color:#d1d5db;">›</div>
-    <div style="flex:1; text-align:center; padding:0.5rem; background:#f3f4f6; color:#9ca3af; border-radius:0.375rem; font-size:0.85rem;">3. Komisja</div>
-    <div style="color:#d1d5db;">›</div>
-    <div style="flex:1; text-align:center; padding:0.5rem; background:#f3f4f6; color:#9ca3af; border-radius:0.375rem; font-size:0.85rem;">4. Dyrektor</div>
+  <div class="kreator-pasek">
+    <div class="kreator-krok u-csp-318">Ścieżka B</div>
+    <div class="kreator-krok--separator">›</div>
+    <div class="kreator-krok kreator-krok--aktywny">2. Wniosek</div>
+    <div class="kreator-krok--separator">›</div>
+    <div class="kreator-krok kreator-krok--nieaktywny">3. Komisja</div>
+    <div class="kreator-krok--separator">›</div>
+    <div class="kreator-krok kreator-krok--nieaktywny">4. Dyrektor</div>
   </div>
 
   <div class="karta">
@@ -23,8 +23,8 @@
     <div class="karta__tresc">
 
       <!-- Procedura ogólna -->
-      <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:0.5rem; padding:1rem; margin-bottom:1rem; font-size:0.83rem; color:#374151; line-height:1.5;">
-        <div style="font-weight:600; margin-bottom:0.4rem; font-size:0.88rem;">Procedura — Ścieżka B: Uznanie efektów uczenia się</div>
+      <div class="u-info-box--szary">
+        <div class="u-fw-600 u-mb-025 u-csp-314">Procedura — Ścieżka B: Uznanie efektów uczenia się</div>
         Niezależnie od rodzaju zatrudnienia student ubiega się o zaliczenie tych samych
         <strong>trzynastu efektów uczenia się</strong> (zał. 4a + zał. 4b).
         Różnica polega wyłącznie na rodzaju dokumentów potwierdzających zakres realizowanych czynności zawodowych.
@@ -35,25 +35,25 @@
 
       <!-- Info o wymaganych załącznikach -->
       {% if subtype == 'INTERNSHIP' %}
-      <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:0.5rem; padding:1rem; margin-bottom:1.5rem; font-size:0.85rem;">
-        <div style="font-weight:600; margin-bottom:0.5rem; color:#1e40af;">B.1 — Staż: wymagane dokumenty do wniosku (zał. 4b)</div>
-        <ul style="margin:0; padding-left:1.2rem; color:#1e40af; line-height:1.8;">
+      <div class="u-info-box">
+        <div class="u-info-box__tytul">B.1 — Staż: wymagane dokumenty do wniosku (zał. 4b)</div>
+        <ul class="u-info-box__lista">
           <li>Zaświadczenie o odbyciu stażu (PDF)</li>
           <li>Zakres obowiązków realizowanych w ramach stażu (PDF)</li>
         </ul>
       </div>
       {% elif subtype == 'WORK' %}
-      <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:0.5rem; padding:1rem; margin-bottom:1.5rem; font-size:0.85rem;">
-        <div style="font-weight:600; margin-bottom:0.5rem; color:#1e40af;">B.2 — Praca zawodowa: wymagane dokumenty do wniosku (zał. 4b)</div>
-        <ul style="margin:0; padding-left:1.2rem; color:#1e40af; line-height:1.8;">
+      <div class="u-info-box">
+        <div class="u-info-box__tytul">B.2 — Praca zawodowa: wymagane dokumenty do wniosku (zał. 4b)</div>
+        <ul class="u-info-box__lista">
           <li>Umowa o pracę / umowa zlecenie (PDF)</li>
           <li>Opis stanowiska pracy / karta stanowiskowa (PDF)</li>
         </ul>
       </div>
       {% else %}
-      <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:0.5rem; padding:1rem; margin-bottom:1.5rem; font-size:0.85rem;">
-        <div style="font-weight:600; margin-bottom:0.5rem; color:#1e40af;">Wymagane dokumenty do wniosku (zał. 4b)</div>
-        <ul style="margin:0; padding-left:1.2rem; color:#1e40af; line-height:1.8;">
+      <div class="u-info-box">
+        <div class="u-info-box__tytul">Wymagane dokumenty do wniosku (zał. 4b)</div>
+        <ul class="u-info-box__lista">
           <li><strong>Staż:</strong> zaświadczenie o odbyciu stażu + zakres obowiązków</li>
           <li><strong>Praca zawodowa:</strong> umowa o pracę / zlecenie + opis stanowiska / karta stanowiskowa</li>
         </ul>
@@ -61,23 +61,18 @@
       {% endif %}
 
       <!-- Upload załączników (fetch, poza submit formularza) -->
-      <div style="margin-bottom:1.5rem;">
-        <div style="font-weight:600; margin-bottom:0.75rem; font-size:0.9rem;">Dodaj załączniki (PDF, maks. 10 MB)</div>
+      <div class="u-mb-15">
+        <div class="u-fw-600 u-mb-05 u-csp-321">Dodaj załączniki (PDF, maks. 10 MB)</div>
 
-        <label for="upload-file"
-               style="display:flex; align-items:center; gap:0.75rem; padding:0.75rem 1rem;
-                      border:2px dashed var(--kolor-ramka); border-radius:var(--promien);
-                      cursor:pointer; background:var(--kolor-tlo); transition:border-color 0.15s; margin-bottom:0.5rem;"
-               onmouseover="this.style.borderColor='var(--kolor-glowny)'"
-               onmouseout="this.style.borderColor='var(--kolor-ramka)'">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22" style="flex-shrink:0;color:var(--kolor-tekst-drugor)"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-          <span id="upload-file-label" style="font-size:0.875rem; color:var(--kolor-tekst-drugor);">Wybierz plik PDF lub przeciągnij tutaj</span>
+        <label for="upload-file" class="upload-label">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22" class="u-tekst-drugor u-csp-328"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <span id="upload-file-label" class="u-tekst-drugor u-csp-329">Wybierz plik PDF lub przeciągnij tutaj</span>
         </label>
-        <input type="file" id="upload-file" accept=".pdf,.jpg,.jpeg,.png"
-               style="display:none;"
+        <input class="u-csp-094" type="file" id="upload-file" accept=".pdf,.jpg,.jpeg,.png"
+
                onchange="document.getElementById('upload-file-label').textContent = this.files[0]?.name || 'Wybierz plik PDF'">
 
-        <select id="upload-type" class="pole-formularza__input" style="margin-bottom:0.5rem;">
+        <select id="upload-type" class="form-field__input u-mb-05">
           {% if subtype == 'INTERNSHIP' %}
           <option value="zaswiadczenie_staz">Zaświadczenie o odbyciu stażu</option>
           <option value="zakres_obowiazkow_staz">Zakres obowiązków (staż)</option>
@@ -95,47 +90,47 @@
           {% endif %}
         </select>
         <button type="button" onclick="uploadZalacznik()" class="przycisk przycisk--drugorzedny przycisk--maly">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="vertical-align:middle;margin-right:0.3rem"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <svg class="u-csp-330" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
           Dodaj plik
         </button>
-        <div id="upload-status" style="font-size:0.8rem; margin-top:0.5rem;"></div>
-        <div id="upload-lista" style="margin-top:0.75rem;"></div>
+        <div id="upload-status" class="u-meta u-mt-05"></div>
+        <div id="upload-lista" class="u-mt-05"></div>
       </div>
 
       <form method="POST" novalidate>
         {{ form.hidden_tag() }}
         <input type="hidden" name="employment_subtype" value="{{ subtype or 'WORK' }}">
 
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
-          <div class="pole-formularza {% if form.pracodawca_nazwa.errors %}pole-formularza--blad{% endif %}">
-            {{ form.pracodawca_nazwa.label(class="pole-formularza__etykieta") }}
-            {{ form.pracodawca_nazwa(class="pole-formularza__input") }}
-            {% for e in form.pracodawca_nazwa.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
+        <div class="u-grid-2-mb">
+          <div class="form-field {% if form.pracodawca_nazwa.errors %}form-field--error{% endif %}">
+            {{ form.pracodawca_nazwa.label(class="form-field__label") }}
+            {{ form.pracodawca_nazwa(class="form-field__input") }}
+            {% for e in form.pracodawca_nazwa.errors %}<span class="form-field__error">{{ e }}</span>{% endfor %}
           </div>
-          <div class="pole-formularza {% if form.stanowisko.errors %}pole-formularza--blad{% endif %}">
-            {{ form.stanowisko.label(class="pole-formularza__etykieta") }}
-            {{ form.stanowisko(class="pole-formularza__input") }}
-            {% for e in form.stanowisko.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
-          </div>
-        </div>
-
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
-          <div class="pole-formularza">
-            {{ form.pracodawca_adres.label(class="pole-formularza__etykieta") }}
-            {{ form.pracodawca_adres(class="pole-formularza__input") }}
-          </div>
-          <div class="pole-formularza">
-            {{ form.pracodawca_miasto.label(class="pole-formularza__etykieta") }}
-            {{ form.pracodawca_miasto(class="pole-formularza__input") }}
+          <div class="form-field {% if form.stanowisko.errors %}form-field--error{% endif %}">
+            {{ form.stanowisko.label(class="form-field__label") }}
+            {{ form.stanowisko(class="form-field__input") }}
+            {% for e in form.stanowisko.errors %}<span class="form-field__error">{{ e }}</span>{% endfor %}
           </div>
         </div>
 
-        <div class="pole-formularza {% if form.uzasadnienie.errors %}pole-formularza--blad{% endif %}" style="margin-bottom:1.5rem;">
-          {{ form.uzasadnienie.label(class="pole-formularza__etykieta") }}
-          {{ form.uzasadnienie(class="pole-formularza__input", rows=8, style="height:auto;", placeholder="Opisz zakres obowiązków/działalności i dlaczego spełniają wymagania praktyki zawodowej...", id="uzasadnienie_input", maxlength=2000) }}
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.3rem;">
-            <div>{% for e in form.uzasadnienie.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}</div>
-            <span id="uzasadnienie_licznik" style="font-size:0.78rem;">0 / min. 500 znaków</span>
+        <div class="u-grid-2-mb">
+          <div class="form-field">
+            {{ form.pracodawca_adres.label(class="form-field__label") }}
+            {{ form.pracodawca_adres(class="form-field__input") }}
+          </div>
+          <div class="form-field">
+            {{ form.pracodawca_miasto.label(class="form-field__label") }}
+            {{ form.pracodawca_miasto(class="form-field__input") }}
+          </div>
+        </div>
+
+        <div class="form-field {% if form.uzasadnienie.errors %}form-field--error{% endif %} u-mb-15">
+          {{ form.uzasadnienie.label(class="form-field__label") }}
+          {{ form.uzasadnienie(class="form-field__input u-textarea-auto", rows=8, placeholder="Opisz zakres obowiązków/działalności i dlaczego spełniają wymagania praktyki zawodowej...", id="uzasadnienie_input", maxlength=2000) }}
+          <div class="u-flex--between u-csp-331">
+            <div>{% for e in form.uzasadnienie.errors %}<span class="form-field__error">{{ e }}</span>{% endfor %}</div>
+            <span id="uzasadnienie_licznik" class="u-meta u-csp-332">0 / min. 500 znaków</span>
           </div>
         </div>
         <script>
@@ -152,8 +147,8 @@
           })();
         </script>
 
-        <div style="display:flex; justify-content:space-between; gap:1rem;">
-          <a href="{{ url_for('praktyki.kreator_sciezka', id=zapis.internship_id) }}" class="przycisk przycisk--drugorzedny">← Wróć</a>
+        <div class="u-csp-333">
+          <a href="{{ url_for('internships.kreator_sciezka', id=zapis.internship_id) }}" class="przycisk przycisk--drugorzedny">← Wróć</a>
           <button type="submit" class="przycisk przycisk--glowny">Złóż wniosek →</button>
         </div>
       </form>
@@ -246,12 +241,10 @@ async function usunPlik(id) {
 function renderLista() {
   const el = document.getElementById('upload-lista');
   el.innerHTML = uploadedFiles.map(f =>
-    `<div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;
-                 font-size:0.82rem;padding:0.4rem 0.6rem;margin-top:0.3rem;
-                 background:var(--kolor-tlo);border:1px solid var(--kolor-ramka);border-radius:var(--promien);">
-      <span style="color:var(--kolor-sukces);">✓ ${f.name} <span style="color:var(--kolor-tekst-trzeciorzed);">(${f.type})</span></span>
-      <button type="button" onclick="usunPlik('${f.id}')"
-              style="background:none;border:none;cursor:pointer;color:var(--kolor-blad);font-size:1rem;line-height:1;padding:0 0.2rem;"
+    `<div class="upload-plik">
+      <span class="u-csp-334">✓ ${f.name} <span class="u-csp-335">(${f.type})</span></span>
+      <button class="u-csp-336" type="button" onclick="usunPlik('${f.id}')"
+
               title="Usuń plik">✕</button>
     </div>`
   ).join('');

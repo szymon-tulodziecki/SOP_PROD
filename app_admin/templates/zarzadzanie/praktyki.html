@@ -1,9 +1,9 @@
-﻿{% extends "layouts/base_panel.html" %}
+{% extends "layouts/base_panel.html" %}
 {% block tytul %}Lista praktyk{% endblock %}
 {% block naglowek %}Praktyki{% endblock %}
 
 {% block naglowek_akcje %}
-<div style="display: flex; gap: 0.5rem;">
+<div class="u-flex--gap-05">
   {% if current_user.role and current_user.role.value == 'ADMIN' %}
   <a href="{{ url_for('zarzadzanie.nowa_praktyka') }}" class="przycisk przycisk--glowny">
     <span aria-hidden="true">+</span> Nowa praktyka
@@ -30,7 +30,7 @@
       <tbody>
         {% for p in praktyki.items %}
         <tr>
-          <td style="font-weight: 500;">{{ p.academic_year }}</td>
+          <td class="u-fw-500">{{ p.academic_year }}</td>
           <td>{{ p.semester_label }}</td>
           <td>{{ p.required_hours }} h</td>
           <td>{{ p.zapisy | length }}</td>
@@ -41,12 +41,12 @@
               <span class="status status--szkic">Nieaktywna</span>
             {% endif %}
           </td>
-          <td style="white-space: nowrap;">
+          <td class="u-nowrap">
             {% if current_user.role and current_user.role.value == 'ADMIN' %}
-            <div style="display: flex; gap: 0.375rem;">
-              <form method="POST"
+            <div class="u-flex--gap-05">
+              <form class="u-csp-256" method="POST"
                     action="{{ url_for('zarzadzanie.przelacz_aktywnosc_praktyki', id=p.id) }}"
-                    style="display: inline;">
+                   >
                 {{ csrf_form.hidden_tag() }}
                 <button type="submit"
                         class="przycisk {% if p.status.value == 'ACTIVE' %}przycisk--ostrzezenie{% else %}przycisk--drugorzedny{% endif %} przycisk--maly"
@@ -54,9 +54,9 @@
                   {{ 'Dezaktywuj' if p.status.value == 'ACTIVE' else 'Aktywuj' }}
                 </button>
               </form>
-              <form method="POST"
+              <form class="u-csp-256" method="POST"
                     action="{{ url_for('zarzadzanie.usun_praktyke', id=p.id) }}"
-                    style="display: inline;">
+                   >
                 {{ csrf_form.hidden_tag() }}
                 <button type="submit"
                         class="przycisk przycisk--niebezpieczny przycisk--maly"
@@ -98,10 +98,10 @@
 </div>
 
 {% if do_usuniecia %}
-<div class="karta" style="margin-top: 2rem; border: 1px solid #fca5a5;">
-  <div class="karta__naglowek" style="background: #fef2f2;">
-    <h2 class="karta__tytul" style="color: #dc2626;">Oczekujące na trwałe usunięcie</h2>
-    <span style="font-size: 0.8rem; color: #6b7280;">Zostaną automatycznie usunięte po 7 dniach od dezaktywacji</span>
+<div class="karta u-mt-2 u-csp-257">
+  <div class="karta__naglowek u-csp-258">
+    <h2 class="karta__tytul u-csp-259">Oczekujące na trwałe usunięcie</h2>
+    <span class="u-meta">Zostaną automatycznie usunięte po 7 dniach od dezaktywacji</span>
   </div>
   <div class="tabela-wrapper">
     <table class="tabela">
@@ -118,18 +118,18 @@
         {% for p in do_usuniecia %}
         {% set dni_pozostale = ((p.deleted_at.timestamp() + 7*86400 - now().timestamp()) / 86400) | int %}
         <tr>
-          <td style="font-weight: 500;">{{ p.academic_year }}</td>
+          <td class="u-fw-500">{{ p.academic_year }}</td>
           <td>{{ p.semester_label }}</td>
           <td>{{ p.deleted_at.strftime('%d.%m.%Y %H:%M') }}</td>
           <td>
             {% if dni_pozostale <= 1 %}
-              <span style="color: #dc2626; font-weight: 600;">dziś / jutro</span>
+              <span class="u-tekst-blad u-fw-600">dziś / jutro</span>
             {% else %}
-              <span style="color: #92400e;">{{ dni_pozostale }} dni</span>
+              <span class="u-csp-260">{{ dni_pozostale }} dni</span>
             {% endif %}
           </td>
           <td>
-            <form method="POST" action="{{ url_for('zarzadzanie.przywroc_praktyke', id=p.id) }}" style="display:inline;">
+            <form class="u-csp-006" method="POST" action="{{ url_for('zarzadzanie.przywroc_praktyke', id=p.id) }}">
               {{ csrf_form.hidden_tag() }}
               <button type="submit" class="przycisk przycisk--drugorzedny przycisk--maly">Przywróć</button>
             </form>
@@ -142,5 +142,5 @@
 </div>
 {% endif %}
 
-<style>.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }</style>
+
 {% endblock %}

@@ -1,11 +1,11 @@
-"""core/modele/__init__.py
+﻿"""core/modele/__init__.py
 
 Exports all domain models.
 Flask-Migrate (Alembic) must see every db.Model class
 before it can generate migration scripts — hence the star-style imports.
 """
 
-from core.modele.uzytkownicy import (
+from core.modele.users import (
     UserRole,
     User,
     Student,
@@ -15,11 +15,11 @@ from core.modele.uzytkownicy import (
     DyrektorUser,
 )
 
-from core.modele.firmy import (
+from core.modele.companies import (
     Company,
 )
 
-from core.modele.praktyki import (
+from core.modele.internships import (
     InternshipStatus,
     EnrollmentStatus,
     InternshipPath,
@@ -37,7 +37,7 @@ from core.modele.praktyki import (
     DocumentNumber,
 )
 
-from core.modele.dziennik import (
+from core.modele.journal import (
     AssessmentResult,
     LearningOutcome,
     entry_outcomes,
@@ -46,7 +46,7 @@ from core.modele.dziennik import (
     CommitteeOutcomeEvaluation,
 )
 
-from core.modele.dokumenty import (
+from core.modele.documents import (
     DocumentStatus,
     DocumentAuditLog,
     UploadedDocument,

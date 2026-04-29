@@ -18,7 +18,26 @@ app = Flask(__name__)
 STORAGE = Path('/data/files')
 STORAGE.mkdir(parents=True, exist_ok=True)
 
-API_KEY = os.environ.get('FILESERVER_API_KEY', '')
+
+def _load_secret(name: str) -> str:
+    """Reads from /run/secrets/<name>, {NAME}_FILE, or {NAME} env var."""
+    p = Path(f'/run/secrets/{name}')
+    if p.is_file():
+        return p.read_text().strip()
+    file_env = os.environ.get(f'{name.upper()}_FILE')
+    if file_env:
+        fp = Path(file_env)
+        if fp.is_file():
+            return fp.read_text().strip()
+    return os.environ.get(name.upper(), '')
+
+
+API_KEY = _load_secret('fileserver_api_key')
+if not API_KEY:
+    raise RuntimeError(
+        "Sekret 'fileserver_api_key' jest niedostępny. "
+        "Ustaw /run/secrets/fileserver_api_key, FILESERVER_API_KEY_FILE lub FILESERVER_API_KEY."
+    )
 
 
 def _auth():

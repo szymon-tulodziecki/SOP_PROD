@@ -1,13 +1,13 @@
-{% extends "layouts/base_student.html" %}
+﻿{% extends "layouts/base_student.html" %}
 {% block tytul %}Potwierdzenie wysłania zgłoszenia{% endblock %}
 {% block naglowek %}Rejestracja praktyki zawodowej{% endblock %}
 
 {% block tresc %}
-<div style="max-width: 600px; margin: 3rem auto; text-align: center;">
+<div class="u-csp-343">
 
-  <div class="karta" style="padding: 2.5rem 2rem;">
+  <div class="karta u-csp-344">
 
-    <div style="margin-bottom: 1rem;">
+    <div class="u-mb-1">
       <svg xmlns="http://www.w3.org/2000/svg" width="52" height="52" viewBox="0 0 24 24" fill="none"
            stroke="var(--kolor-glowny)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -16,36 +16,36 @@
       </svg>
     </div>
     {% if zapis.status.value == 'REVISION_REQUIRED' %}
-    <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">Poprawki gotowe do wysłania</h2>
-    <p style="color: var(--kolor-tekst-drugor); margin-bottom: 2rem; font-size: 0.9rem;">
+    <h2 class="u-fw-600 u-mb-05 u-csp-345">Poprawki gotowe do wysłania</h2>
+    <p class="u-tekst-drugor u-mb-2 u-csp-041">
       Czy chcesz teraz odesłać poprawione zgłoszenie?<br>
       Po wysłaniu trafi ono ponownie do weryfikacji.
     </p>
     {% else %}
-    <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">Zgłoszenie gotowe do wysłania</h2>
-    <p style="color: var(--kolor-tekst-drugor); margin-bottom: 2rem; font-size: 0.9rem;">
+    <h2 class="u-fw-600 u-mb-05 u-csp-345">Zgłoszenie gotowe do wysłania</h2>
+    <p class="u-tekst-drugor u-mb-2 u-csp-041">
       Czy chcesz teraz przesłać zgłoszenie do zatwierdzenia?<br>
       Po wysłaniu nie będzie można edytować danych bez kontaktu z opiekunem.
     </p>
     {% endif %}
 
-    <div style="display: flex; flex-direction: column; gap: 0.75rem; align-items: center;">
+    <div class="u-flex--col u-csp-346">
 
-      <form method="POST" action="{{ url_for('praktyki.wyslij_do_zatwierdzenia', id=zapis.id) }}">
+      <form method="POST" action="{{ url_for('internships.wyslij_do_zatwierdzenia', id=zapis.id) }}">
         {{ csrf_form.hidden_tag() }}
-        <button type="submit" class="przycisk przycisk--glowny" style="min-width: 220px; justify-content: center;">
+        <button type="submit" class="przycisk przycisk--glowny u-flex--center u-csp-347">
           Tak, prześlij zgłoszenie
         </button>
       </form>
 
       {% if zapis.track_type.value == 'STANDARD' %}
-      <a href="{{ url_for('praktyki.zapisz_krok2', id=zapis.id) }}"
-         class="przycisk przycisk--drugorzedny" style="min-width: 220px; justify-content: center;">
+      <a href="{{ url_for('internships.zapisz_krok2', id=zapis.id) }}"
+         class="przycisk przycisk--drugorzedny u-flex--center u-csp-347">
         Wróć i popraw
       </a>
       {% else %}
-      <a href="{{ url_for('praktyki.kreator_wniosek', zapis_id=zapis.id) }}"
-         class="przycisk przycisk--drugorzedny" style="min-width: 220px; justify-content: center;">
+      <a href="{{ url_for('internships.kreator_wniosek', zapis_id=zapis.id) }}"
+         class="przycisk przycisk--drugorzedny u-flex--center u-csp-347">
         Wróć i popraw
       </a>
       {% endif %}

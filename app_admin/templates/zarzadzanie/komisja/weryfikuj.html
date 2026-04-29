@@ -1,16 +1,16 @@
-﻿{% extends "layouts/base_panel.html" %}
+{% extends "layouts/base_panel.html" %}
 
 {% block tytul %}Weryfikacja wniosku — {{ zapis.student.first_name }} {{ zapis.student.last_name }}{% endblock %}
 {% block naglowek %}Weryfikacja wniosku komisji{% endblock %}
 
 {% block naglowek_akcje %}
-<div style="display: flex; gap: 0.5rem; align-items: center;">
+<div class="u-flex--gap-05">
   <a href="{{ url_for('zarzadzanie.komisja_lista') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
 </div>
 {% endblock %}
 
 {% block tresc %}
-<div style="max-width: 1200px; margin: 0 auto;">
+<div class="u-csp-076">
 
   {# ── Karta identyfikacyjna ── #}
   {% set status_val = zapis.status.value %}
@@ -42,46 +42,46 @@
 
   {% set form_active = status_val in ['COMMISSION_REVIEW', 'AWAITING_APPROVAL'] %}
 
-  <div style="background: var(--kolor-biale); border-radius: var(--promien-duzy); border-top: 4px solid {{ border_color }}; box-shadow: var(--cien-karta); margin-bottom: 2rem; overflow: hidden;">
-    <div style="padding: 1.75rem 2rem; display: grid; grid-template-columns: auto 1fr auto; gap: 2rem; align-items: center;">
+  <div class="u-enrollment-hero {% if status_val == 'PENDING' %}u-enrollment-hero--pending{% elif status_val == 'AWAITING_APPROVAL' %}u-enrollment-hero--awaiting{% elif status_val == 'COMMISSION_REVIEW' %}u-enrollment-hero--commission{% elif status_val == 'DIRECTOR_APPROVAL' %}u-enrollment-hero--director{% elif status_val == 'IN_PROGRESS' %}u-enrollment-hero--progress{% elif status_val == 'COMPLETED' %}u-enrollment-hero--completed{% elif status_val == 'REJECTED' %}u-enrollment-hero--rejected{% else %}u-enrollment-hero--default{% endif %}">
+    <div class="u-csp-102">
 
-      <div style="width: 56px; height: 56px; border-radius: 50%; background: var(--kolor-glowny); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; font-weight: 700; flex-shrink: 0; letter-spacing: 0.5px;">
+      <div class="u-csp-103">
         {{ zapis.student.first_name[0] }}{{ zapis.student.last_name[0] }}
       </div>
 
-      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; min-width: 0;">
+      <div class="u-csp-104">
         <div>
-          <div style="font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--kolor-tekst-trzeciorzed); margin-bottom: 0.35rem;">Student</div>
-          <div style="font-weight: 700; font-size: 1rem; color: var(--kolor-tekst);">{{ zapis.student.first_name }} {{ zapis.student.last_name }}</div>
-          <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor); margin-top: 0.15rem;">{{ zapis.student.email }}</div>
+          <div class="u-etykieta">Student</div>
+          <div class="u-csp-105">{{ zapis.student.first_name }} {{ zapis.student.last_name }}</div>
+          <div class="u-meta u-csp-106">{{ zapis.student.email }}</div>
           {% if zapis.student.album_number %}
-          <div style="font-size: 0.75rem; color: var(--kolor-tekst-trzeciorzed);">nr alb. {{ zapis.student.album_number }}</div>
+          <div class="u-fs-xs u-tekst-trzeciorzed">nr alb. {{ zapis.student.album_number }}</div>
           {% endif %}
         </div>
         <div>
-          <div style="font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--kolor-tekst-trzeciorzed); margin-bottom: 0.35rem;">Rok akademicki</div>
-          <div style="font-weight: 600; color: var(--kolor-tekst);">{{ zapis.praktyka.academic_year }}</div>
-          <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor);">Semestr {{ zapis.praktyka.semester_label }}</div>
+          <div class="u-etykieta">Rok akademicki</div>
+          <div class="u-wartosc">{{ zapis.praktyka.academic_year }}</div>
+          <div class="u-meta">Semestr {{ zapis.praktyka.semester_label }}</div>
         </div>
         <div>
-          <div style="font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--kolor-tekst-trzeciorzed); margin-bottom: 0.35rem;">Ścieżka</div>
-          <div style="font-weight: 600; color: var(--kolor-tekst);">
+          <div class="u-etykieta">Ścieżka</div>
+          <div class="u-wartosc">
             {% if zapis.track_type.value == 'STANDARD' %}A — Standardowa
             {% else %}B — Uznanie efektów{% endif %}
           </div>
         </div>
         <div>
-          <div style="font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--kolor-tekst-trzeciorzed); margin-bottom: 0.35rem;">Data zgłoszenia</div>
-          <div style="font-weight: 600; color: var(--kolor-tekst);">{{ zapis.enrolled_at.strftime('%d.%m.%Y') if zapis.enrolled_at else '—' }}</div>
-          <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor);">{{ zapis.enrolled_at.strftime('%H:%M') if zapis.enrolled_at else '' }}</div>
+          <div class="u-etykieta">Data zgłoszenia</div>
+          <div class="u-wartosc">{{ zapis.enrolled_at.strftime('%d.%m.%Y') if zapis.enrolled_at else '—' }}</div>
+          <div class="u-meta">{{ zapis.enrolled_at.strftime('%H:%M') if zapis.enrolled_at else '' }}</div>
         </div>
       </div>
 
-      <div style="text-align: right; flex-shrink: 0;">
-        <span class="status {{ status_cls }}" style="font-size: 0.75rem; padding: 0.4rem 1rem;">{{ status_label }}</span>
+      <div class="u-ta-center u-csp-107">
+        <span class="status {{ status_cls }} u-csp-108">{{ status_label }}</span>
         {% if zapis.uopz %}
-        <div style="margin-top: 0.75rem; font-size: 0.75rem; color: var(--kolor-tekst-trzeciorzed); text-align: right;">
-          UOPZ: <strong style="color: var(--kolor-tekst-drugor);">{{ zapis.uopz.first_name }} {{ zapis.uopz.last_name }}</strong>
+        <div class="u-fs-xs u-tekst-trzeciorzed u-ta-center u-csp-109">
+          UOPZ: <strong class="u-tekst-drugor">{{ zapis.uopz.first_name }} {{ zapis.uopz.last_name }}</strong>
         </div>
         {% endif %}
       </div>
@@ -91,10 +91,10 @@
 
   {# ── Główna siatka treści ── #}
   {% if form_active %}<form method="POST">{{ form.hidden_tag() }}{% endif %}
-  <div style="display: grid; grid-template-columns: 1fr 480px; gap: 1.5rem; align-items: start;">
+  <div class="u-csp-160">
 
     {# ═══ LEWA KOLUMNA ═══ #}
-    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+    <div class="u-flex--col-15">
 
       {# Dane podstawowe #}
       <div class="karta">
@@ -102,7 +102,7 @@
           <h3 class="karta__tytul">Dane podstawowe</h3>
         </div>
         <div class="karta__tresc">
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
+          <div class="u-grid-2-lg">
             <div class="pole-info">
               <div class="pole-info__etykieta">Ścieżka praktyki</div>
               <div class="pole-info__wartosc">
@@ -124,16 +124,16 @@
           <h3 class="karta__tytul">Dane pracodawcy / działalności</h3>
         </div>
         <div class="karta__tresc">
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
+          <div class="u-grid-2-lg">
             <div class="pole-info">
               <div class="pole-info__etykieta">Nazwa firmy / działalności</div>
-              <div class="pole-info__wartosc" style="font-weight: 600;">{{ zapis.firma_nazwa or '—' }}</div>
+              <div class="pole-info__wartosc u-fw-600">{{ zapis.firma_nazwa or '—' }}</div>
             </div>
             <div class="pole-info">
               <div class="pole-info__etykieta">Stanowisko / zakres obowiązków</div>
               <div class="pole-info__wartosc">{{ zapis.zopz_stanowisko or '—' }}</div>
             </div>
-            <div class="pole-info" style="grid-column: 1 / -1;">
+            <div class="pole-info u-csp-164">
               <div class="pole-info__etykieta">Adres</div>
               <div class="pole-info__wartosc">{{ zapis.firma_adres or '—' }}{% if zapis.firma_miasto %}, {{ zapis.firma_miasto }}{% endif %}</div>
             </div>
@@ -148,7 +148,7 @@
           <h3 class="karta__tytul">Uzasadnienie wniosku</h3>
         </div>
         <div class="karta__tresc">
-          <p style="white-space: pre-line; font-size: 0.9rem; line-height: 1.7; color: var(--kolor-tekst); margin: 0;">{{ zapis.uzasadnienie_sciezki }}</p>
+          <p class="u-csp-111">{{ zapis.uzasadnienie_sciezki }}</p>
         </div>
       </div>
       {% endif %}
@@ -158,17 +158,17 @@
       <div class="karta">
         <div class="karta__naglowek">
           <h3 class="karta__tytul">Załączniki studenta</h3>
-          <span style="font-size: 0.75rem; font-weight: 400; color: var(--kolor-tekst-trzeciorzed);">{{ dokumenty|length }} plik{% if dokumenty|length != 1 %}i{% endif %}</span>
+          <span class="u-fs-xs u-fw-500 u-tekst-trzeciorzed">{{ dokumenty|length }} plik{% if dokumenty|length != 1 %}i{% endif %}</span>
         </div>
-        <div class="karta__tresc" style="display: flex; flex-direction: column; gap: 0.5rem;">
+        <div class="karta__tresc u-flex--col-05">
           {% for dok in dokumenty %}
-          <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; border: 1px solid var(--kolor-ramka); border-radius: var(--promien); background: var(--kolor-tlo);">
-            <div style="min-width: 0;">
-              <div style="font-weight: 600; font-size: 0.875rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ dok.oryginalna_nazwa }}</div>
-              <div style="font-size: 0.75rem; color: var(--kolor-tekst-trzeciorzed); margin-top: 0.15rem;">{{ dok.typ_dokumentu }} · {{ (dok.rozmiar_pliku / 1024)|round(1) }} KB · {{ dok.przeslano_o.strftime('%d.%m.%Y %H:%M') }}</div>
+          <div class="u-ramka u-csp-017">
+            <div class="u-csp-116">
+              <div class="u-fw-600 u-csp-117">{{ dok.oryginalna_nazwa }}</div>
+              <div class="u-fs-xs u-tekst-trzeciorzed u-csp-106">{{ dok.typ_dokumentu }} · {{ (dok.rozmiar_pliku / 1024)|round(1) }} KB · {{ dok.przeslano_o.strftime('%d.%m.%Y %H:%M') }}</div>
             </div>
             <a href="{{ url_for('uploads.download_document', document_id=dok.id) }}"
-               class="przycisk przycisk--maly przycisk--drugorzedny" style="flex-shrink: 0; margin-left: 1rem;">Pobierz</a>
+               class="przycisk przycisk--maly przycisk--drugorzedny u-csp-118">Pobierz</a>
           </div>
           {% endfor %}
         </div>
@@ -179,17 +179,17 @@
       {% if form_active %}
       <div class="karta">
         <div class="karta__naglowek">
-          <h3 class="karta__tytul">Weryfikacja efektów uczenia się <span style="font-size: 0.75rem; font-weight: 400; color: var(--kolor-tekst-trzeciorzed);">Załącznik nr 4a</span></h3>
+          <h3 class="karta__tytul">Weryfikacja efektów uczenia się <span class="u-fs-xs u-fw-500 u-tekst-trzeciorzed">Załącznik nr 4a</span></h3>
         </div>
-        <div class="karta__tresc" style="padding: 0;">
+        <div class="karta__tresc u-p-0">
           <table class="tabela-efektow">
             <thead>
               <tr>
-                <th style="width: 3rem;">Nr</th>
+                <th class="u-csp-112">Nr</th>
                 <th>Efekt uczenia się</th>
-                <th style="width: 7rem; text-align: center;">Uzyskał/a</th>
-                <th style="width: 9rem; text-align: center;">Częściowo</th>
-                <th style="width: 7.5rem; text-align: center;">Nie uzyskał/a</th>
+                <th class="u-csp-203">Uzyskał/a</th>
+                <th class="u-csp-113">Częściowo</th>
+                <th class="u-csp-204">Nie uzyskał/a</th>
               </tr>
             </thead>
             <tbody>
@@ -197,7 +197,7 @@
               {% set ev = istniejace.get(efekt.id) %}
               <tr>
                 <td class="nr-efektu">{{ efekt.kod }}</td>
-                <td style="font-size: 0.85rem; line-height: 1.5; color: var(--kolor-tekst);">{{ efekt.opis }}</td>
+                <td class="u-fs-sm u-lh-15 u-tekst">{{ efekt.opis }}</td>
                 <td class="radio-cell">
                   <input type="radio" name="outcome_{{ efekt.id }}" value="ACHIEVED"
                          class="radio-efekt" data-outcome="{{ efekt.id }}"
@@ -216,17 +216,17 @@
                 </td>
               </tr>
               <tr id="notes_row_{{ efekt.id }}"
-                  style="display: {% if ev and ev.result.value == 'PARTIALLY_ACHIEVED' %}table-row{% else %}none{% endif %}; background: #fffbeb;">
+                  class="u-row-notes {% if not (ev and ev.result.value == 'PARTIALLY_ACHIEVED') %}u-row-hidden{% endif %}">
                 <td></td>
-                <td colspan="4" style="padding: 0.5rem 1rem 0.75rem;">
-                  <label style="font-size: 0.75rem; font-weight: 600; color: #92400e; display: block; margin-bottom: 0.3rem;">
+                <td class="u-csp-205" colspan="4">
+                  <label class="u-csp-206">
                     Uzasadnienie (wymagane)
                   </label>
                   <textarea name="notes_{{ efekt.id }}"
-                            class="pole-formularza__textarea"
+                            class="pole-formularza__textarea u-csp-207"
                             rows="2"
                             placeholder="Opisz, w jakim zakresie efekt został częściowo uzyskany…"
-                            style="width: 100%; box-sizing: border-box; font-size: 0.85rem; border-color: #d97706; resize: vertical;"
+
                             {% if ev and ev.result.value == 'PARTIALLY_ACHIEVED' %}required{% endif %}>{% if ev and ev.notes %}{{ ev.notes }}{% endif %}</textarea>
                 </td>
               </tr>
@@ -240,76 +240,71 @@
     </div>
 
     {# ═══ PRAWA KOLUMNA ═══ #}
-    <div style="display: flex; flex-direction: column; gap: 1.5rem; position: sticky; top: 1.5rem;">
+    <div class="u-flex--col-15 u-csp-119">
 
       {# Panel decyzji komisji #}
       {% if form_active %}
       <div class="karta">
         <div class="karta__naglowek">
           <h3 class="karta__tytul">Opinia komisji</h3>
-          <span style="font-size: 0.75rem; color: var(--kolor-tekst-trzeciorzed);">Wszystkie opcje przekazują do Dyrektora</span>
+          <span class="u-fs-xs u-tekst-trzeciorzed">Wszystkie opcje przekazują do Dyrektora</span>
         </div>
         <div class="karta__tresc">
-          <div style="margin-bottom: 1.25rem;">
-            <label class="pole-formularza__etykieta" style="display: block; margin-bottom: 0.4rem;">Komentarz ogólny <span style="font-weight: 400; color: var(--kolor-tekst-trzeciorzed);">(opcjonalny)</span></label>
-            {{ form.comment(class="pole-formularza__textarea", rows="5",
-               placeholder="Uwagi dla Dyrektora widoczne w dokumentacji…",
-               style="width: 100%; box-sizing: border-box;") }}
+          <div class="u-csp-121">
+            <label class="pole-formularza__etykieta u-csp-176">Komentarz ogólny <span class="u-fw-500 u-tekst-trzeciorzed">(opcjonalny)</span></label>
+            {{ form.comment(class="pole-formularza__textarea u-form-full", rows="5",
+               placeholder="Uwagi dla Dyrektora widoczne w dokumentacji…") }}
           </div>
 
-          <div style="border-top: 1px solid var(--kolor-ramka); padding-top: 1.25rem; display: flex; flex-direction: column; gap: 0.625rem;">
+          <div class="u-flex--col u-csp-122">
             <button type="submit" name="opinia" value="APPROVED"
-                    class="przycisk przycisk--glowny"
-                    style="width: 100%; justify-content: center; text-align: center;">
+                    class="przycisk przycisk--glowny u-w-full u-flex--center">
               Opinia Pozytywna
             </button>
             <button type="submit" name="opinia" value="PARTIALLY_APPROVED"
-                    class="przycisk przycisk--ostrzezenie"
-                    style="width: 100%; justify-content: center; text-align: center;">
+                    class="przycisk przycisk--ostrzezenie u-w-full u-flex--center">
               Opinia Częściowo Pozytywna
             </button>
             <button type="submit" name="opinia" value="REJECTED"
-                    class="przycisk przycisk--niebezpieczny"
-                    style="width: 100%; justify-content: center; text-align: center;">
+                    class="przycisk przycisk--niebezpieczny u-w-full u-flex--center">
               Opinia Negatywna
             </button>
             <a href="{{ url_for('zarzadzanie.komisja_lista') }}"
-               class="przycisk przycisk--drugorzedny"
-               style="width: 100%; justify-content: center; text-align: center;">Anuluj</a>
+               class="przycisk przycisk--drugorzedny u-w-full u-flex--center">Anuluj</a>
           </div>
         </div>
       </div>
 
       {% elif status_val == 'REVISION_REQUIRED' %}
       <div class="karta">
-        <div class="karta__tresc" style="text-align: center; padding: 2rem 1.5rem;">
-          <div style="width: 48px; height: 48px; border-radius: 50%; background: #fef2f2; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; font-size: 1.35rem; color: #dc2626;">!</div>
-          <div style="font-weight: 700; color: #991b1b; font-size: 1rem; margin-bottom: 0.4rem;">Oczekiwanie na poprawki studenta</div>
-          <div style="color: var(--kolor-tekst-drugor); font-size: 0.875rem; line-height: 1.5;">Zgłoszenie zostało zwrócone do studenta. Po nadesłaniu poprawek pojawi się tu ponownie do zatwierdzenia.</div>
+        <div class="karta__tresc u-stan-pusty--sm">
+          <div class="u-csp-177">!</div>
+          <div class="u-fw-600 u-csp-178">Oczekiwanie na poprawki studenta</div>
+          <div class="u-tekst-drugor u-csp-179">Zgłoszenie zostało zwrócone do studenta. Po nadesłaniu poprawek pojawi się tu ponownie do zatwierdzenia.</div>
         </div>
       </div>
 
       {% else %}
       <div class="karta">
-        <div class="karta__tresc" style="text-align: center; padding: 2rem 1.5rem;">
-          <div style="width: 48px; height: 48px; border-radius: 50%; background: #d1fae5; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; font-size: 1.35rem; color: var(--kolor-sukces);">✓</div>
-          <div style="font-weight: 700; color: var(--kolor-sukces); font-size: 1rem; margin-bottom: 0.4rem;">Opinia przekazana do Dyrektora</div>
-          <div style="color: var(--kolor-tekst-drugor); font-size: 0.875rem; line-height: 1.5;">Wniosek oczekuje na decyzję Dyrektora Instytutu.</div>
+        <div class="karta__tresc u-stan-pusty--sm">
+          <div class="u-csp-180">✓</div>
+          <div class="u-fw-600 u-csp-181">Opinia przekazana do Dyrektora</div>
+          <div class="u-tekst-drugor u-csp-179">Wniosek oczekuje na decyzję Dyrektora Instytutu.</div>
         </div>
       </div>
       {% endif %}
 
       {# Historia decyzji #}
-      {% if zapis.decyzja_komisji or zapis.decyzja_dziekana %}
+      {% if zapis.decyzja_komisji or zapis.decyzja_dyrektora %}
       <div class="karta">
         <div class="karta__naglowek">
           <h3 class="karta__tytul">Historia decyzji</h3>
         </div>
-        <div class="karta__tresc" style="display: flex; flex-direction: column; gap: 1rem;">
+        <div class="karta__tresc u-flex--col">
           {% if zapis.decyzja_komisji %}
-          <div style="padding: 1rem; border: 1px solid var(--kolor-ramka); border-radius: var(--promien); background: var(--kolor-tlo);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-              <span style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--kolor-tekst-trzeciorzed);">Komisja ds. praktyk</span>
+          <div class="u-ramka">
+            <div class="u-flex--between-mb">
+              <span class="u-etykieta u-csp-174">Komisja ds. praktyk</span>
               <span class="status {% if zapis.decyzja_komisji == 'APPROVED' %}status--completed{% elif zapis.decyzja_komisji == 'PARTIALLY_APPROVED' %}status--in-progress{% else %}status--odrzucona{% endif %}">
                 {% if zapis.decyzja_komisji == 'APPROVED' %}Opinia pozytywna
                 {% elif zapis.decyzja_komisji == 'PARTIALLY_APPROVED' %}Opinia częściowo pozytywna
@@ -317,20 +312,20 @@
               </span>
             </div>
             {% if zapis.komentarze_komisji %}
-            <p style="font-size: 0.85rem; color: var(--kolor-tekst-drugor); line-height: 1.5; margin: 0;">{{ zapis.komentarze_komisji }}</p>
+            <p class="u-opis">{{ zapis.komentarze_komisji }}</p>
             {% endif %}
           </div>
           {% endif %}
-          {% if zapis.decyzja_dziekana %}
-          <div style="padding: 1rem; border: 1px solid var(--kolor-ramka); border-radius: var(--promien); background: var(--kolor-tlo);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-              <span style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--kolor-tekst-trzeciorzed);">Dyrektor IIS</span>
-              <span class="status {% if zapis.decyzja_dziekana == 'APPROVED' %}status--completed{% else %}status--odrzucona{% endif %}">
-                {{ 'Zatwierdzone' if zapis.decyzja_dziekana == 'APPROVED' else 'Odrzucone' }}
+          {% if zapis.decyzja_dyrektora %}
+          <div class="u-ramka">
+            <div class="u-flex--between-mb">
+              <span class="u-etykieta u-csp-174">Dyrektor IIS</span>
+              <span class="status {% if zapis.decyzja_dyrektora == 'APPROVED' %}status--completed{% else %}status--odrzucona{% endif %}">
+                {{ 'Zatwierdzone' if zapis.decyzja_dyrektora == 'APPROVED' else 'Odrzucone' }}
               </span>
             </div>
-            {% if zapis.komentarze_dziekana %}
-            <p style="font-size: 0.85rem; color: var(--kolor-tekst-drugor); line-height: 1.5; margin: 0;">{{ zapis.komentarze_dziekana }}</p>
+            {% if zapis.komentarze_dyrektora %}
+            <p class="u-opis">{{ zapis.komentarze_dyrektora }}</p>
             {% endif %}
           </div>
           {% endif %}
@@ -345,7 +340,7 @@
           <h3 class="karta__tytul">Poprzedni komentarz komisji</h3>
         </div>
         <div class="karta__tresc">
-          <div style="font-size: 0.875rem; color: var(--kolor-tekst); line-height: 1.55; white-space: pre-wrap;">{{ zapis.komentarze_uopz }}</div>
+          <div class="u-tekst u-fs-sm u-csp-120">{{ zapis.komentarze_uopz }}</div>
         </div>
       </div>
       {% endif %}
@@ -356,68 +351,6 @@
   {% if form_active %}</form>{% endif %}
 
 </div>
-
-<style>
-.pole-info__etykieta {
-  font-size: 0.7rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--kolor-tekst-trzeciorzed);
-  margin-bottom: 0.3rem;
-}
-.pole-info__wartosc {
-  font-size: 0.9rem;
-  color: var(--kolor-tekst);
-  line-height: 1.45;
-}
-
-/* Tabela efektów uczenia się */
-.tabela-efektow {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.875rem;
-}
-.tabela-efektow thead th {
-  padding: 0.75rem 1rem;
-  background: var(--kolor-tlo);
-  border-bottom: 2px solid var(--kolor-ramka);
-  font-size: 0.72rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--kolor-tekst-trzeciorzed);
-}
-.tabela-efektow tbody tr {
-  border-bottom: 1px solid var(--kolor-ramka);
-}
-.tabela-efektow tbody tr:last-child {
-  border-bottom: none;
-}
-.tabela-efektow tbody tr:hover {
-  background: var(--kolor-tlo);
-}
-.tabela-efektow td {
-  padding: 0.75rem 1rem;
-  vertical-align: top;
-}
-.nr-efektu {
-  font-weight: 700;
-  color: var(--kolor-glowny);
-  font-size: 0.8rem;
-  vertical-align: middle !important;
-}
-.radio-cell {
-  text-align: center;
-  vertical-align: middle !important;
-}
-.radio-efekt {
-  width: 1.1rem;
-  height: 1.1rem;
-  cursor: pointer;
-  accent-color: var(--kolor-glowny);
-}
-</style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {

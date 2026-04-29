@@ -1,29 +1,59 @@
-/* ============================================================
-   student.css — Punkt wejścia arkuszy stylów panelu studenta
+﻿/* ============================================================
+   student.css — lokalne nadpisania panelu studenta
    System Praktyk Zawodowych — ANS Elbląg
 
-   Moduły ładowane w kolejności zależności:
-     1. zmienne   — tokeny CSS, reset, dostępność (WCAG 2.1 AA)
-     2. komunikaty — flash messages i powiadomienia
-     3. formularze — pola input, checkboxy
-     4. logowanie  — strona logowania i zmiana hasła
-     5. uklad      — sidebar, panel-main, nagłówek
-     6. karty      — komponent .karta
-     7. tabele     — tabele danych
-     8. przyciski  — przyciski i grupy akcji
-     9. statusy    — odznaki statusów i ról
-    10. komponenty — pasek postępu, paginacja, filtry
-    11. dashboard  — statystyki, strona błędu
+   Moduły bazowe są ładowane z /core/static/css/modul/ w base_student.html.
+   Ten plik zawiera wyłącznie style specyficzne dla app_student.
    ============================================================ */
 
-@import url('/core/static/css/modul/zmienne.css');
-@import url('/core/static/css/modul/komunikaty.css');
-@import url('/core/static/css/modul/formularze.css');
-@import url('/core/static/css/modul/logowanie.css');
-@import url('/core/static/css/modul/uklad.css');
-@import url('/core/static/css/modul/karty.css');
-@import url('/core/static/css/modul/tabele.css');
-@import url('/core/static/css/modul/przyciski.css');
-@import url('/core/static/css/modul/statusy.css');
-@import url('/core/static/css/modul/komponenty.css');
-@import url('/core/static/css/modul/dashboard.css');
+.form-field { display: flex; flex-direction: column; gap: 0.375rem; }
+.form-field__label { font-size: 0.875rem; font-weight: 500; color: var(--kolor-tekst); }
+.form-field__input { width: 100%; padding: 0.75rem 1rem; font-family: var(--font-glowny), serif; font-size: 1rem; color: var(--kolor-tekst); background: var(--kolor-biale); border: 2px solid var(--kolor-ramka-mocna); border-radius: var(--promien); transition: border-color 0.15s, box-shadow 0.15s; }
+.form-field__input:hover { border-color: var(--kolor-glowny-jasny); }
+.form-field__input:focus { border-color: var(--kolor-glowny); box-shadow: 0 0 0 3px rgba(26,58,92,0.15); outline: var(--fokus-grubosc) solid var(--fokus-kolor); outline-offset: var(--fokus-offset); }
+.form-field--error .form-field__input { border-color: var(--kolor-blad); }
+.form-field--error .form-field__input:focus { box-shadow: 0 0 0 3px rgba(192,57,43,0.15); }
+.form-field__error { font-size: 0.825rem; color: var(--kolor-blad); font-weight: 500; }
+
+.path-tile {
+  border: 2px solid #e2e8f0;
+  background: #fafafa;
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.path-tile:hover,
+.path-tile--selected { border-color: #2563eb !important; background: #dbeafe !important; }
+
+.schedule-text-field,
+.schedule-days-field {
+  box-sizing: border-box;
+  height: 2.4rem;
+  min-height: 2.4rem;
+  padding: 0.4rem 0.55rem;
+  line-height: 1.25;
+  font-size: 0.8rem;
+}
+
+.schedule-text-field {
+  resize: vertical;
+  overflow-y: hidden;
+  vertical-align: top;
+}
+
+.schedule-days-field {
+  display: block;
+  text-align: center;
+}
+
+.schedule-days-wrapper {
+  align-items: center;
+  height: 2.4rem;
+  padding-top: 0 !important;
+}
+
+.schedule-text-field::placeholder,
+.schedule-days-field::placeholder {
+  line-height: 1.25;
+}

@@ -1,47 +1,47 @@
-﻿{% extends "layouts/base_panel.html" %}
+{% extends "layouts/base_panel.html" %}
 
 {% block tytul %}Podgląd Sprawozdania{% endblock %}
 {% block naglowek %}Sprawozdanie: {{ zapis.student.first_name }} {{ zapis.student.last_name }}{% endblock %}
 
 {% block naglowek_akcje %}
 <a href="{{ url_for('zarzadzanie.szczegoly_praktyki', id=zapis.internship_id) }}" class="przycisk przycisk--drugorzedny">Powrót do szczegółów</a>
-<a href="{{ url_for('evaluation.ocen_praktyke', id=zapis.id) }}" class="przycisk przycisk--glowny">Przejdź do oceniania</a>
+<a href="{{ url_for('evaluation.evaluate_internship', id=zapis.id) }}" class="przycisk przycisk--glowny">Przejdź do oceniania</a>
 {% endblock %}
 
 {% block tresc %}
-<div style="max-width: 900px; margin: 0 auto; padding-bottom: 3rem;">
+<div class="u-csp-081">
 
   {% if not zapis.sprawozdanie %}
-  <div class="karta" style="text-align: center; padding: 3rem 2rem;">
-    <p style="color: var(--kolor-tekst-drugor);">Student jeszcze nie rozpoczął generowania / pisania sprawozdania.</p>
+  <div class="karta u-stan-pusty">
+    <p class="u-tekst-drugor">Student jeszcze nie rozpoczął generowania / pisania sprawozdania.</p>
   </div>
   {% else %}
 
-  <div class="karta" style="margin-bottom: 2rem;">
-    <div class="karta__naglowek" style="background: var(--kolor-tlo);">
+  <div class="karta u-mb-2">
+    <div class="karta__naglowek u-csp-031">
       <h2 class="karta__tytul">Sekcja I: Charakterystyka miejsca roboczego</h2>
     </div>
     <div class="karta__tresc">
-      <div style="white-space: pre-wrap; font-size: 0.95rem; line-height: 1.6;">{{ zapis.sprawozdanie.charakterystyka_miejsca or 'Brak' }}</div>
+      <div class="u-csp-082">{{ zapis.sprawozdanie.charakterystyka_miejsca or 'Brak' }}</div>
     </div>
   </div>
 
-  <div class="karta" style="margin-bottom: 2rem;">
-    <div class="karta__naglowek" style="background: var(--kolor-tlo);">
+  <div class="karta u-mb-2">
+    <div class="karta__naglowek u-csp-031">
       <h2 class="karta__tytul">Sekcja II: Opis i analiza prac</h2>
     </div>
     <div class="karta__tresc">
-      <div style="white-space: pre-wrap; font-size: 0.95rem; line-height: 1.6;">{{ zapis.sprawozdanie.opis_i_analiza or 'Brak' }}</div>
+      <div class="u-csp-082">{{ zapis.sprawozdanie.opis_i_analiza or 'Brak' }}</div>
     </div>
   </div>
 
-  <div class="karta" style="margin-bottom: 2rem;">
-    <div class="karta__naglowek" style="background: var(--kolor-tlo);">
+  <div class="karta u-mb-2">
+    <div class="karta__naglowek u-csp-031">
       <h2 class="karta__tytul">Sekcja III (Z Dziennika)</h2>
     </div>
     <div class="karta__tresc">
-      <p style="font-size: 0.85rem; color: var(--kolor-tekst-drugor);">Tabela zliczająca godziny dla każdego efektu z dziennika (w PDF).</p>
-      <a href="{{ url_for('journal.podglad', id=zapis.id) }}" class="przycisk przycisk--drugorzedny przycisk--maly" style="margin-top: 1rem;">Zobacz pełny dziennik wpisów</a>
+      <p class="u-meta">Tabela zliczająca godziny dla każdego efektu z dziennika (w PDF).</p>
+      <a href="{{ url_for('journal.podglad', id=zapis.id) }}" class="przycisk przycisk--drugorzedny przycisk--maly u-mt-1">Zobacz pełny dziennik wpisów</a>
     </div>
   </div>
 

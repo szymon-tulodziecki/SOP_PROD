@@ -3,7 +3,7 @@
 {% block naglowek %}Zarządzanie użytkownikami{% endblock %}
 
 {% block naglowek_akcje %}
-<div style="display: flex; gap: 0.5rem; align-items: center;">
+<div class="u-csp-028">
   <a href="{{ url_for('zarzadzanie.nowy_student') }}" class="przycisk przycisk--glowny">
     + Dodaj studenta
   </a>
@@ -53,7 +53,7 @@
       {% endif %}
     </form>
 
-    <span style="font-size: 0.85rem; color: var(--kolor-tekst-drugor);">
+    <span class="u-csp-038">
       {{ uzytkownicy.total }} użytkowników
     </span>
   </div>
@@ -74,9 +74,9 @@
         {% for u in uzytkownicy.items %}
         <tr>
           <td>
-            <div style="display: flex; flex-direction: column; gap: 0.15rem;">
-              <span style="font-weight: 500;">{{ u.first_name }} {{ u.last_name }}</span>
-              <span style="font-size: 0.8rem; color: var(--kolor-tekst-trzeciorzed);">{{ u.email }}</span>
+            <div class="u-csp-223">
+              <span class="u-csp-027">{{ u.first_name }} {{ u.last_name }}</span>
+              <span class="u-csp-224">{{ u.email }}</span>
             </div>
           </td>
           <td>
@@ -92,11 +92,11 @@
               <span class="status status--szkic">Nieaktywny</span>
             {% endif %}
           </td>
-          <td style="white-space: nowrap; font-size: 0.85rem; color: var(--kolor-tekst-drugor);">
+          <td class="u-csp-266">
             {{ u.created_at.strftime('%d.%m.%Y') }}
           </td>
-          <td style="white-space: nowrap;">
-            <div style="display: flex; gap: 0.375rem;">
+          <td class="u-csp-193">
+            <div class="u-csp-267">
 
               {% if u.role.name == 'STUDENT' %}
                 <a href="{{ url_for('zarzadzanie.edytuj_studenta', id=u.id) }}"
@@ -107,9 +107,9 @@
               {% endif %}
 
               {% if u.id != current_user.id %}
-                <form method="POST"
+                <form class="u-csp-256" method="POST"
                       action="{{ url_for('zarzadzanie.przelacz_aktywnosc', id=u.id) }}"
-                      style="display: inline;">
+                     >
                   {{ csrf_form.hidden_tag() }}
                   <button type="submit"
                           class="przycisk {% if u.is_active %}przycisk--ostrzezenie{% else %}przycisk--drugorzedny{% endif %} przycisk--maly"
@@ -119,9 +119,9 @@
                   </button>
                 </form>
 
-                <form method="POST"
+                <form class="u-csp-256" method="POST"
                       action="{{ url_for('zarzadzanie.usun_uzytkownika', id=u.id) }}"
-                      style="display: inline;">
+                     >
                   {{ csrf_form.hidden_tag() }}
                   <button type="submit"
                           class="przycisk przycisk--niebezpieczny przycisk--maly"
@@ -181,19 +181,4 @@
   {% endif %}
 
 </div>
-
-<style>
-.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
-
-.przycisk--ostrzezenie {
-  background: #f59e0b;
-  color: white;
-  border: 1px solid #f59e0b;
-}
-
-.przycisk--ostrzezenie:hover {
-  background: #d97706;
-  border-color: #d97706;
-}
-</style>
 {% endblock %}

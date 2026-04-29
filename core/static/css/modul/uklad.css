@@ -8,6 +8,18 @@
   flex-shrink: 0; position: sticky; top: 0; overflow-y: auto;
 }
 .sidebar__naglowek { padding: 1.5rem 1.25rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.1); }
+.sidebar__logo-kontener {
+  width: 140px;
+  max-width: 100%;
+  margin-bottom: 10px;
+  padding: 10px;
+  background: var(--kolor-biale);
+  border-radius: var(--promien);
+  box-shadow: var(--cien-karta);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 .sidebar__logo { max-width: 100%; height: auto; display: block; }
 .sidebar__system-label { display: block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--kolor-akcent); font-weight: 600; margin-top: 0.5rem; }
 

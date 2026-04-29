@@ -1,21 +1,15 @@
-"""core/uslugi — warstwa usług biznesowych.
-
-Usługi zawierają logikę domenową i orkiestrują
-repozytoria. Kontrolery wywołują wyłącznie usługi —
-nie tworzą zapytań ORM ani nie operują bezpośrednio
-na sesjach bazy danych.
-"""
-from core.uslugi.praktyki  import UslugaPraktyk
-from core.uslugi.uzytkownicy import UslugaUzytkownikow
-from core.uslugi.ocenianie import SerwisOceniania
-from core.uslugi.komisja import SerwisKomisji
-from core.uslugi.dokumenty import (
+﻿"""Business services coordinate domain logic and repositories."""
+from core.uslugi.internships import UslugaPraktyk
+from core.uslugi.users import UserService
+from core.uslugi.evaluation import EvaluationService, SerwisOceniania
+from core.uslugi.committee import SerwisKomisji
+from core.uslugi.documents import (
     DOC_CONFIG, STATIC_TEMPLATES,
-    DocumentEntry, buduj_flagi, rozwiaz_dokumenty, buduj_kontekst,
+    DocumentEntry, buduj_flagi, rozwiaz_dokumenty, build_context,
 )
 
 __all__ = [
-    'UslugaPraktyk', 'UslugaUzytkownikow', 'SerwisOceniania', 'SerwisKomisji',
+    'UslugaPraktyk', 'UserService', 'EvaluationService', 'SerwisOceniania', 'SerwisKomisji',
     'DOC_CONFIG', 'STATIC_TEMPLATES',
-    'DocumentEntry', 'buduj_flagi', 'rozwiaz_dokumenty', 'buduj_kontekst',
+    'DocumentEntry', 'buduj_flagi', 'rozwiaz_dokumenty', 'build_context',
 ]

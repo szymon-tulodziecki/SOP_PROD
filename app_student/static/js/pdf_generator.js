@@ -1,7 +1,9 @@
-/**
+﻿/**
  * Generuje dokument PDF. Obsługuje bezpośrednie pobieranie lub ostrzeżenia o brakach danych.
  */
 async function generujDokument(btnElement, urlGeneruj, isForced = false) {
+    const messages = window.studentI18n?.pdf || {};
+    const msg = (key, fallback) => messages[key] || fallback;
     const label = btnElement.querySelector('[data-pdf-label]');
     const spinner = btnElement.querySelector('[data-pdf-spinner]');
 
@@ -10,19 +12,23 @@ async function generujDokument(btnElement, urlGeneruj, isForced = false) {
     if (label) label.style.display = 'none';
     if (spinner) {
         spinner.style.display = 'inline';
-        spinner.textContent = isForced ? 'Generowanie wymuszone...' : 'Generowanie...';
+        spinner.textContent = isForced
+            ? msg('forcedGenerating', 'Generowanie wymuszone...')
+            : msg('generating', 'Generowanie...');
     }
 
     try {
         const csrfMeta = document.querySelector('meta[name="csrf-token"]');
         const csrfToken = csrfMeta ? csrfMeta.content : (document.querySelector('input[name="csrf_token"]')?.value || '');
 
-        // Jeśli to wymuszone generowanie, dodajemy parametr do URL
-        const finalUrl = isForced ? `${urlGeneruj}?force=true` : urlGeneruj;
-
-        const resp = await fetch(finalUrl, {
+        // Flaga wymuszenia trafia do ciała POST.
+        const resp = await fetch(urlGeneruj, {
             method: 'POST',
-            headers: { 'X-CSRFToken': csrfToken }
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ force: isForced })
         });
 
         const contentType = resp.headers.get('content-type') || '';
@@ -35,7 +41,7 @@ async function generujDokument(btnElement, urlGeneruj, isForced = false) {
             if (data.requires_confirmation) {
                 const listaBrakow = data.warnings.map(w => `• ${w}`).join('\n');
                 const userConfirmed = confirm(
-                    `${data.message}\n\nLista brakujących pól:\n${listaBrakow}\n\nCzy mimo to wygenerować dokument?`
+                    `${data.message}\n\n${msg('missingFields', 'Lista brakujących pól:')}\n${listaBrakow}\n\n${msg('confirmIncomplete', 'Czy mimo to wygenerować dokument?')}`
                 );
 
                 if (userConfirmed) {
@@ -52,7 +58,7 @@ async function generujDokument(btnElement, urlGeneruj, isForced = false) {
         }
 
         // SCENARIUSZ B: Serwer zwraca plik PDF (Blob)
-        if (!resp.ok) throw new Error(`Błąd serwera: ${resp.status}`);
+        if (!resp.ok) throw new Error(`${msg('serverError', 'Błąd serwera')}: ${resp.status}`);
 
         const blob = await resp.blob();
         const url = URL.createObjectURL(blob);
@@ -75,7 +81,7 @@ async function generujDokument(btnElement, urlGeneruj, isForced = false) {
         }, 100);
 
     } catch (err) {
-        alert('Błąd generowania PDF: ' + err.message);
+        alert(`${msg('pdfError', 'Błąd generowania PDF')}: ${err.message}`);
     } finally {
         // Resetujemy przycisk tylko jeśli nie jesteśmy w trakcie rekurencyjnego wywołania "force"
         if (!isForced || !btnElement.disabled) {

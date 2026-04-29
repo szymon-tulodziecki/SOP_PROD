@@ -5,7 +5,7 @@
 
 {% block naglowek_akcje %}
   {% if current_user.role.value == 'ADMIN' %}
-  <div class="akcje-panelu" style="display: flex; gap: 0.5rem; align-items: center;">
+  <div class="u-flex--gap-05">
     <a href="{{ url_for('zarzadzanie.nowy_student') }}" class="przycisk przycisk--glowny">
       <span aria-hidden="true">+</span> Dodaj studenta
     </a>
@@ -19,16 +19,16 @@
 {% block tresc %}
 
 {% if current_user.role.value == 'UOPZ' and pilne_oceny %}
-<div style="margin-bottom: 2rem;">
+<div class="u-mb-2">
   {% for item in pilne_oceny %}
-  <div class="komunikat komunikat--{% if item.przekroczony %}danger{% else %}warning{% endif %}" style="margin-bottom: 1rem;">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 2px;">
+  <div class="komunikat komunikat--{% if item.przekroczony %}danger{% else %}warning{% endif %} u-mb-1">
+    <svg class="u-csp-001" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
       <line x1="12" y1="9" x2="12" y2="13"/>
       <line x1="12" y1="17" x2="12.01" y2="17"/>
     </svg>
     <div>
-      <div style="font-weight: 600;">
+      <div class="u-fw-600">
         {% if item.przekroczony %}
           Przekroczony deadline oceny: {{ item.zapis.student.last_name }} {{ item.zapis.student.first_name }}
         {% elif item.deadline_is_today %}
@@ -37,10 +37,10 @@
           Pilna ocena za {{ item.dni_do_deadline }} dni: {{ item.zapis.student.last_name }} {{ item.zapis.student.first_name }}
         {% endif %}
       </div>
-      <div style="font-size: 0.9rem; margin-top: 0.5rem;">
+      <div class="u-meta u-csp-002">
         Deadline: {{ item.deadline.strftime('%d.%m.%Y') }}
-        <a href="{{ url_for('evaluation.ocen_praktyke', id=item.zapis.id) }}"
-           style="margin-left: 1rem; color: inherit; text-decoration: underline;">
+        <a class="u-csp-003" href="{{ url_for('evaluation.evaluate_internship', id=item.zapis.id) }}"
+          >
           Wystaw ocenę →
         </a>
       </div>
@@ -78,7 +78,7 @@
 
 </section>
 
-<div class="uklad-dashboardu" style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+<div class="uklad-dashboardu u-csp-004">
 
   <section class="karta" aria-labelledby="tytul-ostatnie">
     <header class="karta__naglowek">
@@ -93,7 +93,7 @@
               <th scope="col">Student</th>
               <th scope="col">Praktyka</th>
               <th scope="col">Status</th>
-              <th scope="col" style="text-align:right;">Akcje</th>
+              <th class="u-csp-005" scope="col">Akcje</th>
             </tr>
           </thead>
           <tbody>
@@ -106,9 +106,9 @@
                   {{ z.status_label }}
                 </span>
               </td>
-              <td style="text-align:right;">
+              <td class="u-csp-005">
                 {% if z.is_pending %}
-                <form method="POST" action="{{ url_for('zarzadzanie.potwierdz_zapis', id=z.id) }}" style="display:inline;">
+                <form class="u-csp-006" method="POST" action="{{ url_for('zarzadzanie.potwierdz_zapis', id=z.id) }}">
                   {{ csrf_form.hidden_tag() }}
                   <button type="submit" class="przycisk przycisk--drugorzedny przycisk--maly" onclick="return confirm('Potwierdzić ten zapis?')">Zatwierdź</button>
                 </form>
@@ -131,16 +131,16 @@
       <h2 id="tytul-oczekujace" class="karta__tytul">Aktywne praktyki</h2>
     </header>
     <div class="karta__tresc">
-      <ul class="lista-prosta" role="list" style="list-style: none; padding: 0;">
+      <ul class="lista-prosta u-csp-007" role="list">
         {% for z in ostatnie_zapisy %}
-        <li style="padding: 1rem 0; border-bottom: 1px solid var(--kolor-ramka); display: flex; justify-content: space-between; align-items: center;">
+        <li class="u-flex--between u-csp-008">
           <div>
-            <span style="display: block; font-weight: 600;">{{ z.student.first_name }} {{ z.student.last_name }}</span>
-            <span style="font-size: 0.85rem; color: var(--kolor-tekst-drugor);">{{ z.praktyka.academic_year }}</span>
+            <span class="u-fw-600 u-csp-009">{{ z.student.first_name }} {{ z.student.last_name }}</span>
+            <span class="u-meta">{{ z.praktyka.academic_year }}</span>
           </div>
         </li>
         {% else %}
-        <li style="padding: 2rem; text-align: center; color: var(--kolor-tekst-drugor);">Brak zapisów.</li>
+        <li class="u-stan-pusty--sm">Brak zapisów.</li>
         {% endfor %}
       </ul>
     </div>

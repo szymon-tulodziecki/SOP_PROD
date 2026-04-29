@@ -14,6 +14,7 @@
      9. statusy    — odznaki statusów i ról
     10. komponenty — pasek postępu, paginacja, filtry
     11. dashboard  — statystyki, strona błędu
+    12. utils      — klasy użytkowe (zastępują inline style=)
    ============================================================ */
 
 @import url('/core/static/css/modul/zmienne.css');
@@ -27,3 +28,4 @@
 @import url('/core/static/css/modul/statusy.css');
 @import url('/core/static/css/modul/komponenty.css');
 @import url('/core/static/css/modul/dashboard.css');
+@import url('/core/static/css/modul/utils.css');

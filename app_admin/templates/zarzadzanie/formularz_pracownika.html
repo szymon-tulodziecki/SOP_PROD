@@ -9,7 +9,7 @@
   <div class="karta">
   <div class="karta__naglowek">
     <h2 class="karta__tytul">Dane konta pracownika</h2>
-    <span style="font-size: 0.825rem; color: var(--kolor-tekst-drugor); background: #faeeda; padding: 0.25rem 0.75rem; border-radius: 999px; font-weight: 500;">
+    <span class="u-csp-228">
       Logowanie przez Microsoft — e-mail musi być kontem w domenie uczelni
     </span>
   </div>
@@ -38,15 +38,15 @@
       
       <div class="pole-formularza {% if form.role.errors %}pole-formularza--blad{% endif %}">
         <label for="role" class="pole-formularza__etykieta">Rola w systemie <span class="pole-formularza__wymagane" aria-label="wymagane">*</span></label>
-        {{ form.role(class="filtr-select", style="width:100%") }}
+        {{ form.role(class="filtr-select u-select-full") }}
         {% if form.role.errors %}<span class="pole-formularza__blad" role="alert">{{ form.role.errors[0] }}</span>{% endif %}
       </div>
 
-      <div style="background: #f4f6f9; border-radius: var(--promien); padding: 0.875rem 1rem; font-size: 0.875rem; color: var(--kolor-tekst-drugor);">
+      <div class="u-csp-229">
         Pracownik zaloguje się e-mailem i hasłem tymczasowym (adres z e-mail, wszystko przed znakiem @), a następnie zostanie poproszony o ustawienie własnego hasła.
       </div>
 
-      <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 0.5rem; justify-content: flex-end;">
+      <div class="u-csp-230">
         <a href="{{ url_for('zarzadzanie.lista_uzytkownikow') }}" class="przycisk przycisk--drugorzedny">Anuluj</a>
         <button type="submit" class="przycisk przycisk--glowny">Utwórz konto pracownika</button>
       </div>

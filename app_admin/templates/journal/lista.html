@@ -30,20 +30,20 @@
         </thead>
         <tbody>
           {% for d in rows %}
-          <tr {% if d.alert %}style="background: rgba(192, 57, 43, 0.05);"{% endif %}>
+          <tr class="{% if d.alert %}u-row-soft-danger{% endif %}">
             <td>
-              <div style="font-weight: 600;">{{ d.zapis.student.last_name }} {{ d.zapis.student.first_name }}</div>
-              <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor);">Album: {{ d.zapis.student.album_number or '-' }}</div>
+              <div class="u-fw-600">{{ d.zapis.student.last_name }} {{ d.zapis.student.first_name }}</div>
+              <div class="u-meta">Album: {{ d.zapis.student.album_number or '-' }}</div>
             </td>
             <td>
               <div>{{ d.zapis.praktyka.academic_year }}</div>
-              <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor);">{{ d.zapis.praktyka.semester_label }}</div>
+              <div class="u-meta">{{ d.zapis.praktyka.semester_label }}</div>
             </td>
             <td>
-              <div style="font-weight: 600;">{{ d.zapis.total_hours_logged }} / {{ d.zapis.praktyka.required_hours }} h</div>
-              <div class="pasek-postep" style="margin-top: 4px;">
+              <div class="u-fw-600">{{ d.zapis.total_hours_logged }} / {{ d.zapis.praktyka.required_hours }} h</div>
+              <div class="pasek-postep u-mt-05">
                 <div class="pasek-postep__wypelnienie {{ 'pasek-postep__wypelnienie--zakonczony' if d.zapis.progress_percent >= 100 else '' }}"
-                     style="width: {{ d.zapis.progress_percent }}%;"></div>
+                     class="u-progress-{{ d.zapis.progress_percent|int }}"></div>
               </div>
             </td>
             <td><strong>{{ d.liczba_wpisow }}</strong></td>
@@ -51,12 +51,12 @@
               {% if d.ostatni_wpis %}
                 {{ d.ostatni_wpis.strftime('%d.%m.%Y') }}
               {% else %}
-                <span style="color: var(--kolor-tekst-trzeciorzed);">Brak wpisów</span>
+                <span class="u-tekst-trzeciorzed">Brak wpisów</span>
               {% endif %}
             </td>
             <td>
               {% if d.alert %}
-                <span class="status" style="background: #fef2f2; color: var(--kolor-blad);">
+                <span class="status u-csp-095">
                   ⚠ Przerwa &gt;3 dni
                 </span>
               {% else %}

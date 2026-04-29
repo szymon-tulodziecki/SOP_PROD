@@ -1,0 +1,351 @@
+# docker-stack.yml — Docker Swarm (produkcja)
+#
+# Różnice względem docker-compose.yml (dev):
+#   - secrets: external: true  →  zarządzane przez Docker Swarm, nie plikami
+#   - deploy.replicas          →  skalowanie replik
+#   - deploy.update_config     →  rolling update bez downtime
+#   - deploy.restart_policy    →  zastępuje `restart: unless-stopped`
+#   - brak depends_on          →  nieobsługiwane w Swarm (healthcheck zastępuje)
+#   - brak container_name      →  Swarm zarządza nazewnictwem
+#   - brak build:              →  Swarm używa gotowych obrazów z rejestru
+#
+# Wdrożenie:
+#   docker stack deploy -c docker-stack.yml sop
+#
+# Wymagane wcześniej (jednorazowo):
+#   docker swarm init
+#   ./scripts/create_swarm_secrets.sh
+
+secrets:
+  secret_key:
+    external: true
+  postgres_password:
+    external: true
+  file_encryption_key:
+    external: true
+  azure_client_id:
+    external: true
+  azure_client_secret:
+    external: true
+  azure_tenant_id:
+    external: true
+  fileserver_api_key:
+    external: true
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ans_admin
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+      POSTGRES_DB: ans_praktyki
+    secrets:
+      - postgres_password
+    networks:
+      - internal
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+
+  redis:
+    image: redis:7-alpine
+    networks:
+      - internal
+    volumes:
+      - redis_data:/data
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+
+  admin:
+    image: ${REGISTRY:-registry.example.com}/sop-admin:${IMAGE_TAG:-latest}
+    environment:
+      FLASK_ENV: production
+      POSTGRES_USER: ans_admin
+      POSTGRES_HOST: db
+      POSTGRES_DB: ans_praktyki
+      FILESERVER_URL: http://fileserver:5003
+      TEX_SERVICE_URL: http://tex-service:5002
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+    secrets:
+      - secret_key
+      - postgres_password
+      - file_encryption_key
+      - azure_client_id
+      - azure_client_secret
+      - azure_tenant_id
+      - fileserver_api_key
+    ports:
+      - "5000:5000"
+    networks:
+      - internal
+      - public
+    volumes:
+      - pdf_data:/app/pdf_output
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /app/app_admin/logs
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: rollback
+        order: start-first
+      rollback_config:
+        parallelism: 1
+        delay: 5s
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  student:
+    image: ${REGISTRY:-registry.example.com}/sop-student:${IMAGE_TAG:-latest}
+    environment:
+      FLASK_ENV: production
+      POSTGRES_USER: ans_admin
+      POSTGRES_HOST: db
+      POSTGRES_DB: ans_praktyki
+      FILESERVER_URL: http://fileserver:5003
+      TEX_SERVICE_URL: http://tex-service:5002
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+    secrets:
+      - secret_key
+      - postgres_password
+      - file_encryption_key
+      - azure_client_id
+      - azure_client_secret
+      - azure_tenant_id
+      - fileserver_api_key
+    ports:
+      - "5001:5001"
+    networks:
+      - internal
+      - public
+    volumes:
+      - pdf_data:/app/pdf_output
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: rollback
+        order: start-first
+      rollback_config:
+        parallelism: 1
+        delay: 5s
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  celery-worker:
+    image: ${REGISTRY:-registry.example.com}/sop-celery:${IMAGE_TAG:-latest}
+    environment:
+      FLASK_ENV: production
+      POSTGRES_USER: ans_admin
+      POSTGRES_HOST: db
+      POSTGRES_DB: ans_praktyki
+      FILESERVER_URL: http://fileserver:5003
+      TEX_SERVICE_URL: http://tex-service:5002
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+    secrets:
+      - secret_key
+      - postgres_password
+      - file_encryption_key
+      - fileserver_api_key
+    command: celery -A celery_app worker --loglevel=info --concurrency=2
+    networks:
+      - internal
+    volumes:
+      - pdf_data:/app/pdf_output
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: rollback
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+
+  celery-beat:
+    image: ${REGISTRY:-registry.example.com}/sop-celery:${IMAGE_TAG:-latest}
+    environment:
+      FLASK_ENV: production
+      POSTGRES_USER: ans_admin
+      POSTGRES_HOST: db
+      POSTGRES_DB: ans_praktyki
+      TEX_SERVICE_URL: http://tex-service:5002
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      PDF_OUTPUT_DIR: /app/pdf_output
+    secrets:
+      - postgres_password
+    command: celery -A celery_app beat --loglevel=info --schedule=/tmp/celerybeat-schedule
+    networks:
+      - internal
+    volumes:
+      - pdf_data:/app/pdf_output
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+
+  fileserver:
+    image: ${REGISTRY:-registry.example.com}/sop-fileserver:${IMAGE_TAG:-latest}
+    secrets:
+      - fileserver_api_key
+    networks:
+      - internal
+    volumes:
+      - fileserver_data:/data/files
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5003/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+
+  tex-service:
+    image: ${REGISTRY:-registry.example.com}/sop-tex:${IMAGE_TAG:-latest}
+    environment:
+      TZ: Europe/Warsaw
+      TEXMFVAR: /tmp/texmf-var
+      TEXMFCACHE: /tmp/texmf-var
+      HOME: /tmp
+    networks:
+      - internal
+    read_only: true
+    tmpfs:
+      - /tmp:size=256m,mode=1777
+      - /root:size=128m,mode=0700
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5002/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          memory: 128M
+
+networks:
+  internal:
+    driver: overlay
+    internal: true
+  public:
+    driver: overlay
+
+volumes:
+  pgdata:
+  pdf_data:
+  fileserver_data:
+  redis_data:

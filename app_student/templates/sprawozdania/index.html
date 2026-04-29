@@ -1,9 +1,9 @@
-{% extends "layouts/base_student.html" %}
+﻿{% extends "layouts/base_student.html" %}
 {% block tytul %}Sprawozdanie z praktyki{% endblock %}
 {% block naglowek %}Sprawozdanie z przebiegu praktyki{% endblock %}
 
 {% block naglowek_akcje %}
-<div style="display:flex; gap:0.5rem; align-items:center;">
+<div class="u-csp-368">
   {% if zapis %}
   <button type="submit" form="formularz-sprawozdania" class="przycisk przycisk--glowny">Zapisz sprawozdanie</button>
   {% endif %}
@@ -12,68 +12,79 @@
 {% endblock %}
 
 {% block tresc %}
-<div style="max-width: 900px; margin: 0 auto; padding-bottom: 3rem;">
+<div class="u-csp-081">
 
   {% if not ma_zapis %}
-  <div class="karta" style="text-align: center; padding: 3rem 2rem;">
-    <p style="color: var(--kolor-tekst-drugor);">Najpierw zapisz się na praktykę.</p>
-    <a href="{{ url_for('praktyki.lista') }}" class="przycisk przycisk--glowny" style="margin-top: 1rem;">Dostępne praktyki</a>
+  <div class="karta u-csp-200">
+    <p class="u-csp-036">Najpierw zapisz się na praktykę.</p>
+    <a href="{{ url_for('internships.lista') }}" class="przycisk przycisk--glowny u-csp-287">Dostępne praktyki</a>
   </div>
   {% elif not zapis %}
-  <div class="karta" style="text-align: center; padding: 3rem 2rem;">
-    <p style="color: var(--kolor-tekst-drugor);">Twój zapis oczekuje na akceptację przez UOPZ, dlatego projekt sprawozdania jest jeszcze niedostępny.</p>
+  <div class="karta u-csp-200">
+    <p class="u-csp-036">Twój zapis oczekuje na akceptację przez UOPZ, dlatego projekt sprawozdania jest jeszcze niedostępny.</p>
   </div>
   {% else %}
 
-<form id="formularz-sprawozdania" method="POST" action="{{ url_for('sprawozdania.index') }}" novalidate>
+<form id="formularz-sprawozdania" method="POST" action="{{ url_for('reports.index') }}" novalidate>
     {{ form.hidden_tag() }}
 
-    <div class="karta" style="margin-bottom: 2rem;">
+    <div class="karta u-csp-011">
       <div class="karta__naglowek">
-        <h2 class="karta__tytul">{{ form.charakterystyka.label.text }}</h2>
+        <h2 class="karta__tytul">{{ form.workplace_characteristics.label.text }}</h2>
       </div>
       <div class="karta__tresc">
-        <p style="font-size: 0.8rem; color: var(--kolor-tekst-drugor); margin-bottom: 0.5rem; font-style: italic;">
+        <p class="u-csp-369">
           Krótki opis instytucji, w której odbywała się praktyka zawodowa
         </p>
-        <div class="pole-formularza {% if form.charakterystyka.errors %}pole-formularza--blad{% endif %}">
-          {{ form.charakterystyka(class="pole-formularza__input", rows="4", placeholder="Tutaj wpisz sekcję I...", style="resize:vertical; overflow:auto;") }}
-          {% for e in form.charakterystyka.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
+        <div class="form-field {% if form.workplace_characteristics.errors %}form-field--error{% endif %}">
+          {{ form.workplace_characteristics(class="form-field__input u-textarea-resize", rows="4", placeholder="Tutaj wpisz sekcję I...") }}
+          {% for e in form.workplace_characteristics.errors %}<span class="form-field__error">{{ e }}</span>{% endfor %}
         </div>
       </div>
     </div>
 
-    <div class="karta" style="margin-bottom: 2rem;">
+    <div class="karta u-csp-011">
       <div class="karta__naglowek">
-        <h2 class="karta__tytul">{{ form.opis.label.text }}</h2>
+        <h2 class="karta__tytul">{{ form.work_description.label.text if is_standard else form.duties_scope.label.text }}</h2>
       </div>
       <div class="karta__tresc">
-        <p style="font-size: 0.8rem; color: var(--kolor-tekst-drugor); margin-bottom: 0.5rem; font-style: italic;">
+        <p class="u-csp-369">
           Syntetyczny opis wykonanych prac — student opisuje w sposób syntetyczny, jakie zadania wykonywał w trakcie praktyki (jego zdaniem najważniejsze).
         </p>
-        <div class="pole-formularza {% if form.opis.errors %}pole-formularza--blad{% endif %}">
-          {{ form.opis(class="pole-formularza__input", rows="6", placeholder="Tutaj wpisz sekcję II...", style="resize:vertical; overflow:auto;") }}
-          {% for e in form.opis.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
+        {% if is_standard %}
+        <div class="form-field {% if form.work_description.errors %}form-field--error{% endif %}">
+          {{ form.work_description(class="form-field__input u-textarea-resize", rows="6", placeholder="Tutaj wpisz sekcję II...") }}
+          {% for e in form.work_description.errors %}<span class="form-field__error">{{ e }}</span>{% endfor %}
         </div>
+        {% else %}
+        <div class="form-field {% if form.duties_scope.errors %}form-field--error{% endif %}">
+          {{ form.duties_scope(class="form-field__input u-textarea-resize", rows="4", placeholder="Tutaj wpisz zakres obowiązków...") }}
+          {% for e in form.duties_scope.errors %}<span class="form-field__error">{{ e }}</span>{% endfor %}
+        </div>
+        <div class="form-field {% if form.work_analysis.errors %}form-field--error{% endif %}">
+          {{ form.work_analysis(class="form-field__input u-textarea-resize", rows="6", placeholder="Tutaj wpisz analizę prac...") }}
+          {% for e in form.work_analysis.errors %}<span class="form-field__error">{{ e }}</span>{% endfor %}
+        </div>
+        {% endif %}
       </div>
     </div>
 
-    <div class="karta" style="margin-bottom: 2rem;">
+    <div class="karta u-csp-011">
       <div class="karta__naglowek">
-        <h2 class="karta__tytul">{{ form.wiedza.label.text }}</h2>
+        <h2 class="karta__tytul">{{ form.acquired_knowledge.label.text }}</h2>
       </div>
       <div class="karta__tresc">
-        <p style="font-size: 0.8rem; color: var(--kolor-tekst-drugor); margin-bottom: 0.5rem; font-style: italic;">
+        <p class="u-csp-369">
           Samoocena w zakresie nabytych kompetencji oraz osiągniętych efektów uczenia się — student opisuje, jakie kompetencje nabył w trakcie praktyki zawodowej oraz dokonuje samooceny w zakresie osiągniętych efektów uczenia się. Cytuje po kolei zakładane efekty uczenia się i wykazuje wykonane prace, które prowadziły do ich osiągnięcia.
         </p>
-        <div class="pole-formularza {% if form.wiedza.errors %}pole-formularza--blad{% endif %}">
-          {{ form.wiedza(class="pole-formularza__input", rows="5", placeholder="Tutaj wpisz sekcję III...", style="resize:vertical; overflow:auto;") }}
-          {% for e in form.wiedza.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
+        <div class="form-field {% if form.acquired_knowledge.errors %}form-field--error{% endif %}">
+          {{ form.acquired_knowledge(class="form-field__input u-textarea-resize", rows="5", placeholder="Tutaj wpisz sekcję III...") }}
+          {% for e in form.acquired_knowledge.errors %}<span class="form-field__error">{{ e }}</span>{% endfor %}
         </div>
       </div>
     </div>
 
-    <div style="display: flex; justify-content: flex-end; gap: 1rem;">
+    <div class="u-csp-370">
       <button type="submit" class="przycisk przycisk--glowny">Zapisz sprawozdanie</button>
     </div>
 

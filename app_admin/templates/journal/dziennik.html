@@ -4,41 +4,41 @@
 {% block naglowek %}Dziennik praktyki{% endblock %}
 
 {% block naglowek_akcje %}
-<div style="display: flex; gap: 0.5rem; align-items: center;">
+<div class="u-flex--gap-05">
   <a href="{{ url_for('journal.lista_dziennikow') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
 
   <button id="btn-pdf" onclick="zlecPDF()" class="przycisk przycisk--glowny">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -1px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    <svg class="u-csp-083" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
     <span id="btn-pdf-label">Pobierz PDF</span>
   </button>
 
-  <span id="pdf-status" style="font-size: 0.85rem; color: var(--kolor-tekst-drugor); display: none;"></span>
+  <span id="pdf-status" class="u-meta-sm u-csp-084"></span>
 </div>
 {% endblock %}
 
 {% block tresc %}
-<div style="max-width: 1000px; margin: 0 auto;">
+<div class="u-csp-049">
 
   <!-- Info o zapisie -->
-  <div class="karta" style="margin-bottom: 2rem; border-left: 4px solid var(--kolor-glowny);">
+  <div class="karta u-mb-2 u-csp-050">
     <div class="karta__tresc">
-      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem;">
+      <div class="u-csp-085">
         <div>
-          <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--kolor-tekst-drugor); margin-bottom: 0.25rem;">Student</div>
-          <div style="font-weight: 600;">{{ zapis.student.first_name }} {{ zapis.student.last_name }}</div>
-          <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor);">Album: {{ zapis.student.album_number or '-' }}</div>
+          <div class="u-etykieta">Student</div>
+          <div class="u-fw-600">{{ zapis.student.first_name }} {{ zapis.student.last_name }}</div>
+          <div class="u-meta">Album: {{ zapis.student.album_number or '-' }}</div>
         </div>
         <div>
-          <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--kolor-tekst-drugor); margin-bottom: 0.25rem;">Praktyka</div>
-          <div style="font-weight: 600;">{{ zapis.praktyka.academic_year }}</div>
-          <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor);">Semestr {{ zapis.praktyka.semester_label }}</div>
+          <div class="u-etykieta">Praktyka</div>
+          <div class="u-fw-600">{{ zapis.praktyka.academic_year }}</div>
+          <div class="u-meta">Semestr {{ zapis.praktyka.semester_label }}</div>
         </div>
         <div>
-          <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--kolor-tekst-drugor); margin-bottom: 0.25rem;">Postęp godzin</div>
-          <div style="font-weight: 700; font-size: 1.2rem; color: var(--kolor-glowny);">{{ total_hours }} / {{ zapis.praktyka.required_hours }} h</div>
-          <div class="pasek-postep" style="margin-top: 0.5rem; height: 8px;">
+          <div class="u-etykieta">Postęp godzin</div>
+          <div class="u-fw-600 u-csp-086">{{ total_hours }} / {{ zapis.praktyka.required_hours }} h</div>
+          <div class="pasek-postep u-mt-05 u-csp-087">
             <div class="pasek-postep__wypelnienie {{ 'pasek-postep__wypelnienie--zakonczony' if zapis.progress_percent >= 100 else '' }}"
-                 style="width: {{ zapis.progress_percent }}%;"></div>
+                 class="u-progress-{{ zapis.progress_percent|int }}"></div>
           </div>
         </div>
       </div>
@@ -47,10 +47,10 @@
 
   <!-- Alerty przerw -->
   {% if gaps %}
-  <div style="margin-bottom: 2rem;">
+  <div class="u-mb-2">
     {% for p in gaps %}
-    <div class="komunikat komunikat--danger" style="margin-bottom: 0.5rem;">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 2px;">
+    <div class="komunikat komunikat--danger u-mb-05">
+      <svg class="u-csp-001" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
         <line x1="12" y1="9" x2="12" y2="13"/>
         <line x1="12" y1="17" x2="12.01" y2="17"/>
@@ -63,14 +63,14 @@
 
   <!-- Wpisy -->
   <div class="karta">
-    <div class="karta__naglowek" style="flex-wrap:wrap; gap:0.75rem;">
+    <div class="karta__naglowek u-csp-077">
       <h3 class="karta__tytul">Wpisy dziennika ({{ entries|length }}{% if data_od or data_do %} — filtr aktywny{% endif %})</h3>
-      <form method="GET" style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap; margin-left:auto;">
-        <label style="font-size:0.85rem; color:var(--kolor-tekst-drugor);">Od</label>
-        <input type="date" name="od" class="pole-formularza__input" style="width:145px; padding:0.3rem 0.5rem; font-size:0.85rem;"
+      <form method="GET" class="u-flex--gap-05 u-csp-088">
+        <label class="u-meta-sm">Od</label>
+        <input type="date" name="od" class="pole-formularza__input u-csp-089"
                value="{{ data_od.isoformat() if data_od else '' }}">
-        <label style="font-size:0.85rem; color:var(--kolor-tekst-drugor);">Do</label>
-        <input type="date" name="do" class="pole-formularza__input" style="width:145px; padding:0.3rem 0.5rem; font-size:0.85rem;"
+        <label class="u-meta-sm">Do</label>
+        <input type="date" name="do" class="pole-formularza__input u-csp-089"
                value="{{ data_do.isoformat() if data_do else '' }}">
         <button type="submit" class="przycisk przycisk--maly przycisk--drugorzedny">Filtruj</button>
         {% if data_od or data_do %}
@@ -78,34 +78,34 @@
         {% endif %}
       </form>
     </div>
-    <div class="karta__tresc" style="padding: 0;">
+    <div class="karta__tresc u-p-0">
       <div class="tabela-wrapper">
         <table class="tabela">
           <thead>
             <tr>
-              <th scope="col" style="width: 110px;">Data</th>
-              <th scope="col" style="width: 80px;">Godziny</th>
+              <th class="u-csp-090" scope="col">Data</th>
+              <th class="u-csp-091" scope="col">Godziny</th>
               <th scope="col">Opis czynności</th>
-              <th scope="col" style="width: 70px;">Efekt</th>
+              <th class="u-csp-092" scope="col">Efekt</th>
             </tr>
           </thead>
           <tbody>
             {% for w in entries %}
             <tr>
               <td><strong>{{ w.entry_date.strftime('%d.%m.%Y') }}</strong></td>
-              <td style="text-align: center;">{{ w.duration_hours }} h</td>
-              <td style="font-size: 0.85rem; line-height: 1.5; max-width: 420px;">
+              <td class="u-ta-center">{{ w.duration_hours }} h</td>
+              <td class="u-fs-sm u-lh-15 u-csp-093">
                 {% if w.description | length > 120 %}
                   <span class="opis-skrot">{{ w.description[:120] }}&hellip; <button type="button" class="btn-rozwin" onclick="rozwinOpis(this)">Rozwiń</button></span>
-                  <span class="opis-pelny" style="display:none;">{{ w.description }} <button type="button" class="btn-rozwin" onclick="zwinOpis(this)">Zwiń</button></span>
+                  <span class="opis-pelny u-csp-094">{{ w.description }} <button type="button" class="btn-rozwin" onclick="zwinOpis(this)">Zwiń</button></span>
                 {% else %}
                   {{ w.description }}
                 {% endif %}
               </td>
-              <td style="white-space: nowrap; text-align: center;">
+              <td class="u-nowrap u-ta-center">
                 {% if w.efekty_uczenia %}
                   {% for e in w.efekty_uczenia %}
-                    <span style="font-size: 0.75rem; background: var(--kolor-tlo); padding: 0.2rem 0.4rem; border-radius: 4px; font-weight: 600;">{{ e.kod }}</span>
+                    <span class="efekt-kod">{{ e.kod }}</span>
                   {% endfor %}
                 {% else %}—{% endif %}
               </td>
@@ -166,7 +166,6 @@ function sprawdzStatus(taskId) {
       statusEl.textContent = 'Gotowe!';
       btnLabel.textContent = 'Pobierz PDF';
       btn.disabled = false;
-      // Automatyczne pobranie
       window.location.href = URL_POBIERZ(taskId);
     } else if (data.status === 'FAILURE') {
       clearInterval(pollInterval);
@@ -202,12 +201,4 @@ function zwinOpis(btn) {
   pelny.previousElementSibling.style.display = '';
 }
 </script>
-<style>
-.btn-rozwin {
-  background: none; border: none; padding: 0;
-  color: var(--kolor-glowny); font-size: 0.8rem;
-  cursor: pointer; text-decoration: underline;
-}
-.btn-rozwin:hover { opacity: 0.75; }
-</style>
 {% endblock %}

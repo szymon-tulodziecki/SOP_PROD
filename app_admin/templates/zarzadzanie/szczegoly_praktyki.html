@@ -1,4 +1,4 @@
-﻿{% extends "layouts/base_panel.html" %}
+{% extends "layouts/base_panel.html" %}
 
 {% block tytul %}Szczegóły praktyki{% endblock %}
 {% block naglowek %}Szczegóły praktyki{% endblock %}
@@ -7,43 +7,43 @@
 <div class="akcje-panelu">
   <a href="{{ url_for('zarzadzanie.lista_praktyk') }}" class="przycisk przycisk--drugorzedny">Powrót do listy</a>
   {% if current_user.role.value in ['ADMIN', 'UOPZ'] %}
-  <a href="{{ url_for('evaluation.ocen_praktyke', id=praktyka.id) }}" class="przycisk przycisk--glowny">Oceń / Egzaminuj</a>
+  <a href="{{ url_for('evaluation.evaluate_internship', id=praktyka.id) }}" class="przycisk przycisk--glowny">Oceń / Egzaminuj</a>
   <a href="{{ url_for('evaluation.podglad_sprawozdania', id=praktyka.id) }}" class="przycisk przycisk--drugorzedny">Zobacz Sprawozdanie</a>
   <a href="{{ url_for('journal.podglad', id=praktyka.id) }}" class="przycisk przycisk--drugorzedny">Zobacz Dziennik</a>
-  <a href="{{ url_for('documents.panel', id=praktyka.id) }}" class="przycisk przycisk--drugorzedny" style="border-color: #8e44ad; color: #8e44ad;">📄 Dokumenty (PDF)</a>
+  <a href="{{ url_for('documents.panel', id=praktyka.id) }}" class="przycisk przycisk--drugorzedny u-csp-261">📄 Dokumenty (PDF)</a>
   {% endif %}
 </div>
 {% endblock %}
 
 {% block tresc %}
-<div class="uklad-szczegolow" style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
-  
-  <div class="lewa-kolumna" style="display: flex; flex-direction: column; gap: 2rem;">
-    
+<div class="u-csp-004">
+
+  <div class="u-flex--col-15">
+
     <!-- Dane podstawowe -->
     <section class="karta">
       <header class="karta__naglowek">
         <h2 class="karta__tytul">Informacje o praktyce</h2>
-        <span class="status status--{{ praktyka.status.value|lower|replace('_', '-') }}">{{ tlumacz_status(praktyka.status.value) }}</span>
+        <span class="status status--{{ praktyka.status.value|lower|replace('_', '-') }}">{{ translate_status(praktyka.status.value) }}</span>
       </header>
       <div class="karta__tresc">
-        <dl style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+        <dl class="u-grid-2-lg">
           <div>
-            <dt style="font-size: 0.8rem; color: var(--kolor-tekst-drugor); margin-bottom: 0.25rem;">Student</dt>
-            <dd style="font-weight: 600;">{{ praktyka.student.first_name }} {{ praktyka.student.last_name }}</dd>
-            <dd style="font-size: 0.9rem;">Album: {{ praktyka.student.album_number or '-' }}</dd>
+            <dt class="u-etykieta">Student</dt>
+            <dd class="u-fw-600">{{ praktyka.student.first_name }} {{ praktyka.student.last_name }}</dd>
+            <dd class="u-meta">Album: {{ praktyka.student.album_number or '-' }}</dd>
           </div>
           <div>
-            <dt style="font-size: 0.8rem; color: var(--kolor-tekst-drugor); margin-bottom: 0.25rem;">Zakład pracy</dt>
-            <dd style="font-weight: 600;">{{ praktyka.zaklad.nazwa }}</dd>
-            <dd style="font-size: 0.9rem;">{{ praktyka.zaklad.miasto }}</dd>
+            <dt class="u-etykieta">Zakład pracy</dt>
+            <dd class="u-fw-600">{{ praktyka.zaklad.nazwa }}</dd>
+            <dd class="u-meta">{{ praktyka.zaklad.miasto }}</dd>
           </div>
           <div>
-            <dt style="font-size: 0.8rem; color: var(--kolor-tekst-drugor); margin-bottom: 0.25rem;">Termin</dt>
+            <dt class="u-etykieta">Termin</dt>
             <dd>{{ praktyka.data_rozpoczecia }} — {{ praktyka.data_zakonczenia or '...' }}</dd>
           </div>
           <div>
-            <dt style="font-size: 0.8rem; color: var(--kolor-tekst-drugor); margin-bottom: 0.25rem;">Ścieżka</dt>
+            <dt class="u-etykieta">Ścieżka</dt>
             <dd>{{ praktyka.typ_sciezki.value }}</dd>
           </div>
         </dl>
@@ -55,35 +55,35 @@
       <header class="karta__naglowek">
         <h2 class="karta__tytul">Realizacja godzinowa</h2>
       </header>
-      <div class="karta__tresc" style="padding: 2rem;">
-        <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; align-items: flex-end;">
-          <span style="font-size: 2rem; font-weight: 700; color: var(--kolor-glowny);">{{ praktyka.lacznie_godzin }} <small style="font-size: 1rem; color: var(--kolor-tekst-drugor);">/ 160 h</small></span>
-          <span style="font-weight: 600; color: var(--kolor-sukces);">{{ (praktyka.lacznie_godzin / 1.6)|round|int }}%</span>
+      <div class="karta__tresc u-csp-042">
+        <div class="u-flex--between u-mb-1 u-csp-262">
+          <span class="u-csp-263">{{ praktyka.lacznie_godzin }} <small class="u-meta u-csp-264">/ 160 h</small></span>
+          <span class="u-fw-600 u-csp-022">{{ (praktyka.lacznie_godzin / 1.6)|round|int }}%</span>
         </div>
-        <div class="pasek-postep" style="height: 12px;">
-          <div class="pasek-postep__wypelnienie {{ 'pasek-postep__wypelnienie--zakonczony' if praktyka.lacznie_godzin >= 160 else '' }}" 
-               style="width: {% if praktyka.lacznie_godzin >= 160 %}100{% else %}{{ praktyka.lacznie_godzin / 1.6 }}{% endif %}%;"></div>
+        <div class="pasek-postep u-csp-265">
+          <div class="pasek-postep__wypelnienie {{ 'pasek-postep__wypelnienie--zakonczony' if praktyka.lacznie_godzin >= 160 else '' }}"
+               class="u-progress-{% if praktyka.lacznie_godzin >= 160 %}100{% else %}{{ (praktyka.lacznie_godzin / 1.6)|int }}{% endif %}"></div>
         </div>
       </div>
     </section>
 
   </div>
 
-  <div class="prawa-kolumna" style="display: flex; flex-direction: column; gap: 2rem;">
-    
+  <div class="u-flex--col-15">
+
     <!-- Opiekunowie -->
     <section class="karta">
       <header class="karta__naglowek">
         <h2 class="karta__tytul">Opiekunowie</h2>
       </header>
       <div class="karta__tresc">
-        <div style="margin-bottom: 1.5rem;">
-          <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--kolor-tekst-drugor); margin-bottom: 0.5rem;">Uczelniany (UOPZ)</div>
-          <div style="font-weight: 600;">{{ praktyka.uopz.first_name }} {{ praktyka.uopz.last_name }}</div>
+        <div class="u-mb-15">
+          <div class="u-etykieta">Uczelniany (UOPZ)</div>
+          <div class="u-fw-600">{{ praktyka.uopz.first_name }} {{ praktyka.uopz.last_name }}</div>
         </div>
         <div>
-          <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--kolor-tekst-drugor); margin-bottom: 0.5rem;">Zakładowy (ZOPZ)</div>
-          <div style="font-weight: 600;">{{ praktyka.zopz.first_name }} {{ praktyka.zopz.last_name }}</div>
+          <div class="u-etykieta">Zakładowy (ZOPZ)</div>
+          <div class="u-fw-600">{{ praktyka.zopz.first_name }} {{ praktyka.zopz.last_name }}</div>
         </div>
       </div>
     </section>
@@ -95,18 +95,18 @@
         <h2 class="karta__tytul">Wyniki oceny</h2>
       </header>
       <div class="karta__tresc">
-        <dl style="display: flex; flex-direction: column; gap: 1rem;">
-          <div style="display: flex; justify-content: space-between;">
+        <dl class="u-flex--col">
+          <div class="u-flex--between">
             <dt>Sprawozdanie (S):</dt>
-            <dd style="font-weight: 700; color: var(--kolor-glowny);">{{ praktyka.ocena_sprawozdania or '-' }}</dd>
+            <dd class="u-fw-600 u-tekst-glowny">{{ praktyka.ocena_sprawozdania or '-' }}</dd>
           </div>
-          <div style="display: flex; justify-content: space-between;">
+          <div class="u-flex--between">
             <dt>Ocena UOPZ (U):</dt>
-            <dd style="font-weight: 700; color: var(--kolor-glowny);">{{ praktyka.ocena_uopz or '-' }}</dd>
+            <dd class="u-fw-600 u-tekst-glowny">{{ praktyka.ocena_uopz or '-' }}</dd>
           </div>
-          <div style="display: flex; justify-content: space-between;">
+          <div class="u-flex--between">
             <dt>Ocena ZOPZ (Z):</dt>
-            <dd style="font-weight: 700; color: var(--kolor-glowny);">{{ praktyka.ocena_zopz or '-' }}</dd>
+            <dd class="u-fw-600 u-tekst-glowny">{{ praktyka.ocena_zopz or '-' }}</dd>
           </div>
         </dl>
       </div>

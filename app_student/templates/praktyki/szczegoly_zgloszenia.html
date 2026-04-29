@@ -1,9 +1,9 @@
-{% extends "layouts/base_student.html" %}
+﻿{% extends "layouts/base_student.html" %}
 {% block tytul %}Szczegóły zgłoszenia{% endblock %}
 {% block naglowek %}Rejestracja praktyki zawodowej{% endblock %}
 
 {% block naglowek_akcje %}
-<a href="{{ url_for('praktyki.lista') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
+<a href="{{ url_for('internships.lista') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
 {% endblock %}
 
 {% block tresc %}
@@ -12,108 +12,108 @@
 
 {% if zapis.is_standard %}
 
-  <div style="max-width: 800px; margin: 0 auto;">
+  <div class="u-kontener-wazki">
 
   <!-- === SEKCJA 1: Terminy === -->
-  <div class="karta" style="margin-bottom:1rem;">
+  <div class="karta u-mb-1">
     <div class="karta__naglowek"><h2 class="karta__tytul">Terminy i opiekun uczelniany</h2></div>
     <div class="karta__tresc">
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
-        <div class="pole-formularza">
-          <label class="pole-formularza__etykieta">Data rozpoczęcia</label>
-          <input class="pole-formularza__input" type="text" readonly value="{{ zapis.start_date.strftime('%d.%m.%Y') if zapis.start_date else '—' }}">
+      <div class="u-grid-2-mb">
+        <div class="form-field">
+          <label class="form-field__label">Data rozpoczęcia</label>
+          <input class="form-field__input" type="text" readonly value="{{ zapis.start_date.strftime('%d.%m.%Y') if zapis.start_date else '—' }}">
         </div>
-        <div class="pole-formularza">
-          <label class="pole-formularza__etykieta">Data zakończenia</label>
-          <input class="pole-formularza__input" type="text" readonly value="{{ zapis.end_date.strftime('%d.%m.%Y') if zapis.end_date else '—' }}">
+        <div class="form-field">
+          <label class="form-field__label">Data zakończenia</label>
+          <input class="form-field__input" type="text" readonly value="{{ zapis.end_date.strftime('%d.%m.%Y') if zapis.end_date else '—' }}">
         </div>
       </div>
-      <div style="background:#fef3cd; border:1px solid #fde68a; border-radius:0.5rem; padding:0.875rem; margin-top:1rem;">
-        <label style="display:flex; gap:0.75rem; align-items:flex-start;">
-          <input type="checkbox" disabled {% if zapis.accident_insurance %}checked{% endif %} style="margin-top:0.15rem; width:16px; height:16px; flex-shrink:0;">
-          <span style="font-weight:500; font-size:0.9rem;">Posiadam ubezpieczenie NW na czas trwania praktyki</span>
+      <div class="u-csp-319">
+        <label class="u-flex--gap-05 u-csp-359">
+          <input class="u-csp-360" type="checkbox" disabled {% if zapis.accident_insurance %}checked{% endif %}>
+          <span class="u-fw-500 u-csp-321">Posiadam ubezpieczenie NW na czas trwania praktyki</span>
         </label>
-        <div style="font-size:0.78rem; color:#92400e; margin-top:0.3rem; margin-left:22px;">Wymagane przed rozpoczęciem praktyki (art. 304 KP)</div>
+        <div class="u-meta u-csp-361">Wymagane przed rozpoczęciem praktyki (art. 304 KP)</div>
       </div>
     </div>
   </div>
 
   <!-- === SEKCJA 2: Zakład pracy === -->
-  <div class="karta" style="margin-bottom:1rem;">
+  <div class="karta u-mb-1">
     <div class="karta__naglowek"><h2 class="karta__tytul">Zakład pracy</h2></div>
     <div class="karta__tresc">
       {% if not zapis.is_custom_company and zapis.firma %}
-      <div class="pole-formularza" style="margin-bottom:1rem;">
-        <label class="pole-formularza__etykieta">Jak znalazłeś/-aś miejsce praktyki?</label>
-        <input class="pole-formularza__input" type="text" readonly value="Uczelnia kieruje do zakładu (firma ma umowę z ANS)">
+      <div class="form-field u-mb-1">
+        <label class="form-field__label">Jak znalazłeś/-aś miejsce praktyki?</label>
+        <input class="form-field__input" type="text" readonly value="Uczelnia kieruje do zakładu (firma ma umowę z ANS)">
       </div>
-      <div class="pole-formularza">
-        <label class="pole-formularza__etykieta">Wybrana firma</label>
-        <input class="pole-formularza__input" type="text" readonly value="{{ zapis.firma.name }}">
+      <div class="form-field">
+        <label class="form-field__label">Wybrana firma</label>
+        <input class="form-field__input" type="text" readonly value="{{ zapis.firma.name }}">
       </div>
       {% elif dm %}
-      <div class="pole-formularza" style="margin-bottom:1rem;">
-        <label class="pole-formularza__etykieta">Jak znalazłeś/-aś miejsce praktyki?</label>
-        <input class="pole-formularza__input" type="text" readonly value="Sam/a znalazłem/-am miejsce (wymaga Zał. 9 i Zał. 1)">
+      <div class="form-field u-mb-1">
+        <label class="form-field__label">Jak znalazłeś/-aś miejsce praktyki?</label>
+        <input class="form-field__input" type="text" readonly value="Sam/a znalazłem/-am miejsce (wymaga Zał. 9 i Zał. 1)">
       </div>
-      <div class="pole-formularza" style="margin-bottom:1rem;">
-        <label class="pole-formularza__etykieta">Nazwa zakładu pracy</label>
-        <input class="pole-formularza__input" type="text" readonly value="{{ dm.company_name or '' }}">
+      <div class="form-field u-mb-1">
+        <label class="form-field__label">Nazwa zakładu pracy</label>
+        <input class="form-field__input" type="text" readonly value="{{ dm.company_name or '' }}">
       </div>
-      <div class="pole-formularza" style="margin-bottom:1rem;">
-        <label class="pole-formularza__etykieta">Adres (ulica, nr)</label>
-        <input class="pole-formularza__input" type="text" readonly value="{{ dm.company_address or '' }}">
+      <div class="form-field u-mb-1">
+        <label class="form-field__label">Adres (ulica, nr)</label>
+        <input class="form-field__input" type="text" readonly value="{{ dm.company_address or '' }}">
       </div>
-      <div style="display:grid; grid-template-columns:1fr 2fr; gap:1rem; margin-bottom:1rem;">
-        <div class="pole-formularza">
-          <label class="pole-formularza__etykieta">Kod pocztowy</label>
-          <input class="pole-formularza__input" type="text" readonly value="{{ dm.company_zip or '' }}">
+      <div class="u-csp-362">
+        <div class="form-field">
+          <label class="form-field__label">Kod pocztowy</label>
+          <input class="form-field__input" type="text" readonly value="{{ dm.company_zip or '' }}">
         </div>
-        <div class="pole-formularza">
-          <label class="pole-formularza__etykieta">Miasto</label>
-          <input class="pole-formularza__input" type="text" readonly value="{{ dm.company_city or '' }}">
-        </div>
-      </div>
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
-        <div class="pole-formularza">
-          <label class="pole-formularza__etykieta">NIP / KRS</label>
-          <input class="pole-formularza__input" type="text" readonly value="{{ dm.company_tax_id or '' }}">
-        </div>
-        <div class="pole-formularza">
-          <label class="pole-formularza__etykieta">Osoba upoważniona do podpisania porozumienia</label>
-          <input class="pole-formularza__input" type="text" readonly value="{{ dm.authorized_person or '' }}">
+        <div class="form-field">
+          <label class="form-field__label">Miasto</label>
+          <input class="form-field__input" type="text" readonly value="{{ dm.company_city or '' }}">
         </div>
       </div>
-      <div class="pole-formularza" style="margin-top:1rem;">
-        <label class="pole-formularza__etykieta">Stanowisko osoby upoważnionej</label>
-        <input class="pole-formularza__input" type="text" readonly value="{{ dm.authorized_person_position or '' }}">
+      <div class="u-grid-2">
+        <div class="form-field">
+          <label class="form-field__label">NIP / KRS</label>
+          <input class="form-field__input" type="text" readonly value="{{ dm.company_tax_id or '' }}">
+        </div>
+        <div class="form-field">
+          <label class="form-field__label">Osoba upoważniona do podpisania porozumienia</label>
+          <input class="form-field__input" type="text" readonly value="{{ dm.authorized_person or '' }}">
+        </div>
+      </div>
+      <div class="form-field u-mt-1">
+        <label class="form-field__label">Stanowisko osoby upoważnionej</label>
+        <input class="form-field__input" type="text" readonly value="{{ dm.authorized_person_position or '' }}">
       </div>
       {% endif %}
     </div>
   </div>
 
   <!-- === SEKCJA 3: ZOPZ === -->
-  <div class="karta" style="margin-bottom:1rem;">
+  <div class="karta u-mb-1">
     <div class="karta__naglowek"><h2 class="karta__tytul">Opiekun zakładowy (ZOPZ)</h2></div>
     <div class="karta__tresc">
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
-        <div class="pole-formularza">
-          <label class="pole-formularza__etykieta">Opiekun zakładowy (ZOPZ) — imię i nazwisko</label>
-          <input class="pole-formularza__input" type="text" readonly value="{{ dm.workplace_mentor_name if dm else '' }}">
+      <div class="u-grid-2-mb">
+        <div class="form-field">
+          <label class="form-field__label">Opiekun zakładowy (ZOPZ) — imię i nazwisko</label>
+          <input class="form-field__input" type="text" readonly value="{{ dm.workplace_mentor_name if dm else '' }}">
         </div>
-        <div class="pole-formularza">
-          <label class="pole-formularza__etykieta">Stanowisko ZOPZ</label>
-          <input class="pole-formularza__input" type="text" readonly value="{{ dm.workplace_mentor_position if dm else '' }}">
+        <div class="form-field">
+          <label class="form-field__label">Stanowisko ZOPZ</label>
+          <input class="form-field__input" type="text" readonly value="{{ dm.workplace_mentor_position if dm else '' }}">
         </div>
       </div>
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
-        <div class="pole-formularza">
-          <label class="pole-formularza__etykieta">Telefon ZOPZ</label>
-          <input class="pole-formularza__input" type="text" readonly value="{{ dm.workplace_mentor_phone if dm else '' }}">
+      <div class="u-grid-2">
+        <div class="form-field">
+          <label class="form-field__label">Telefon ZOPZ</label>
+          <input class="form-field__input" type="text" readonly value="{{ dm.workplace_mentor_phone if dm else '' }}">
         </div>
-        <div class="pole-formularza">
-          <label class="pole-formularza__etykieta">E-mail ZOPZ</label>
-          <input class="pole-formularza__input" type="text" readonly value="{{ dm.workplace_mentor_email if dm else '' }}">
+        <div class="form-field">
+          <label class="form-field__label">E-mail ZOPZ</label>
+          <input class="form-field__input" type="text" readonly value="{{ dm.workplace_mentor_email if dm else '' }}">
         </div>
       </div>
     </div>
@@ -121,22 +121,22 @@
 
   <!-- === SEKCJA 4: Harmonogram === -->
   {% if harmonogram_dict %}
-  <div class="karta" style="margin-bottom:1rem;">
+  <div class="karta u-mb-1">
     <div class="karta__naglowek"><h2 class="karta__tytul">Harmonogram praktyki — efekty uczenia się</h2></div>
-    <div style="padding:0.6rem 1rem; background:#fef3cd; border-bottom:1px solid #fde68a; font-size:0.8rem; color:#92400e;">
+    <div class="u-csp-337">
       Dla każdego efektu: dział zakładu pracy, przykładowe czynności i liczba dni.
     </div>
     {% for e in efekty %}
     {% set h = harmonogram_dict.get(e.id|string) %}
     {% if h %}
-    <div style="border-bottom:1px solid var(--kolor-ramka); padding:0.6rem 1rem;">
-      <div style="font-size:0.78rem; color:var(--kolor-tekst-drugor); margin-bottom:0.35rem;">{{ e.opis }}</div>
-      <div style="display:grid; grid-template-columns:1fr 1fr auto; gap:0.5rem; align-items:center;">
-        <input type="text" readonly class="pole-formularza__input" style="font-size:0.8rem; padding:0.3rem 0.5rem;" value="{{ h.department_name }}">
-        <input type="text" readonly class="pole-formularza__input" style="font-size:0.8rem; padding:0.3rem 0.5rem;" value="{{ h.example_tasks }}">
-        <div style="display:flex; align-items:center; gap:0.4rem;">
-          <input type="text" readonly class="pole-formularza__input" style="width:4rem; font-size:0.8rem; padding:0.3rem 0.5rem; text-align:center;" value="{{ h.days_count }}">
-          <span style="font-size:0.8rem; color:var(--kolor-tekst-drugor); white-space:nowrap;">dni</span>
+    <div class="u-csp-338">
+      <div class="u-meta u-mb-035">{{ e.opis }}</div>
+      <div class="u-csp-363">
+        <input type="text" readonly class="form-field__input u-csp-364" value="{{ h.department_name }}">
+        <input type="text" readonly class="form-field__input u-csp-364" value="{{ h.example_tasks }}">
+        <div class="u-flex--gap-05 u-csp-365">
+          <input type="text" readonly class="form-field__input u-csp-342" value="{{ h.days_count }}">
+          <span class="u-meta u-nowrap">dni</span>
         </div>
       </div>
     </div>
@@ -147,17 +147,17 @@
 
   <!-- === SEKCJA 5: UOPZ === -->
   {% if zapis.uopz %}
-  <div class="karta" style="margin-bottom:1rem;">
+  <div class="karta u-mb-1">
     <div class="karta__naglowek"><h2 class="karta__tytul">Opiekun uczelniany (UOPZ)</h2></div>
     <div class="karta__tresc">
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
-        <div class="pole-formularza">
-          <label class="pole-formularza__etykieta">Imię i nazwisko</label>
-          <input class="pole-formularza__input" type="text" readonly value="{{ zapis.uopz.first_name }} {{ zapis.uopz.last_name }}">
+      <div class="u-grid-2">
+        <div class="form-field">
+          <label class="form-field__label">Imię i nazwisko</label>
+          <input class="form-field__input" type="text" readonly value="{{ zapis.uopz.first_name }} {{ zapis.uopz.last_name }}">
         </div>
-        <div class="pole-formularza">
-          <label class="pole-formularza__etykieta">E-mail</label>
-          <input class="pole-formularza__input" type="text" readonly value="{{ zapis.uopz.email or '' }}">
+        <div class="form-field">
+          <label class="form-field__label">E-mail</label>
+          <input class="form-field__input" type="text" readonly value="{{ zapis.uopz.email or '' }}">
         </div>
       </div>
     </div>
@@ -166,12 +166,12 @@
 
   {% if zapis.is_completed_or_in_progress %}
   <div class="karta">
-    <div class="karta__tresc" style="display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;">
+    <div class="karta__tresc u-flex--between u-csp-366">
       <div>
-        <div style="font-weight:600; margin-bottom:0.2rem;">Dokumenty praktyki</div>
-        <div style="font-size:0.85rem; color:var(--kolor-tekst-drugor);">Porozumienie, program, karta skierowania — dostępne w Moich Dokumentach.</div>
+        <div class="u-fw-600 u-mb-025">Dokumenty praktyki</div>
+        <div class="u-meta-sm">Porozumienie, program, karta skierowania — dostępne w Moich Dokumentach.</div>
       </div>
-      <a href="{{ url_for('documents.moje_dokumenty') }}" class="przycisk przycisk--glowny">Moje Dokumenty →</a>
+      <a href="{{ url_for('documents.my_documents') }}" class="przycisk przycisk--glowny">Moje Dokumenty →</a>
     </div>
   </div>
   {% endif %}
@@ -179,7 +179,7 @@
 {% else %}
 {# ════════════ ŚCIEŻKA B/C ════════════ #}
 
-  <div style="max-width: 700px; margin: 0 auto;">
+  <div class="u-csp-327">
 
   <div class="karta">
     <div class="karta__naglowek">
@@ -188,17 +188,17 @@
     <div class="karta__tresc">
 
       {% if uz and uz.employment_subtype %}
-      <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:0.5rem; padding:1rem; margin-bottom:1rem; font-size:0.85rem;">
-        <div style="font-weight:600; margin-bottom:0.5rem; color:#1e40af;">
+      <div class="u-info-box u-mb-1">
+        <div class="u-info-box__tytul">
           {% if uz.employment_subtype == 'INTERNSHIP' %}B.1 — Staż{% else %}B.2 — Praca zawodowa (umowa o pracę / umowa zlecenie){% endif %}
         </div>
         {% if uz.employment_subtype == 'INTERNSHIP' %}
-        <ul style="margin:0; padding-left:1.2rem; color:#1e40af; line-height:1.8;">
+        <ul class="u-info-box__lista">
           <li>Zaświadczenie o odbyciu stażu (PDF)</li>
           <li>Zakres obowiązków realizowanych w ramach stażu (PDF)</li>
         </ul>
         {% else %}
-        <ul style="margin:0; padding-left:1.2rem; color:#1e40af; line-height:1.8;">
+        <ul class="u-info-box__lista">
           <li>Umowa o pracę / umowa zlecenie (PDF)</li>
           <li>Opis stanowiska pracy / karta stanowiskowa (PDF)</li>
         </ul>
@@ -207,12 +207,12 @@
       {% endif %}
 
       {% if uploaded_docs %}
-      <div style="margin-bottom:1.5rem;">
-        <div style="font-weight:600; margin-bottom:0.75rem; font-size:0.9rem;">Załączniki ({{ uploaded_docs|length }})</div>
-        <div style="display:flex; flex-direction:column; gap:0.3rem;">
+      <div class="u-mb-15">
+        <div class="u-fw-600 u-mb-05 u-csp-321">Załączniki ({{ uploaded_docs|length }})</div>
+        <div class="u-flex--col-05">
           {% for dok in uploaded_docs %}
-          <div style="display:flex; align-items:center; justify-content:space-between; gap:0.5rem; font-size:0.82rem; padding:0.4rem 0.6rem; background:var(--kolor-tlo); border:1px solid var(--kolor-ramka); border-radius:var(--promien);">
-            <span style="color:var(--kolor-sukces);">✓ {{ dok.original_filename }} <span style="color:var(--kolor-tekst-trzeciorzed);">({{ dok.document_type }})</span></span>
+          <div class="upload-plik">
+            <span class="u-csp-334">✓ {{ dok.original_filename }} <span class="u-tekst-trzeciorzed">({{ dok.document_type }})</span></span>
             <a href="{{ url_for('uploads.download_document', document_id=dok.id) }}" class="przycisk przycisk--maly przycisk--drugorzedny">Pobierz</a>
           </div>
           {% endfor %}
@@ -220,48 +220,48 @@
       </div>
       {% endif %}
 
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
-        <div class="pole-formularza">
-          <label class="pole-formularza__etykieta">Nazwa pracodawcy / firmy</label>
-          <input class="pole-formularza__input" type="text" readonly value="{{ dm.company_name if dm else '' }}">
+      <div class="u-grid-2-mb">
+        <div class="form-field">
+          <label class="form-field__label">Nazwa pracodawcy / firmy</label>
+          <input class="form-field__input" type="text" readonly value="{{ dm.company_name if dm else '' }}">
         </div>
-        <div class="pole-formularza">
-          <label class="pole-formularza__etykieta">Stanowisko / zakres działalności</label>
-          <input class="pole-formularza__input" type="text" readonly value="{{ dm.workplace_mentor_position if dm else '' }}">
-        </div>
-      </div>
-
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
-        <div class="pole-formularza">
-          <label class="pole-formularza__etykieta">Adres</label>
-          <input class="pole-formularza__input" type="text" readonly value="{{ dm.company_address if dm else '' }}">
-        </div>
-        <div class="pole-formularza">
-          <label class="pole-formularza__etykieta">Miasto</label>
-          <input class="pole-formularza__input" type="text" readonly value="{{ dm.company_city if dm else '' }}">
+        <div class="form-field">
+          <label class="form-field__label">Stanowisko / zakres działalności</label>
+          <input class="form-field__input" type="text" readonly value="{{ dm.workplace_mentor_position if dm else '' }}">
         </div>
       </div>
 
-      <div class="pole-formularza">
-        <label class="pole-formularza__etykieta">Uzasadnienie wniosku</label>
-        <textarea class="pole-formularza__input" readonly rows="5" style="height:auto; resize:none;">{{ uz.justification if uz else '' }}</textarea>
+      <div class="u-grid-2-mb">
+        <div class="form-field">
+          <label class="form-field__label">Adres</label>
+          <input class="form-field__input" type="text" readonly value="{{ dm.company_address if dm else '' }}">
+        </div>
+        <div class="form-field">
+          <label class="form-field__label">Miasto</label>
+          <input class="form-field__input" type="text" readonly value="{{ dm.company_city if dm else '' }}">
+        </div>
+      </div>
+
+      <div class="form-field">
+        <label class="form-field__label">Uzasadnienie wniosku</label>
+        <textarea class="form-field__input u-csp-367" readonly rows="5">{{ uz.justification if uz else '' }}</textarea>
       </div>
 
     </div>
   </div>
 
   {% if zapis.uopz %}
-  <div class="karta" style="margin-top:1rem;">
+  <div class="karta u-mt-1">
     <div class="karta__naglowek"><h2 class="karta__tytul">Opiekun uczelniany (UOPZ)</h2></div>
     <div class="karta__tresc">
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
-        <div class="pole-formularza">
-          <label class="pole-formularza__etykieta">Imię i nazwisko</label>
-          <input class="pole-formularza__input" type="text" readonly value="{{ zapis.uopz.first_name }} {{ zapis.uopz.last_name }}">
+      <div class="u-grid-2">
+        <div class="form-field">
+          <label class="form-field__label">Imię i nazwisko</label>
+          <input class="form-field__input" type="text" readonly value="{{ zapis.uopz.first_name }} {{ zapis.uopz.last_name }}">
         </div>
-        <div class="pole-formularza">
-          <label class="pole-formularza__etykieta">E-mail</label>
-          <input class="pole-formularza__input" type="text" readonly value="{{ zapis.uopz.email or '' }}">
+        <div class="form-field">
+          <label class="form-field__label">E-mail</label>
+          <input class="form-field__input" type="text" readonly value="{{ zapis.uopz.email or '' }}">
         </div>
       </div>
     </div>

@@ -1,6 +1,6 @@
-"""core/uslugi/workflow.py
+﻿"""core/uslugi/workflow.py
 
-Maszyna Stanów (FSM) dla ZapisPraktyki.
+Maszyna Stanów (FSM) dla InternshipEnrollment.
 
 Każda metoda publiczna reprezentuje jedno legalne przejście między stanami.
 Nielegalne przejście rzuca IllegalTransitionError — kontrolery łapią ten
@@ -34,7 +34,7 @@ Diagram przejść:
 """
 from __future__ import annotations
 
-from core.modele.praktyki import EnrollmentStatus as S
+from core.modele.internships import EnrollmentStatus as S
 
 # ---------------------------------------------------------------------------
 # Wyjątek dziedziny
@@ -97,7 +97,7 @@ _ALLOWED: dict[S, set[S]] = {
 # ---------------------------------------------------------------------------
 
 class ZapisFSM:
-    """Kontroler przejść stanu dla instancji ZapisPraktyki.
+    """Kontroler przejść stanu dla instancji InternshipEnrollment.
 
     Nie wykonuje commit — wywołujący odpowiada za transakcję.
 
@@ -119,7 +119,7 @@ class ZapisFSM:
 
     @classmethod
     def lock(cls, enrollment_id) -> 'ZapisFSM':
-        """Ładuje ZapisPraktyki z blokadą FOR UPDATE i zwraca FSM.
+        """Ładuje InternshipEnrollment z blokadą FOR UPDATE i zwraca FSM.
 
         Blokada wierszowa w PostgreSQL gwarantuje, że żaden inny proces
         Gunicorn nie zmodyfikuje statusu między odczytem a commitem.
@@ -132,10 +132,10 @@ class ZapisFSM:
 
         Użycie bez context managera:
             fsm = ZapisFSM.lock(id)
-            fsm.zatwierdz_przez_dziekana()
+            fsm.zatwierdz_przez_dyrektora()
             db.session.commit()
         """
-        from core.modele.praktyki import InternshipEnrollment
+        from core.modele.internships import InternshipEnrollment
         from core.extensions import db
 
         zapis = (
@@ -174,7 +174,7 @@ class ZapisFSM:
                          decision: str = '') -> None:
         """Tworzy ProcessEvent i dodaje do sesji (bez commit)."""
         from datetime import datetime, timezone as _tz
-        from core.modele.praktyki import ProcessEvent, EventType
+        from core.modele.internships import ProcessEvent, EventType
         from core.extensions import db
         db.session.add(ProcessEvent(
             enrollment_id=self._zapis.id,
@@ -196,8 +196,8 @@ class ZapisFSM:
     def _auto_przypisz_uopz(self) -> None:
         """Przypisuje opiekuna uczelnianego z najmniejszą liczbą aktywnych zapisów."""
         from core.extensions import db
-        from core.modele.uzytkownicy import UniversityMentor
-        from core.modele.praktyki import InternshipEnrollment
+        from core.modele.users import UniversityMentor
+        from core.modele.internships import InternshipEnrollment
         from sqlalchemy import func
         aktywne = (S.AWAITING_APPROVAL, S.IN_PROGRESS, S.COMMISSION_REVIEW,
                    S.REVISION_REQUIRED, S.DIRECTOR_APPROVAL)
@@ -232,7 +232,7 @@ class ZapisFSM:
         Rozróżnia ścieżkę na podstawie path_type zapisu — student po poprawkach
         wraca do recenzenta, który zadał poprawki, a nie zawsze do komisji.
         """
-        from core.modele.praktyki import InternshipPath
+        from core.modele.internships import InternshipPath
         if self.zapis.path_type == InternshipPath.STANDARD:
             self._przejdz(S.AWAITING_APPROVAL)
         else:
@@ -240,7 +240,7 @@ class ZapisFSM:
 
     def zatwierdz_przez_uopz(self, actor_id=None, comment: str = '') -> None:
         """AWAITING_APPROVAL → IN_PROGRESS. Opcjonalnie zapisuje komentarz UOPZ."""
-        from core.modele.praktyki import EventType
+        from core.modele.internships import EventType
         self._przejdz(S.IN_PROGRESS, 'decyzja UOPZ')
         if comment:
             self._dodaj_zdarzenie(EventType.SUPERVISOR_COMMENT, actor_id=actor_id,
@@ -251,7 +251,7 @@ class ZapisFSM:
 
         decision: 'APPROVED' | 'PARTIALLY_APPROVED' | 'REJECTED'
         """
-        from core.modele.praktyki import EventType
+        from core.modele.internships import EventType
         self._przejdz(S.DIRECTOR_APPROVAL, 'opinia komisji')
         self._dodaj_zdarzenie(EventType.COMMITTEE_DECISION, actor_id=actor_id,
                               comment=comment, decision=decision)
@@ -262,26 +262,23 @@ class ZapisFSM:
 
     def zadaj_poprawki(self, actor_id=None, comment: str = '') -> None:
         """COMMISSION_REVIEW / REVISION_REQUIRED → REVISION_REQUIRED."""
-        from core.modele.praktyki import EventType
+        from core.modele.internships import EventType
         self._przejdz(S.REVISION_REQUIRED, 'komisja: wymaga uzupełnień')
         self._dodaj_zdarzenie(EventType.COMMITTEE_DECISION, actor_id=actor_id,
                               comment=comment, decision='PARTIALLY_APPROVED')
 
     def zatwierdz_przez_dyrektora(self, actor_id=None, comment: str = '') -> None:
         """DIRECTOR_APPROVAL → IN_PROGRESS."""
-        from core.modele.praktyki import EventType
+        from core.modele.internships import EventType
         self._przejdz(S.IN_PROGRESS, 'decyzja dyrektora')
         self._dodaj_zdarzenie(EventType.DIRECTOR_DECISION, actor_id=actor_id,
                               comment=comment, decision='APPROVED')
 
-    # backward-compat alias
-    def zatwierdz_przez_dziekana(self, actor_id=None, comment: str = '') -> None:
-        return self.zatwierdz_przez_dyrektora(actor_id=actor_id, comment=comment)
 
     def odrzuc(self, actor_id=None, comment: str = '',
                event_type=None) -> None:
         """Dowolny aktywny stan → REJECTED."""
-        from core.modele.praktyki import EventType
+        from core.modele.internships import EventType
         self._przejdz(S.REJECTED)
         et = event_type or EventType.SUPERVISOR_COMMENT
         self._dodaj_zdarzenie(et, actor_id=actor_id,

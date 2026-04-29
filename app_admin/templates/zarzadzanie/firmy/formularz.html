@@ -4,13 +4,13 @@
 {% block naglowek %}{% if tryb == 'dodaj' %}Dodawanie nowej firmy{% else %}Edycja firmy{% endif %}{% endblock %}
 
 {% block naglowek_akcje %}
-<div style="display: flex; gap: 0.5rem;">
+<div class="u-csp-136">
   <a href="{{ url_for('zarzadzanie.lista_firm') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
 </div>
 {% endblock %}
 
 {% block tresc %}
-<div style="max-width: 800px; margin: 0 auto;">
+<div class="u-csp-182">
 
   <div class="karta">
     <div class="karta__naglowek">
@@ -26,7 +26,7 @@
       <form method="POST" novalidate>
         {{ form.hidden_tag() }}
 
-        <div style="display: grid; grid-template-columns: 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+        <div class="u-csp-183">
 
           <!-- Nazwa firmy -->
           <div class="pole-formularza {% if form.name.errors %}pole-formularza--blad{% endif %}">
@@ -40,12 +40,12 @@
             {{ form.address.label(class="pole-formularza__etykieta") }}
             {{ form.address(class="pole-formularza__input") }}
             {% for e in form.address.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
-            <small style="font-size: 0.8rem; color: var(--kolor-tekst-drugor);">
+            <small class="u-csp-146">
               Pełny adres, np. "ul. Kolejowa 15/3"
             </small>
           </div>
 
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+          <div class="u-csp-184">
             <!-- Miasto -->
             <div class="pole-formularza {% if form.city.errors %}pole-formularza--blad{% endif %}">
               {{ form.city.label(class="pole-formularza__etykieta") }}
@@ -58,7 +58,7 @@
               {{ form.vat_number.label(class="pole-formularza__etykieta") }}
               {{ form.vat_number(class="pole-formularza__input") }}
               {% for e in form.vat_number.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
-              <small style="font-size: 0.8rem; color: var(--kolor-tekst-drugor);">
+              <small class="u-csp-146">
                 NIP lub numer KRS
               </small>
             </div>
@@ -66,21 +66,21 @@
 
         </div>
 
-        <div style="margin-bottom: 1.5rem; padding: 1rem; background: #f0f9ff; border-radius: 0.5rem; border-left: 4px solid #0ea5e9;">
-          <div style="font-weight: 500; color: #0c4a6e; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
-            <svg viewBox="0 0 24 24" style="width: 1rem; height: 1rem; fill: currentColor;">
+        <div class="u-csp-185">
+          <div class="u-csp-186">
+            <svg class="u-csp-187" viewBox="0 0 24 24">
               <circle cx="12" cy="12" r="10"/>
               <line x1="12" y1="16" x2="12" y2="12"/>
               <line x1="12" y1="8" x2="12.01" y2="8"/>
             </svg>
             Informacja o firmach w systemie
           </div>
-          <div style="color: #0c4a6e; font-size: 0.9rem; line-height: 1.4;">
+          <div class="u-csp-188">
             Wszystkie firmy dodawane do systemu mają <strong>stałą umowę z uczelnią</strong>. Studenci którzy wybierają firmy z tej bazy nie muszą generować Załącznika 3 (Porozumienia). Studenci mogą też podać własne firmy podczas zapisów na praktyki.
           </div>
         </div>
 
-        <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div class="u-csp-017">
           <a href="{{ url_for('zarzadzanie.lista_firm') }}" class="przycisk przycisk--drugorzedny">
             Anuluj
           </a>

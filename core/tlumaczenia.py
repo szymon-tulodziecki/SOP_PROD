@@ -15,7 +15,7 @@ def status_css_class(status_value: str) -> str:
     return STATUS_CSS_MAP.get(status_value, 'draft')
 
 
-TLUMACZENIA_ROL = {
+ROLE_TRANSLATIONS = {
     'STUDENT':   'Student',
     'UOPZ':      'Opiekun uczelniany',
     'KOMISJA':   'Komisja',
@@ -24,11 +24,11 @@ TLUMACZENIA_ROL = {
 }
 
 
-def tlumacz_role(val: str) -> str:
-    return TLUMACZENIA_ROL.get(val, val)
+def translate_role(val: str) -> str:
+    return ROLE_TRANSLATIONS.get(val, val)
 
 
-TLUMACZENIA_STATUSOW = {
+STATUS_TRANSLATIONS = {
     'PENDING':            'Oczekuje na wysłanie',
     'AWAITING_APPROVAL':  'Oczekuje na zatwierdzenie',
     'COMMISSION_REVIEW':  'Weryfikacja komisji',
@@ -42,5 +42,5 @@ TLUMACZENIA_STATUSOW = {
 }
 
 
-def tlumacz_status(val: str) -> str:
-    return TLUMACZENIA_STATUSOW.get(val, val)
+def translate_status(val: str) -> str:
+    return STATUS_TRANSLATIONS.get(val, val)

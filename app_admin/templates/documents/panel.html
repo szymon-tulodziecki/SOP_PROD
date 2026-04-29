@@ -1,4 +1,4 @@
-﻿{% extends "layouts/base_panel.html" %}
+{% extends "layouts/base_panel.html" %}
 
 {% block tytul %}Dokumenty i Załączniki{% endblock %}
 {% block naglowek %}Generowanie dokumentów: {{ zapis.student.first_name }} {{ zapis.student.last_name }}{% endblock %}
@@ -8,29 +8,29 @@
 {% endblock %}
 
 {% block tresc %}
-<div class="uklad-szczegolow" style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+<div class="uklad-szczegolow u-csp-004">
 
-  <div class="lewa-kolumna" style="display: flex; flex-direction: column; gap: 2rem;">
+  <div class="lewa-kolumna u-csp-023">
     <!-- Lista dokumentów -->
     <div class="karta">
-      <div class="karta__naglowek" style="background: var(--kolor-tlo); display: flex; justify-content: space-between; align-items: center;">
+      <div class="karta__naglowek u-csp-012">
         <h2 class="karta__tytul">Dostępne szablony (LaTeX)</h2>
       </div>
       <div class="karta__tresc">
-        <p style="font-size: 0.85rem; color: var(--kolor-tekst-drugor); margin-bottom: 0.5rem;">
+        <p class="u-csp-024">
           Wybierz dokument, który chcesz wygenerować ze stałych szablonów. Kliknij "Tryb ręczny" aby edytować surowy szablon TeX przed kompilacją.
         </p>
 
-        <div style="display: flex; flex-direction: column; gap: 1rem;">
+        <div class="u-csp-025">
           {% for doc_key, doc_info in docs.items() %}
-          <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; border: 1px solid var(--kolor-ramka); border-radius: 8px;">
-            <div style="font-weight: 500;">
+          <div class="u-csp-026">
+            <div class="u-csp-027">
               {{ doc_info[1] }}
             </div>
-            <div style="display: flex; gap: 0.5rem; align-items: center;">
-              <span id="status-{{ doc_key }}" style="font-size: 0.8rem; color: var(--kolor-tekst-drugor); font-weight: 600; margin-right: 0.5rem;"></span>
+            <div class="u-csp-028">
+              <span class="u-csp-029" id="status-{{ doc_key }}"></span>
               <button onclick="triggerAuto('{{ doc_key }}')" id="btn-auto-{{ doc_key }}" class="przycisk przycisk--drugorzedny przycisk--maly">Wyg. Automatycznie</button>
-              <a href="{{ url_for('documents.edytuj', id=zapis.id, doc_type=doc_key) }}" class="przycisk przycisk--glowny przycisk--maly" style="background: #e67e22; border-color: #e67e22;">Tryb ręczny (TeX)</a>
+              <a href="{{ url_for('documents.edytuj', id=zapis.id, doc_type=doc_key) }}" class="przycisk przycisk--glowny przycisk--maly u-csp-030">Tryb ręczny (TeX)</a>
             </div>
           </div>
           {% endfor %}
@@ -39,30 +39,30 @@
     </div>
   </div>
 
-  <div class="prawa-kolumna" style="display: flex; flex-direction: column; gap: 2rem;">
+  <div class="prawa-kolumna u-csp-023">
     <!-- Audit log -->
     <div class="karta">
-      <div class="karta__naglowek" style="background: var(--kolor-tlo);">
+      <div class="karta__naglowek u-csp-031">
         <h2 class="karta__tytul">Ostatnie modyfikacje (Log)</h2>
       </div>
       <div class="karta__tresc py-3">
         {% if logs %}
-        <ul style="list-style: none; padding: 0; margin: 0; font-size: 0.85rem;">
+        <ul class="u-csp-032">
           {% for log in logs %}
-          <li style="margin-bottom: 1rem; border-bottom: 1px dashed var(--kolor-ramka); padding-bottom: 0.5rem;">
-            <strong style="color: var(--kolor-tekst);">{{ log.action }}</strong> — <span style="font-family: monospace;">{{ log.document_type }}</span>
+          <li class="u-csp-033">
+            <strong class="u-csp-034">{{ log.action }}</strong> — <span class="u-csp-035">{{ log.document_type }}</span>
             <br>
-            <span style="color: var(--kolor-tekst-drugor);">
+            <span class="u-csp-036">
               {{ log.created_at.strftime('%Y-%m-%d %H:%M') }} | Kto: {{ log.user.first_name if log.user else 'System' }}
             </span>
             {% if log.details %}
-            <div style="font-style: italic; margin-top: 0.25rem;">{{ log.details }}</div>
+            <div class="u-csp-037">{{ log.details }}</div>
             {% endif %}
           </li>
           {% endfor %}
         </ul>
         {% else %}
-        <p style="font-size: 0.85rem; color: var(--kolor-tekst-drugor);">Brak historii dokumentów.</p>
+        <p class="u-csp-038">Brak historii dokumentów.</p>
         {% endif %}
       </div>
     </div>
@@ -77,7 +77,7 @@ async function triggerAuto(docType) {
     const statusBox = document.getElementById('status-' + docType);
 
     btn.disabled = true;
-    statusBox.innerHTML = '<span style="color: var(--kolor-glowny);">Uruchamianie...</span>';
+    statusBox.innerHTML = '<span class="u-csp-020">Uruchamianie...</span>';
 
     try {
         const url = `/dokumenty/zapis/{{ zapis.id }}/generuj_auto/${docType}`;
@@ -92,7 +92,7 @@ async function triggerAuto(docType) {
         // SSE — jedno trwałe połączenie zamiast pollingu co 2 sekundy
         watchTaskSSE(data.task_id, btn, statusBox);
     } catch (err) {
-        statusBox.innerHTML = `<span style="color: var(--kolor-blad);">Błąd: ${err.message}</span>`;
+        statusBox.innerHTML = `<span class="u-csp-021">Błąd: ${err.message}</span>`;
         btn.disabled = false;
     }
 }
@@ -100,31 +100,31 @@ async function triggerAuto(docType) {
 function watchTaskSSE(taskId, btn, statusBox) {
     const es = new EventSource(`/dokumenty/stream/${taskId}`);
 
-    statusBox.innerHTML = '<span style="color: var(--kolor-glowny);">⏳ Trwa kompilacja...</span>';
+    statusBox.innerHTML = '<span class="u-csp-020">⏳ Trwa kompilacja...</span>';
 
     es.onmessage = (event) => {
         const data = JSON.parse(event.data);
 
         if (data.status === 'SUCCESS') {
             es.close();
-            statusBox.innerHTML = `<span style="color: var(--kolor-sukces);">✅ Gotowe! Pobieranie...</span>`;
+            statusBox.innerHTML = `<span class="u-csp-022">✅ Gotowe! Pobieranie...</span>`;
             btn.disabled = false;
             window.location.href = data.download_url;
             setTimeout(() => { statusBox.innerHTML = ''; window.location.reload(); }, 3000);
         } else if (data.status === 'FAILURE') {
             es.close();
-            statusBox.innerHTML = `<span style="color: var(--kolor-blad);">❌ Błąd generacji.</span>`;
+            statusBox.innerHTML = `<span class="u-csp-021">❌ Błąd generacji.</span>`;
             btn.disabled = false;
             alert('Błąd kompilacji: ' + data.error);
         } else {
             const prog = data.progress || 0;
-            statusBox.innerHTML = `<span style="color: var(--kolor-glowny);">⏳ Kompilacja... ${prog}%</span>`;
+            statusBox.innerHTML = `<span class="u-csp-020">⏳ Kompilacja... ${prog}%</span>`;
         }
     };
 
     es.onerror = () => {
         es.close();
-        statusBox.innerHTML = `<span style="color: var(--kolor-blad);">Błąd połączenia SSE.</span>`;
+        statusBox.innerHTML = `<span class="u-csp-021">Błąd połączenia SSE.</span>`;
         btn.disabled = false;
     };
 }

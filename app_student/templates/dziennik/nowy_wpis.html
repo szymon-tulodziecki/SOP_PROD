@@ -1,19 +1,19 @@
-{% extends "layouts/base_student.html" %}
+﻿{% extends "layouts/base_student.html" %}
 {% block tytul %}{% if edycja %}Edytuj wpis{% else %}Nowy wpis{% endif %}{% endblock %}
 {% block naglowek %}{% if edycja %}Edytuj wpis z {{ wpis.entry_date.strftime('%d.%m.%Y') }}{% else %}Nowy wpis do dziennika{% endif %}{% endblock %}
 
 {% block naglowek_akcje %}
-<a href="{{ url_for('dziennik.index') }}" class="przycisk przycisk--drugorzedny">Anuluj</a>
+<a href="{{ url_for('logbook.index') }}" class="przycisk przycisk--drugorzedny">Anuluj</a>
 {% endblock %}
 
 {% block tresc %}
-<div style="max-width: 640px; margin: 0 auto;">
+<div class="u-csp-235">
 
   <!-- Info o postępie -->
-  <div class="karta" style="margin-bottom: 1.5rem; border-left: 4px solid var(--kolor-glowny);">
-    <div class="karta__tresc" style="display: flex; justify-content: space-between; align-items: center;">
-      <span style="font-weight: 600;">{{ zapis.praktyka.academic_year }} — {{ zapis.praktyka.semester_label }}</span>
-      <span style="font-size: 0.9rem; color: var(--kolor-tekst-drugor);">
+  <div class="karta u-csp-288">
+    <div class="karta__tresc u-csp-017">
+      <span class="u-csp-141">{{ zapis.praktyka.academic_year }} — {{ zapis.praktyka.semester_label }}</span>
+      <span class="u-csp-144">
         {{ zapis.total_hours_logged }} / {{ zapis.praktyka.required_hours }} h
       </span>
     </div>
@@ -24,58 +24,58 @@
       <h2 class="karta__tytul">Dane wpisu</h2>
     </div>
     <div class="karta__tresc">
-      <form method="POST" action="{% if edycja %}{{ url_for('dziennik.edytuj_wpis', wpis_id=wpis.id) }}{% else %}{{ url_for('dziennik.nowy_wpis') }}{% endif %}" novalidate>
+      <form method="POST" action="{% if edycja %}{{ url_for('logbook.edytuj_wpis', wpis_id=wpis.id) }}{% else %}{{ url_for('logbook.nowy_wpis') }}{% endif %}" novalidate>
         {{ form.hidden_tag() }}
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+        <div class="u-csp-303">
 
-          <div class="pole-formularza {% if form.data_wpisu.errors %}pole-formularza--blad{% endif %}">
-            {{ form.data_wpisu.label(class="pole-formularza__etykieta") }}
-            {{ form.data_wpisu(class="pole-formularza__input", type="date") }}
-            {% for e in form.data_wpisu.errors %}
-              <span class="pole-formularza__blad">{{ e }}</span>
+          <div class="form-field {% if form.entry_date.errors %}form-field--error{% endif %}">
+            {{ form.entry_date.label(class="form-field__label") }}
+            {{ form.entry_date(class="form-field__input", type="date") }}
+            {% for e in form.entry_date.errors %}
+              <span class="form-field__error">{{ e }}</span>
             {% endfor %}
           </div>
 
-          <div class="pole-formularza {% if form.liczba_godzin.errors %}pole-formularza--blad{% endif %}">
-            {{ form.liczba_godzin.label(class="pole-formularza__etykieta") }}
-            {{ form.liczba_godzin(class="pole-formularza__input", type="number", min="1", max="8", placeholder="1–8") }}
-            {% for e in form.liczba_godzin.errors %}
-              <span class="pole-formularza__blad">{{ e }}</span>
+          <div class="form-field {% if form.hours_count.errors %}form-field--error{% endif %}">
+            {{ form.hours_count.label(class="form-field__label") }}
+            {{ form.hours_count(class="form-field__input", type="number", min="1", max="8", placeholder="1–8") }}
+            {% for e in form.hours_count.errors %}
+              <span class="form-field__error">{{ e }}</span>
             {% endfor %}
           </div>
 
         </div>
 
-        <div class="pole-formularza {% if form.efekty_ids.errors %}pole-formularza--blad{% endif %}" style="margin-bottom: 1rem;">
-          {{ form.efekty_ids.label(class="pole-formularza__etykieta") }}
-          <div style="border: 1px solid var(--kolor-ramka, #d1d5db); border-radius: 6px; padding: 0.75rem; max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem;">
-            {% for subfield in form.efekty_ids %}
-            <label style="display: flex; align-items: flex-start; gap: 0.5rem; cursor: pointer; font-size: 0.875rem; line-height: 1.4;">
-              {{ subfield(style="margin-top: 2px; flex-shrink: 0;") }}
+        <div class="form-field {% if form.outcome_ids.errors %}form-field--error{% endif %} u-csp-304">
+          {{ form.outcome_ids.label(class="form-field__label") }}
+          <div class="u-csp-305">
+            {% for subfield in form.outcome_ids %}
+            <label class="u-csp-306">
+              {{ subfield(class="u-radio-top") }}
               <span>{{ subfield.label.text }}</span>
             </label>
             {% endfor %}
           </div>
-          {% for e in form.efekty_ids.errors %}
-            <span class="pole-formularza__blad">{{ e }}</span>
+          {% for e in form.outcome_ids.errors %}
+            <span class="form-field__error">{{ e }}</span>
           {% endfor %}
         </div>
 
-        <div class="pole-formularza {% if form.opis.errors %}pole-formularza--blad{% endif %}" style="margin-bottom: 1.5rem;">
-          {{ form.opis.label(class="pole-formularza__etykieta") }}
-          {{ form.opis(class="pole-formularza__input", rows="5", placeholder="Opisz szczegółowo wykonane czynności...") }}
-          <span style="font-size: 0.78rem; color: var(--kolor-tekst-drugor);">
+        <div class="form-field {% if form.description.errors %}form-field--error{% endif %} u-csp-208">
+          {{ form.description.label(class="form-field__label") }}
+          {{ form.description(class="form-field__input", rows="5", placeholder="Opisz szczegółowo wykonane czynności...") }}
+          <span class="u-csp-220">
             Opis powinien być szczegółowy — będzie widoczny w Dzienniku Praktyki (Załącznik 6).
           </span>
-          {% for e in form.opis.errors %}
-            <span class="pole-formularza__blad">{{ e }}</span>
+          {% for e in form.description.errors %}
+            <span class="form-field__error">{{ e }}</span>
           {% endfor %}
         </div>
 
-        <div style="display: flex; gap: 0.5rem; justify-content: center;">
+        <div class="u-csp-307">
           <button type="submit" class="przycisk przycisk--glowny">{% if edycja %}Zapisz zmiany{% else %}Dodaj wpis{% endif %}</button>
-          <a href="{{ url_for('dziennik.index') }}" class="przycisk przycisk--drugorzedny">Anuluj</a>
+          <a href="{{ url_for('logbook.index') }}" class="przycisk przycisk--drugorzedny">Anuluj</a>
         </div>
 
       </form>

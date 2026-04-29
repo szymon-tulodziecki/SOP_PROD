@@ -1,29 +1,18 @@
-import os
+﻿import os
 from datetime import timedelta
-
-
-def _require(name: str) -> str:
-    v = os.environ.get(name)
-    if not v:
-        raise RuntimeError(
-            f"Zmienna środowiskowa {name!r} nie jest ustawiona. "
-            "Uzupełnij plik .env lub zmienne środowiskowe kontenera."
-        )
-    return v
+from core.secrets import get_secret, get_database_url
 
 
 class Config:
-    # Osobne nazwy ciasteczek dla admina i studenta
     SESSION_COOKIE_NAME = 'student_session'
 
-    SECRET_KEY               = _require('SECRET_KEY')
-    SQLALCHEMY_DATABASE_URI  = _require('DATABASE_URL')
+    SECRET_KEY               = get_secret('secret_key')
+    SQLALCHEMY_DATABASE_URI  = get_database_url()
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-    # Microsoft Entra ID (Azure AD) — OAuth 2.0
-    AZURE_CLIENT_ID     = _require('AZURE_CLIENT_ID')
-    AZURE_CLIENT_SECRET = _require('AZURE_CLIENT_SECRET')
-    AZURE_TENANT_ID     = _require('AZURE_TENANT_ID')
+    AZURE_CLIENT_ID     = get_secret('azure_client_id')
+    AZURE_CLIENT_SECRET = get_secret('azure_client_secret')
+    AZURE_TENANT_ID     = get_secret('azure_tenant_id')
 
     # Session
     PERMANENT_SESSION_LIFETIME = timedelta(hours=8)
@@ -52,7 +41,7 @@ class ProductionConfig(Config):
     SESSION_COOKIE_SAMESITE = 'Lax'
 
 
-config_dict = {
+CONFIGURATION_MAP = {
     'development': DevelopmentConfig,
     'production': ProductionConfig,
     'default': DevelopmentConfig

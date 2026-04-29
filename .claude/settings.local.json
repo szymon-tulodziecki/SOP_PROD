@@ -29,7 +29,10 @@
       "Bash(git -C /c/Users/Szymon/Desktop/Repozytoria/SOP log --all --oneline -- \"app_admin/.env\")",
       "Bash(curl -s -u admin:adminadmin \"http://localhost:9000/api/issues/search?componentKeys=sop&resolved=false&ps=1\")",
       "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('Total issues:', d.get\\('total', 'N/A'\\)\\)\")",
-      "Bash(curl *)"
+      "Bash(curl *)",
+      "Bash(git check-ignore *)",
+      "Bash(chmod +x scripts/create_swarm_secrets.sh scripts/rotate_secret.sh)",
+      "Bash(sort -t: -k2 -rn)"
     ]
   }
 }

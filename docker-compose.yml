@@ -1,3 +1,19 @@
+secrets:
+  secret_key:
+    file: ./secrets/secret_key.txt
+  postgres_password:
+    file: ./secrets/postgres_password.txt
+  file_encryption_key:
+    file: ./secrets/file_encryption_key.txt
+  azure_client_id:
+    file: ./secrets/azure_client_id.txt
+  azure_client_secret:
+    file: ./secrets/azure_client_secret.txt
+  azure_tenant_id:
+    file: ./secrets/azure_tenant_id.txt
+  fileserver_api_key:
+    file: ./secrets/fileserver_api_key.txt
+
 services:
   db:
     image: postgres:16-alpine
@@ -5,8 +21,10 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-ans_admin}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
       POSTGRES_DB: ${POSTGRES_DB:-ans_praktyki}
+    secrets:
+      - postgres_password
     networks:
       - internal
     volumes:
@@ -40,17 +58,21 @@ services:
     restart: unless-stopped
     environment:
       - FLASK_ENV=${FLASK_ENV:-production}
-      - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER:-ans_admin}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:-ans_praktyki}
-      - SECRET_KEY=${SECRET_KEY:?Set SECRET_KEY in .env}
-      - FILE_ENCRYPTION_KEY=${FILE_ENCRYPTION_KEY:?Set FILE_ENCRYPTION_KEY in .env}
+      - POSTGRES_USER=${POSTGRES_USER:-ans_admin}
+      - POSTGRES_HOST=db
+      - POSTGRES_DB=${POSTGRES_DB:-ans_praktyki}
       - FILESERVER_URL=${FILESERVER_URL:-http://fileserver:5003}
-      - FILESERVER_API_KEY=${FILESERVER_API_KEY:?Set FILESERVER_API_KEY in .env}
       - TEX_SERVICE_URL=http://tex-service:5002
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
-      - AZURE_CLIENT_ID=${AZURE_CLIENT_ID:?Set AZURE_CLIENT_ID in .env}
-      - AZURE_CLIENT_SECRET=${AZURE_CLIENT_SECRET:?Set AZURE_CLIENT_SECRET in .env}
-      - AZURE_TENANT_ID=${AZURE_TENANT_ID:?Set AZURE_TENANT_ID in .env}
+    secrets:
+      - secret_key
+      - postgres_password
+      - file_encryption_key
+      - azure_client_id
+      - azure_client_secret
+      - azure_tenant_id
+      - fileserver_api_key
     ports:
       - "5000:5000"
     networks:
@@ -81,6 +103,8 @@ services:
       resources:
         limits:
           cpus: '0.5'
+          memory: 512M
+        reservations:
           memory: 256M
 
   student:
@@ -91,17 +115,21 @@ services:
     restart: unless-stopped
     environment:
       - FLASK_ENV=${FLASK_ENV:-production}
-      - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER:-ans_admin}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:-ans_praktyki}
-      - SECRET_KEY=${SECRET_KEY:?Set SECRET_KEY in .env}
-      - FILE_ENCRYPTION_KEY=${FILE_ENCRYPTION_KEY:?Set FILE_ENCRYPTION_KEY in .env}
+      - POSTGRES_USER=${POSTGRES_USER:-ans_admin}
+      - POSTGRES_HOST=db
+      - POSTGRES_DB=${POSTGRES_DB:-ans_praktyki}
       - FILESERVER_URL=${FILESERVER_URL:-http://fileserver:5003}
-      - FILESERVER_API_KEY=${FILESERVER_API_KEY:?Set FILESERVER_API_KEY in .env}
       - TEX_SERVICE_URL=http://tex-service:5002
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
-      - AZURE_CLIENT_ID=${AZURE_CLIENT_ID:?Set AZURE_CLIENT_ID in .env}
-      - AZURE_CLIENT_SECRET=${AZURE_CLIENT_SECRET:?Set AZURE_CLIENT_SECRET in .env}
-      - AZURE_TENANT_ID=${AZURE_TENANT_ID:?Set AZURE_TENANT_ID in .env}
+    secrets:
+      - secret_key
+      - postgres_password
+      - file_encryption_key
+      - azure_client_id
+      - azure_client_secret
+      - azure_tenant_id
+      - fileserver_api_key
     ports:
       - "5001:5001"
     networks:
@@ -131,6 +159,8 @@ services:
       resources:
         limits:
           cpus: '0.5'
+          memory: 512M
+        reservations:
           memory: 256M
 
   celery-worker:
@@ -141,14 +171,18 @@ services:
     restart: unless-stopped
     environment:
       - FLASK_ENV=${FLASK_ENV:-production}
-      - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER:-ans_admin}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:-ans_praktyki}
-      - SECRET_KEY=${SECRET_KEY:?Set SECRET_KEY in .env}
-      - FILE_ENCRYPTION_KEY=${FILE_ENCRYPTION_KEY:?Set FILE_ENCRYPTION_KEY in .env}
+      - POSTGRES_USER=${POSTGRES_USER:-ans_admin}
+      - POSTGRES_HOST=db
+      - POSTGRES_DB=${POSTGRES_DB:-ans_praktyki}
       - FILESERVER_URL=${FILESERVER_URL:-http://fileserver:5003}
-      - FILESERVER_API_KEY=${FILESERVER_API_KEY:?Set FILESERVER_API_KEY in .env}
       - TEX_SERVICE_URL=http://tex-service:5002
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    secrets:
+      - secret_key
+      - postgres_password
+      - file_encryption_key
+      - fileserver_api_key
     command: celery -A celery_app worker --loglevel=info --concurrency=2
     networks:
       - internal
@@ -183,15 +217,15 @@ services:
     restart: unless-stopped
     environment:
       - FLASK_ENV=${FLASK_ENV:-production}
-      - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER:-ans_admin}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:-ans_praktyki}
-      - SECRET_KEY=${SECRET_KEY:?Set SECRET_KEY in .env}
-      - FILE_ENCRYPTION_KEY=${FILE_ENCRYPTION_KEY:?Set FILE_ENCRYPTION_KEY in .env}
-      - FILESERVER_URL=${FILESERVER_URL:-http://fileserver:5003}
-      - FILESERVER_API_KEY=${FILESERVER_API_KEY:?Set FILESERVER_API_KEY in .env}
+      - POSTGRES_USER=${POSTGRES_USER:-ans_admin}
+      - POSTGRES_HOST=db
+      - POSTGRES_DB=${POSTGRES_DB:-ans_praktyki}
       - TEX_SERVICE_URL=http://tex-service:5002
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
       - PDF_OUTPUT_DIR=/app/pdf_output
+    secrets:
+      - postgres_password
     command: celery -A celery_app beat --loglevel=info --schedule=/tmp/celerybeat-schedule
     networks:
       - internal
@@ -222,12 +256,19 @@ services:
       dockerfile: Dockerfile
     container_name: sop_fileserver
     restart: unless-stopped
-    environment:
-      - FILESERVER_API_KEY=${FILESERVER_API_KEY:?Set FILESERVER_API_KEY in .env}
+    secrets:
+      - fileserver_api_key
     networks:
       - internal
     volumes:
       - fileserver_data:/data/files
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5003/health')"]
       interval: 10s

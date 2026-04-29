@@ -10,13 +10,13 @@
 {% block tresc %}
 {% set is_bc = zapis.is_path_b %}
 
-<div style="max-width: 1000px; margin: 0 auto;">
+<div class="u-csp-049">
 
-  <div class="karta" style="margin-bottom: 2rem; border-left: 4px solid var(--kolor-glowny);">
-    <div class="karta__tresc" style="display: flex; justify-content: space-between; align-items: center;">
+  <div class="karta u-mb-2 u-csp-050">
+    <div class="karta__tresc u-flex--between">
       <div>
-        <h2 style="font-size: 1.1rem; margin-bottom: 0.25rem;">{{ zapis.student.last_name }} {{ zapis.student.first_name }}</h2>
-        <p style="color: var(--kolor-tekst-drugor); font-size: 0.9rem;">
+        <h2 class="u-csp-040">{{ zapis.student.last_name }} {{ zapis.student.first_name }}</h2>
+        <p class="u-tekst-drugor u-csp-041">
           Firma: {{ zapis.firma_nazwa or '—' }}
           &nbsp;·&nbsp;
           Ścieżka:
@@ -24,15 +24,15 @@
           {% else %}B — Uznanie efektów{% endif %}
         </p>
       </div>
-      <span class="status status--{{ zapis.status.value|lower|replace('_', '-') }}">{{ tlumacz_status(zapis.status.value) }}</span>
+      <span class="status status--{{ zapis.status.value|lower|replace('_', '-') }}">{{ translate_status(zapis.status.value) }}</span>
     </div>
   </div>
 
   {% if is_bc %}
-  <div class="karta" style="margin-bottom: 1.5rem; border-left: 4px solid #f59e0b; background: #fffbeb;">
+  <div class="karta u-mb-15 u-csp-051">
     <div class="karta__tresc">
       <strong>Ścieżka B — trzystopniowa skala oceny efektów.</strong><br>
-      <span style="font-size: 0.85rem; color: var(--kolor-tekst-drugor);">
+      <span class="u-meta-sm">
         Dla każdego efektu możesz wybrać: <em>Uzyskał/a</em>, <em>Uzyskał/a częściowo</em> (wymaga uwag) lub <em>Nie uzyskał/a</em>.
       </span>
     </div>
@@ -42,18 +42,18 @@
   <form method="POST">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-    <section class="karta" style="margin-bottom: 2rem;">
+    <section class="karta u-mb-2">
       <header class="karta__naglowek">
         <h3 class="karta__tytul">Ocena 13 efektów uczenia się</h3>
       </header>
-      <div class="karta__tresc" style="padding: 0;">
+      <div class="karta__tresc u-p-0">
         <div class="tabela-wrapper">
           <table class="tabela">
             <thead>
               <tr>
-                <th style="width: 60px;">Kod</th>
+                <th class="u-csp-052">Kod</th>
                 <th>Opis efektu</th>
-                <th style="width: {% if is_bc %}320px{% else %}240px{% endif %};">Wynik</th>
+                <th class="{% if is_bc %}u-th-result-wide{% else %}u-th-result-standard{% endif %}">Wynik</th>
               </tr>
             </thead>
             <tbody>
@@ -61,11 +61,11 @@
               {% set ocena = istniejace.get(efekt.id|string) %}
               <tr>
                 <td><strong>{{ efekt.description.split(':')[0] if ':' in efekt.description else efekt.id }}</strong></td>
-                <td style="font-size: 0.85rem; line-height: 1.4;">
+                <td class="u-fs-sm u-csp-053">
                   {{ efekt.description.split(':', 1)[1].strip() if ':' in efekt.description else efekt.description }}
                 </td>
                 <td>
-                  <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                  <div class="u-flex--gap-05 u-csp-054">
                     <label class="radio-ocena">
                       <input type="radio" name="wynik_{{ efekt.id }}" value="ACHIEVED"
                              {% if ocena and ocena.result.name == 'ACHIEVED' %}checked{% endif %} required>
@@ -88,10 +88,10 @@
                   </div>
 
                   {% if is_bc %}
-                  <input type="text" name="uwagi_{{ efekt.id }}"
+                  <input class="u-csp-055" type="text" name="uwagi_{{ efekt.id }}"
                          value="{{ ocena.notes if ocena else '' }}"
                          placeholder="Uwagi (wymagane przy częściowym)"
-                         style="width: 100%; margin-top: 0.5rem; padding: 0.4rem; font-size: 0.8rem; border: 1px solid var(--kolor-ramka); border-radius: 4px;">
+                        >
                   {% endif %}
                 </td>
               </tr>
@@ -102,26 +102,11 @@
       </div>
     </section>
 
-    <div style="display: flex; justify-content: center; padding-bottom: 3rem;">
-      <button type="submit" class="przycisk przycisk--glowny" style="padding: 1rem 3rem; font-size: 1.1rem;">
+    <div class="u-ta-center u-csp-056">
+      <button type="submit" class="przycisk przycisk--glowny u-csp-057">
         Zapisz arkusz oceny
       </button>
     </div>
   </form>
 </div>
-
-<style>
-  .radio-ocena {
-    display: inline-flex; align-items: center; gap: 0.4rem;
-    font-size: 0.85rem; cursor: pointer;
-    background: var(--kolor-tlo); padding: 0.3rem 0.6rem;
-    border-radius: 4px; border: 1px solid var(--kolor-ramka);
-    transition: all 0.2s;
-  }
-  .radio-ocena:hover { border-color: var(--kolor-glowny-jasny); }
-  .radio-ocena input:checked + span { font-weight: 600; color: var(--kolor-glowny); }
-  .radio-ocena--czesc input:checked + span { color: #d97706; }
-  .radio-ocena--nie input:checked + span { color: var(--kolor-blad); }
-  .radio-ocena input { accent-color: var(--kolor-glowny); }
-</style>
 {% endblock %}

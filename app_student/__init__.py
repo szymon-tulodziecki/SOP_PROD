@@ -2,10 +2,10 @@
 from jinja2 import select_autoescape
 from core.extensions import db, login_manager, csrf, limiter
 from core.error_handlers import register_error_handlers
-from app_student.config import config_dict
+from app_student.config import CONFIGURATION_MAP
 
 
-def _check_needs_attention(enrollments) -> bool:
+def _check_enrollment_requires_action(enrollments) -> bool:
     from core.modele import EnrollmentStatus
     for z in enrollments:
         s = z.status
@@ -20,10 +20,10 @@ def _check_needs_attention(enrollments) -> bool:
 
 def create_app():
     from pathlib import Path as _Path
-    from flask import Blueprint as _Blueprint
+    from flask import Blueprint as _Blueprint, Response
     app = Flask(__name__)
 
-    # ── Core static assets (CSS design system + templates) ──────
+    # Core static assets (CSS design system + templates)
     core_bp = _Blueprint(
         'core_static', __name__,
         static_folder=str(_Path(__file__).parent.parent / 'core' / 'static'),
@@ -36,50 +36,92 @@ def create_app():
         'autoescape': select_autoescape(['html', 'xml'])
     })
     env = __import__('os').environ.get('FLASK_ENV', 'development')
-    app.config.from_object(config_dict.get(env, config_dict['default']))
+    app.config.from_object(CONFIGURATION_MAP.get(env, CONFIGURATION_MAP['default']))
 
     db.init_app(app)
     login_manager.init_app(app)
     csrf.init_app(app)
     limiter.init_app(app)
     register_error_handlers(app)
+    from core.security import configure_security_headers
+    configure_security_headers(app)
+
+    @app.route('/assets/student.css', endpoint='student_css_bundle')
+    def student_css_bundle():
+        css_root = _Path(__file__).parent.parent / 'core' / 'static' / 'css' / 'modul'
+        local_css = _Path(__file__).parent / 'static' / 'css' / 'student.css'
+        modules = [
+            'zmienne.css',
+            'komunikaty.css',
+            'formularze.css',
+            'logowanie.css',
+            'uklad.css',
+            'karty.css',
+            'tabele.css',
+            'przyciski.css',
+            'statusy.css',
+            'komponenty.css',
+            'dashboard.css',
+            'utils.css',
+        ]
+        parts = []
+        for module_name in modules:
+            parts.append((css_root / module_name).read_text(encoding='utf-8'))
+        parts.append(local_css.read_text(encoding='utf-8'))
+
+        response = Response('\n'.join(parts), mimetype='text/css')
+        response.cache_control.public = True
+        response.cache_control.max_age = 31536000
+        response.cache_control.immutable = True
+        return response
+
+    @app.after_request
+    def cache_static_assets(response):
+        from flask import request
+
+        if request.path.startswith(('/static/', '/core/static/', '/assets/')):
+            response.cache_control.public = True
+            response.cache_control.max_age = 31536000
+            response.cache_control.immutable = True
+            response.cache_control.no_cache = None
+            response.cache_control.no_store = None
+        return response
 
     login_manager.login_view = 'auth.logowanie'
     login_manager.login_message = 'Zaloguj się, aby uzyskać dostęp.'
 
     with app.app_context():
-        from core.autoryzacja  import stworz_blueprint_auth
-        from core.pliki import stworz_blueprint_pliki
+        from core.autoryzacja  import create_auth_blueprint
+        from core.pliki import create_files_blueprint
         from core.modele import UserRole
-        from app_student.routes.pulpit       import dashboard_bp
-        from app_student.routes.praktyki     import praktyki_bp
-        from app_student.routes.dziennik     import dziennik_bp
-        from app_student.routes.sprawozdania import sprawozdania_bp
-        from app_student.routes.dokumenty    import documents_bp
+        from app_student.routes.dashboard   import dashboard_bp
+        from app_student.routes.internships import internships_bp
+        from app_student.routes.logbook     import logbook_bp
+        from app_student.routes.reports     import reports_bp
+        from app_student.routes.documents   import documents_bp
 
-        auth_bp    = stworz_blueprint_auth(
-            dozwolone_role=[UserRole.STUDENT],
-            template_logowania='auth/logowanie.html',
-            template_zmiany_hasla='auth/zmien_haslo.html',
+        auth_bp    = create_auth_blueprint(
+            allowed_roles=[UserRole.STUDENT],
+            login_template='auth/logowanie.html',
         )
-        uploads_bp = stworz_blueprint_pliki()
+        uploads_bp = create_files_blueprint()
 
         app.register_blueprint(auth_bp)
         app.register_blueprint(dashboard_bp,  url_prefix='/panel')
-        app.register_blueprint(praktyki_bp,   url_prefix='/praktyki')
-        app.register_blueprint(dziennik_bp,   url_prefix='/dziennik')
-        app.register_blueprint(sprawozdania_bp, url_prefix='/sprawozdanie')
+        app.register_blueprint(internships_bp, url_prefix='/praktyki')
+        app.register_blueprint(logbook_bp,     url_prefix='/dziennik')
+        app.register_blueprint(reports_bp,     url_prefix='/sprawozdanie')
         app.register_blueprint(documents_bp,  url_prefix='/dokumenty')
         app.register_blueprint(uploads_bp,    url_prefix='/uploads')
 
     # Kontekst globalny: informacje o aktywnym zapisie studenta
     @app.context_processor
-    def inject_aktywny_zapis():
+    def inject_active_enrollment_context():
         from flask_login import current_user
         from core.modele import EnrollmentStatus
         from core.repozytoria import EnrollmentRepository
-        info = {'ma_aktywny': False, 'sciezka': None, 'status': None}
-        wymaga_uwagi = False
+        info = {'is_active': False, 'path_type': None, 'status': None}
+        requires_attention = False
         try:
             if current_user.is_authenticated:
                 _repo = EnrollmentRepository()
@@ -90,8 +132,8 @@ def create_app():
                 ])
                 if z:
                     info = {
-                        'ma_aktywny': True,
-                        'sciezka': z.track_type.value if z.track_type else 'STANDARD',
+                        'is_active': True,
+                        'path_type': z.track_type.value if z.track_type else 'STANDARD',
                         'status': z.status.value,
                     }
                 zapisy_do_sprawdzenia = _repo.aktywne_dla_studenta(current_user.id, [
@@ -100,19 +142,22 @@ def create_app():
                     EnrollmentStatus.REVISION_REQUIRED,
                     EnrollmentStatus.REJECTED,
                 ])
-                wymaga_uwagi = _check_needs_attention(zapisy_do_sprawdzenia)
+                requires_attention = _check_enrollment_requires_action(zapisy_do_sprawdzenia)
         except Exception:
             pass
-        return {'aktywny_zapis_info': info, 'nav_wymaga_uwagi': wymaga_uwagi}
+        return {
+            'active_enrollment_info': info,
+            'nav_requires_attention': requires_attention,
+        }
 
     # Dodaj funkcje pomocnicze do szablonów
     @app.template_global()
-    def tlumacz_status(status_value):
-        from core.tlumaczenia import tlumacz_status as _tlumacz
-        return _tlumacz(status_value)
+    def translate_status(status_value):
+        from core.tlumaczenia import translate_status as core_translate_status
+        return core_translate_status(status_value)
 
     @app.before_request
-    def sprawdz_studenta():
+    def validate_student_role():
         from flask import request, redirect, url_for, abort
         from flask_login import current_user
         from core.modele import UserRole
@@ -123,11 +168,10 @@ def create_app():
         if getattr(current_user.role, 'value', current_user.role) != 'STUDENT':
             abort(403)
 
-
     return app
 
 
 @login_manager.user_loader
-def wczytaj_uzytkownika(user_id):
+def load_user(user_id):
     from core.modele import User
     return db.session.get(User, user_id)

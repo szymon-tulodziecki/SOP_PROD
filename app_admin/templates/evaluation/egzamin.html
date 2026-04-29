@@ -1,4 +1,4 @@
-﻿{% extends "layouts/base_panel.html" %}
+{% extends "layouts/base_panel.html" %}
 
 {% block tytul %}Egzamin praktyki{% endblock %}
 {% block naglowek %}Protokół egzaminacyjny{% endblock %}
@@ -8,33 +8,31 @@
 {% endblock %}
 
 {% block tresc %}
-<div style="max-width: 800px; margin: 0 auto;">
+<div class="u-kontener-wazki">
 
   <!-- Info o studencie -->
-  <div class="karta" style="margin-bottom: 2rem; border-left: 4px solid var(--kolor-akcent);">
-    <div class="karta__tresc" style="display: flex; justify-content: space-between; align-items: center;">
+  <div class="karta u-mb-2 u-csp-039">
+    <div class="karta__tresc u-flex--between">
       <div>
-        <h2 style="font-size: 1.1rem; margin-bottom: 0.25rem;">{{ praktyka.student.first_name }} {{ praktyka.student.last_name }}</h2>
-        <p style="color: var(--kolor-tekst-drugor); font-size: 0.9rem;">
+        <h2 class="u-csp-040">{{ praktyka.student.first_name }} {{ praktyka.student.last_name }}</h2>
+        <p class="u-tekst-drugor u-csp-041">
           Zakład: {{ praktyka.zaklad.nazwa }} | Godziny: {{ praktyka.lacznie_godzin }} / 160 h
         </p>
       </div>
-      <div style="text-align: right;">
-        <span class="status status--{{ praktyka.status.value|lower|replace('_', '-') }}">{{ tlumacz_status(praktyka.status.value) }}</span>
-      </div>
+      <span class="status status--{{ praktyka.status.value|lower|replace('_', '-') }}">{{ translate_status(praktyka.status.value) }}</span>
     </div>
   </div>
 
   <!-- Wzór -->
-  <div class="karta" style="margin-bottom: 2rem;">
+  <div class="karta u-mb-2">
     <div class="karta__naglowek">
       <h3 class="karta__tytul">Wzór obliczania oceny końcowej (Zał. 8)</h3>
     </div>
-    <div class="karta__tresc" style="text-align: center; padding: 2rem;">
-      <div style="font-size: 1.3rem; font-weight: 700; color: var(--kolor-glowny); font-family: var(--font-mono);">
+    <div class="karta__tresc u-ta-center u-csp-042">
+      <div class="u-csp-043">
         K = 0,4 · E + 0,1 · S + 0,2 · U + 0,3 · Z
       </div>
-      <div style="margin-top: 1rem; font-size: 0.85rem; color: var(--kolor-tekst-drugor);">
+      <div class="u-meta u-mt-1">
         E — egzamin &nbsp;|&nbsp; S — sprawozdanie &nbsp;|&nbsp; U — opiekun uczelniany (UOPZ) &nbsp;|&nbsp; Z — opiekun zakładowy (ZOPZ)
       </div>
     </div>
@@ -42,16 +40,16 @@
 
   <form method="POST">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <div class="karta" style="margin-bottom: 2rem;">
+    <div class="karta u-mb-2">
       <div class="karta__naglowek">
         <h3 class="karta__tytul">Oceny składowe</h3>
       </div>
       <div class="karta__tresc">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+        <div class="u-grid-2-lg">
 
           <div class="pole-formularza">
             <label class="pole-formularza__etykieta">Ocena z egzaminu (E)</label>
-            <select name="ocena_egzamin" class="filtr-select" style="width: 100%;" required>
+            <select name="ocena_egzamin" class="filtr-select u-w-full" required>
               <option value="">Wybierz...</option>
               {% for stopien in [2.0, 3.0, 3.5, 4.0, 4.5, 5.0] %}
               <option value="{{ stopien }}">{{ stopien }}</option>
@@ -61,7 +59,7 @@
 
           <div class="pole-formularza">
             <label class="pole-formularza__etykieta">Ocena sprawozdania (S)</label>
-            <select name="ocena_sprawozdanie" class="filtr-select" style="width: 100%;" required>
+            <select name="ocena_sprawozdanie" class="filtr-select u-w-full" required>
               <option value="">Wybierz...</option>
               {% for stopien in [2.0, 3.0, 3.5, 4.0, 4.5, 5.0] %}
               <option value="{{ stopien }}" {% if praktyka.ocena_sprawozdania == stopien %}selected{% endif %}>{{ stopien }}</option>
@@ -71,7 +69,7 @@
 
           <div class="pole-formularza">
             <label class="pole-formularza__etykieta">Ocena Opiekuna Uczelnianego (U)</label>
-            <select name="ocena_uopz" class="filtr-select" style="width: 100%;" required>
+            <select name="ocena_uopz" class="filtr-select u-w-full" required>
               <option value="">Wybierz...</option>
               {% for stopien in [2.0, 3.0, 3.5, 4.0, 4.5, 5.0] %}
               <option value="{{ stopien }}" {% if praktyka.ocena_uopz == stopien %}selected{% endif %}>{{ stopien }}</option>
@@ -81,7 +79,7 @@
 
           <div class="pole-formularza">
             <label class="pole-formularza__etykieta">Ocena Opiekuna Zakładowego (Z)</label>
-            <select name="ocena_zopz" class="filtr-select" style="width: 100%;" required>
+            <select name="ocena_zopz" class="filtr-select u-w-full" required>
               <option value="">Wybierz...</option>
               {% for stopien in [2.0, 3.0, 3.5, 4.0, 4.5, 5.0] %}
               <option value="{{ stopien }}" {% if praktyka.ocena_zopz == stopien %}selected{% endif %}>{{ stopien }}</option>
@@ -94,14 +92,14 @@
     </div>
 
     <!-- Wyliczenie K (JS) -->
-    <div class="karta" style="margin-bottom: 2rem;">
-      <div class="karta__tresc" style="text-align: center; padding: 1.5rem;">
-        <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--kolor-tekst-drugor); margin-bottom: 0.5rem;">Ocena końcowa K</div>
-        <div id="wynik-k" style="font-size: 3rem; font-weight: 800; color: var(--kolor-glowny);">—</div>
+    <div class="karta u-mb-2">
+      <div class="karta__tresc u-ta-center u-csp-044">
+        <div class="u-etykieta u-csp-045">Ocena końcowa K</div>
+        <div class="u-csp-046" id="wynik-k">—</div>
       </div>
     </div>
 
-    <div class="karta" style="margin-bottom: 2rem;">
+    <div class="karta u-mb-2">
       <div class="karta__tresc">
         <div class="pole-formularza">
           <label class="pole-formularza__etykieta">Członkowie komisji egzaminacyjnej (oddzieleni przecinkami)</label>
@@ -112,8 +110,8 @@
       </div>
     </div>
 
-    <div style="display: flex; justify-content: center; padding-bottom: 4rem;">
-      <button type="submit" class="przycisk przycisk--glowny" style="padding: 1rem 3rem; font-size: 1.1rem; box-shadow: 0 4px 14px rgba(26, 58, 92, 0.3);">
+    <div class="u-ta-center u-csp-047">
+      <button type="submit" class="przycisk przycisk--glowny u-csp-048">
         Zatwierdź egzamin i zakończ praktykę
       </button>
     </div>

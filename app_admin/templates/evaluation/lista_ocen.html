@@ -8,12 +8,12 @@
 {% endblock %}
 
 {% block tresc %}
-<div style="max-width: 1200px; margin: 0 auto;">
+<div class="u-csp-076">
 
 <div class="karta">
-  <div class="karta__naglowek" style="flex-wrap:wrap; gap:0.75rem;">
-    <h2 class="karta__tytul">Zakończone praktyki <span style="font-size:0.85rem; font-weight:400; color:var(--kolor-tekst-drugor);">({{ widoczne|length }}{% if filtr %} filtr aktywny{% endif %})</span></h2>
-    <div style="display:flex; gap:0.5rem; margin-left:auto; flex-wrap:wrap;">
+  <div class="karta__naglowek u-csp-077">
+    <h2 class="karta__tytul">Zakończone praktyki <span class="u-meta u-csp-078">({{ widoczne|length }}{% if filtr %} filtr aktywny{% endif %})</span></h2>
+    <div class="u-flex--gap-05 u-csp-079">
       <a href="{{ url_for('evaluation.lista_ocen') }}"
          class="przycisk przycisk--maly {% if not filtr %}przycisk--glowny{% else %}przycisk--drugorzedny{% endif %}">
         Wszystkie ({{ zakonczone|length }})
@@ -34,38 +34,38 @@
         <tr>
           <th>Student</th>
           <th>Zakład pracy</th>
-          <th style="text-align:center;" title="Ocena sprawozdania">Spr.</th>
-          <th style="text-align:center;" title="Ocena UOPZ">UOPZ</th>
-          <th style="text-align:center;" title="Ocena ZOPZ (z karty papierowej)">ZOPZ</th>
-          <th style="text-align:center;" title="Średnia z egzaminu komisyjnego">Egz.</th>
-          <th style="text-align:center;" title="Ocena końcowa: K = 0.4·E + 0.1·S + 0.2·U + 0.3·Z">Ocena K</th>
-          <th style="text-align:center;">Akcje</th>
+          <th class="u-ta-center" title="Ocena sprawozdania">Spr.</th>
+          <th class="u-ta-center" title="Ocena UOPZ">UOPZ</th>
+          <th class="u-ta-center" title="Ocena ZOPZ (z karty papierowej)">ZOPZ</th>
+          <th class="u-ta-center" title="Średnia z egzaminu komisyjnego">Egz.</th>
+          <th class="u-ta-center" title="Ocena końcowa: K = 0.4·E + 0.1·S + 0.2·U + 0.3·Z">Ocena K</th>
+          <th class="u-ta-center">Akcje</th>
         </tr>
       </thead>
       <tbody>
         {% for item in widoczne %}
         {% set p = item.zapis %}
-        <tr {% if item.przekroczony %}style="background:rgba(220,38,38,0.04);"{% endif %}>
+        <tr class="{% if item.przekroczony %}u-row-alert{% endif %}">
           <td>
-            <div style="font-weight:600;">{{ p.student.last_name }} {{ p.student.first_name }}</div>
-            <div style="font-size:0.8rem; color:var(--kolor-tekst-drugor);">Nr alb.: {{ p.student.album_number or '-' }}
-              {% if item.is_path_b %}<span class="status status--in-progress" style="font-size:0.65rem; margin-left:0.4rem;">{% if p.path_type == p.path_type.EMPLOYMENT %}Staż/zatrudnienie{% else %}Dział. gospod.{% endif %}</span>{% else %}<span class="status status--completed" style="font-size:0.65rem; margin-left:0.4rem;">Praktyka</span>{% endif %}
+            <div class="u-fw-600">{{ p.student.last_name }} {{ p.student.first_name }}</div>
+            <div class="u-meta">Nr alb.: {{ p.student.album_number or '-' }}
+              {% if item.is_path_b %}<span class="status status--in-progress u-csp-080">{% if p.path_type == p.path_type.EMPLOYMENT %}Staż/zatrudnienie{% else %}Dział. gospod.{% endif %}</span>{% else %}<span class="status status--completed u-csp-080">Praktyka</span>{% endif %}
             </div>
           </td>
-          <td style="font-size:0.85rem;">{{ (p.firma.name if p.firma else p.firma_nazwa) or '-' }}</td>
-          <td style="text-align:center;">{{ p.ocena_sprawozdania or '—' }}</td>
-          <td style="text-align:center;">{{ p.ocena_uopz or '—' }}</td>
-          <td style="text-align:center;">{{ p.ocena_zopz or '—' }}</td>
-          <td style="text-align:center;">{{ p.exam_grade or '—' }}</td>
-          <td style="text-align:center;">
+          <td class="u-fs-sm">{{ (p.firma.name if p.firma else p.firma_nazwa) or '-' }}</td>
+          <td class="u-ta-center">{{ p.ocena_sprawozdania or '—' }}</td>
+          <td class="u-ta-center">{{ p.ocena_uopz or '—' }}</td>
+          <td class="u-ta-center">{{ p.ocena_zopz or '—' }}</td>
+          <td class="u-ta-center">{{ p.exam_grade or '—' }}</td>
+          <td class="u-ta-center">
             {% if p.final_grade is not none %}
-            <strong style="font-size:1.05rem; color:{% if p.final_grade_is_passing %}var(--kolor-sukces){% else %}var(--kolor-blad){% endif %};">
+            <strong class="u-grade-final-list {% if p.final_grade_is_passing %}u-grade-final--pass{% else %}u-grade-final--fail{% endif %}">
               {{ "%.1f"|format(p.final_grade) }}
             </strong>
             {% else %}—{% endif %}
           </td>
-          <td style="text-align:center;">
-            <a href="{{ url_for('evaluation.ocen_praktyke', id=p.id) }}"
+          <td class="u-ta-center">
+            <a href="{{ url_for('evaluation.evaluate_internship', id=p.id) }}"
                class="przycisk przycisk--maly {% if item.przekroczony %}przycisk--niebezpieczny{% elif not item.oceniony %}przycisk--glowny{% else %}przycisk--drugorzedny{% endif %}">
               {% if item.przekroczony %}PILNE{% elif not item.oceniony %}Wystaw ocenę{% else %}Edytuj{% endif %}
             </a>

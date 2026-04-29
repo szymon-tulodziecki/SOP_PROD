@@ -4,13 +4,13 @@
 {% block naglowek %}Zarządzanie zgłoszeniami praktyk{% endblock %}
 
 {% block tresc %}
-<div style="max-width: 1400px; margin: 0 auto;">
+<div class="u-kontener-szeroki">
 
   <!-- Filtry statusu -->
-  <div class="karta" style="margin-bottom: 2rem;">
+  <div class="karta u-mb-2">
     <div class="karta__tresc">
-      <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
-        <span style="font-weight: 600;">Filtruj:</span>
+      <div class="u-flex--gap-1 u-csp-054">
+        <span class="u-fw-600">Filtruj:</span>
         <a href="{{ url_for('zarzadzanie.lista_zgloszen') }}"
            class="przycisk przycisk--{% if not request.args.get('status') %}glowny{% else %}drugorzedny{% endif %} przycisk--maly">
           Wszystkie
@@ -37,32 +37,32 @@
         <table class="tabela">
           <thead>
             <tr>
-              <th style="width: 25%;">Student</th>
-              <th style="width: 20%;">Praktyka</th>
-              <th style="width: 20%;">Firma</th>
-              <th style="width: 15%;">Status</th>
-              <th style="width: 12%;">Data zgłoszenia</th>
-              <th style="width: 8%; text-align: center;">Akcje</th>
+              <th class="u-csp-127">Student</th>
+              <th class="u-csp-128">Praktyka</th>
+              <th class="u-csp-128">Firma</th>
+              <th class="u-csp-129">Status</th>
+              <th class="u-csp-130">Data zgłoszenia</th>
+              <th class="u-csp-131">Akcje</th>
             </tr>
           </thead>
           <tbody>
             {% for z in zgloszenia.items %}
             <tr>
               <td>
-                <div style="font-weight: 600;">{{ z.student.first_name }} {{ z.student.last_name }}</div>
-                <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor);">{{ z.student.email }}</div>
+                <div class="u-fw-600">{{ z.student.first_name }} {{ z.student.last_name }}</div>
+                <div class="u-meta">{{ z.student.email }}</div>
                 {% if z.student.album_number %}
-                <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor);">Album: {{ z.student.album_number }}</div>
+                <div class="u-meta">Album: {{ z.student.album_number }}</div>
                 {% endif %}
               </td>
               <td>
-                <div style="font-weight: 600;">{{ z.praktyka.academic_year }}</div>
-                <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor);">{{ z.praktyka.semester_label }}</div>
+                <div class="u-fw-600">{{ z.praktyka.academic_year }}</div>
+                <div class="u-meta">{{ z.praktyka.semester_label }}</div>
               </td>
               <td>
                 <div>{{ z.firma_nazwa or 'Nie podano' }}</div>
                 {% if z.firma_miasto %}
-                <div style="font-size: 0.8rem; color: var(--kolor-tekst-drugor);">{{ z.firma_miasto }}</div>
+                <div class="u-meta">{{ z.firma_miasto }}</div>
                 {% endif %}
               </td>
               <td>
@@ -70,25 +70,24 @@
                   {{ z.status_label }}
                 </span>
                 {% if z.uopz %}
-                <div style="font-size: 0.7rem; color: var(--kolor-tekst-drugor); margin-top: 0.25rem;">
+                <div class="u-tekst-drugor u-csp-132">
                   UOPZ: {{ z.uopz.first_name }} {{ z.uopz.last_name }}
                 </div>
                 {% endif %}
               </td>
-              <td style="font-size: 0.85rem;">
+              <td class="u-fs-sm">
                 {{ z.enrolled_at.strftime('%d.%m.%Y') if z.enrolled_at else '-' }}
-                <div style="font-size: 0.7rem; color: var(--kolor-tekst-drugor);">
+                <div class="u-tekst-drugor u-fs-xs">
                   {{ z.enrolled_at.strftime('%H:%M') if z.enrolled_at else '' }}
                 </div>
               </td>
-              <td style="text-align: center;">
-                <div style="display: flex; flex-direction: column; gap: 0.5rem; align-items: center;">
+              <td class="u-ta-center">
+                <div class="u-flex--col-05 u-csp-133">
                   <a href="{{ url_for('zarzadzanie.szczegoly_zgloszenia', id=z.id) }}"
-                     class="przycisk przycisk--drugorzedny przycisk--maly"
-                     style="min-width: 80px;">
+                     class="przycisk przycisk--drugorzedny przycisk--maly u-csp-134"
+                    >
                     Szczegóły
                   </a>
-
                 </div>
               </td>
             </tr>
@@ -105,7 +104,7 @@
 
       <!-- Paginacja -->
       {% if zgloszenia.pages > 1 %}
-      <div style="display: flex; justify-content: center; margin-top: 2rem; gap: 0.5rem;">
+      <div class="u-flex--center u-mt-2 u-csp-135">
         {% if zgloszenia.has_prev %}
         <a href="{{ url_for('zarzadzanie.lista_zgloszen', page=zgloszenia.prev_num, **request.args) }}"
            class="przycisk przycisk--drugorzedny przycisk--maly">← Poprzednia</a>

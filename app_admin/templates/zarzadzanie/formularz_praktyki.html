@@ -7,7 +7,7 @@
 {% endblock %}
 
 {% block tresc %}
-<div style="max-width: 480px; margin: 0 auto;">
+<div class="u-csp-231">
   <form method="POST" action="{{ url_for('zarzadzanie.nowa_praktyka') }}" novalidate>
     {{ form.hidden_tag() }}
 
@@ -15,11 +15,11 @@
       <div class="karta__naglowek">
         <h2 class="karta__tytul">Dane praktyki</h2>
       </div>
-      <div class="karta__tresc" style="display: flex; flex-direction: column; gap: 1.25rem;">
+      <div class="karta__tresc u-csp-232">
 
         <div class="pole-formularza">
           {{ form.academic_year.label(class="pole-formularza__etykieta") }}
-          <input type="text" name="academic_year" class="pole-formularza__input" style="width:100%;" placeholder="np. 2024/2025" value="{{ form.academic_year.data or '' }}">
+          <input type="text" name="academic_year" class="pole-formularza__input u-csp-233" placeholder="np. 2024/2025" value="{{ form.academic_year.data or '' }}">
           {% for e in form.academic_year.errors %}
             <span class="pole-formularza__blad">{{ e }}</span>
           {% endfor %}
@@ -27,7 +27,7 @@
 
         <div class="pole-formularza">
           {{ form.semester.label(class="pole-formularza__etykieta") }}
-          {{ form.semester(class="filtr-select", style="width:100%") }}
+          {{ form.semester(class="filtr-select u-select-full") }}
           {% for e in form.semester.errors %}
             <span class="pole-formularza__blad">{{ e }}</span>
           {% endfor %}
@@ -44,7 +44,7 @@
       </div>
     </div>
 
-    <div style="display: flex; gap: 0.5rem; margin-top: 1.25rem; justify-content: flex-end;">
+    <div class="u-csp-234">
       <a href="{{ url_for('zarzadzanie.lista_praktyk') }}" class="przycisk przycisk--drugorzedny">Anuluj</a>
       <button type="submit" class="przycisk przycisk--glowny">Utwórz praktykę</button>
     </div>

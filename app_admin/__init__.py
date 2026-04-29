@@ -40,37 +40,37 @@ def create_app():
     except Exception:
         pass
 
-    from app_admin.config import config_dict
+    from app_admin.config import CONFIGURATION_MAP
     env = os.environ.get('FLASK_ENV', 'development')
-    app.config.from_object(config_dict.get(env, config_dict['default']))
+    app.config.from_object(CONFIGURATION_MAP.get(env, CONFIGURATION_MAP['default']))
 
     db.init_app(app)
     login_manager.init_app(app)
     csrf.init_app(app)
     limiter.init_app(app)
     register_error_handlers(app)
+    from core.security import configure_security_headers
+    configure_security_headers(app)
 
     login_manager.login_view = 'auth.logowanie'
-    # Polish translation for Flask-Login unauthorized message
     login_manager.login_message = 'Zaloguj się, aby uzyskać dostęp do tej strony.'
     login_manager.login_message_category = 'warning'
     with app.app_context():
-        from core.autoryzacja  import stworz_blueprint_auth, wymaga_roli
-        from core.pliki import stworz_blueprint_pliki
+        from core.autoryzacja  import create_auth_blueprint
+        from core.pliki import create_files_blueprint
         from core.modele import UserRole
-        from app_admin.routes.pulpit      import dashboard_bp
+        from app_admin.routes.dashboard      import dashboard_bp
         from app_admin.routes.zarzadzanie import zarzadzanie_bp
-        from app_admin.routes.ocenianie   import evaluation_bp
-        from app_admin.routes.dziennik    import journal_bp
-        from app_admin.routes.dokumenty   import documents_bp
-        from app_admin.routes.logi        import logi_bp
+        from app_admin.routes.evaluation   import evaluation_bp
+        from app_admin.routes.journal    import journal_bp
+        from app_admin.routes.documents   import documents_bp
+        from app_admin.routes.logs        import logi_bp
 
-        auth_bp    = stworz_blueprint_auth(
-            dozwolone_role=[UserRole.ADMIN, UserRole.UOPZ, UserRole.KOMISJA, UserRole.DYREKTOR],
-            template_logowania='auth/logowanie.html',
-            template_zmiany_hasla='auth/zmien_haslo.html',
+        auth_bp    = create_auth_blueprint(
+            allowed_roles=[UserRole.ADMIN, UserRole.UOPZ, UserRole.KOMISJA, UserRole.DYREKTOR],
+            login_template='auth/logowanie.html',
         )
-        uploads_bp = stworz_blueprint_pliki()
+        uploads_bp = create_files_blueprint()
 
         app.register_blueprint(auth_bp)
         app.register_blueprint(dashboard_bp,  url_prefix='/panel')
@@ -102,13 +102,12 @@ def create_app():
 
     @app.context_processor
     def inject_tlumacz():
-        from core.tlumaczenia import tlumacz_status
-        return {'tlumacz_status': tlumacz_status}
-
+        from core.tlumaczenia import translate_status
+        return {'translate_status': translate_status}
 
     return app
 
 @login_manager.user_loader
-def wczytaj_uzytkownika(user_id):
+def load_user(user_id):
     from core.modele import User
     return db.session.get(User, user_id)

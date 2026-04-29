@@ -1,4 +1,4 @@
-﻿{% extends "layouts/base_panel.html" %}
+{% extends "layouts/base_panel.html" %}
 {% block tytul %}Dokumenty studentów{% endblock %}
 {% block naglowek %}Dokumenty studentów{% endblock %}
 
@@ -31,7 +31,7 @@
       {% endif %}
     </form>
 
-    <span style="font-size: 0.85rem; color: var(--kolor-tekst-drugor);">
+    <span class="u-csp-038">
       {{ studenci.total }} studentów
     </span>
   </div>
@@ -53,27 +53,27 @@
         {% set s = wpis.student %}
         <tr>
           <td>
-            <div style="display: flex; flex-direction: column; gap: 0.15rem;">
-              <span style="font-weight: 500;">{{ s.first_name }} {{ s.last_name }}</span>
-              <span style="font-size: 0.8rem; color: var(--kolor-tekst-trzeciorzed);">{{ s.email }}</span>
+            <div class="u-csp-223">
+              <span class="u-csp-027">{{ s.first_name }} {{ s.last_name }}</span>
+              <span class="u-csp-224">{{ s.email }}</span>
             </div>
           </td>
           <td>{{ s.album_number or '—' }}</td>
           <td>
-            <div style="font-size: 0.875rem;">{{ s.field_of_study or '—' }}</div>
-            {% if s.study_mode %}<div style="font-size: 0.78rem; color: var(--kolor-tekst-drugor);">{{ {'full-time': 'Stacjonarne', 'part-time': 'Niestacjonarne'}.get(s.study_mode, s.study_mode) }}</div>{% endif %}
+            <div class="u-csp-225">{{ s.field_of_study or '—' }}</div>
+            {% if s.study_mode %}<div class="u-csp-220">{{ {'full-time': 'Stacjonarne', 'part-time': 'Niestacjonarne'}.get(s.study_mode, s.study_mode) }}</div>{% endif %}
           </td>
-          <td style="font-size: 0.875rem;">
-            {% if wpis.uopz %}{{ wpis.uopz.first_name }} {{ wpis.uopz.last_name }}{% else %}<span style="color: var(--kolor-tekst-trzeciorzed);">—</span>{% endif %}
+          <td class="u-csp-225">
+            {% if wpis.uopz %}{{ wpis.uopz.first_name }} {{ wpis.uopz.last_name }}{% else %}<span class="u-csp-226">—</span>{% endif %}
           </td>
           <td>
             {% if wpis.aktywne %}
               <span class="status status--aktywna">{{ wpis.aktywne }}</span>
             {% else %}
-              <span style="color: var(--kolor-tekst-trzeciorzed); font-size: 0.85rem;">—</span>
+              <span class="u-csp-227">—</span>
             {% endif %}
           </td>
-          <td style="white-space: nowrap;">
+          <td class="u-csp-193">
             <a href="{{ url_for('zarzadzanie.dokumenty_studenta', student_id=s.id) }}"
                class="przycisk przycisk--drugorzedny przycisk--maly">
               Dokumenty
@@ -124,8 +124,4 @@
   {% endif %}
 
 </div>
-
-<style>
-.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
-</style>
 {% endblock %}

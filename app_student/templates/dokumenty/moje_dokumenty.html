@@ -1,4 +1,4 @@
-{% extends "layouts/base_student.html" %}
+﻿{% extends "layouts/base_student.html" %}
 {% block tytul %}Moje Dokumenty{% endblock %}
 {% block naglowek %}Moje Dokumenty{% endblock %}
 
@@ -7,63 +7,60 @@
 {% endblock %}
 
 {% block tresc %}
-<div style="max-width: 900px; margin: 0 auto;">
+<div class="u-csp-058">
 
-  {% if not dokumenty_list %}
+  {% if not documents_list %}
   <div class="karta">
-    <div class="karta__tresc" style="text-align: center; padding: 3rem 2rem;">
-      <div style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;">
-        <svg viewBox="0 0 24 24" style="width: 3rem; height: 3rem; fill: none; stroke: currentColor; stroke-width: 2;">
+    <div class="karta__tresc u-csp-200">
+      <div class="u-csp-156">
+        <svg class="u-csp-282" viewBox="0 0 24 24">
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
           <polyline points="14 2 14 8 20 8"/>
         </svg>
       </div>
-      <div style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem;">Brak dostępnych dokumentów</div>
-      <div style="color: var(--kolor-tekst-drugor);">Dokumenty pojawią się tutaj po zatwierdzeniu praktyki przez opiekuna.</div>
+      <div class="u-csp-214">Brak dostępnych dokumentów</div>
+      <div class="u-csp-036">Dokumenty pojawią się tutaj po zatwierdzeniu praktyki przez opiekuna.</div>
     </div>
   </div>
   {% endif %}
 
-  {% for wpis in dokumenty_list %}
-  <div class="karta" style="margin-bottom: 1.5rem;">
+  {% for item in documents_list %}
+  <div class="karta u-csp-208">
     <div class="karta__naglowek">
       <div>
-        <div style="font-weight: 600;">{{ wpis.zapis.praktyka.academic_year }} · Semestr {{ wpis.zapis.praktyka.semester_label }}</div>
-        <div style="font-size: 0.85rem; color: var(--kolor-tekst-drugor); margin-top: 0.25rem;">
-          {% if wpis.zapis.firma %}{{ wpis.zapis.firma.name }}{% elif wpis.zapis.firma_nazwa %}{{ wpis.zapis.firma_nazwa }}{% endif %}
+        <div class="u-csp-141">{{ item.enrollment.praktyka.academic_year }} · Semestr {{ item.enrollment.praktyka.semester_label }}</div>
+        <div class="u-csp-283">
+          {% if item.enrollment.firma %}{{ item.enrollment.firma.name }}{% elif item.enrollment.firma_nazwa %}{{ item.enrollment.firma_nazwa }}{% endif %}
           · Ścieżka:
-          {% if wpis.sciezka == 'STANDARD' %}Standardowa
-          {% elif wpis.sciezka == 'EMPLOYMENT' %}Praca etatowa
+          {% if item.path_type == 'STANDARD' %}Standardowa
+          {% elif item.path_type == 'EMPLOYMENT' %}Praca etatowa
           {% else %}Działalność gospodarcza{% endif %}
         </div>
       </div>
-      <span class="status status--{{ wpis.zapis.status_css_class }}">{{ wpis.zapis.status_label }}</span>
+      <span class="status status--{{ item.enrollment.status_css_class }}">{{ item.enrollment.status_label }}</span>
     </div>
     <div class="karta__tresc">
-      <div style="display: grid; gap: 0.6rem;">
-        {% for doc in wpis.docs %}
+      <div class="u-csp-284">
+        {% for doc in item.docs %}
 
         {% if doc.separator is defined and doc.separator %}
-        <div style="display: flex; align-items: center; gap: 0.75rem; margin: 0.5rem 0;">
-          <hr style="flex: 1; border: none; border-top: 1px dashed #d1d5db;">
-          <span style="font-size: 0.78rem; color: var(--kolor-tekst-drugor); white-space: nowrap; font-weight: 500;">{{ doc.name }}</span>
-          <hr style="flex: 1; border: none; border-top: 1px dashed #d1d5db;">
+        <div class="u-csp-285">
+          <hr class="u-csp-218">
+          <span class="u-csp-219">{{ doc.name }}</span>
+          <hr class="u-csp-218">
         </div>
 
         {% else %}
-        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem;
-             background: {% if doc.dostepny %}#f8fafc{% else %}#f3f4f6{% endif %};
-             border: 1px solid {% if doc.dostepny %}#e2e8f0{% else %}#d1d5db{% endif %};
-             border-radius: 0.5rem;">
+        <div class="u-doc-row {% if not doc.dostepny %}u-doc-row--disabled{% endif %}">
           <div>
-            <div style="font-weight: 500; font-size: 0.9rem; {% if not doc.dostepny %}color: var(--kolor-tekst-drugor);{% endif %}">
+            <div class="u-doc-title {% if not doc.dostepny %}u-doc-title--disabled{% endif %}">
               {{ doc.name }}
             </div>
             {% if doc.opis %}
-            <div style="font-size: 0.78rem; color: var(--kolor-tekst-drugor);">{{ doc.opis }}</div>
+            <div class="u-csp-220">{{ doc.opis }}</div>
             {% endif %}
             {% if not doc.dostepny and doc.powod %}
-            <div style="font-size: 0.78rem; color: #d97706; margin-top: 0.15rem;">{{ doc.powod }}</div>
+            <div class="u-csp-221">{{ doc.powod }}</div>
             {% endif %}
           </div>
 
@@ -72,11 +69,11 @@
             <a href="{{ url_for('documents.pobierz_staly', doc_key=doc.klucz_staly) }}"
                class="przycisk przycisk--drugorzedny przycisk--maly">Pobierz PDF</a>
             {% elif doc.dynamiczny is defined and doc.dynamiczny %}
-            <a href="{{ url_for('documents.pobierz_dynamiczny', zapis_id=doc.zapis_id, typ=doc.typ) }}"
+            <a href="{{ url_for('documents.download_dynamic', enrollment_id=doc.zapis_id, doc_type=doc.typ) }}"
                class="przycisk przycisk--drugorzedny przycisk--maly">Pobierz PDF</a>
             {% endif %}
           {% else %}
-          <span style="font-size: 0.78rem; color: var(--kolor-tekst-drugor); padding: 0.3rem 0.625rem; white-space: nowrap;">Niedostępny</span>
+          <span class="u-csp-222">Niedostępny</span>
           {% endif %}
         </div>
         {% endif %}
