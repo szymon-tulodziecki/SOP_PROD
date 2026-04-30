@@ -11,8 +11,6 @@ def _check_enrollment_requires_action(enrollments) -> bool:
         s = z.status
         if s == EnrollmentStatus.PENDING and (z.admin_comments or z.supervisor_comments):
             return True
-        if s == EnrollmentStatus.AWAITING_APPROVAL and z.supervisor_comments:
-            return True
         if s in (EnrollmentStatus.REVISION_REQUIRED, EnrollmentStatus.REJECTED):
             return True
     return False

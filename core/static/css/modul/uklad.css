@@ -1,27 +1,54 @@
 /* uklad.css — Layout panelu: sidebar, panel-main, nagłówek */
 
-.panel-body { display: flex; min-height: 100vh; background: var(--kolor-tlo); }
+.panel-body {
+  --panel-topbar-height: 82px;
+  --panel-topbar-line: var(--kolor-ramka);
+  display: flex;
+  min-height: 100vh;
+  background: var(--kolor-tlo);
+}
 
 .sidebar {
   width: 260px; height: 100vh; background: var(--kolor-glowny);
   color: rgba(255,255,255,0.85); display: flex; flex-direction: column;
   flex-shrink: 0; position: sticky; top: 0; overflow-y: auto;
+  z-index: 2;
+  box-shadow: 8px 0 18px rgba(15, 37, 64, 0.12);
 }
-.sidebar__naglowek { padding: 1.5rem 1.25rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.1); }
-.sidebar__logo-kontener {
-  width: 140px;
-  max-width: 100%;
-  margin-bottom: 10px;
-  padding: 10px;
+.sidebar__naglowek {
+  position: relative;
+  height: var(--panel-topbar-height);
+  padding: 0.7rem 1.25rem;
   background: var(--kolor-biale);
-  border-radius: var(--promien);
-  box-shadow: var(--cien-karta);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.sidebar__naglowek::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: var(--panel-topbar-line);
+}
+.sidebar__logo-kontener {
+  width: 150px;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
   display: flex;
   align-items: center;
   justify-content: center;
 }
-.sidebar__logo { max-width: 100%; height: auto; display: block; }
-.sidebar__system-label { display: block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--kolor-akcent); font-weight: 600; margin-top: 0.5rem; }
+.sidebar__logo { width: 100%; height: auto; display: block; }
+.sidebar__system-label { display: block; font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--kolor-glowny); font-weight: 700; margin-top: 0.35rem; line-height: 1.1; }
 
 .sidebar__uzytkownik { display: flex; align-items: center; gap: 0.75rem; padding: 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.08); }
 .sidebar__uzytkownik-avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--kolor-akcent); color: var(--kolor-glowny-ciemny); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem; flex-shrink: 0; }
@@ -46,8 +73,17 @@
 .sidebar :focus-visible { outline-color: var(--kolor-akcent-jasny); }
 
 .panel-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-.panel-main__naglowek { background: var(--kolor-biale); border-bottom: 1px solid var(--kolor-ramka); padding: 1.25rem 2rem; }
-.panel-main__naglowek-tresc { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.panel-main__naglowek { position: relative; min-height: var(--panel-topbar-height); background: #f9fbfd; padding: 1.25rem 2rem; display: flex; align-items: center; }
+.panel-main__naglowek::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: var(--panel-topbar-line);
+}
+.panel-main__naglowek-tresc { display: flex; align-items: center; justify-content: space-between; gap: 1rem; width: 100%; }
 .panel-main__tytul { font-size: 1.35rem; font-weight: 600; color: var(--kolor-tekst); letter-spacing: -0.01em; }
 .panel-main__tresc { flex: 1; padding: 2rem; }
 

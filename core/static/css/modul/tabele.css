@@ -11,3 +11,66 @@
 .komorka-uzytkownik { display: flex; flex-direction: column; }
 .komorka-uzytkownik__nazwa { font-weight: 600; }
 .komorka-uzytkownik__info { font-size: 0.75rem; color: var(--kolor-tekst-trzeciorzed); }
+
+.lista-firm {
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+.lista-firm .karta__naglowek {
+  padding: 0.85rem 1rem;
+}
+
+.lista-firm .karta__tresc {
+  padding: 0;
+}
+
+.lista-firm .pasek-filtrow {
+  gap: 0.6rem;
+}
+
+.lista-firm .filtr-szukaj {
+  min-width: 260px;
+}
+
+.lista-firm .tabela th,
+.lista-firm .tabela td {
+  padding: 0.7rem 0.85rem;
+}
+
+.lista-firm .tabela th:first-child {
+  width: 28%;
+}
+
+.lista-firm .tabela th:nth-child(3) {
+  width: 9rem;
+  text-align: left;
+}
+
+.lista-firm .tabela th:nth-child(4),
+.lista-firm .tabela td:nth-child(4) {
+  width: 9rem;
+  text-align: center;
+}
+
+.lista-firm .tabela th:last-child,
+.lista-firm .tabela td:last-child {
+  width: 17rem;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.lista-firm .u-csp-154,
+.lista-firm .u-csp-155 {
+  margin: 1rem;
+}
+
+@media (max-width: 900px) {
+  .lista-firm {
+    max-width: none;
+  }
+
+  .lista-firm .filtr-szukaj {
+    min-width: 100%;
+  }
+}

@@ -27,9 +27,10 @@
 
 {% else %}
 
-  <div class="karta u-csp-288">
+  <div class="dziennik-panel">
+  <div class="karta u-csp-288 dziennik-panel__podsumowanie">
     <div class="karta__tresc">
-      <div class="u-csp-085">
+      <div class="u-csp-085 dziennik-panel__metryki">
         <div>
           <div class="u-csp-289">Praktyka</div>
           <div class="u-csp-141">{{ zapis.praktyka.academic_year }}</div>
@@ -57,7 +58,7 @@
   </div>
 
   {% if zapis.moze_pobrac_wydruki %}
-  <div class="karta u-csp-293">
+  <div class="karta u-csp-293 dziennik-panel__final">
     <div class="karta__naglowek u-csp-294">
       <h2 class="karta__tytul">⚠ Dokumenty końcowe praktyki</h2>
     </div>
@@ -92,7 +93,7 @@
   </div>
   {% endif %}
 
-  <div class="karta">
+  <div class="karta dziennik-panel__wpisy">
     <div class="karta__naglowek u-csp-077">
       <h2 class="karta__tytul">Wpisy dziennika ({{ wpisy|length }}{% if data_od or data_do %} — filtr aktywny{% endif %})</h2>
       <form class="u-csp-300" method="GET">
@@ -154,6 +155,7 @@
         </tbody>
       </table>
     </div>
+  </div>
   </div>
 
 {% endif %}

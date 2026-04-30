@@ -24,3 +24,141 @@
 .pole-formularza--checkbox { flex-direction: row; }
 .pole-formularza__etykieta-checkbox { display: flex; align-items: center; gap: 0.625rem; cursor: pointer; font-size: 0.9rem; color: var(--kolor-tekst-drugor); }
 .pole-formularza__checkbox { width: 18px; height: 18px; flex-shrink: 0; cursor: pointer; accent-color: var(--kolor-glowny); }
+
+.formularz-firmy {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.formularz-firmy .karta__naglowek {
+  padding: 0.85rem 1.15rem;
+}
+
+.formularz-firmy .karta__tresc {
+  padding: 1.15rem;
+}
+
+.formularz-firmy__pola {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.formularz-firmy__siatka {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.formularz-firmy__akcje {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.75rem;
+  padding-top: 0.25rem;
+}
+
+@media (max-width: 640px) {
+  .formularz-firmy {
+    max-width: none;
+  }
+
+  .formularz-firmy__siatka {
+    grid-template-columns: 1fr;
+  }
+
+  .formularz-firmy__akcje {
+    justify-content: stretch;
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+}
+
+.import-csv {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.import-csv .karta__naglowek {
+  padding: 0.85rem 1.15rem;
+}
+
+.import-csv .karta__tresc {
+  padding: 1.15rem;
+}
+
+.import-csv__form {
+  display: grid;
+  gap: 1rem;
+}
+
+.import-csv__upload {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.65rem 0.85rem;
+  background: var(--kolor-tlo);
+  border: 1px dashed var(--kolor-ramka-mocna);
+  border-radius: var(--promien);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.import-csv__upload:hover {
+  background: var(--kolor-biale);
+  border-color: var(--kolor-glowny-jasny);
+}
+
+.import-csv__akcje {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.import-csv__format {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--kolor-ramka);
+}
+
+.import-csv__format-tytul {
+  color: var(--kolor-tekst);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.import-csv__format p {
+  margin: 0.75rem 0;
+  color: var(--kolor-tekst-drugor);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.import-csv__format code {
+  display: block;
+  padding: 0.75rem;
+  background: var(--kolor-tlo);
+  border: 1px solid var(--kolor-ramka);
+  border-radius: var(--promien);
+  color: var(--kolor-tekst);
+  font-size: 0.78rem;
+  line-height: 1.7;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+.import-csv__wyniki {
+  max-width: 600px;
+  margin: 1.25rem auto 0;
+}
+
+@media (max-width: 640px) {
+  .import-csv {
+    max-width: none;
+  }
+
+  .import-csv__akcje .przycisk {
+    width: 100%;
+    justify-content: center;
+  }
+}

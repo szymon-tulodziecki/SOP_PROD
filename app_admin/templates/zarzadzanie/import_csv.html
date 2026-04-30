@@ -5,21 +5,19 @@
   <a href="{{ url_for('zarzadzanie.lista_uzytkownikow') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
 {% endblock %}
 {% block tresc %}
-<div class="u-csp-239">
+<div class="import-csv">
 
   <div class="karta">
     <div class="karta__naglowek"><h2 class="karta__tytul">Wgraj plik CSV</h2></div>
     <div class="karta__tresc">
-      <form method="POST" enctype="multipart/form-data" novalidate class="formularz-panel">
+      <form method="POST" enctype="multipart/form-data" novalidate class="import-csv__form">
         {{ form.hidden_tag() }}
 
         <div class="pole-formularza">
           <label for="file" class="pole-formularza__etykieta">
             Plik CSV <span class="pole-formularza__wymagane" aria-label="wymagane">*</span>
           </label>
-          <label class="u-csp-240" for="file"
-                 onmouseover="this.style.borderColor='var(--kolor-glowny)'"
-                 onmouseout="this.style.borderColor='var(--kolor-ramka)'">
+          <label class="import-csv__upload" for="file">
             <svg class="u-csp-241" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
             <span class="u-csp-242" id="file-label">Wybierz plik CSV lub przeciągnij tutaj</span>
           </label>
@@ -45,31 +43,31 @@
           {% endif %}
         </div>
 
-        <button type="submit" class="przycisk przycisk--glowny u-csp-244">
+        <div class="import-csv__akcje">
+          <button type="submit" class="przycisk przycisk--glowny">
           <svg class="u-csp-245" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
           Importuj studentów
-        </button>
+          </button>
+        </div>
       </form>
-    </div>
-  </div>
 
-  <div class="karta">
-    <div class="karta__naglowek"><h2 class="karta__tytul">Format pliku</h2></div>
-    <div class="karta__tresc u-csp-246">
-      <p class="u-csp-247">
-        Pierwsza linia musi zawierać nagłówki. Wszystkie kolumny są wymagane.
-        Kolumna email musi zawierać konto Microsoft w domenie uczelni. Kodowanie: UTF-8 lub UTF-8 z BOM.
-      </p>
-      <code class="u-csp-248">imie,nazwisko,email,numer_albumu,plec,kierunek,tryb_studiow
+      <div class="import-csv__format">
+        <div class="import-csv__format-tytul">Format pliku CSV</div>
+        <p>
+          Pierwsza linia musi zawierać nagłówki. Wszystkie kolumny są wymagane.
+          Kolumna email musi zawierać konto Microsoft w domenie uczelni. Kodowanie: UTF-8 lub UTF-8 z BOM.
+        </p>
+        <code>imie,nazwisko,email,numer_albumu,plec,kierunek,tryb_studiow
 Jan,Kowalski,54321@ans-elblag.pl,54321,M,Informatyka,stacjonarne
 Anna,Nowak,67890@ans-elblag.pl,67890,K,Informatyka,niestacjonarne</code>
+      </div>
     </div>
   </div>
 
 </div>
 
 {% if results %}
-<div class="karta u-csp-249">
+<div class="karta import-csv__wyniki">
   <div class="karta__naglowek">
     <h2 class="karta__tytul">Wyniki importu</h2>
   </div>

@@ -208,18 +208,26 @@ class InternshipEnrollment(db.Model):
 
     @property
     def firma_nazwa(self):
+        if self.company_id and self.firma:
+            return self.firma.name
         return self.workplace_details.company_name if self.workplace_details else None
 
     @property
     def firma_adres(self):
+        if self.company_id and self.firma:
+            return self.firma.address
         return self.workplace_details.company_address if self.workplace_details else None
 
     @property
     def firma_miasto(self):
+        if self.company_id and self.firma:
+            return self.firma.city
         return self.workplace_details.company_city if self.workplace_details else None
 
     @property
     def firma_nip_krs(self):
+        if self.company_id and self.firma:
+            return self.firma.tax_id
         return self.workplace_details.company_tax_id if self.workplace_details else None
 
     @property

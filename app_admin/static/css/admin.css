@@ -19,13 +19,13 @@
 
 @import url('/core/static/css/modul/zmienne.css');
 @import url('/core/static/css/modul/komunikaty.css');
-@import url('/core/static/css/modul/formularze.css');
+@import url('/core/static/css/modul/formularze.css?v=20260430-20');
 @import url('/core/static/css/modul/logowanie.css');
-@import url('/core/static/css/modul/uklad.css');
+@import url('/core/static/css/modul/uklad.css?v=20260430-13');
 @import url('/core/static/css/modul/karty.css');
-@import url('/core/static/css/modul/tabele.css');
+@import url('/core/static/css/modul/tabele.css?v=20260430-22');
 @import url('/core/static/css/modul/przyciski.css');
 @import url('/core/static/css/modul/statusy.css');
 @import url('/core/static/css/modul/komponenty.css');
 @import url('/core/static/css/modul/dashboard.css');
-@import url('/core/static/css/modul/utils.css');
+@import url('/core/static/css/modul/utils.css?v=20260430-23');

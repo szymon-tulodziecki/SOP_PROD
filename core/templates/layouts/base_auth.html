@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block tytul %}Autoryzacja{% endblock %} — ANS Elbląg</title>
-  <link rel="stylesheet" href="{{ url_for('core_static.static', filename='css/autoryzacja.css') }}">
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="preload" href="{{ url_for('core_static.static', filename='css/autoryzacja.css', v='20260430-1') }}" as="style">
+  <link rel="stylesheet" href="{{ url_for('core_static.static', filename='css/autoryzacja.css', v='20260430-1') }}">
   {% block head_extra %}{% endblock %}
 </head>
 <body class="strona-logowania">

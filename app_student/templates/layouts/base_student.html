@@ -6,8 +6,8 @@
   {% set _csrf_token = csrf_token() %}
   <meta name="csrf-token" content="{{ _csrf_token }}">
   <title>{% block tytul %}Panel studenta{% endblock %} — ANS Elbląg</title>
-  <link rel="preload" href="{{ url_for('student_css_bundle', v='20260429-8') }}" as="style">
-  <link rel="stylesheet" href="{{ url_for('student_css_bundle', v='20260429-8') }}">
+  <link rel="preload" href="{{ url_for('student_css_bundle', v='20260430-24') }}" as="style">
+  <link rel="stylesheet" href="{{ url_for('student_css_bundle', v='20260430-24') }}">
 </head>
 <body class="panel-body">
 
@@ -16,7 +16,7 @@
   <nav class="sidebar" aria-label="Nawigacja główna panelu">
     <div class="sidebar__naglowek">
       <div class="sidebar__logo-kontener">
-        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="ANS Elbląg" class="sidebar__logo">
+        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="ANS Elbląg" class="sidebar__logo" width="150" height="27">
       </div>
       <span class="sidebar__system-label">Panel studenta</span>
     </div>

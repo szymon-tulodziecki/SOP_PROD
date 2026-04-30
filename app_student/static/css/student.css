@@ -6,11 +6,11 @@
    Ten plik zawiera wyłącznie style specyficzne dla app_student.
    ============================================================ */
 
-.form-field { display: flex; flex-direction: column; gap: 0.375rem; }
+.form-field { display: flex; flex-direction: column; gap: 0.5rem; }
 .form-field__label { font-size: 0.875rem; font-weight: 500; color: var(--kolor-tekst); }
 .form-field__input { width: 100%; padding: 0.75rem 1rem; font-family: var(--font-glowny), serif; font-size: 1rem; color: var(--kolor-tekst); background: var(--kolor-biale); border: 2px solid var(--kolor-ramka-mocna); border-radius: var(--promien); transition: border-color 0.15s, box-shadow 0.15s; }
 .form-field__input:hover { border-color: var(--kolor-glowny-jasny); }
-.form-field__input:focus { border-color: var(--kolor-glowny); box-shadow: 0 0 0 3px rgba(26,58,92,0.15); outline: var(--fokus-grubosc) solid var(--fokus-kolor); outline-offset: var(--fokus-offset); }
+.form-field__input:focus { border-color: var(--kolor-glowny); box-shadow: 0 0 0 3px rgba(26,58,92,0.15); outline: none; }
 .form-field--error .form-field__input { border-color: var(--kolor-blad); }
 .form-field--error .form-field__input:focus { box-shadow: 0 0 0 3px rgba(192,57,43,0.15); }
 .form-field__error { font-size: 0.825rem; color: var(--kolor-blad); font-weight: 500; }
@@ -56,4 +56,131 @@
 .schedule-text-field::placeholder,
 .schedule-days-field::placeholder {
   line-height: 1.25;
+}
+
+.dziennik-panel {
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+.dziennik-panel .karta {
+  margin-bottom: 1rem;
+}
+
+.dziennik-panel .karta__tresc {
+  padding: 1rem 1.1rem;
+}
+
+.dziennik-panel .karta__naglowek {
+  padding: 0.8rem 1rem;
+  min-height: auto;
+}
+
+.dziennik-panel .karta__tytul {
+  font-size: 0.98rem;
+}
+
+.dziennik-panel__podsumowanie {
+  border-left-width: 3px;
+}
+
+.dziennik-panel__metryki {
+  gap: 1rem;
+  align-items: start;
+}
+
+.dziennik-panel__metryki .u-csp-289 {
+  margin-bottom: 0.15rem;
+  font-size: 0.68rem;
+  letter-spacing: 0;
+}
+
+.dziennik-panel__metryki .u-csp-141,
+.dziennik-panel__metryki .u-csp-146,
+.dziennik-panel__metryki .u-csp-290,
+.dziennik-panel__metryki .u-csp-291 {
+  font-size: 0.95rem;
+  line-height: 1.35;
+}
+
+.dziennik-panel__metryki .pasek-postep {
+  height: 0.42rem;
+  margin-top: 0.4rem;
+  margin-bottom: 0.65rem;
+}
+
+.dziennik-panel__final {
+  border-left-width: 3px;
+}
+
+.dziennik-panel__final .karta__tresc {
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.dziennik-panel__final .u-csp-297 {
+  margin-top: 0.45rem;
+  margin-bottom: 0.55rem;
+}
+
+.dziennik-panel__final .u-csp-299 {
+  gap: 0.5rem;
+}
+
+.dziennik-panel__wpisy .karta__naglowek {
+  gap: 0.75rem;
+}
+
+.dziennik-panel__wpisy .u-csp-300 {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+.dziennik-panel__wpisy .form-field__input {
+  width: auto;
+  min-width: 8.2rem;
+  height: 2rem;
+  padding: 0.25rem 0.45rem;
+  font-size: 0.8rem;
+  border-width: 1px;
+}
+
+.dziennik-panel__wpisy .tabela th {
+  padding: 0.55rem 0.7rem;
+  font-size: 0.7rem;
+}
+
+.dziennik-panel__wpisy .tabela td {
+  padding: 0.58rem 0.7rem;
+  font-size: 0.8rem;
+  vertical-align: top;
+}
+
+.dziennik-panel__wpisy .u-csp-301 {
+  max-width: 520px;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.dziennik-panel__wpisy .u-csp-302 {
+  font-size: 0.68rem;
+  padding: 0.14rem 0.35rem;
+}
+
+@media (max-width: 900px) {
+  .dziennik-panel__metryki {
+    grid-template-columns: 1fr;
+  }
+
+  .dziennik-panel__wpisy .karta__naglowek {
+    align-items: stretch;
+  }
+
+  .dziennik-panel__wpisy .u-csp-300 {
+    margin-left: 0;
+    flex-wrap: wrap;
+  }
 }

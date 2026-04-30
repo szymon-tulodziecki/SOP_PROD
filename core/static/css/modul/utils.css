@@ -735,10 +735,15 @@
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 .przycisk--ostrzezenie { background: #f59e0b; color: white; border: 1px solid #f59e0b; }
 .przycisk--ostrzezenie:hover { background: #d97706; border-color: #d97706; }
-.u-doc-row { display: flex; justify-content: space-between; align-items: center; padding: 0.7rem 1rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.5rem; }
+.u-doc-row { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 0.85rem 1rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.5rem; }
 .u-doc-row--disabled { background: #f3f4f6; border-color: #d1d5db; }
 .u-doc-title { font-weight: 500; font-size: 0.9rem; }
 .u-doc-title--disabled { color: var(--kolor-tekst-drugor); }
+@media (max-width: 640px) {
+  .u-doc-row { align-items: flex-start; flex-direction: column; }
+  .u-doc-row .przycisk,
+  .u-doc-row .u-csp-222 { width: 100%; justify-content: center; text-align: center; }
+}
 .u-enrollment-hero { background: var(--kolor-biale); border-radius: var(--promien-duzy); box-shadow: var(--cien-karta); margin-bottom: 2rem; overflow: hidden; }
 .u-enrollment-hero--pending { border-top: 4px solid #f59e0b; }
 .u-enrollment-hero--awaiting { border-top: 4px solid #3b82f6; }
@@ -753,6 +758,47 @@
 .u-card-border-warning { border-left: 4px solid #d97706; }
 .u-card-border-danger { border-left: 4px solid #dc2626; }
 .u-card-border-top-success { border-top: 3px solid var(--kolor-sukces); }
+
+.historia-decyzji { display: grid; gap: 0.75rem; }
+.historia-decyzji__wpis {
+  padding: 0.9rem 1rem;
+  background: var(--kolor-tlo);
+  border: 1px solid var(--kolor-ramka);
+  border-radius: var(--promien);
+}
+.historia-decyzji__naglowek {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
+.historia-decyzji__tytul { font-weight: 600; color: var(--kolor-tekst); }
+.historia-decyzji__meta {
+  margin-top: 0.2rem;
+  color: var(--kolor-tekst-trzeciorzed);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+.historia-decyzji__komentarz {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--kolor-ramka);
+}
+.historia-decyzji__etykieta {
+  margin-bottom: 0.25rem;
+  color: var(--kolor-tekst-trzeciorzed);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.historia-decyzji__komentarz p {
+  margin: 0;
+  color: var(--kolor-tekst);
+  font-size: 0.9rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
 .u-card-border-top-warning { border-top: 3px solid #d97706; }
 .u-card-border-top-danger { border-top: 3px solid var(--kolor-blad); }
 .u-grid-grades-standard { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }

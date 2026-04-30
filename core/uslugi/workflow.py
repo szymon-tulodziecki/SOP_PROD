@@ -260,11 +260,18 @@ class ZapisFSM:
         """COMMISSION_REVIEW / REVISION_REQUIRED → DIRECTOR_APPROVAL (backward compat)."""
         self.wyslij_do_dyrektora(decision='APPROVED', actor_id=actor_id, comment=comment)
 
-    def zadaj_poprawki(self, actor_id=None, comment: str = '') -> None:
-        """COMMISSION_REVIEW / REVISION_REQUIRED → REVISION_REQUIRED."""
+    def zadaj_poprawki(self, actor_id=None, comment: str = '', event_type=None) -> None:
+        """Wysyła zapis do poprawek i zapisuje właściwy typ zdarzenia."""
         from core.modele.internships import EventType
-        self._przejdz(S.REVISION_REQUIRED, 'komisja: wymaga uzupełnień')
-        self._dodaj_zdarzenie(EventType.COMMITTEE_DECISION, actor_id=actor_id,
+        event_type = event_type or EventType.COMMITTEE_DECISION
+        opis_by_type = {
+            EventType.ADMIN_COMMENT: 'admin: wymaga uzupełnień',
+            EventType.SUPERVISOR_COMMENT: 'uopz: wymaga uzupełnień',
+            EventType.COMMITTEE_DECISION: 'komisja: wymaga uzupełnień',
+        }
+        opis = opis_by_type.get(event_type, 'wymaga uzupełnień')
+        self._przejdz(S.REVISION_REQUIRED, opis)
+        self._dodaj_zdarzenie(event_type, actor_id=actor_id,
                               comment=comment, decision='PARTIALLY_APPROVED')
 
     def zatwierdz_przez_dyrektora(self, actor_id=None, comment: str = '') -> None:

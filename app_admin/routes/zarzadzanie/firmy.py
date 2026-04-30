@@ -27,13 +27,13 @@ ACTIVE_ENROLLMENT_STATUSES = [
 def _check_company_uniqueness(form, exclude_id=None) -> str | None:
     company_name = form.name.data.strip()
     if company_repository.find_active_by_name(company_name, exclude_id=exclude_id):
-        return 'Company o tej nazwie już istnieje w systemie.'
+        return 'Firma o tej nazwie już istnieje w systemie.'
 
     tax_id = form.vat_number.data.strip() if form.vat_number.data else ''
     if tax_id:
         existing_company = company_repository.find_active_by_tax_id(tax_id, exclude_id=exclude_id)
         if existing_company:
-            return f'Company z NIP/KRS "{tax_id}" już istnieje ({existing_company.name}).'
+            return f'Firma z NIP/KRS "{tax_id}" już istnieje ({existing_company.name}).'
     return None
 
 
@@ -68,7 +68,7 @@ def dodaj_firme():
         )
         company_repository.save(company)
         db.session.commit()
-        flash('Company została dodana do systemu.', 'success')
+        flash('Firma została dodana do systemu.', 'success')
         return redirect(url_for(COMPANY_LIST_ROUTE))
 
     return render_template(COMPANY_FORM_TEMPLATE, form=form, tryb='dodaj')
@@ -109,7 +109,7 @@ def usun_firme(id):
     company_name = company.name
     company_repository.delete(company)
     db.session.commit()
-    flash(f'Company "{company_name}" została trwale usunięta z systemu.', 'success')
+    flash(f'Firma "{company_name}" została trwale usunięta z systemu.', 'success')
     return redirect(url_for(COMPANY_LIST_ROUTE))
 
 
@@ -127,10 +127,10 @@ def przelacz_aktywnosc_firmy(id):
             flash(f'Nie można dezaktywować firmy - ma {active_internships} aktywnych praktyk.', 'error')
             return redirect(url_for(COMPANY_LIST_ROUTE))
         company.is_active = False
-        flash('Company została dezaktywowana.', 'success')
+        flash('Firma została dezaktywowana.', 'success')
     else:
         company.is_active = True
-        flash('Company została aktywowana.', 'success')
+        flash('Firma została aktywowana.', 'success')
 
     db.session.commit()
     return redirect(url_for(COMPANY_LIST_ROUTE))

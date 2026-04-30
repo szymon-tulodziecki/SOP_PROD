@@ -142,8 +142,17 @@ class UslugaPraktyk:
     ) -> None:
         """Wysyła prośbę o poprawki do studenta. Commit w serwisie."""
         from core.uslugi.workflow import ZapisFSM
+        from core.modele import EnrollmentStatus, EventType, User, UserRole
         with ZapisFSM.lock(enrollment_id) as fsm:
-            fsm.zadaj_poprawki(actor_id=actor_id, comment=comment)
+            actor = db.session.get(User, actor_id) if actor_id else None
+            actor_role = actor.role if actor else None
+            if actor_role == UserRole.KOMISJA or fsm.zapis.status == EnrollmentStatus.COMMISSION_REVIEW:
+                event_type = EventType.COMMITTEE_DECISION
+            elif actor_role == UserRole.UOPZ:
+                event_type = EventType.SUPERVISOR_COMMENT
+            else:
+                event_type = EventType.ADMIN_COMMENT
+            fsm.zadaj_poprawki(actor_id=actor_id, comment=comment, event_type=event_type)
             db.session.commit()
 
     def wyslij_do_akceptacji_z_uopz(
@@ -337,11 +346,7 @@ class UslugaPraktyk:
             'border_alert':         border_alert,
             'komentarz_zwrotny':    komentarz_komisji or komentarz_admina or komentarz_uopz or '',
             'komentarz_odrzucenia': komentarz_odrzucenia or '',
-            'wymaga_uwagi': (
-                zapis.status == EnrollmentStatus.AWAITING_APPROVAL
-                and bool(komentarz_uopz)
-                and sciezka == 'STANDARD'
-            ),
+            'wymaga_uwagi': zwrocone or jest_odrzucone,
         }
 
     # ── Repository access ─────────────────────────────────────────────────────

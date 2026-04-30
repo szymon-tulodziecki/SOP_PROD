@@ -325,36 +325,29 @@
       </div>
       {% endif %}
 
-      {% if zapis.decyzja_komisji or zapis.decyzja_dyrektora %}
+      {% if decision_history_entries %}
       <div class="karta">
         <div class="karta__naglowek">
-          <h3 class="karta__tytul">Decyzje</h3>
+          <h3 class="karta__tytul">Historia decyzji</h3>
         </div>
-        <div class="karta__tresc u-flex--col">
-          {% if zapis.decyzja_komisji %}
-          <div class="u-ramka">
-            <div class="u-flex--between-mb">
-              <span class="u-etykieta u-csp-174">Komisja ds. praktyk</span>
-              <span class="status {% if zapis.decyzja_komisji == 'APPROVED' %}status--completed{% elif zapis.decyzja_komisji == 'REJECTED' %}status--draft u-status-danger{% else %}status--in-progress{% endif %}">
-                {% if zapis.decyzja_komisji == 'APPROVED' %}Zatwierdzono
-                {% elif zapis.decyzja_komisji == 'PARTIALLY_APPROVED' %}Częściowo zatwierdzono
-                {% else %}Odrzucono{% endif %}
-              </span>
+        <div class="karta__tresc historia-decyzji">
+          {% for entry in decision_history_entries %}
+          <div class="historia-decyzji__wpis">
+            <div class="historia-decyzji__naglowek">
+              <div>
+                <div class="historia-decyzji__tytul">{{ entry.stage_label }}</div>
+                <div class="historia-decyzji__meta">{{ entry.executed_at }} · {{ entry.actor_name }}{% if entry.actor_email %} · {{ entry.actor_email }}{% endif %} · {{ entry.role_label }}</div>
+              </div>
+              <span class="status {{ entry.status_class }}">{{ entry.status_label }}</span>
             </div>
-            {% if zapis.komentarze_komisji %}<p class="u-opis">{{ zapis.komentarze_komisji }}</p>{% endif %}
-          </div>
-          {% endif %}
-          {% if zapis.decyzja_dyrektora %}
-          <div class="u-ramka">
-            <div class="u-flex--between-mb">
-              <span class="u-etykieta u-csp-174">Dyrektor IIS</span>
-              <span class="status {% if zapis.decyzja_dyrektora == 'APPROVED' %}status--completed{% else %}status--draft u-status-danger{% endif %}">
-                {{ 'Zatwierdzono' if zapis.decyzja_dyrektora == 'APPROVED' else 'Odrzucono' }}
-              </span>
+            {% if entry.comment %}
+            <div class="historia-decyzji__komentarz">
+              <div class="historia-decyzji__etykieta">Komentarz</div>
+              <p>{{ entry.comment }}</p>
             </div>
-            {% if zapis.komentarze_dyrektora %}<p class="u-opis">{{ zapis.komentarze_dyrektora }}</p>{% endif %}
+            {% endif %}
           </div>
-          {% endif %}
+          {% endfor %}
         </div>
       </div>
       {% endif %}
@@ -437,40 +430,29 @@
       {% endif %}
 
       {# Historia decyzji #}
-      {% if zapis.decyzja_komisji or zapis.decyzja_dyrektora %}
+      {% if decision_history_entries %}
       <div class="karta">
         <div class="karta__naglowek">
           <h3 class="karta__tytul">Historia decyzji</h3>
         </div>
-        <div class="karta__tresc u-flex--col">
-          {% if zapis.decyzja_komisji %}
-          <div class="u-ramka">
-            <div class="u-flex--between-mb">
-              <span class="u-etykieta u-csp-174">Komisja ds. praktyk</span>
-              <span class="status {% if zapis.decyzja_komisji == 'APPROVED' %}status--completed{% elif zapis.decyzja_komisji == 'PARTIALLY_APPROVED' %}status--in-progress{% else %}status--odrzucona{% endif %}">
-                {% if zapis.decyzja_komisji == 'APPROVED' %}Opinia pozytywna
-                {% elif zapis.decyzja_komisji == 'PARTIALLY_APPROVED' %}Opinia częściowo pozytywna
-                {% else %}Opinia negatywna{% endif %}
-              </span>
+        <div class="karta__tresc historia-decyzji">
+          {% for entry in decision_history_entries %}
+          <div class="historia-decyzji__wpis">
+            <div class="historia-decyzji__naglowek">
+              <div>
+                <div class="historia-decyzji__tytul">{{ entry.stage_label }}</div>
+                <div class="historia-decyzji__meta">{{ entry.executed_at }} · {{ entry.actor_name }}{% if entry.actor_email %} · {{ entry.actor_email }}{% endif %} · {{ entry.role_label }}</div>
+              </div>
+              <span class="status {{ entry.status_class }}">{{ entry.status_label }}</span>
             </div>
-            {% if zapis.komentarze_komisji %}
-            <p class="u-opis">{{ zapis.komentarze_komisji }}</p>
+            {% if entry.comment %}
+            <div class="historia-decyzji__komentarz">
+              <div class="historia-decyzji__etykieta">Komentarz</div>
+              <p>{{ entry.comment }}</p>
+            </div>
             {% endif %}
           </div>
-          {% endif %}
-          {% if zapis.decyzja_dyrektora %}
-          <div class="u-ramka">
-            <div class="u-flex--between-mb">
-              <span class="u-etykieta u-csp-174">Dyrektor IIS</span>
-              <span class="status {% if zapis.decyzja_dyrektora == 'APPROVED' %}status--completed{% else %}status--odrzucona{% endif %}">
-                {{ 'Zatwierdzone' if zapis.decyzja_dyrektora == 'APPROVED' else 'Odrzucone' }}
-              </span>
-            </div>
-            {% if zapis.komentarze_dyrektora %}
-            <p class="u-opis">{{ zapis.komentarze_dyrektora }}</p>
-            {% endif %}
-          </div>
-          {% endif %}
+          {% endfor %}
         </div>
       </div>
       {% endif %}

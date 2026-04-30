@@ -3,6 +3,10 @@
 {% block tytul %}Dzienniki praktyk{% endblock %}
 {% block naglowek %}Monitor dzienników{% endblock %}
 
+{% block naglowek_akcje %}
+<a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
+{% endblock %}
+
 {% block tresc %}
 <div class="karta">
   <div class="karta__naglowek">

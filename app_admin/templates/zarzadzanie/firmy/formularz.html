@@ -10,7 +10,7 @@
 {% endblock %}
 
 {% block tresc %}
-<div class="u-csp-182">
+<div class="formularz-firmy">
 
   <div class="karta">
     <div class="karta__naglowek">
@@ -26,7 +26,7 @@
       <form method="POST" novalidate>
         {{ form.hidden_tag() }}
 
-        <div class="u-csp-183">
+        <div class="formularz-firmy__pola">
 
           <!-- Nazwa firmy -->
           <div class="pole-formularza {% if form.name.errors %}pole-formularza--blad{% endif %}">
@@ -41,11 +41,11 @@
             {{ form.address(class="pole-formularza__input") }}
             {% for e in form.address.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
             <small class="u-csp-146">
-              Pełny adres, np. "ul. Kolejowa 15/3"
+              Pełny adres, np. "Kolejowa 15/3"
             </small>
           </div>
 
-          <div class="u-csp-184">
+          <div class="formularz-firmy__siatka">
             <!-- Miasto -->
             <div class="pole-formularza {% if form.city.errors %}pole-formularza--blad{% endif %}">
               {{ form.city.label(class="pole-formularza__etykieta") }}
@@ -66,21 +66,7 @@
 
         </div>
 
-        <div class="u-csp-185">
-          <div class="u-csp-186">
-            <svg class="u-csp-187" viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="12" y1="16" x2="12" y2="12"/>
-              <line x1="12" y1="8" x2="12.01" y2="8"/>
-            </svg>
-            Informacja o firmach w systemie
-          </div>
-          <div class="u-csp-188">
-            Wszystkie firmy dodawane do systemu mają <strong>stałą umowę z uczelnią</strong>. Studenci którzy wybierają firmy z tej bazy nie muszą generować Załącznika 3 (Porozumienia). Studenci mogą też podać własne firmy podczas zapisów na praktyki.
-          </div>
-        </div>
-
-        <div class="u-csp-017">
+        <div class="formularz-firmy__akcje">
           <a href="{{ url_for('zarzadzanie.lista_firm') }}" class="przycisk przycisk--drugorzedny">
             Anuluj
           </a>

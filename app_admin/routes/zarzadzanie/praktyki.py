@@ -13,7 +13,7 @@ from wtforms.validators import DataRequired, Email, Length, Optional, Validation
 from werkzeug.security import generate_password_hash
 
 from core.modele import (User, Student, Internship, InternshipEnrollment, InternshipSchedule, LearningOutcome,
-                    UserRole, InternshipStatus, EnrollmentStatus, InternshipPath, UploadedDocument, Company)
+                    UserRole, InternshipStatus, EnrollmentStatus, InternshipPath, UploadedDocument, Company, EventType)
 from core.extensions import db
 from core.uslugi.internships import UslugaPraktyk
 _serwis_praktyk = UslugaPraktyk()
@@ -34,6 +34,58 @@ _ROUTE_LISTA_ZGLOSZEN = 'zarzadzanie.lista_zgloszen'
 
 from . import zarzadzanie_bp
 from .formularze import InternshipForm
+
+
+def _decision_history_entries(enrollment):
+    entries = []
+    for event in enrollment.process_events:
+        if not event.decision:
+            continue
+
+        actor_role = event.executed_by.role if event.executed_by else None
+        actor_name = (
+            f'{event.executed_by.first_name} {event.executed_by.last_name}'.strip()
+            if event.executed_by else 'Nieznany użytkownik'
+        )
+        actor_email = event.executed_by.email if event.executed_by else ''
+        if event.event_type == EventType.DIRECTOR_DECISION:
+            stage_label = 'Decyzja dyrektora'
+            role_label = 'Dyrektor IIS'
+            status_label = 'Zatwierdzone' if event.decision == 'APPROVED' else 'Odrzucone'
+        elif event.event_type == EventType.COMMITTEE_DECISION and actor_role not in (UserRole.ADMIN, UserRole.UOPZ):
+            stage_label = 'Opinia komisji'
+            role_label = 'Komisja ds. praktyk'
+            if event.decision == 'APPROVED':
+                status_label = 'Opinia pozytywna'
+            elif event.decision == 'PARTIALLY_APPROVED':
+                status_label = 'Opinia częściowo pozytywna'
+            else:
+                status_label = 'Opinia negatywna'
+        else:
+            role_label = 'UOPZ' if actor_role == UserRole.UOPZ else 'Administrator'
+            stage_label = 'Weryfikacja UOPZ' if actor_role == UserRole.UOPZ else 'Weryfikacja administracyjna'
+            if event.decision == 'APPROVED':
+                status_label = 'Zatwierdzone'
+            elif event.decision == 'PARTIALLY_APPROVED':
+                status_label = 'Wymagane poprawki'
+            else:
+                status_label = 'Odrzucone'
+
+        entries.append({
+            'stage_label': stage_label,
+            'role_label': role_label,
+            'actor_name': actor_name,
+            'actor_email': actor_email,
+            'executed_at': event.executed_at.strftime('%d.%m.%Y, %H:%M') if event.executed_at else 'Brak daty',
+            'status_label': status_label,
+            'status_class': (
+                'status--completed' if event.decision == 'APPROVED'
+                else 'status--in-progress' if event.decision == 'PARTIALLY_APPROVED'
+                else 'status--odrzucona'
+            ),
+            'comment': event.comment,
+        })
+    return entries
 
 # ── Praktyki ──────────────────────────────────────────────────────────────────
 
@@ -168,7 +220,8 @@ def szczegoly_zgloszenia(id):
 
     return render_template('zarzadzanie/enrollments/szczegoly.html',
                            zapis=enrollment, harmonogram_dict=schedule_dict,
-                           efekty=outcomes, form=form, uploaded_docs=uploaded_docs)
+                           efekty=outcomes, form=form, uploaded_docs=uploaded_docs,
+                           decision_history_entries=_decision_history_entries(enrollment))
 
 
 @zarzadzanie_bp.route('/zgloszenia/<uuid:id>/zatwierdz-zaklad', methods=['POST'])
@@ -197,9 +250,7 @@ def potwierdz_zapis(id):
 @zarzadzanie_bp.route('/moje-zgloszenia')
 @roles_required(UserRole.UOPZ)
 def moje_zgloszenia():
-    """Lista zgłoszeń przypisanych do aktualnego UOPZ"""
-    from app_admin.routes.evaluation import get_pilne_oceny
-
+    """Lista zgłoszeń przypisanych do aktualnego UOPZ."""
     page          = request.args.get('page', 1, type=int)
     status_filter = request.args.get('status', '').strip()
 
@@ -211,12 +262,15 @@ def moje_zgloszenia():
         flash(f'Nieznany status: {status_filter}', 'warning')
         applications = _repo_zapisow.dla_uopz_strona(current_user.id, strona=page)
 
-    counts        = _repo_zapisow.liczniki_dla_uopz(current_user.id)
-    urgent_grades = get_pilne_oceny(current_user.id)
     csrf_form     = FlaskForm()
-    return render_template('zarzadzanie/enrollments/moje_lista.html',
-                           zgloszenia=applications, liczniki=counts,
-                           pilne_oceny=urgent_grades, csrf_form=csrf_form)
+    return render_template(
+        'zarzadzanie/enrollments/list.html',
+        zgloszenia=applications,
+        csrf_form=csrf_form,
+        endpoint_listy='zarzadzanie.moje_zgloszenia',
+        tytul_listy='Moje zgłoszenia',
+        naglowek_listy='Zgłoszenia moich studentów',
+    )
 
 
 @zarzadzanie_bp.route('/praktyki/<uuid:id>/usun', methods=['POST'])

@@ -1,7 +1,15 @@
 {% extends "layouts/base_panel.html" %}
 
-{% block tytul %}Zgłoszenia studentów{% endblock %}
-{% block naglowek %}Zarządzanie zgłoszeniami praktyk{% endblock %}
+{% set endpoint_listy = endpoint_listy|default('zarzadzanie.lista_zgloszen') %}
+{% set tytul_listy = tytul_listy|default('Zgłoszenia studentów') %}
+{% set naglowek_listy = naglowek_listy|default('Zarządzanie zgłoszeniami praktyk') %}
+
+{% block tytul %}{{ tytul_listy }}{% endblock %}
+{% block naglowek %}{{ naglowek_listy }}{% endblock %}
+
+{% block naglowek_akcje %}
+<a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
+{% endblock %}
 
 {% block tresc %}
 <div class="u-kontener-szeroki">
@@ -11,15 +19,15 @@
     <div class="karta__tresc">
       <div class="u-flex--gap-1 u-csp-054">
         <span class="u-fw-600">Filtruj:</span>
-        <a href="{{ url_for('zarzadzanie.lista_zgloszen') }}"
+        <a href="{{ url_for(endpoint_listy) }}"
            class="przycisk przycisk--{% if not request.args.get('status') %}glowny{% else %}drugorzedny{% endif %} przycisk--maly">
           Wszystkie
         </a>
-        <a href="{{ url_for('zarzadzanie.lista_zgloszen', status='AWAITING_APPROVAL') }}"
+        <a href="{{ url_for(endpoint_listy, status='AWAITING_APPROVAL') }}"
            class="przycisk przycisk--{% if request.args.get('status') == 'AWAITING_APPROVAL' %}glowny{% else %}drugorzedny{% endif %} przycisk--maly">
           Oczekujące
         </a>
-        <a href="{{ url_for('zarzadzanie.lista_zgloszen', status='REVISION_REQUIRED') }}"
+        <a href="{{ url_for(endpoint_listy, status='REVISION_REQUIRED') }}"
            class="przycisk przycisk--{% if request.args.get('status') == 'REVISION_REQUIRED' %}glowny{% else %}drugorzedny{% endif %} przycisk--maly">
           Czeka na poprawki
         </a>
@@ -106,14 +114,14 @@
       {% if zgloszenia.pages > 1 %}
       <div class="u-flex--center u-mt-2 u-csp-135">
         {% if zgloszenia.has_prev %}
-        <a href="{{ url_for('zarzadzanie.lista_zgloszen', page=zgloszenia.prev_num, **request.args) }}"
+        <a href="{{ url_for(endpoint_listy, page=zgloszenia.prev_num, **request.args) }}"
            class="przycisk przycisk--drugorzedny przycisk--maly">← Poprzednia</a>
         {% endif %}
 
         {% for page_num in zgloszenia.iter_pages() %}
           {% if page_num %}
             {% if page_num != zgloszenia.page %}
-            <a href="{{ url_for('zarzadzanie.lista_zgloszen', page=page_num, **request.args) }}"
+            <a href="{{ url_for(endpoint_listy, page=page_num, **request.args) }}"
                class="przycisk przycisk--drugorzedny przycisk--maly">{{ page_num }}</a>
             {% else %}
             <span class="przycisk przycisk--glowny przycisk--maly">{{ page_num }}</span>
@@ -124,7 +132,7 @@
         {% endfor %}
 
         {% if zgloszenia.has_next %}
-        <a href="{{ url_for('zarzadzanie.lista_zgloszen', page=zgloszenia.next_num, **request.args) }}"
+        <a href="{{ url_for(endpoint_listy, page=zgloszenia.next_num, **request.args) }}"
            class="przycisk przycisk--drugorzedny przycisk--maly">Następna →</a>
         {% endif %}
       </div>

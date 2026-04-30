@@ -74,7 +74,7 @@ services:
       - azure_tenant_id
       - fileserver_api_key
     ports:
-      - "5000:5000"
+      - "8080:5000"
     networks:
       - internal
       - public
@@ -131,7 +131,7 @@ services:
       - azure_tenant_id
       - fileserver_api_key
     ports:
-      - "5001:5001"
+      - "8081:5001"
     networks:
       - internal
       - public
