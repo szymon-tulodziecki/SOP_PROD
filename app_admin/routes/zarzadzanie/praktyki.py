@@ -36,60 +36,69 @@ from . import zarzadzanie_bp
 from .formularze import InternshipForm
 
 
+_DECISION_STATUS_CLASS = {
+    'APPROVED':           'status--completed',
+    'PARTIALLY_APPROVED': 'status--in-progress',
+}
+_COMMITTEE_STATUS_LABELS = {
+    'APPROVED':           'Opinia pozytywna',
+    'PARTIALLY_APPROVED': 'Opinia częściowo pozytywna',
+}
+_ADMIN_STATUS_LABELS = {
+    'APPROVED':           'Zatwierdzone',
+    'PARTIALLY_APPROVED': 'Wymagane poprawki',
+}
+
+
+def _actor_info(event) -> tuple[str, str, object]:
+    if not event.executed_by:
+        return 'Nieznany użytkownik', '', None
+    u = event.executed_by
+    return f'{u.first_name} {u.last_name}'.strip(), u.email, u.role
+
+
+def _stage_info(event, actor_role) -> tuple[str, str, str]:
+    if event.event_type == EventType.DIRECTOR_DECISION:
+        status = 'Zatwierdzone' if event.decision == 'APPROVED' else 'Odrzucone'
+        return 'Decyzja dyrektora', 'Dyrektor IIS', status
+
+    if event.event_type == EventType.COMMITTEE_DECISION and actor_role not in (UserRole.ADMIN, UserRole.UOPZ):
+        status = _COMMITTEE_STATUS_LABELS.get(event.decision, 'Opinia negatywna')
+        return 'Opinia komisji', 'Komisja ds. praktyk', status
+
+    is_uopz = actor_role == UserRole.UOPZ
+    role_label  = 'UOPZ' if is_uopz else 'Administrator'
+    stage_label = 'Weryfikacja UOPZ' if is_uopz else 'Weryfikacja administracyjna'
+    status = _ADMIN_STATUS_LABELS.get(event.decision, 'Odrzucone')
+    return stage_label, role_label, status
+
+
 def _decision_history_entries(enrollment):
     entries = []
     for event in enrollment.process_events:
         if not event.decision:
             continue
 
-        actor_role = event.executed_by.role if event.executed_by else None
-        actor_name = (
-            f'{event.executed_by.first_name} {event.executed_by.last_name}'.strip()
-            if event.executed_by else 'Nieznany użytkownik'
-        )
-        actor_email = event.executed_by.email if event.executed_by else ''
-        if event.event_type == EventType.DIRECTOR_DECISION:
-            stage_label = 'Decyzja dyrektora'
-            role_label = 'Dyrektor IIS'
-            status_label = 'Zatwierdzone' if event.decision == 'APPROVED' else 'Odrzucone'
-        elif event.event_type == EventType.COMMITTEE_DECISION and actor_role not in (UserRole.ADMIN, UserRole.UOPZ):
-            stage_label = 'Opinia komisji'
-            role_label = 'Komisja ds. praktyk'
-            if event.decision == 'APPROVED':
-                status_label = 'Opinia pozytywna'
-            elif event.decision == 'PARTIALLY_APPROVED':
-                status_label = 'Opinia częściowo pozytywna'
-            else:
-                status_label = 'Opinia negatywna'
-        else:
-            role_label = 'UOPZ' if actor_role == UserRole.UOPZ else 'Administrator'
-            stage_label = 'Weryfikacja UOPZ' if actor_role == UserRole.UOPZ else 'Weryfikacja administracyjna'
-            if event.decision == 'APPROVED':
-                status_label = 'Zatwierdzone'
-            elif event.decision == 'PARTIALLY_APPROVED':
-                status_label = 'Wymagane poprawki'
-            else:
-                status_label = 'Odrzucone'
+        actor_name, actor_email, actor_role = _actor_info(event)
+        stage_label, role_label, status_label = _stage_info(event, actor_role)
+        status_class = _DECISION_STATUS_CLASS.get(event.decision, 'status--odrzucona')
+        executed_at = event.executed_at.strftime('%d.%m.%Y, %H:%M') if event.executed_at else 'Brak daty'
 
         entries.append({
-            'stage_label': stage_label,
-            'role_label': role_label,
-            'actor_name': actor_name,
-            'actor_email': actor_email,
-            'executed_at': event.executed_at.strftime('%d.%m.%Y, %H:%M') if event.executed_at else 'Brak daty',
+            'stage_label':  stage_label,
+            'role_label':   role_label,
+            'actor_name':   actor_name,
+            'actor_email':  actor_email,
+            'executed_at':  executed_at,
             'status_label': status_label,
-            'status_class': (
-                'status--completed' if event.decision == 'APPROVED'
-                else 'status--in-progress' if event.decision == 'PARTIALLY_APPROVED'
-                else 'status--odrzucona'
-            ),
-            'comment': event.comment,
+            'status_class': status_class,
+            'comment':      event.comment,
         })
     return entries
 
 # ── Praktyki ──────────────────────────────────────────────────────────────────
 
-@zarzadzanie_bp.route('/praktyki')
+@zarzadzanie_bp.route('/praktyki', methods=['GET'])
 @login_required
 def lista_praktyk():
     page = request.args.get('strona', 1, type=int)
@@ -142,7 +151,7 @@ class FormularzPrzypiszUOPZ(FlaskForm):
     uopz_id = SelectField('Opiekun uczelniany (UOPZ)', choices=[], validators=[Optional()])
 
 
-@zarzadzanie_bp.route('/zgloszenia')
+@zarzadzanie_bp.route('/zgloszenia', methods=['GET'])
 @roles_required(UserRole.ADMIN, UserRole.KOMISJA, UserRole.DYREKTOR, UserRole.UOPZ)
 def lista_zgloszen():
     page          = request.args.get('page', 1, type=int)
@@ -247,7 +256,7 @@ def potwierdz_zapis(id):
     return redirect(request.referrer or url_for('dashboard.index'))
 
 
-@zarzadzanie_bp.route('/moje-zgloszenia')
+@zarzadzanie_bp.route('/moje-zgloszenia', methods=['GET'])
 @roles_required(UserRole.UOPZ)
 def moje_zgloszenia():
     """Lista zgłoszeń przypisanych do aktualnego UOPZ."""

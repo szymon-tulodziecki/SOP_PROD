@@ -10,7 +10,7 @@
   };
 
   function updateStepBar(value) {
-    const labels = stepLabels[value] || ['2. -', '3. -', '4. -'];
+    const labels = stepLabels[value] || ['2. Dane', '3. Harmonogram', '4. Wysłanie'];
     const stepBar = document.getElementById('pasek-krokow');
     if (!stepBar) return;
 

@@ -1,9 +1,11 @@
+_SELF = "'self'"
+
 CONTENT_SECURITY_POLICY = {
-    'default-src': ["'self'"],
-    'style-src': ["'self'"],
-    'script-src': ["'self'"],
-    'img-src': ["'self'", 'data:'],
-    'font-src': ["'self'"],
+    'default-src': [_SELF],
+    'style-src': [_SELF],
+    'script-src': [_SELF],
+    'img-src': [_SELF, 'data:'],
+    'font-src': [_SELF],
 }
 
 

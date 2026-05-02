@@ -46,6 +46,7 @@ def create_app():
 
     db.init_app(app)
     login_manager.init_app(app)
+    login_manager.session_protection = 'strong'
     csrf.init_app(app)
     limiter.init_app(app)
     register_error_handlers(app)
@@ -63,7 +64,6 @@ def create_app():
         from app_admin.routes.zarzadzanie import zarzadzanie_bp
         from app_admin.routes.evaluation   import evaluation_bp
         from app_admin.routes.journal    import journal_bp
-        from app_admin.routes.documents   import documents_bp
         from app_admin.routes.logs        import logi_bp
 
         auth_bp    = create_auth_blueprint(
@@ -77,7 +77,6 @@ def create_app():
         app.register_blueprint(zarzadzanie_bp, url_prefix='/zarzadzanie')
         app.register_blueprint(evaluation_bp, url_prefix='/oceny')
         app.register_blueprint(journal_bp,    url_prefix='/dzienniki')
-        app.register_blueprint(documents_bp,  url_prefix='/dokumenty')
         app.register_blueprint(uploads_bp,    url_prefix='/uploads')
         app.register_blueprint(logi_bp,       url_prefix='/logi')
 

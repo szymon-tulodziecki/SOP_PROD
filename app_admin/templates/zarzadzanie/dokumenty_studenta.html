@@ -63,20 +63,26 @@
           {% else %}B — Uznanie efektów{% endif %}
         </div>
       </div>
-      <span class="status
-        {% if zapis.status.value == 'COMPLETED' %}status--zakonczona
-        {% elif zapis.status.value == 'IN_PROGRESS' %}status--aktywna
-        {% else %}status--oczekuje{% endif %}">
-        {% if zapis.status.value == 'COMPLETED' %}Zakończona
-        {% elif zapis.status.value == 'IN_PROGRESS' %}W trakcie
-        {% elif zapis.status.value == 'AWAITING_APPROVAL' %}Oczekuje na akceptację
-        {% elif zapis.status.value == 'COMMISSION_REVIEW' %}Komisja
-        {% elif zapis.status.value == 'DIRECTOR_APPROVAL' %}Dyrektor
-        {% elif zapis.status.value == 'REVISION_REQUIRED' %}Czeka na poprawki
-        {% elif zapis.status.value == 'REJECTED' %}Odrzucona
-        {% elif zapis.status.value == 'PENDING' %}Oczekuje
-        {% else %}{{ zapis.status.value }}{% endif %}
-      </span>
+      <div class="u-flex--gap-05">
+        {% if wpis.sciezka == 'STANDARD' %}
+        <a href="{{ url_for('journal.dziennik_zapisu', id=zapis.id) }}"
+           class="przycisk przycisk--drugorzedny przycisk--maly">Dziennik</a>
+        {% endif %}
+        <span class="status
+          {% if zapis.status.value == 'COMPLETED' %}status--zakonczona
+          {% elif zapis.status.value == 'IN_PROGRESS' %}status--aktywna
+          {% else %}status--oczekuje{% endif %}">
+          {% if zapis.status.value == 'COMPLETED' %}Zakończona
+          {% elif zapis.status.value == 'IN_PROGRESS' %}W trakcie
+          {% elif zapis.status.value == 'AWAITING_APPROVAL' %}Oczekuje na akceptację
+          {% elif zapis.status.value == 'COMMISSION_REVIEW' %}Komisja
+          {% elif zapis.status.value == 'DIRECTOR_APPROVAL' %}Dyrektor
+          {% elif zapis.status.value == 'REVISION_REQUIRED' %}Czeka na poprawki
+          {% elif zapis.status.value == 'REJECTED' %}Odrzucona
+          {% elif zapis.status.value == 'PENDING' %}Oczekuje
+          {% else %}{{ zapis.status.value }}{% endif %}
+        </span>
+      </div>
     </div>
 
     <div class="karta__tresc">

@@ -105,15 +105,23 @@ class UserService:
         db.session.commit()
 
     @staticmethod
+    def _sanitize_csv_field(value: str) -> str:
+        """Prevents CSV Formula Injection by neutralizing dangerous leading characters."""
+        if value and value[0] in ('=', '+', '-', '@', '\t', '\r'):
+            return "'" + value
+        return value
+
+    @staticmethod
     def _parse_csv_row(row_number: int, row: dict) -> tuple[dict | None, str | None]:
         """Parses one CSV row. Returns (parsed_dict, None) or (None, error_msg)."""
-        first_name = (row.get('imie') or row.get('Imię') or '').strip()
-        last_name = (row.get('nazwisko') or row.get('Nazwisko') or '').strip()
+        _s = UserService._sanitize_csv_field
+        first_name = _s((row.get('imie') or row.get('Imię') or '').strip())
+        last_name = _s((row.get('nazwisko') or row.get('Nazwisko') or '').strip())
         email = (row.get('email') or row.get('Email') or '').strip().lower()
         album_number = (row.get('numer_albumu') or row.get('Nr albumu') or '').strip()
         gender = (row.get('plec') or row.get('Płeć') or '').strip().upper() or None
-        field_of_study = (row.get('kierunek') or row.get('Kierunek') or '').strip() or None
-        specialization = (row.get('specjalnosc') or row.get('Specjalność') or '').strip() or None
+        field_of_study = _s((row.get('kierunek') or row.get('Kierunek') or '').strip()) or None
+        specialization = _s((row.get('specjalnosc') or row.get('Specjalność') or '').strip()) or None
         study_mode = (row.get('tryb_studiow') or row.get('Tryb') or '').strip().lower() or None
 
         if not all([first_name, last_name, email, album_number, gender, field_of_study, study_mode]):

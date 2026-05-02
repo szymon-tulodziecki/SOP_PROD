@@ -110,8 +110,9 @@
       </div>
     {% endif %}
   {% endwith %}
-  <script src="{{ url_for('static', filename='js/panel_ui.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/panel_ui.js', v='20260430-3') }}"></script>
   <script src="{{ url_for('static', filename='js/pdf_generator.js') }}"></script>
+  {% block scripts_extra %}{% endblock %}
 </body>
 </html>
 

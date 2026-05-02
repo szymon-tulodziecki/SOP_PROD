@@ -214,7 +214,7 @@ class EnrollmentRepository:
                           strona: int = 1, na_strone: int = 20):
         """Lista zapisów IN_PROGRESS i COMPLETED z opcjonalnym filtrem UOPZ i wyszukiwaniem."""
         from sqlalchemy.orm import selectinload
-        from core.modele.users import User
+        from core.modele.users import Student, User
         q = (
             db.session.query(InternshipEnrollment)
             .options(selectinload(InternshipEnrollment.student))
@@ -223,7 +223,14 @@ class EnrollmentRepository:
             ]))
         )
         if supervisor_id is not None:
-            q = q.filter_by(supervisor_id=supervisor_id)
+            student_assigned_to_uopz = exists().where(
+                (Student.id == InternshipEnrollment.student_id) &
+                (Student.supervisor_id == supervisor_id)
+            )
+            q = q.filter(db.or_(
+                InternshipEnrollment.supervisor_id == supervisor_id,
+                student_assigned_to_uopz,
+            ))
         if szukaj:
             wzorzec = f'%{szukaj}%'
             q = q.join(User, InternshipEnrollment.student_id == User.id).filter(

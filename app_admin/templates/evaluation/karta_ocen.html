@@ -10,7 +10,7 @@
 {% block tresc %}
 {% set is_path_b = zapis.is_path_b %}
 {% set path_label = 'Staż/zatrudnienie' if zapis.path_type == zapis.path_type.EMPLOYMENT else 'Dział. gospod.' %}
-<div class="u-csp-058">
+<div class="u-csp-058" data-evaluation-card data-path-b="{{ 'true' if is_path_b else 'false' }}">
 
   <!-- Info o studencie -->
   <div class="karta u-mb-2 {% if is_path_b %}u-card-border-warning{% else %}u-card-border-accent{% endif %}">
@@ -36,6 +36,53 @@
 
   <form method="POST">
     {{ csrf_form.hidden_tag() }}
+
+    {% if not is_path_b %}
+    <div class="karta u-mb-2">
+      <div class="karta__naglowek u-csp-031">
+        <h3 class="karta__tytul">Potwierdzenie efektów uczenia się (Zał. 4)</h3>
+        <span class="u-tekst-trzeciorzed u-csp-060">Uzupełnia UOPZ lub administrator przed wygenerowaniem Zał. 4.</span>
+      </div>
+      <div class="karta__tresc u-p-0">
+        <div class="tabela-wrapper">
+          <table class="tabela tabela-efekty-zal4">
+            <thead>
+              <tr>
+                <th class="u-csp-052">Kod</th>
+                <th>Efekt uczenia się</th>
+                <th class="u-ta-center">Uzyskał/a</th>
+                <th class="u-ta-center">Nie uzyskał/a</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for efekt in efekty %}
+              {% set ocena = istniejace.get(efekt.id|string) %}
+              <tr>
+                <td><strong>{{ efekt.kod }}</strong></td>
+                <td class="u-fs-sm u-lh-15">{{ efekt.opis }}</td>
+                <td class="u-ta-center">
+                  <label class="zal4-radio">
+                    <input type="radio" name="outcome_{{ efekt.id }}" value="ACHIEVED"
+                           {% if ocena and ocena.result.value == 'ACHIEVED' %}checked{% endif %}>
+                    <span>✓</span>
+                  </label>
+                </td>
+                <td class="u-ta-center">
+                  <label class="zal4-radio">
+                    <input type="radio" name="outcome_{{ efekt.id }}" value="NOT_ACHIEVED"
+                           {% if ocena and ocena.result.value == 'NOT_ACHIEVED' %}checked{% endif %}>
+                    <span>✕</span>
+                  </label>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
 
     <!-- Oceny parametryczne -->
     <div class="karta u-mb-2">
@@ -85,6 +132,7 @@
         {% endif %}
       </div>
     </div>
+
 
     <!-- Komisja Egzaminacyjna (Zał. 8) -->
     <div class="karta u-mb-2">
@@ -204,10 +252,13 @@
 
   </form>
 </div>
+{% endblock %}
 
 {% block scripts_extra %}
+<script src="{{ url_for('static', filename='js/evaluation_card.js', v='20260430-3') }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+    if (document.querySelector('[data-evaluation-card]')) return;
     const isPathB = {{ 'true' if is_path_b else 'false' }};
 
     const p1 = document.querySelector('[name="sprawdzian_ocena_1"]');
@@ -264,7 +315,8 @@ document.addEventListener('DOMContentLoaded', () => {
         el.addEventListener('input',  obl);
         el.addEventListener('change', obl);
     });
+
+    obl();
 });
 </script>
-{% endblock %}
 {% endblock %}

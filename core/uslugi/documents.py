@@ -135,8 +135,8 @@ def _docs_standard() -> list:
         _sep('Dostępne po zakończeniu praktyki'),
         DocumentEntry('Zał. 4 – Potwierdzenie efektów uczenia się', 'ZAL_4',
                       'Podpisuje ZOPZ + UOPZ',
-                      available_when=_zakonczona,
-                      unavailable_reason=_POWOD_ZAKONCZONA),
+                      available_when=_oceniona,
+                      unavailable_reason=_POWOD_OCENIONA),
         DocumentEntry('Zał. 7 – Sprawozdanie końcowe', 'ZAL_7',
                       'Podpisuje student',
                       available_when=_zakonczona,
@@ -466,6 +466,23 @@ def _ctx_firma(zapis, dm) -> tuple[dict, str, str, str]:
     }, nazwa, adres, miasto
 
 
+def _ctx_zopz(dm) -> dict:
+    return {
+        'imie_nazwisko': dm.workplace_mentor_name     if dm else '',
+        'stanowisko':    dm.workplace_mentor_position if dm else '',
+        'telefon':       dm.workplace_mentor_phone    if dm else '',
+        'email':         dm.workplace_mentor_email    if dm else '',
+    }
+
+
+def _ctx_uopz(uopz) -> dict:
+    return {
+        'first_name':    _g(uopz, 'first_name') if uopz else '',
+        'last_name':     _g(uopz, 'last_name')  if uopz else '',
+        'imie_nazwisko': f"{uopz.first_name} {uopz.last_name}" if uopz else '',
+    }
+
+
 # Kanoniczny builder kontekstu TeX
 # ---------------------------------------------------------------------------
 
@@ -492,17 +509,8 @@ def build_context(enrollment, document_type: str) -> dict:
             'od': _fmt(zapis.start_date),
             'do': _fmt(zapis.end_date),
         },
-        'zopz': {
-            'imie_nazwisko': dm.workplace_mentor_name     if dm else '',
-            'stanowisko':    dm.workplace_mentor_position if dm else '',
-            'telefon':       dm.workplace_mentor_phone    if dm else '',
-            'email':         dm.workplace_mentor_email    if dm else '',
-        },
-        'uopz': {
-            'first_name':    _g(uopz, 'first_name') if uopz else '',
-            'last_name':     _g(uopz, 'last_name')  if uopz else '',
-            'imie_nazwisko': f"{uopz.first_name} {uopz.last_name}" if uopz else '',
-        },
+        'zopz': _ctx_zopz(dm),
+        'uopz': _ctx_uopz(uopz),
         'firma_upowazniony':            dm.authorized_person          if dm else '',
         'firma_upowazniony_stanowisko': dm.authorized_person_position if dm else '',
         'uzasadnienie':   zapis.path_justification.justification if zapis.path_justification else '',

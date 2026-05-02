@@ -747,7 +747,7 @@
 .u-enrollment-hero { background: var(--kolor-biale); border-radius: var(--promien-duzy); box-shadow: var(--cien-karta); margin-bottom: 2rem; overflow: hidden; }
 .u-enrollment-hero--pending { border-top: 4px solid #f59e0b; }
 .u-enrollment-hero--awaiting { border-top: 4px solid #3b82f6; }
-.u-enrollment-hero--commission { border-top: 4px solid #8b5cf6; }
+.u-enrollment-hero--commission { border-top: 4px solid var(--kolor-glowny); }
 .u-enrollment-hero--director { border-top: 4px solid #0ea5e9; }
 .u-enrollment-hero--progress { border-top: 4px solid #10b981; }
 .u-enrollment-hero--completed { border-top: 4px solid var(--kolor-sukces); }

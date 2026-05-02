@@ -44,6 +44,18 @@ class JournalRepository:
         )
         return {r.enrollment_id: (r.ostatni, r.liczba) for r in rows}
 
+    def statystyki_dla_zapisu(self, enrollment_id) -> tuple[int, int]:
+        """Zwraca (liczba_wpisow, suma_godzin) dla całego dziennika zapisu."""
+        row = (
+            db.session.query(
+                func.count(JournalEntry.id).label('liczba'),
+                func.coalesce(func.sum(JournalEntry.duration_hours), 0).label('godziny'),
+            )
+            .filter_by(enrollment_id=enrollment_id)
+            .one()
+        )
+        return row.liczba, row.godziny
+
     def znajdz_duplikat(self, enrollment_id, data) -> Optional[JournalEntry]:
         """Sprawdza czy wpis na dany dzień już istnieje."""
         return (

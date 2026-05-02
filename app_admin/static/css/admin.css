@@ -28,4 +28,120 @@
 @import url('/core/static/css/modul/statusy.css');
 @import url('/core/static/css/modul/komponenty.css');
 @import url('/core/static/css/modul/dashboard.css');
-@import url('/core/static/css/modul/utils.css?v=20260430-23');
+@import url('/core/static/css/modul/utils.css?v=20260502-4');
+
+.tabela-efekty-zal4 th:nth-child(3),
+.tabela-efekty-zal4 th:nth-child(4),
+.tabela-efekty-zal4 td:nth-child(3),
+.tabela-efekty-zal4 td:nth-child(4) {
+  width: 7.5rem;
+}
+
+.tabela-efekty-zal4--komisja th:nth-child(3),
+.tabela-efekty-zal4--komisja th:nth-child(4),
+.tabela-efekty-zal4--komisja td:nth-child(3),
+.tabela-efekty-zal4--komisja td:nth-child(4),
+.tabela-efekty-zal4--komisja th:nth-child(5),
+.tabela-efekty-zal4--komisja td:nth-child(5) {
+  width: 8.5rem;
+}
+
+.tabela-efekty-zal4--komisja .zal4-radio span {
+  min-width: 7rem;
+  width: 100%;
+  padding: 0 0.5rem;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.zal4-radio {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  width: 100%;
+  cursor: pointer;
+}
+
+.zal4-radio input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.zal4-radio span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid var(--kolor-ramka);
+  border-radius: 6px;
+  color: var(--kolor-tekst-trzeciorzed);
+  font-weight: 700;
+  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+
+.zal4-radio:hover span {
+  border-color: var(--kolor-glowny);
+}
+
+.zal4-radio input:checked + span {
+  background: var(--kolor-glowny);
+  border-color: var(--kolor-glowny);
+  color: #fff;
+}
+
+.zal4-radio input:focus-visible + span {
+  outline: 2px solid var(--kolor-glowny);
+  outline-offset: 2px;
+}
+
+.praktyki-usuwane {
+  border-left: 3px solid #f59e0b;
+}
+
+.praktyki-usuwane__naglowek {
+  align-items: center;
+  gap: 1rem;
+}
+
+.praktyki-usuwane__opis {
+  margin: 0.25rem 0 0;
+  color: var(--kolor-tekst-drugorzedny);
+  font-size: 0.9rem;
+}
+
+.praktyki-usuwane__lista {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.praktyki-usuwane__wiersz {
+  display: grid;
+  grid-template-columns: minmax(10rem, 1.2fr) minmax(11rem, 1fr) minmax(8rem, auto) auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--kolor-ramka);
+  border-radius: 8px;
+  background: var(--kolor-karta);
+}
+
+.praktyki-usuwane__rok,
+.praktyki-usuwane__data {
+  font-weight: 700;
+  color: var(--kolor-tekst);
+}
+
+.praktyki-usuwane__glowne {
+  min-width: 0;
+}
+
+@media (max-width: 760px) {
+  .praktyki-usuwane__wiersz {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+}

@@ -37,7 +37,7 @@ def _check_company_uniqueness(form, exclude_id=None) -> str | None:
     return None
 
 
-@zarzadzanie_bp.route('/firmy')
+@zarzadzanie_bp.route('/firmy', methods=['GET'])
 @roles_required(UserRole.ADMIN)
 def lista_firm():
     page = request.args.get('page', 1, type=int)

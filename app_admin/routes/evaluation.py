@@ -26,6 +26,16 @@ evaluation_bp = Blueprint('evaluation', __name__)
 GRADE_FORM_ENDPOINT = 'evaluation.evaluate_internship'
 
 
+def _can_grade(enrollment) -> bool:
+    if current_user.role == UserRole.ADMIN:
+        return True
+    if current_user.role == UserRole.UOPZ:
+        if enrollment.supervisor_id == current_user.id:
+            return True
+        return getattr(enrollment.student, 'supervisor_id', None) == current_user.id
+    return False
+
+
 def get_pilne_oceny(uopz_id=None):
     return GradingService.get_pilne_oceny(uopz_id)
 
@@ -33,7 +43,6 @@ def get_pilne_oceny(uopz_id=None):
 @evaluation_bp.route('/', methods=['GET'])
 @login_required
 def lista_ocen():
-    GradingService.auto_complete_internships()
     supervisor_id = current_user.id if current_user.role == UserRole.UOPZ else None
     data = GradingService.przygotuj_liste_ocen(supervisor_id=supervisor_id, filtr=request.args.get('filtr'))
     return render_template(
@@ -44,10 +53,25 @@ def lista_ocen():
     )
 
 
+@evaluation_bp.route('/auto-zakoncz', methods=['POST'])
+@roles_required(UserRole.ADMIN)
+def auto_zakoncz_praktyki():
+    """Endpoint for scheduled auto-completion of internships past their end date."""
+    result = GradingService.auto_complete_internships()
+    return {'completed': result['completed'], 'skipped': result['skipped']}, 200
+
+
 @evaluation_bp.route('/zapis/<uuid:id>/karta_ocen', methods=['GET', 'POST'])
 @roles_required(UserRole.ADMIN, UserRole.UOPZ)
 def evaluate_internship(id):
     enrollment = enrollment_repository.znajdz_po_id(id) or abort(404)
+    if not _can_grade(enrollment):
+        abort(403)
+    outcomes = outcome_repository.wszystkie()
+    existing_assessments = {
+        str(assessment.learning_outcome_id): assessment
+        for assessment in assessment_repository.get_by_enrollment(id)
+    }
 
     if request.method == 'POST':
         try:
@@ -77,6 +101,24 @@ def evaluate_internship(id):
             flash(result.error_message, 'danger')
             return redirect(url_for(GRADE_FORM_ENDPOINT, id=enrollment.id))
 
+        outcome_error = EvaluationService.waliduj_efekty_ocen(
+            outcomes, request.form, enrollment.is_path_b, grade_data.finalize
+        )
+        if outcome_error:
+            db.session.rollback()
+            flash(outcome_error, 'danger')
+            return redirect(url_for(GRADE_FORM_ENDPOINT, id=enrollment.id))
+
+        for outcome in outcomes:
+            notes = request.form.get(f'notes_{outcome.id}', '').strip()
+            EvaluationService.upsert_assessment(
+                outcome,
+                request.form.get(f'outcome_{outcome.id}'),
+                notes,
+                existing_assessments,
+                enrollment.id,
+            )
+
         db.session.commit()
         if grade_data.finalize:
             flash('Oceny zostały zatwierdzone.', 'success')
@@ -92,6 +134,8 @@ def evaluate_internship(id):
         practically=enrollment,
         pracownicy=staff,
         csrf_form=csrf_form,
+        efekty=outcomes,
+        istniejace=existing_assessments,
     )
 
 
@@ -99,6 +143,8 @@ def evaluate_internship(id):
 @roles_required(UserRole.ADMIN, UserRole.UOPZ)
 def podglad_sprawozdania(id):
     enrollment = enrollment_repository.znajdz_po_id(id) or abort(404)
+    if not _can_grade(enrollment):
+        abort(403)
     return render_template('evaluation/podglad_sprawozdania.html', zapis=enrollment)
 
 
@@ -106,6 +152,8 @@ def podglad_sprawozdania(id):
 @roles_required(UserRole.ADMIN, UserRole.UOPZ)
 def ocen_zapis(id):
     enrollment = enrollment_repository.znajdz_po_id(id) or abort(404)
+    if not _can_grade(enrollment):
+        abort(403)
     outcomes = outcome_repository.wszystkie()
 
     existing_assessments = {
@@ -139,6 +187,8 @@ def ocen_zapis(id):
 @roles_required(UserRole.ADMIN, UserRole.UOPZ)
 def zakoncz_zapis(id):
     enrollment = enrollment_repository.znajdz_po_id(id) or abort(404)
+    if not _can_grade(enrollment):
+        abort(403)
     ZapisFSM(enrollment).zakoncz()
     db.session.commit()
     flash(
@@ -153,13 +203,15 @@ def zakoncz_zapis(id):
 def generuj_protokol(id):
     """Generates the exam protocol PDF through tex-service."""
     enrollment = enrollment_repository.znajdz_po_id(id) or abort(404)
+    if not _can_grade(enrollment):
+        abort(403)
     if not (enrollment.final_grades and enrollment.final_grades.supervisor_grade):
         flash('Protokół dostępny dopiero po wystawieniu oceny UOPZ.', 'warning')
         return redirect(url_for(GRADE_FORM_ENDPOINT, id=id))
 
     context = build_context(enrollment, 'ZAL_8')
     student = enrollment.student
-    tex_url = current_app.config.get('TEX_SERVICE_URL', 'http://tex-service:5002')
+    tex_url = current_app.config['TEX_SERVICE_URL']
     try:
         response = httpx.post(
             f'{tex_url}/generuj',

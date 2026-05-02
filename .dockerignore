@@ -1,0 +1,63 @@
+# Secrets and credentials
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+secrets/
+secrets.json
+
+# Version control
+.git
+.gitignore
+.gitattributes
+
+# SonarQube
+.sonarqube/
+sonar-project.properties
+sonar-scan.ps1
+
+# Development tools and IDE
+.vscode/
+.idea/
+*.iml
+.editorconfig
+
+# Python cache and build artifacts
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+build/
+.eggs/
+.tox/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Test artifacts
+.pytest_cache/
+htmlcov/
+.coverage
+coverage.xml
+
+# Local documentation
+*.pdf
+dokumentacja_kodu.pdf
+pliki_originalne.pdf
+
+# Docker files (not needed inside container)
+docker-compose.yml
+docker-compose.*.yml
+docker-stack.yml
+**/Dockerfile
+
+# OS artifacts
+.DS_Store
+Thumbs.db

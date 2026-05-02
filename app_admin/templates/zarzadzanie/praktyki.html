@@ -98,46 +98,41 @@
 </div>
 
 {% if do_usuniecia %}
-<div class="karta u-mt-2 u-csp-257">
-  <div class="karta__naglowek u-csp-258">
-    <h2 class="karta__tytul u-csp-259">Oczekujące na trwałe usunięcie</h2>
-    <span class="u-meta">Zostaną automatycznie usunięte po 7 dniach od dezaktywacji</span>
+<div class="karta u-mt-2 praktyki-usuwane">
+  <div class="karta__naglowek praktyki-usuwane__naglowek">
+    <div>
+      <h2 class="karta__tytul">Oczekujące na trwałe usunięcie</h2>
+      <p class="praktyki-usuwane__opis">Zostaną automatycznie usunięte po 7 dniach od dezaktywacji.</p>
+    </div>
   </div>
-  <div class="tabela-wrapper">
-    <table class="tabela">
-      <thead>
-        <tr>
-          <th>Rok uczelniany</th>
-          <th>Semestr</th>
-          <th>Dezaktywowana</th>
-          <th>Usunięcie za</th>
-          <th><span class="sr-only">Akcje</span></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for p in do_usuniecia %}
-        {% set dni_pozostale = ((p.deleted_at.timestamp() + 7*86400 - now().timestamp()) / 86400) | int %}
-        <tr>
-          <td class="u-fw-500">{{ p.academic_year }}</td>
-          <td>{{ p.semester_label }}</td>
-          <td>{{ p.deleted_at.strftime('%d.%m.%Y %H:%M') }}</td>
-          <td>
-            {% if dni_pozostale <= 1 %}
-              <span class="u-tekst-blad u-fw-600">dziś / jutro</span>
-            {% else %}
-              <span class="u-csp-260">{{ dni_pozostale }} dni</span>
-            {% endif %}
-          </td>
-          <td>
-            <form class="u-csp-006" method="POST" action="{{ url_for('zarzadzanie.przywroc_praktyke', id=p.id) }}">
-              {{ csrf_form.hidden_tag() }}
-              <button type="submit" class="przycisk przycisk--drugorzedny przycisk--maly">Przywróć</button>
-            </form>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  <div class="karta__tresc">
+    <div class="praktyki-usuwane__lista">
+      {% for p in do_usuniecia %}
+      {% set dni_pozostale = ((p.deleted_at.timestamp() + 7*86400 - now().timestamp()) / 86400) | int %}
+      <div class="praktyki-usuwane__wiersz">
+        <div class="praktyki-usuwane__glowne">
+          <div class="praktyki-usuwane__rok">{{ p.academic_year }}</div>
+          <div class="u-meta">{{ p.semester_label }}</div>
+        </div>
+        <div>
+          <div class="u-etykieta">Dezaktywowana</div>
+          <div class="praktyki-usuwane__data">{{ p.deleted_at.strftime('%d.%m.%Y %H:%M') }}</div>
+        </div>
+        <div>
+          <div class="u-etykieta">Usunięcie za</div>
+          {% if dni_pozostale <= 1 %}
+            <span class="status u-status-danger">dziś / jutro</span>
+          {% else %}
+            <span class="status u-status-warning">{{ dni_pozostale }} dni</span>
+          {% endif %}
+        </div>
+        <form class="u-csp-006" method="POST" action="{{ url_for('zarzadzanie.przywroc_praktyke', id=p.id) }}">
+          {{ csrf_form.hidden_tag() }}
+          <button type="submit" class="przycisk przycisk--drugorzedny przycisk--maly">Przywróć</button>
+        </form>
+      </div>
+      {% endfor %}
+    </div>
   </div>
 </div>
 {% endif %}

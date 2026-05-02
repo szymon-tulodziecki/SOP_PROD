@@ -15,27 +15,21 @@
   {# ── Karta identyfikacyjna ── #}
   {% set status_val = zapis.status.value %}
   {% if status_val == 'COMMISSION_REVIEW' %}
-    {% set border_color = '#3b82f6' %}
     {% set status_cls = 'status--planned' %}
     {% set status_label = 'Do rozpatrzenia przez komisję' %}
   {% elif status_val == 'REVISION_REQUIRED' %}
-    {% set border_color = '#dc2626' %}
     {% set status_cls = 'status--odrzucona' %}
     {% set status_label = 'Czeka na poprawki studenta' %}
   {% elif status_val == 'AWAITING_APPROVAL' %}
-    {% set border_color = 'var(--kolor-akcent)' %}
     {% set status_cls = 'status--in-progress' %}
     {% set status_label = 'Zwrócone do uzupełnienia' %}
   {% elif status_val == 'DIRECTOR_APPROVAL' %}
-    {% set border_color = 'var(--kolor-glowny)' %}
     {% set status_cls = 'status--planned' %}
     {% set status_label = 'Przekazane do Dyrektora' %}
   {% elif status_val == 'IN_PROGRESS' %}
-    {% set border_color = 'var(--kolor-sukces)' %}
     {% set status_cls = 'status--completed' %}
     {% set status_label = 'Zatwierdzona — w realizacji' %}
   {% else %}
-    {% set border_color = 'var(--kolor-ramka)' %}
     {% set status_cls = 'status--draft' %}
     {% set status_label = status_val %}
   {% endif %}
@@ -56,6 +50,9 @@
           <div class="u-meta u-csp-106">{{ zapis.student.email }}</div>
           {% if zapis.student.album_number %}
           <div class="u-fs-xs u-tekst-trzeciorzed">nr alb. {{ zapis.student.album_number }}</div>
+          {% endif %}
+          {% if zapis.specialization or zapis.student.specialization %}
+          <div class="u-fs-xs u-tekst-trzeciorzed">Specjalność: {{ zapis.specialization or zapis.student.specialization }}</div>
           {% endif %}
         </div>
         <div>
@@ -112,7 +109,7 @@
             </div>
             <div class="pole-info">
               <div class="pole-info__etykieta">Specjalność</div>
-              <div class="pole-info__wartosc">{{ zapis.specialization or '—' }}</div>
+              <div class="pole-info__wartosc">{{ zapis.specialization or zapis.student.specialization or '—' }}</div>
             </div>
           </div>
         </div>
@@ -179,60 +176,71 @@
       {% if form_active %}
       <div class="karta">
         <div class="karta__naglowek">
-          <h3 class="karta__tytul">Weryfikacja efektów uczenia się <span class="u-fs-xs u-fw-500 u-tekst-trzeciorzed">Załącznik nr 4a</span></h3>
+          <h3 class="karta__tytul">Weryfikacja efektów uczenia się (Załącznik nr 4a)</h3>
+          <span class="u-tekst-trzeciorzed u-csp-060">Komisja potwierdza realizację efektów dla wniosku o uznanie efektów uczenia się. Przy wyniku „Częściowo” wymagane jest uzasadnienie.</span>
         </div>
         <div class="karta__tresc u-p-0">
-          <table class="tabela-efektow">
-            <thead>
-              <tr>
-                <th class="u-csp-112">Nr</th>
-                <th>Efekt uczenia się</th>
-                <th class="u-csp-203">Uzyskał/a</th>
-                <th class="u-csp-113">Częściowo</th>
-                <th class="u-csp-204">Nie uzyskał/a</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for efekt in efekty %}
-              {% set ev = istniejace.get(efekt.id) %}
-              <tr>
-                <td class="nr-efektu">{{ efekt.kod }}</td>
-                <td class="u-fs-sm u-lh-15 u-tekst">{{ efekt.opis }}</td>
-                <td class="radio-cell">
-                  <input type="radio" name="outcome_{{ efekt.id }}" value="ACHIEVED"
-                         class="radio-efekt" data-outcome="{{ efekt.id }}"
-                         {% if ev and ev.result.value == 'ACHIEVED' %}checked{% endif %}
-                         required>
-                </td>
-                <td class="radio-cell">
-                  <input type="radio" name="outcome_{{ efekt.id }}" value="PARTIALLY_ACHIEVED"
-                         class="radio-efekt" data-outcome="{{ efekt.id }}"
-                         {% if ev and ev.result.value == 'PARTIALLY_ACHIEVED' %}checked{% endif %}>
-                </td>
-                <td class="radio-cell">
-                  <input type="radio" name="outcome_{{ efekt.id }}" value="NOT_ACHIEVED"
-                         class="radio-efekt" data-outcome="{{ efekt.id }}"
-                         {% if ev and ev.result.value == 'NOT_ACHIEVED' %}checked{% endif %}>
-                </td>
-              </tr>
-              <tr id="notes_row_{{ efekt.id }}"
-                  class="u-row-notes {% if not (ev and ev.result.value == 'PARTIALLY_ACHIEVED') %}u-row-hidden{% endif %}">
-                <td></td>
-                <td class="u-csp-205" colspan="4">
-                  <label class="u-csp-206">
-                    Uzasadnienie (wymagane)
-                  </label>
-                  <textarea name="notes_{{ efekt.id }}"
-                            class="pole-formularza__textarea u-csp-207"
-                            rows="2"
-                            placeholder="Opisz, w jakim zakresie efekt został częściowo uzyskany…"
-
-                            {% if ev and ev.result.value == 'PARTIALLY_ACHIEVED' %}required{% endif %}>{% if ev and ev.notes %}{{ ev.notes }}{% endif %}</textarea>
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+          <div class="tabela-wrapper">
+            <table class="tabela tabela-efekty-zal4 tabela-efekty-zal4--komisja">
+              <thead>
+                <tr>
+                  <th class="u-csp-052">Kod</th>
+                  <th>Efekt uczenia się</th>
+                  <th class="u-ta-center">Uzyskał/a</th>
+                  <th class="u-ta-center">Częściowo</th>
+                  <th class="u-ta-center">Nie uzyskał/a</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for efekt in efekty %}
+                {% set ev = istniejace.get(efekt.id) %}
+                <tr>
+                  <td><strong>{{ efekt.kod }}</strong></td>
+                  <td class="u-fs-sm u-lh-15">{{ efekt.opis }}</td>
+                  <td class="u-ta-center">
+                    <label class="zal4-radio">
+                      <input type="radio" name="outcome_{{ efekt.id }}" value="ACHIEVED"
+                             class="radio-efekt" data-outcome="{{ efekt.id }}"
+                             {% if ev and ev.result.value == 'ACHIEVED' %}checked{% endif %}
+                             required>
+                      <span>Uzyskał/a</span>
+                    </label>
+                  </td>
+                  <td class="u-ta-center">
+                    <label class="zal4-radio">
+                      <input type="radio" name="outcome_{{ efekt.id }}" value="PARTIALLY_ACHIEVED"
+                             class="radio-efekt" data-outcome="{{ efekt.id }}"
+                             {% if ev and ev.result.value == 'PARTIALLY_ACHIEVED' %}checked{% endif %}>
+                      <span>Częściowo</span>
+                    </label>
+                  </td>
+                  <td class="u-ta-center">
+                    <label class="zal4-radio">
+                      <input type="radio" name="outcome_{{ efekt.id }}" value="NOT_ACHIEVED"
+                             class="radio-efekt" data-outcome="{{ efekt.id }}"
+                             {% if ev and ev.result.value == 'NOT_ACHIEVED' %}checked{% endif %}>
+                      <span>Nie uzyskał/a</span>
+                    </label>
+                  </td>
+                </tr>
+                <tr id="notes_row_{{ efekt.id }}"
+                    class="u-row-notes {% if not (ev and ev.result.value == 'PARTIALLY_ACHIEVED') %}u-row-hidden{% endif %}">
+                  <td></td>
+                  <td class="u-csp-205" colspan="4">
+                    <label class="pole-formularza__etykieta u-csp-206">
+                      Uzasadnienie dla wyniku „Częściowo” (wymagane)
+                    </label>
+                    <textarea name="notes_{{ efekt.id }}"
+                              class="pole-formularza__textarea u-csp-207"
+                              rows="2"
+                              placeholder="Opisz, w jakim zakresie efekt został częściowo uzyskany."
+                              {% if ev and ev.result.value == 'PARTIALLY_ACHIEVED' %}required{% endif %}>{% if ev and ev.notes %}{{ ev.notes }}{% endif %}</textarea>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
       {% endif %}
@@ -352,24 +360,8 @@
 
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-  document.querySelectorAll('.radio-efekt').forEach(function (radio) {
-    radio.addEventListener('change', function () {
-      var outcomeId  = this.dataset.outcome;
-      var notesRow   = document.getElementById('notes_row_' + outcomeId);
-      var isPartial  = this.value === 'PARTIALLY_ACHIEVED';
-      if (notesRow) {
-        notesRow.style.display = isPartial ? 'table-row' : 'none';
-        var ta = notesRow.querySelector('textarea');
-        if (ta) {
-          ta.required = isPartial;
-          if (!isPartial) ta.value = '';
-        }
-      }
-    });
-  });
-});
-</script>
+{% endblock %}
 
+{% block scripts_extra %}
+<script src="{{ url_for('static', filename='js/komisja_weryfikuj.js', v='20260502-2') }}"></script>
 {% endblock %}

@@ -16,6 +16,41 @@ def _check_enrollment_requires_action(enrollments) -> bool:
     return False
 
 
+def _build_enrollment_context() -> dict:
+    from flask_login import current_user
+    from core.modele import EnrollmentStatus
+    from core.repozytoria import EnrollmentRepository
+    info = {'is_active': False, 'path_type': None, 'status': None}
+    requires_attention = False
+    try:
+        if current_user.is_authenticated:
+            _repo = EnrollmentRepository()
+            z = _repo.aktywny_dla_studenta(current_user.id, [
+                EnrollmentStatus.IN_PROGRESS, EnrollmentStatus.COMPLETED,
+                EnrollmentStatus.COMMISSION_REVIEW, EnrollmentStatus.DIRECTOR_APPROVAL,
+                EnrollmentStatus.AWAITING_APPROVAL, EnrollmentStatus.REVISION_REQUIRED,
+            ])
+            if z:
+                info = {
+                    'is_active': True,
+                    'path_type': z.track_type.value if z.track_type else 'STANDARD',
+                    'status': z.status.value,
+                }
+            zapisy_do_sprawdzenia = _repo.aktywne_dla_studenta(current_user.id, [
+                EnrollmentStatus.PENDING,
+                EnrollmentStatus.AWAITING_APPROVAL,
+                EnrollmentStatus.REVISION_REQUIRED,
+                EnrollmentStatus.REJECTED,
+            ])
+            requires_attention = _check_enrollment_requires_action(zapisy_do_sprawdzenia)
+    except Exception:
+        pass
+    return {
+        'active_enrollment_info': info,
+        'nav_requires_attention': requires_attention,
+    }
+
+
 def create_app():
     from pathlib import Path as _Path
     from flask import Blueprint as _Blueprint, Response
@@ -38,13 +73,14 @@ def create_app():
 
     db.init_app(app)
     login_manager.init_app(app)
+    login_manager.session_protection = 'strong'
     csrf.init_app(app)
     limiter.init_app(app)
     register_error_handlers(app)
     from core.security import configure_security_headers
     configure_security_headers(app)
 
-    @app.route('/assets/student.css', endpoint='student_css_bundle')
+    @app.route('/assets/student.css', endpoint='student_css_bundle', methods=['GET'])
     def student_css_bundle():
         css_root = _Path(__file__).parent.parent / 'core' / 'static' / 'css' / 'modul'
         local_css = _Path(__file__).parent / 'static' / 'css' / 'student.css'
@@ -67,7 +103,15 @@ def create_app():
             parts.append((css_root / module_name).read_text(encoding='utf-8'))
         parts.append(local_css.read_text(encoding='utf-8'))
 
-        response = Response('\n'.join(parts), mimetype='text/css')
+        from flask import request as _req
+        import gzip as _gzip
+        raw = '\n'.join(parts).encode('utf-8')
+        if 'gzip' in _req.headers.get('Accept-Encoding', ''):
+            body = _gzip.compress(raw, compresslevel=6)
+            response = Response(body, mimetype='text/css')
+            response.headers['Content-Encoding'] = 'gzip'
+        else:
+            response = Response(raw, mimetype='text/css')
         response.cache_control.public = True
         response.cache_control.max_age = 31536000
         response.cache_control.immutable = True
@@ -113,40 +157,7 @@ def create_app():
         app.register_blueprint(uploads_bp,    url_prefix='/uploads')
 
     # Kontekst globalny: informacje o aktywnym zapisie studenta
-    @app.context_processor
-    def inject_active_enrollment_context():
-        from flask_login import current_user
-        from core.modele import EnrollmentStatus
-        from core.repozytoria import EnrollmentRepository
-        info = {'is_active': False, 'path_type': None, 'status': None}
-        requires_attention = False
-        try:
-            if current_user.is_authenticated:
-                _repo = EnrollmentRepository()
-                z = _repo.aktywny_dla_studenta(current_user.id, [
-                    EnrollmentStatus.IN_PROGRESS, EnrollmentStatus.COMPLETED,
-                    EnrollmentStatus.COMMISSION_REVIEW, EnrollmentStatus.DIRECTOR_APPROVAL,
-                    EnrollmentStatus.AWAITING_APPROVAL, EnrollmentStatus.REVISION_REQUIRED,
-                ])
-                if z:
-                    info = {
-                        'is_active': True,
-                        'path_type': z.track_type.value if z.track_type else 'STANDARD',
-                        'status': z.status.value,
-                    }
-                zapisy_do_sprawdzenia = _repo.aktywne_dla_studenta(current_user.id, [
-                    EnrollmentStatus.PENDING,
-                    EnrollmentStatus.AWAITING_APPROVAL,
-                    EnrollmentStatus.REVISION_REQUIRED,
-                    EnrollmentStatus.REJECTED,
-                ])
-                requires_attention = _check_enrollment_requires_action(zapisy_do_sprawdzenia)
-        except Exception:
-            pass
-        return {
-            'active_enrollment_info': info,
-            'nav_requires_attention': requires_attention,
-        }
+    app.context_processor(_build_enrollment_context)
 
     # Dodaj funkcje pomocnicze do szablonów
     @app.template_global()

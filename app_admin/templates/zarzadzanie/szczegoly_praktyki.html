@@ -10,7 +10,7 @@
   <a href="{{ url_for('evaluation.evaluate_internship', id=praktyka.id) }}" class="przycisk przycisk--glowny">Oceń / Egzaminuj</a>
   <a href="{{ url_for('evaluation.podglad_sprawozdania', id=praktyka.id) }}" class="przycisk przycisk--drugorzedny">Zobacz Sprawozdanie</a>
   <a href="{{ url_for('journal.podglad', id=praktyka.id) }}" class="przycisk przycisk--drugorzedny">Zobacz Dziennik</a>
-  <a href="{{ url_for('documents.panel', id=praktyka.id) }}" class="przycisk przycisk--drugorzedny u-csp-261">📄 Dokumenty (PDF)</a>
+  <a href="{{ url_for('zarzadzanie.dokumenty_studenta', student_id=praktyka.student_id) }}" class="przycisk przycisk--drugorzedny u-csp-261">Dokumenty (PDF)</a>
   {% endif %}
 </div>
 {% endblock %}

@@ -7,8 +7,7 @@
 \geometry{margin=1.5cm}
 \usepackage{longtable}
 \usepackage{array}
-\usepackage{makecell}
-\renewcommand{\arraystretch}{1.5}
+\renewcommand{\arraystretch}{1.45}
 
 \begin{document}
 
@@ -26,6 +25,16 @@ Zał. nr 4
 \vspace{1em}
 
 <<% set jest_kobieta = (student.plec == 'F') %>>
+<<% set wyniki = oceny | selectattr('wynik') | map(attribute='wynik') | list %>>
+<<% if wyniki and 'NOT_ACHIEVED' not in wyniki and 'PARTIALLY_ACHIEVED' not in wyniki %>>
+<<% set wynik_ogolny = 'uzyskała' if jest_kobieta else 'uzyskał' %>>
+<<% elif wyniki and wyniki | select('eq', 'NOT_ACHIEVED') | list | length == wyniki | length %>>
+<<% set wynik_ogolny = 'nie uzyskała' if jest_kobieta else 'nie uzyskał' %>>
+<<% elif wyniki %>>
+<<% set wynik_ogolny = 'uzyskała częściowo' if jest_kobieta else 'uzyskał częściowo' %>>
+<<% else %>>
+<<% set wynik_ogolny = ('uzyskała / nie uzyskała *' if jest_kobieta else 'uzyskał / nie uzyskał *') %>>
+<<% endif %>>
 
 \noindent <<% if jest_kobieta %>>Studentka<<% else %>>Student<<% endif %>>: \textbf{<< student.nazwisko | s >>, << student.imie | s >>} \\
 Nr albumu: \textbf{<< student.numer_albumu | s >>} \\
@@ -34,16 +43,16 @@ Kierunek studiów: \textbf{<< student.kierunek | s >>} \hfill Specjalność: \te
 \vspace{1em}
 \noindent W ramach praktyki zawodowej zrealizowanej w wymiarze
 \textbf{<< lacznie_godzin | num >>} godzin
-<<% if jest_kobieta %>>uzyskała / nie uzyskała *<<% else %>>uzyskał / nie uzyskał *<<% endif %>> zakładane efekty uczenia się:
+\textbf{<< wynik_ogolny | s >>} zakładane efekty uczenia się:
 
 \vspace{1em}
 
-\begin{longtable}{|c|p{11cm}|c|}
+\begin{longtable}{|>{\centering\arraybackslash}p{1.1cm}|p{10.3cm}|>{\centering\arraybackslash}p{3.2cm}|}
 \hline
-\textbf{Lp.} & \textbf{Efekty uczenia się} & \textbf{Potwierdzenie} \\ \hline
+\textbf{Lp.} & \textbf{Efekty uczenia się} & \textbf{Potwierdzenie uzyskania efektów} \\ \hline
 \endfirsthead
 \hline
-\textbf{Lp.} & \textbf{Efekty uczenia się} & \textbf{Potwierdzenie} \\ \hline
+\textbf{Lp.} & \textbf{Efekty uczenia się} & \textbf{Potwierdzenie uzyskania efektów} \\ \hline
 \endhead
 \hline \endfoot
 \hline \endlastfoot
@@ -51,23 +60,22 @@ Kierunek studiów: \textbf{<< student.kierunek | s >>} \hfill Specjalność: \te
 <<% for ocena in oceny %>>
 \textbf{<< "%02d"|format(ocena.efekt.id) >>} &
 << ocena.efekt.opis | s >> &
-\makecell{
-<<% if ocena.wynik is none %>>
-  <<% if jest_kobieta %>>uzyskała / nie uzyskała *<<% else %>>uzyskał / nie uzyskał *<<% endif %>>
-<<% elif ocena.wynik == 'ACHIEVED' %>>
-  \textbf{<<% if jest_kobieta %>>uzyskała<<% else %>>uzyskał<<% endif %>>} \\ <<% if jest_kobieta %>>nie uzyskała *<<% else %>>nie uzyskał *<<% endif %>>
+<<% if ocena.wynik == 'ACHIEVED' %>>
+\textbf{<<% if jest_kobieta %>>uzyskała<<% else %>>uzyskał<<% endif %>>}
 <<% elif ocena.wynik == 'PARTIALLY_ACHIEVED' %>>
-  <<% if jest_kobieta %>>uzyskała<<% else %>>uzyskał<<% endif %>> \\ \textbf{częściowo} *
+\textbf{<<% if jest_kobieta %>>uzyskała częściowo<<% else %>>uzyskał częściowo<<% endif %>>}
+<<% elif ocena.wynik == 'NOT_ACHIEVED' %>>
+\textbf{<<% if jest_kobieta %>>nie uzyskała<<% else %>>nie uzyskał<<% endif %>>}
 <<% else %>>
-  <<% if jest_kobieta %>>uzyskała *<<% else %>>uzyskał *<<% endif %>> \\ \textbf{<<% if jest_kobieta %>>nie uzyskała<<% else %>>nie uzyskał<<% endif %>>}
+<<% if jest_kobieta %>>uzyskała / nie uzyskała *<<% else %>>uzyskał / nie uzyskał *<<% endif %>>
 <<% endif %>>
-} \\ \hline
+\\ \hline
 <<% endfor %>>
 
 \end{longtable}
 
 \vspace{1em}
-\noindent {\footnotesize * niewłaściwe skreślić}
+
 
 \vspace{2em}
 \noindent \textbf{Uwagi UOPZ:} \\[0.5em]

@@ -88,11 +88,14 @@ def index():
         LogbookEntryDTO.from_model(entry)
         for entry in _repo_wpisow.get_by_enrollment(zapis.id, start_date=data_od, end_date=data_do)
     ]
+    liczba_wpisow_ogolem, godziny_ogolem = _repo_wpisow.statystyki_dla_zapisu(zapis.id)
     csrf_form = FlaskForm()
-    entries_progress_percent = min(int(len(wpisy) / 120 * 100), 100)
+    entries_progress_percent = min(int(liczba_wpisow_ogolem / 120 * 100), 100)
     return render_template('dziennik/index.html', zapis=zapis, wpisy=wpisy,
                            jakikolwiek=zapis, csrf_form=csrf_form,
                            data_od=data_od, data_do=data_do,
+                           liczba_wpisow_ogolem=liczba_wpisow_ogolem,
+                           godziny_ogolem=godziny_ogolem,
                            entries_progress_percent=entries_progress_percent)
 
 

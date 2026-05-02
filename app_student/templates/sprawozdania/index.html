@@ -45,7 +45,7 @@
 
     <div class="karta u-csp-011">
       <div class="karta__naglowek">
-        <h2 class="karta__tytul">{{ form.work_description.label.text if is_standard else form.duties_scope.label.text }}</h2>
+        <h2 class="karta__tytul">{{ form.work_description.label.text if is_standard else form.work_analysis.label.text }}</h2>
       </div>
       <div class="karta__tresc">
         <p class="u-csp-369">
@@ -57,12 +57,8 @@
           {% for e in form.work_description.errors %}<span class="form-field__error">{{ e }}</span>{% endfor %}
         </div>
         {% else %}
-        <div class="form-field {% if form.duties_scope.errors %}form-field--error{% endif %}">
-          {{ form.duties_scope(class="form-field__input u-textarea-resize", rows="4", placeholder="Tutaj wpisz zakres obowiązków...") }}
-          {% for e in form.duties_scope.errors %}<span class="form-field__error">{{ e }}</span>{% endfor %}
-        </div>
         <div class="form-field {% if form.work_analysis.errors %}form-field--error{% endif %}">
-          {{ form.work_analysis(class="form-field__input u-textarea-resize", rows="6", placeholder="Tutaj wpisz analizę prac...") }}
+          {{ form.work_analysis(class="form-field__input u-textarea-resize", rows="6", placeholder="Tutaj wpisz sekcję II...") }}
           {% for e in form.work_analysis.errors %}<span class="form-field__error">{{ e }}</span>{% endfor %}
         </div>
         {% endif %}

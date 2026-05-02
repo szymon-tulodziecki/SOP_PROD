@@ -31,7 +31,7 @@ _MIME_PDF = 'application/pdf'
 
 
 def _get_tex_url() -> str:
-    return current_app.config.get('TEX_SERVICE_URL', 'http://tex-service:5002')
+    return current_app.config['TEX_SERVICE_URL']
 
 
 # ── Lista dokumentów studenta ─────────────────────────────────────────────────

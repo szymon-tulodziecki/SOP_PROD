@@ -21,7 +21,7 @@ enrollment_repository = EnrollmentRepository()
 
 
 def _get_tex_url() -> str:
-    return current_app.config.get('TEX_SERVICE_URL', 'http://tex-service:5002')
+    return current_app.config['TEX_SERVICE_URL']
 
 
 def _track_name(enrollment) -> str:
@@ -40,7 +40,7 @@ def _pdf_content_disposition(base_name: str, last_name: str) -> str:
     return f"attachment; filename=\"{ascii_fallback}\"; filename*=UTF-8''{utf8_encoded}"
 
 
-@zarzadzanie_bp.route('/dokumenty')
+@zarzadzanie_bp.route('/dokumenty', methods=['GET'])
 @login_required
 def dokumenty_studentow():
     page = request.args.get('strona', 1, type=int)
@@ -88,7 +88,7 @@ def dokumenty_studentow():
     )
 
 
-@zarzadzanie_bp.route('/dokumenty/student/<uuid:student_id>')
+@zarzadzanie_bp.route('/dokumenty/student/<uuid:student_id>', methods=['GET'])
 @login_required
 def dokumenty_studenta(student_id):
     student = user_repository.find_by_id(student_id) or abort(404)
@@ -126,7 +126,7 @@ def dokumenty_studenta(student_id):
     )
 
 
-@zarzadzanie_bp.route('/dokumenty/pobierz/<uuid:zapis_id>/<typ>')
+@zarzadzanie_bp.route('/dokumenty/pobierz/<uuid:zapis_id>/<typ>', methods=['GET'])
 @login_required
 def dokumenty_pobierz(zapis_id, typ):
     if typ not in DOC_CONFIG:
@@ -160,7 +160,7 @@ def dokumenty_pobierz(zapis_id, typ):
         abort(500)
 
 
-@zarzadzanie_bp.route('/dokumenty/staly/<klucz>')
+@zarzadzanie_bp.route('/dokumenty/staly/<klucz>', methods=['GET'])
 @login_required
 def dokumenty_pobierz_staly(klucz):
     if klucz not in STATIC_TEMPLATES:

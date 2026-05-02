@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 BROKER_URL      = os.environ['CELERY_BROKER_URL']
 RESULT_URL      = os.environ['CELERY_RESULT_BACKEND']
 PDF_OUTPUT_DIR  = os.environ.get('PDF_OUTPUT_DIR', '/app/pdf_output')
-TEX_SERVICE_URL = os.environ.get('TEX_SERVICE_URL', 'http://tex-service:5002')
+TEX_SERVICE_URL = os.environ['TEX_SERVICE_URL']
 
 from core.secrets import get_database_url as _get_database_url, get_secret as _get_secret
 
@@ -56,6 +56,10 @@ celery.conf.update(
             'task': 'cleanup_deleted_internships',
             'schedule': 86400.0,  # raz na dobę
         },
+        'auto-complete-internships': {
+            'task': 'auto_complete_internships',
+            'schedule': 3600.0,   # co godzinę
+        },
     },
 )
 
@@ -69,6 +73,9 @@ def _create_worker_app() -> Flask:
     przez sygnał worker_process_init.
     """
     app = Flask(__name__)
+    # CSRF not needed: this app context is used only by Celery workers, never
+    # serves HTTP requests from users, so there are no forms to protect.
+    app.config['WTF_CSRF_ENABLED'] = False
     app.config['SQLALCHEMY_DATABASE_URI'] = _get_database_url()
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     # QueuePool: pula utrzymywana per-proces, odbudowywana po fork() via dispose.
@@ -307,3 +314,15 @@ def generate_pdf_from_template(self, template_name: str, context: dict,
         'path':     str(output_path),
         'filename': filename,
     }
+
+
+@celery.task(name='auto_complete_internships')
+def auto_complete_internships_task() -> dict:
+    """Automatycznie zamyka praktyki z przekroczonym terminem i wymaganą liczbą godzin."""
+    from core.uslugi.evaluation import SerwisOceniania
+    result = SerwisOceniania.auto_complete_internships()
+    logger.info(
+        "auto_complete_internships: zakończono %d, pominięto %d",
+        result['completed'], result['skipped'],
+    )
+    return result

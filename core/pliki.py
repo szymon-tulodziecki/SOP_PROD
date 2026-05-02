@@ -33,7 +33,7 @@ _repo_docs        = StudentDocumentRepository()
 
 # ── Fileserver ────────────────────────────────────────────────────────────────
 
-FILESERVER_URL = os.environ.get('FILESERVER_URL', 'http://fileserver:5003')
+FILESERVER_URL = os.environ['FILESERVER_URL']
 FILESERVER_KEY = get_secret('fileserver_api_key')
 
 

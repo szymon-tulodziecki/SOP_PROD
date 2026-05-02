@@ -65,9 +65,29 @@ class EvaluationService:
         if not value or not value.strip():
             return None
         try:
-            return float(value.strip().replace(',', '.'))
+            grade = float(value.strip().replace(',', '.'))
         except (ValueError, AttributeError):
             raise ValueError(f'Nieprawidłowa wartość oceny: {value!r}')
+        if grade < 2 or grade > 5:
+            raise ValueError('Ocena musi być z zakresu 2.0-5.0.')
+        if abs(grade * 2 - round(grade * 2)) > 0.001:
+            raise ValueError('Ocena musi być podana co 0.5, np. 3.0, 3.5 albo 4.0.')
+        return grade
+
+    @staticmethod
+    def waliduj_efekty_ocen(outcomes, form_data: dict, is_path_b: bool, finalize: bool) -> str | None:
+        """Waliduje wyniki efektów z formularza. Zwraca komunikat błędu lub None."""
+        if not is_path_b:
+            for outcome in outcomes:
+                if form_data.get(f'outcome_{outcome.id}') == 'PARTIALLY_ACHIEVED':
+                    return (
+                        f'Efekt {outcome.kod}: w ścieżce A wybierz tylko "uzyskał/a" albo "nie uzyskał/a".'
+                    )
+        if finalize and not is_path_b:
+            missing = [o.kod for o in outcomes if not form_data.get(f'outcome_{o.id}')]
+            if missing:
+                return f'Nie można zakończyć - uzupełnij efekty uczenia się: {", ".join(missing)}.'
+        return None
 
     @staticmethod
     def upsert_assessment(outcome, result_str, notes, existing_assessments, enrollment_id) -> None:

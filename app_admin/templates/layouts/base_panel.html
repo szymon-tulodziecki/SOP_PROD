@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
   <meta name="description" content="Panel administracyjny — System Praktyk Zawodowych IIS ANS Elbląg">
   <title>{% block tytul %}Panel{% endblock %} — IIS ANS Elbląg</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css', v='20260430-23') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css', v='20260502-1') }}">
   {% block head_extra %}{% endblock %}
 </head>
 <body class="panel-body">
@@ -78,11 +78,13 @@
         </a>
       </li>
       {% endif %}
+      {% if current_user.is_authenticated and current_user.role and current_user.role.value in ['ADMIN', 'UOPZ', 'DYREKTOR'] %}
       <li class="sidebar__menu-pozycja">
         <a href="{{ url_for('journal.lista_dziennikow') }}" class="sidebar__link {% if 'journal' in (request.endpoint or '') %}sidebar__link--aktywny{% endif %}" {% if 'journal' in (request.endpoint or '') %}aria-current="page"{% endif %}>
           <span class="sidebar__ikona" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><line x1="9" y1="7" x2="16" y2="7"/><line x1="9" y1="11" x2="16" y2="11"/><line x1="9" y1="15" x2="13" y2="15"/></svg></span> Dzienniki
         </a>
       </li>
+      {% endif %}
       <li class="sidebar__menu-pozycja">
         <a href="{{ url_for('zarzadzanie.dokumenty_studentow') }}" class="sidebar__link {% if 'dokumenty_studentow' in (request.endpoint or '') %}sidebar__link--aktywny{% endif %}" {% if 'dokumenty_studentow' in (request.endpoint or '') %}aria-current="page"{% endif %}>
           <span class="sidebar__ikona" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></span> Dokumenty studentów
@@ -162,6 +164,7 @@
       </div>
     {% endif %}
   {% endwith %}
-  <script src="{{ url_for('static', filename='js/panel_ui.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/panel_ui.js', v='20260430-3') }}"></script>
+  {% block scripts_extra %}{% endblock %}
 </body>
 </html>

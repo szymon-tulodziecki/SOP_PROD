@@ -19,6 +19,7 @@ from flask import (
     abort,
     current_app,
     flash,
+    make_response,
     redirect,
     render_template,
     request,
@@ -26,6 +27,7 @@ from flask import (
     url_for,
 )
 from flask_login import current_user, login_required, login_user, logout_user
+from itsdangerous import BadSignature, URLSafeTimedSerializer
 from sqlalchemy.exc import SQLAlchemyError
 
 from core.extensions import limiter
@@ -36,6 +38,48 @@ user_repository = UserRepository()
 _ROUTE_LOGIN = 'auth.logowanie'
 _ROUTE_DASHBOARD = 'dashboard.index'
 _MS_SCOPES = ['User.Read']
+_OAUTH_COOKIE_MAX_AGE = 600
+
+
+def _oauth_serializer() -> URLSafeTimedSerializer:
+    return URLSafeTimedSerializer(current_app.secret_key, salt='oauth-state')
+
+
+def _oauth_cookie_name(suffix: str) -> str:
+    session_cookie = current_app.config.get('SESSION_COOKIE_NAME', 'session')
+    return f'{session_cookie}_oauth_{suffix}'
+
+
+def _set_oauth_cookie(response, suffix: str, value: str) -> None:
+    response.set_cookie(
+        _oauth_cookie_name(suffix),
+        _oauth_serializer().dumps(value),
+        max_age=_OAUTH_COOKIE_MAX_AGE,
+        secure=current_app.config.get('SESSION_COOKIE_SECURE', False),
+        httponly=True,
+        samesite='Lax',
+    )
+
+
+def _read_oauth_cookie(suffix: str) -> str | None:
+    raw = request.cookies.get(_oauth_cookie_name(suffix))
+    if not raw:
+        return None
+    try:
+        return _oauth_serializer().loads(raw, max_age=_OAUTH_COOKIE_MAX_AGE)
+    except BadSignature:
+        return None
+
+
+def _clear_oauth_cookies(response) -> None:
+    for suffix in ('state', 'next'):
+        response.delete_cookie(_oauth_cookie_name(suffix))
+
+
+def _redirect_clearing_oauth(location: str):
+    response = make_response(redirect(location))
+    _clear_oauth_cookies(response)
+    return response
 
 
 def roles_required(*allowed_roles):
@@ -101,27 +145,27 @@ def _resolve_user(ms_email: str, allowed_roles):
 
 def _ms_callback_handler(allowed_roles):
     """Handle the Microsoft OAuth callback."""
-    expected_state = session.pop('oauth_state', None)
+    expected_state = session.pop('oauth_state', None) or _read_oauth_cookie('state')
     if not expected_state or request.args.get('state') != expected_state:
         current_app.logger.warning('OAuth state mismatch; possible CSRF attack')
         flash('Błąd bezpieczeństwa logowania. Spróbuj ponownie.', 'danger')
-        return redirect(url_for(_ROUTE_LOGIN))
+        return _redirect_clearing_oauth(url_for(_ROUTE_LOGIN))
 
     if 'error' in request.args:
         error_desc = request.args.get('error_description', request.args['error'])
         current_app.logger.warning('Microsoft OAuth error: %s', error_desc)
         flash('Logowanie przez Microsoft nie powiodło się.', 'danger')
-        return redirect(url_for(_ROUTE_LOGIN))
+        return _redirect_clearing_oauth(url_for(_ROUTE_LOGIN))
 
     code = request.args.get('code')
     if not code:
         flash('Brak kodu autoryzacyjnego od Microsoft.', 'danger')
-        return redirect(url_for(_ROUTE_LOGIN))
+        return _redirect_clearing_oauth(url_for(_ROUTE_LOGIN))
 
     result = _acquire_token(code)
     if result is None:
         flash('Błąd komunikacji z Microsoft. Spróbuj ponownie.', 'danger')
-        return redirect(url_for(_ROUTE_LOGIN))
+        return _redirect_clearing_oauth(url_for(_ROUTE_LOGIN))
 
     if 'error' in result:
         current_app.logger.warning(
@@ -130,22 +174,24 @@ def _ms_callback_handler(allowed_roles):
             result.get('error_description'),
         )
         flash('Nie udało się uzyskać tokenu od Microsoft.', 'danger')
-        return redirect(url_for(_ROUTE_LOGIN))
+        return _redirect_clearing_oauth(url_for(_ROUTE_LOGIN))
 
     ms_email = (result.get('id_token_claims', {}).get('preferred_username') or '').lower().strip()
     if not ms_email:
         flash('Nie udało się odczytać adresu e-mail z konta Microsoft.', 'danger')
-        return redirect(url_for(_ROUTE_LOGIN))
+        return _redirect_clearing_oauth(url_for(_ROUTE_LOGIN))
 
     user, err = _resolve_user(ms_email, allowed_roles)
     if err:
         flash(err, 'danger')
-        return redirect(url_for(_ROUTE_LOGIN))
+        return _redirect_clearing_oauth(url_for(_ROUTE_LOGIN))
 
+    next_page = session.pop('oauth_next', None) or _read_oauth_cookie('next')
+    session.clear()
     login_user(user, remember=False)
     current_app.logger.info('Microsoft login succeeded: %s (role: %s)', ms_email, user.role)
-    next_page = session.pop('oauth_next', None)
-    return redirect(next_page if next_page and next_page.startswith('/') else url_for(_ROUTE_DASHBOARD))
+    target = next_page if next_page and next_page.startswith('/') else url_for(_ROUTE_DASHBOARD)
+    return _redirect_clearing_oauth(target)
 
 
 def create_auth_blueprint(
@@ -184,7 +230,11 @@ def create_auth_blueprint(
             flash('Błąd konfiguracji logowania. Skontaktuj się z administratorem.', 'danger')
             return redirect(url_for(_ROUTE_LOGIN))
 
-        return redirect(auth_url)
+        response = make_response(redirect(auth_url))
+        _set_oauth_cookie(response, 'state', state)
+        if next_page.startswith('/'):
+            _set_oauth_cookie(response, 'next', next_page)
+        return response
 
     @auth_bp.route('/ms-callback', methods=['GET'])
     @limiter.limit("20 per minute")

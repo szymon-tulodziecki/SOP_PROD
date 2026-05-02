@@ -19,7 +19,7 @@ user_repository = UserRepository()
 USER_LIST_ENDPOINT = 'zarzadzanie.lista_uzytkownikow'
 
 
-@zarzadzanie_bp.route('/uzytkownicy')
+@zarzadzanie_bp.route('/uzytkownicy', methods=['GET'])
 @login_required
 def lista_uzytkownikow():
     page = request.args.get('strona', 1, type=int)

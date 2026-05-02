@@ -3,10 +3,11 @@ import io
 from datetime import date
 
 from flask import Blueprint, abort, render_template, request, send_file
-from flask_login import current_user, login_required
+from flask_login import current_user
 
 from core.modele import UserRole
 from core.repozytoria import EnrollmentRepository, JournalRepository
+from core.autoryzacja import roles_required
 from core.uslugi.journal import JournalService
 
 journal_bp = Blueprint('journal', __name__)
@@ -15,8 +16,16 @@ _repo_enrollments = EnrollmentRepository()
 _repo_entries = JournalRepository()
 
 
+def _uopz_can_access(enrollment) -> bool:
+    if current_user.role != UserRole.UOPZ:
+        return True
+    if enrollment.supervisor_id == current_user.id:
+        return True
+    return getattr(enrollment.student, 'supervisor_id', None) == current_user.id
+
+
 @journal_bp.route('/', methods=['GET'], endpoint='lista_dziennikow')
-@login_required
+@roles_required(UserRole.ADMIN, UserRole.UOPZ, UserRole.DYREKTOR)
 def journal_list():
     search_query = request.args.get('szukaj', '').strip()
     page = request.args.get('strona', 1, type=int)
@@ -46,16 +55,16 @@ def journal_list():
             'alert': alert,
         })
 
-    return render_template('journal/lista.html', dane=rows, paginated_enrollments=paginated_enrollments)
+    return render_template('journal/lista.html', rows=rows, paginated_enrollments=paginated_enrollments)
 
 
 @journal_bp.route('/zapis/<uuid:id>', methods=['GET'], endpoint='dziennik_zapisu')
-@login_required
+@roles_required(UserRole.ADMIN, UserRole.UOPZ, UserRole.DYREKTOR)
 def enrollment_journal(id):
     from datetime import date as _date
 
     enrollment = _repo_enrollments.znajdz_po_id(id) or abort(404)
-    if current_user.role == UserRole.UOPZ and enrollment.supervisor_id != current_user.id:
+    if not _uopz_can_access(enrollment):
         abort(403)
 
     def _parse_date(key):
@@ -83,9 +92,11 @@ def enrollment_journal(id):
 
 
 @journal_bp.route('/zapis/<uuid:id>/pdf', methods=['GET'])
-@login_required
+@roles_required(UserRole.ADMIN, UserRole.UOPZ, UserRole.DYREKTOR)
 def pdf_dziennik(id):
     enrollment = _repo_enrollments.znajdz_po_id(id) or abort(404)
+    if not _uopz_can_access(enrollment):
+        abort(403)
     try:
         from tex_service.compiler import compile_pdf
         from core.uslugi.documents import build_context

@@ -193,10 +193,12 @@ function getCsrf() {
 function rozwinOpis(btn) {
   const skrot = btn.closest('.opis-skrot');
   skrot.style.display = 'none';
+  skrot.nextElementSibling.classList.remove('u-csp-094');
   skrot.nextElementSibling.style.display = '';
 }
 function zwinOpis(btn) {
   const pelny = btn.closest('.opis-pelny');
+  pelny.classList.add('u-csp-094');
   pelny.style.display = 'none';
   pelny.previousElementSibling.style.display = '';
 }

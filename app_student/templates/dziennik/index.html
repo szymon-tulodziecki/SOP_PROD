@@ -38,17 +38,20 @@
         </div>
         <div>
           <div class="u-csp-289">Wpisy</div>
-          <div class="u-csp-290">{{ wpisy | length }}</div>
+          <div class="u-csp-290">{{ liczba_wpisow_ogolem }}</div>
+          {% if data_od or data_do %}
+          <div class="u-csp-146">Widoczne: {{ wpisy | length }}</div>
+          {% endif %}
         </div>
         <div>
           <div class="u-csp-289">Godziny</div>
-          <div class="u-csp-291">{{ zapis.total_hours_logged }} / {{ zapis.praktyka.required_hours }} h</div>
+          <div class="u-csp-291">{{ godziny_ogolem }} / {{ zapis.praktyka.required_hours }} h</div>
           <div class="pasek-postep u-csp-292">
             <div class="pasek-postep__wypelnienie{% if zapis.progress_percent >= 100 %} pasek-postep__wypelnienie--zakonczony{% endif %} u-progress-{{ zapis.progress_percent|int }}"></div>
           </div>
           
           <div class="u-csp-289">Dni</div>
-          <div class="u-csp-291">{{ wpisy | length }} / 120 dni</div>
+          <div class="u-csp-291">{{ liczba_wpisow_ogolem }} / 120 dni</div>
           <div class="pasek-postep u-csp-002">
             <div class="pasek-postep__wypelnienie{% if entries_progress_percent >= 100 %} pasek-postep__wypelnienie--zakonczony{% endif %} u-progress-{{ entries_progress_percent|int }}"></div>
           </div>
@@ -163,10 +166,12 @@
 function expandDescription(btn) {
   const skrot = btn.closest('.opis-skrot');
   skrot.style.display = 'none';
+  skrot.nextElementSibling.classList.remove('u-csp-094');
   skrot.nextElementSibling.style.display = '';
 }
 function collapseDescription(btn) {
   const pelny = btn.closest('.opis-pelny');
+  pelny.classList.add('u-csp-094');
   pelny.style.display = 'none';
   pelny.previousElementSibling.style.display = '';
 }

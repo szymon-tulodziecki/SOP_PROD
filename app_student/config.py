@@ -18,7 +18,8 @@ class Config:
     PERMANENT_SESSION_LIFETIME = timedelta(hours=8)
 
     # External services
-    TEX_SERVICE_URL = os.environ.get('TEX_SERVICE_URL', 'http://tex-service:5002')
+    TEX_SERVICE_URL = os.environ['TEX_SERVICE_URL']
+    FILESERVER_URL  = os.environ['FILESERVER_URL']
 
     # Rate limiting (flask-limiter + Redis)
     RATELIMIT_STORAGE_URI = os.environ.get('CELERY_BROKER_URL', os.environ.get('REDIS_URL', 'redis://localhost:6379/0'))
@@ -38,7 +39,7 @@ class ProductionConfig(Config):
     ENV = 'production'
     SESSION_COOKIE_SECURE   = True
     SESSION_COOKIE_HTTPONLY = True
-    SESSION_COOKIE_SAMESITE = 'Lax'
+    SESSION_COOKIE_SAMESITE = 'Strict'
 
 
 CONFIGURATION_MAP = {

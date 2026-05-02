@@ -19,6 +19,25 @@ import os
 from pathlib import Path
 
 _SECRETS_DIR = Path('/run/secrets')
+_PLACEHOLDER_PREFIXES = ('CHANGE_ME', 'changeme', 'example', 'password')
+
+
+def _is_production() -> bool:
+    return os.environ.get('FLASK_ENV', '').lower() == 'production'
+
+
+def _validate_secret(name: str, value: str) -> str:
+    if not _is_production():
+        return value
+
+    stripped = (value or '').strip()
+    if not stripped:
+        raise RuntimeError(f"Sekret '{name}' jest pusty w środowisku produkcyjnym.")
+    if any(stripped.startswith(prefix) for prefix in _PLACEHOLDER_PREFIXES):
+        raise RuntimeError(f"Sekret '{name}' ma wartość przykładową w środowisku produkcyjnym.")
+    if name == 'secret_key' and len(stripped) < 32:
+        raise RuntimeError("SECRET_KEY musi mieć co najmniej 32 znaki w środowisku produkcyjnym.")
+    return stripped
 
 
 def get_secret(name: str, *, required: bool = True, default: str = '') -> str:
@@ -29,7 +48,7 @@ def get_secret(name: str, *, required: bool = True, default: str = '') -> str:
     # 1. Docker Secret file
     candidate = _SECRETS_DIR / name
     if candidate.is_file():
-        return candidate.read_text().strip()
+        return _validate_secret(name, candidate.read_text())
 
     upper = name.upper()
 
@@ -38,7 +57,7 @@ def get_secret(name: str, *, required: bool = True, default: str = '') -> str:
     if file_env:
         p = Path(file_env)
         if p.is_file():
-            return p.read_text().strip()
+            return _validate_secret(name, p.read_text())
 
     # 3. Bezpośrednia zmienna środowiskowa
     val = os.environ.get(upper, default)
@@ -47,7 +66,9 @@ def get_secret(name: str, *, required: bool = True, default: str = '') -> str:
             f"Sekret '{name}' jest niedostępny. "
             f"Ustaw /run/secrets/{name}, {upper}_FILE lub {upper}."
         )
-    return val
+    if not val:
+        return val
+    return _validate_secret(name, val)
 
 
 def get_database_url() -> str:

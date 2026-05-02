@@ -45,7 +45,7 @@ class CommitteeForm(FlaskForm):
     comment = TextAreaField('Komentarz ogólny komisji', validators=[Optional()])
 
 
-@zarzadzanie_bp.route('/komisja')
+@zarzadzanie_bp.route('/komisja', methods=['GET'])
 @roles_required(UserRole.ADMIN, UserRole.KOMISJA)
 def komisja_lista():
     page = request.args.get('page', 1, type=int)

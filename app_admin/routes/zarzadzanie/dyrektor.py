@@ -24,7 +24,7 @@ from . import zarzadzanie_bp
 
 # ── Dyrektor Instytutu ────────────────────────────────────────────────────────
 
-@zarzadzanie_bp.route('/dyrektor')
+@zarzadzanie_bp.route('/dyrektor', methods=['GET'])
 @roles_required(UserRole.ADMIN, UserRole.DYREKTOR)
 def dyrektor_lista():
     page         = request.args.get('page', 1, type=int)

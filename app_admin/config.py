@@ -14,6 +14,8 @@ class Config:
     AZURE_TENANT_ID     = get_secret('azure_tenant_id')
 
     RATELIMIT_STORAGE_URI = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/0')
+    TEX_SERVICE_URL  = os.environ['TEX_SERVICE_URL']
+    FILESERVER_URL   = os.environ['FILESERVER_URL']
 
 
 class DevelopmentConfig(Config):
@@ -26,7 +28,7 @@ class ProductionConfig(Config):
     ENV = 'production'
     SESSION_COOKIE_SECURE   = True
     SESSION_COOKIE_HTTPONLY = True
-    SESSION_COOKIE_SAMESITE = 'Lax'
+    SESSION_COOKIE_SAMESITE = 'Strict'
 
 CONFIGURATION_MAP = {
     'development': DevelopmentConfig,
