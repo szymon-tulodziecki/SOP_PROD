@@ -63,11 +63,11 @@ def create_app():
     login_manager.login_message = 'Zaloguj się, aby uzyskać dostęp do tej strony.'
     login_manager.login_message_category = 'warning'
     with app.app_context():
-        from core.autoryzacja  import create_auth_blueprint
-        from core.pliki import create_files_blueprint
-        from core.modele import UserRole
+        from core.auth  import create_auth_blueprint
+        from core.files import create_files_blueprint
+        from core.models import UserRole
         from app_admin.routes.dashboard      import dashboard_bp
-        from app_admin.routes.zarzadzanie import zarzadzanie_bp
+        from app_admin.routes.management import zarzadzanie_bp
         from app_admin.routes.evaluation   import evaluation_bp
         from app_admin.routes.journal    import journal_bp
         from app_admin.routes.logs        import logi_bp
@@ -81,7 +81,7 @@ def create_app():
         app.register_blueprint(auth_bp)
         app.register_blueprint(dashboard_bp,  url_prefix='/panel')
         app.register_blueprint(zarzadzanie_bp, url_prefix='/zarzadzanie')
-        app.register_blueprint(evaluation_bp, url_prefix='/oceny')
+        app.register_blueprint(evaluation_bp, url_prefix='/assessments')
         app.register_blueprint(journal_bp,    url_prefix='/dzienniki')
         app.register_blueprint(uploads_bp,    url_prefix='/uploads')
         app.register_blueprint(logi_bp,       url_prefix='/logi')
@@ -92,10 +92,10 @@ def create_app():
         try:
             from flask_login import current_user
             if current_user.is_authenticated:
-                from core.repozytoria import EnrollmentRepository
-                from core.modele import UserRole
-                uopz_id = current_user.id if current_user.role == UserRole.UOPZ else None
-                counts.update(EnrollmentRepository().liczniki_nav(supervisor_id=uopz_id))
+                from core.repositories import EnrollmentRepository
+                from core.models import UserRole
+                supervisor_id = current_user.id if current_user.role == UserRole.UOPZ else None
+                counts.update(EnrollmentRepository().liczniki_nav(supervisor_id=supervisor_id))
         except Exception as exc:
             app.logger.warning("inject_nav_counts error: %s", exc)
         return counts
@@ -107,12 +107,12 @@ def create_app():
 
     @app.context_processor
     def inject_tlumacz():
-        from core.tlumaczenia import translate_status
+        from core.translations import translate_status
         return {'translate_status': translate_status}
 
     return app
 
 @login_manager.user_loader
 def load_user(user_id):
-    from core.modele import User
+    from core.models import User
     return db.session.get(User, user_id)

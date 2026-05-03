@@ -1,4 +1,4 @@
-{% extends "layouts/base.html" %}
+﻿{% extends "layouts/base.html" %}
 {% block tytul %}Przypisz UOPZ{% endblock %}
 {% block tresc %}
 <h1>Przypisz opiekuna uczelnianego</h1>
@@ -6,8 +6,8 @@
   <form method="post">
     {{ form.hidden_tag() }}
     <div class="pole-form">
-      <label>{{ form.uopz_id.label }}</label>
-      {{ form.uopz_id(class_='select') }}
+      <label>{{ form.supervisor_id.label }}</label>
+      {{ form.supervisor_id(class_='select') }}
     </div>
     <div class="u-csp-159">
       <button type="submit" class="przycisk przycisk--glowny">Zapisz</button>

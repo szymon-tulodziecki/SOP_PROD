@@ -33,8 +33,8 @@
       <div class="u-csp-085 dziennik-panel__metryki">
         <div>
           <div class="u-csp-289">Praktyka</div>
-          <div class="u-csp-141">{{ zapis.praktyka.academic_year }}</div>
-          <div class="u-csp-146">Semestr {{ zapis.praktyka.semester_label }}</div>
+          <div class="u-csp-141">{{ zapis.internship.academic_year }}</div>
+          <div class="u-csp-146">Semestr {{ zapis.internship.semester_label }}</div>
         </div>
         <div>
           <div class="u-csp-289">Wpisy</div>
@@ -45,7 +45,7 @@
         </div>
         <div>
           <div class="u-csp-289">Godziny</div>
-          <div class="u-csp-291">{{ godziny_ogolem }} / {{ zapis.praktyka.required_hours }} h</div>
+          <div class="u-csp-291">{{ godziny_ogolem }} / {{ zapis.internship.required_hours }} h</div>
           <div class="pasek-postep u-csp-292">
             <div class="pasek-postep__wypelnienie{% if zapis.progress_percent >= 100 %} pasek-postep__wypelnienie--zakonczony{% endif %} u-progress-{{ zapis.progress_percent|int }}"></div>
           </div>
@@ -60,7 +60,7 @@
     </div>
   </div>
 
-  {% if zapis.moze_pobrac_wydruki %}
+  {% if zapis.can_download_printouts %}
   <div class="karta u-csp-293 dziennik-panel__final">
     <div class="karta__naglowek u-csp-294">
       <h2 class="karta__tytul">⚠ Dokumenty końcowe praktyki</h2>
@@ -71,8 +71,8 @@
       </p>
       <ul class="u-csp-297">
         <li><strong>Zał. 3b</strong> — Karta zakładowa (BHP, zaświadczenie i ocena ZOPZ — wypełniana w firmie przez 6 miesięcy)</li>
-        <li><strong>Zał. 3c</strong> — Ocena uczelniana (generowana po wystawieniu oceny przez UOPZ)</li>
-        <li><strong>Zał. 4</strong> — Potwierdzenie uzyskania efektów uczenia się (podpisuje ZOPZ + UOPZ)</li>
+        <li><strong>Zał. 3c</strong> — Ocena uczelniana (generowana po wystawieniu assessments przez UOPZ)</li>
+        <li><strong>Zał. 4</strong> — Potwierdzenie uzyskania learning_outcomeów uczenia się (podpisuje ZOPZ + UOPZ)</li>
         <li><strong>Zał. 6</strong> — Dziennik praktyki (eksport z systemu)</li>
         <li><strong>Zał. 7</strong> — Sprawozdanie z przebiegu praktyki (podpisane przez studenta)</li>
         <li><strong>Zał. 5</strong> — Kwestionariusz ankiety (wypełniony przez studenta)</li>
@@ -139,7 +139,7 @@
             <td class="u-csp-193">
               {% if entry.learning_outcomes %}
                 {% for e in entry.learning_outcomes %}
-                  <span class="u-csp-302">{{ e.kod }}</span>
+                  <span class="u-csp-302">{{ e.code }}</span>
                 {% endfor %}
               {% else %}—{% endif %}
             </td>
@@ -164,13 +164,13 @@
 {% endif %}
 <script>
 function expandDescription(btn) {
-  const skrot = btn.closest('.opis-skrot');
+  const skrot = btn.closest('.description-skrot');
   skrot.style.display = 'none';
   skrot.nextElementSibling.classList.remove('u-csp-094');
   skrot.nextElementSibling.style.display = '';
 }
 function collapseDescription(btn) {
-  const pelny = btn.closest('.opis-pelny');
+  const pelny = btn.closest('.description-pelny');
   pelny.classList.add('u-csp-094');
   pelny.style.display = 'none';
   pelny.previousElementSibling.style.display = '';

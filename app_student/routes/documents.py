@@ -12,15 +12,15 @@ from flask import (Blueprint, abort, send_file, jsonify, request,
 from flask_login import login_required, current_user
 
 from core.extensions import limiter
-from core.modele import EnrollmentStatus
-from core.uslugi.documents import (
+from core.models import EnrollmentStatus
+from core.services.documents import (
     DOC_CONFIG,
     STATIC_TEMPLATES,
-    rozwiaz_dokumenty as resolve_documents,
+    resolve_documents as resolve_documents,
     build_context,
-    waliduj_kompletnosc,
+    validate_completeness,
 )
-from core.repozytoria import EnrollmentRepository
+from core.repositories import EnrollmentRepository
 
 _enrollment_repository = EnrollmentRepository()
 
@@ -148,7 +148,7 @@ def generuj(doc_type: str):
     if not enrollment:
         return jsonify({'error': 'Nie znaleziono zapisu na praktykę.'}), 404
 
-    warnings = waliduj_kompletnosc(enrollment, doc_type)
+    warnings = validate_completeness(enrollment, doc_type)
 
     if warnings and not force:
         return jsonify({

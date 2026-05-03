@@ -1,11 +1,11 @@
-{% extends "layouts/base_panel.html" %}
+﻿{% extends "layouts/base_panel.html" %}
 
 {% block tytul %}Dziennik praktyki{% endblock %}
 {% block naglowek %}Dziennik praktyki{% endblock %}
 
 {% block naglowek_akcje %}
 <div class="u-flex--gap-05">
-  <a href="{{ url_for('journal.lista_dziennikow') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
+  <a href="{{ url_for('journal.lista_dziennikow') }}" class="przycisk przycisk--drugorzedny">â† PowrĂłt</a>
 
   <button id="btn-pdf" onclick="zlecPDF()" class="przycisk przycisk--glowny">
     <svg class="u-csp-083" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -30,12 +30,12 @@
         </div>
         <div>
           <div class="u-etykieta">Praktyka</div>
-          <div class="u-fw-600">{{ zapis.praktyka.academic_year }}</div>
-          <div class="u-meta">Semestr {{ zapis.praktyka.semester_label }}</div>
+          <div class="u-fw-600">{{ zapis.internship.academic_year }}</div>
+          <div class="u-meta">Semestr {{ zapis.internship.semester_label }}</div>
         </div>
         <div>
-          <div class="u-etykieta">Postęp godzin</div>
-          <div class="u-fw-600 u-csp-086">{{ total_hours }} / {{ zapis.praktyka.required_hours }} h</div>
+          <div class="u-etykieta">PostÄ™p godzin</div>
+          <div class="u-fw-600 u-csp-086">{{ total_hours }} / {{ zapis.internship.required_hours }} h</div>
           <div class="pasek-postep u-mt-05 u-csp-087">
             <div class="pasek-postep__wypelnienie {{ 'pasek-postep__wypelnienie--zakonczony' if zapis.progress_percent >= 100 else '' }}"
                  class="u-progress-{{ zapis.progress_percent|int }}"></div>
@@ -55,7 +55,7 @@
         <line x1="12" y1="9" x2="12" y2="13"/>
         <line x1="12" y1="17" x2="12.01" y2="17"/>
       </svg>
-      <span>Przerwa <strong>{{ p.working_days }} dni roboczych</strong> między {{ p.date_from.strftime('%d.%m') }} a {{ p.date_to.strftime('%d.%m.%Y') }}</span>
+      <span>Przerwa <strong>{{ p.working_days }} dni roboczych</strong> miÄ™dzy {{ p.date_from.strftime('%d.%m') }} a {{ p.date_to.strftime('%d.%m.%Y') }}</span>
     </div>
     {% endfor %}
   </div>
@@ -64,7 +64,7 @@
   <!-- Wpisy -->
   <div class="karta">
     <div class="karta__naglowek u-csp-077">
-      <h3 class="karta__tytul">Wpisy dziennika ({{ entries|length }}{% if data_od or data_do %} — filtr aktywny{% endif %})</h3>
+      <h3 class="karta__tytul">Wpisy dziennika ({{ entries|length }}{% if data_od or data_do %} â€” filtr aktywny{% endif %})</h3>
       <form method="GET" class="u-flex--gap-05 u-csp-088">
         <label class="u-meta-sm">Od</label>
         <input type="date" name="od" class="pole-formularza__input u-csp-089"
@@ -74,7 +74,7 @@
                value="{{ data_do.isoformat() if data_do else '' }}">
         <button type="submit" class="przycisk przycisk--maly przycisk--drugorzedny">Filtruj</button>
         {% if data_od or data_do %}
-        <a href="{{ url_for('journal.dziennik_zapisu', id=zapis.id) }}" class="przycisk przycisk--maly przycisk--drugorzedny">Wyczyść</a>
+        <a href="{{ url_for('journal.dziennik_zapisu', id=zapis.id) }}" class="przycisk przycisk--maly przycisk--drugorzedny">WyczyĹ›Ä‡</a>
         {% endif %}
       </form>
     </div>
@@ -85,7 +85,7 @@
             <tr>
               <th class="u-csp-090" scope="col">Data</th>
               <th class="u-csp-091" scope="col">Godziny</th>
-              <th scope="col">Opis czynności</th>
+              <th scope="col">Opis czynnoĹ›ci</th>
               <th class="u-csp-092" scope="col">Efekt</th>
             </tr>
           </thead>
@@ -96,23 +96,23 @@
               <td class="u-ta-center">{{ w.duration_hours }} h</td>
               <td class="u-fs-sm u-lh-15 u-csp-093">
                 {% if w.description | length > 120 %}
-                  <span class="opis-skrot">{{ w.description[:120] }}&hellip; <button type="button" class="btn-rozwin" onclick="rozwinOpis(this)">Rozwiń</button></span>
-                  <span class="opis-pelny u-csp-094">{{ w.description }} <button type="button" class="btn-rozwin" onclick="zwinOpis(this)">Zwiń</button></span>
+                  <span class="opis-skrot">{{ w.description[:120] }}&hellip; <button type="button" class="btn-rozwin" onclick="rozwinOpis(this)">RozwiĹ„</button></span>
+                  <span class="opis-pelny u-csp-094">{{ w.description }} <button type="button" class="btn-rozwin" onclick="zwinOpis(this)">ZwiĹ„</button></span>
                 {% else %}
                   {{ w.description }}
                 {% endif %}
               </td>
               <td class="u-nowrap u-ta-center">
-                {% if w.efekty_uczenia %}
-                  {% for e in w.efekty_uczenia %}
-                    <span class="efekt-kod">{{ e.kod }}</span>
+                {% if w.learning_outcomes %}
+                  {% for e in w.learning_outcomes %}
+                    <span class="learning_outcome-kod">{{ e.code }}</span>
                   {% endfor %}
-                {% else %}—{% endif %}
+                {% else %}â€”{% endif %}
               </td>
             </tr>
             {% else %}
             <tr>
-              <td colspan="4" class="tabela--pusta">Student nie dodał jeszcze żadnych wpisów.</td>
+              <td colspan="4" class="tabela--pusta">Student nie dodaĹ‚ jeszcze ĹĽadnych wpisĂłw.</td>
             </tr>
             {% endfor %}
           </tbody>
@@ -124,10 +124,10 @@
 </div>
 
 <script>
-const ZAPIS_ID  = "{{ zapis.id }}";
-const URL_ZLEC  = `/dzienniki/zapis/${ZAPIS_ID}/pdf`;
-const URL_STATUS = (taskId) => `/dzienniki/zapis/${ZAPIS_ID}/pdf/status/${taskId}`;
-const URL_POBIERZ = (taskId) => `/dzienniki/zapis/${ZAPIS_ID}/pdf/pobierz/${taskId}`;
+  const ENROLLMENT_ID = "{{ zapis.id }}";
+  const URL_ZLEC = `/dzienniki/zapis/${ENROLLMENT_ID}/pdf`;
+  const URL_STATUS = (taskId) => `/dzienniki/zapis/${ENROLLMENT_ID}/pdf/status/${taskId}`;
+  const URL_POBIERZ = (taskId) => `/dzienniki/zapis/${ENROLLMENT_ID}/pdf/pobierz/${taskId}`;
 
 const btn        = document.getElementById('btn-pdf');
 const btnLabel   = document.getElementById('btn-pdf-label');
@@ -151,10 +151,10 @@ function zlecPDF() {
       statusEl.textContent = 'Kompilacja w toku...';
       pollInterval = setInterval(() => sprawdzStatus(data.task_id), 2000);
     } else {
-      blad('Błąd zlecenia: ' + (data.error || 'nieznany'));
+      blad('BĹ‚Ä…d zlecenia: ' + (data.error || 'nieznany'));
     }
   })
-  .catch(() => blad('Błąd połączenia z serwerem.'));
+  .catch(() => blad('BĹ‚Ä…d poĹ‚Ä…czenia z serwerem.'));
 }
 
 function sprawdzStatus(taskId) {
@@ -169,7 +169,7 @@ function sprawdzStatus(taskId) {
       window.location.href = URL_POBIERZ(taskId);
     } else if (data.status === 'FAILURE') {
       clearInterval(pollInterval);
-      blad('Błąd kompilacji: ' + (data.error || 'sprawdź logi workera'));
+      blad('BĹ‚Ä…d kompilacji: ' + (data.error || 'sprawdĹş logi workera'));
     } else {
       const progress = data.progress || 0;
       statusEl.textContent = `Kompilacja... ${progress}%`;
@@ -191,13 +191,13 @@ function getCsrf() {
   return meta ? meta.getAttribute('content') : '';
 }
 function rozwinOpis(btn) {
-  const skrot = btn.closest('.opis-skrot');
+  const skrot = btn.closest('.description-skrot');
   skrot.style.display = 'none';
   skrot.nextElementSibling.classList.remove('u-csp-094');
   skrot.nextElementSibling.style.display = '';
 }
 function zwinOpis(btn) {
-  const pelny = btn.closest('.opis-pelny');
+  const pelny = btn.closest('.description-pelny');
   pelny.classList.add('u-csp-094');
   pelny.style.display = 'none';
   pelny.previousElementSibling.style.display = '';

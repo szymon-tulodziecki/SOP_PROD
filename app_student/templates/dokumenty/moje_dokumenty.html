@@ -28,9 +28,9 @@
   <div class="karta u-csp-208">
     <div class="karta__naglowek">
       <div>
-        <div class="u-csp-141">{{ item.enrollment.praktyka.academic_year }} · Semestr {{ item.enrollment.praktyka.semester_label }}</div>
+        <div class="u-csp-141">{{ item.enrollment.internship.academic_year }} · Semestr {{ item.enrollment.internship.semester_label }}</div>
         <div class="u-csp-283">
-          {% if item.enrollment.firma %}{{ item.enrollment.firma.name }}{% elif item.enrollment.firma_nazwa %}{{ item.enrollment.firma_nazwa }}{% endif %}
+          {% if item.enrollment.company %}{{ item.enrollment.company.name }}{% elif item.enrollment.company_display_name %}{{ item.enrollment.company_display_name }}{% endif %}
           · Ścieżka:
           {% if item.path_type == 'STANDARD' %}Standardowa
           {% elif item.path_type == 'EMPLOYMENT' %}Praca etatowa
@@ -56,8 +56,8 @@
             <div class="u-doc-title {% if not doc.dostepny %}u-doc-title--disabled{% endif %}">
               {{ doc.name }}
             </div>
-            {% if doc.opis %}
-            <div class="u-csp-220">{{ doc.opis }}</div>
+            {% if doc.description %}
+            <div class="u-csp-220">{{ doc.description }}</div>
             {% endif %}
             {% if not doc.dostepny and doc.powod %}
             <div class="u-csp-221">{{ doc.powod }}</div>
@@ -69,7 +69,7 @@
             <a href="{{ url_for('documents.pobierz_staly', doc_key=doc.klucz_staly) }}"
                class="przycisk przycisk--drugorzedny przycisk--maly">Pobierz PDF</a>
             {% elif doc.dynamiczny is defined and doc.dynamiczny %}
-            <a href="{{ url_for('documents.download_dynamic', enrollment_id=doc.zapis_id, doc_type=doc.typ) }}"
+            <a href="{{ url_for('documents.download_dynamic', enrollment_id=doc.enrollment_id, doc_type=doc.event_type) }}"
                class="przycisk przycisk--drugorzedny przycisk--maly">Pobierz PDF</a>
             {% endif %}
           {% else %}

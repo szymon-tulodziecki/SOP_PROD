@@ -1,10 +1,10 @@
-{% extends "layouts/base_panel.html" %}
+﻿{% extends "layouts/base_panel.html" %}
 
-{% block tytul %}Ocena efektów uczenia się{% endblock %}
-{% block naglowek %}Karta oceny efektów uczenia się (Zał. 4 / 4a){% endblock %}
+{% block tytul %}Ocena learning_outcomeĂłw uczenia siÄ™{% endblock %}
+{% block naglowek %}Karta assessments learning_outcomeĂłw uczenia siÄ™ (ZaĹ‚. 4 / 4a){% endblock %}
 
 {% block naglowek_akcje %}
-<a href="{{ url_for('evaluation.lista_ocen') }}" class="przycisk przycisk--drugorzedny">Powrót do listy</a>
+<a href="{{ url_for('evaluation.lista_ocen') }}" class="przycisk przycisk--drugorzedny">PowrĂłt do listy</a>
 {% endblock %}
 
 {% block tresc %}
@@ -17,11 +17,11 @@
       <div>
         <h2 class="u-csp-040">{{ zapis.student.last_name }} {{ zapis.student.first_name }}</h2>
         <p class="u-tekst-drugor u-csp-041">
-          Firma: {{ zapis.firma_nazwa or '—' }}
-          &nbsp;·&nbsp;
-          Ścieżka:
-          {% if zapis.path_type.value == 'STANDARD' %}A — Standardowa
-          {% else %}B — Uznanie efektów{% endif %}
+          company: {{ zapis.company_display_name or 'â€”' }}
+          &nbsp;Â·&nbsp;
+          ĹšcieĹĽka:
+          {% if zapis.path_type.value == 'STANDARD' %}A â€” Standardowa
+          {% else %}B â€” Uznanie learning_outcomeĂłw{% endif %}
         </p>
       </div>
       <span class="status status--{{ zapis.status.value|lower|replace('_', '-') }}">{{ translate_status(zapis.status.value) }}</span>
@@ -31,9 +31,9 @@
   {% if is_bc %}
   <div class="karta u-mb-15 u-csp-051">
     <div class="karta__tresc">
-      <strong>Ścieżka B — trzystopniowa skala oceny efektów.</strong><br>
+      <strong>ĹšcieĹĽka B â€” trzystopniowa skala assessments learning_outcomeĂłw.</strong><br>
       <span class="u-meta-sm">
-        Dla każdego efektu możesz wybrać: <em>Uzyskał/a</em>, <em>Uzyskał/a częściowo</em> (wymaga uwag) lub <em>Nie uzyskał/a</em>.
+        Dla kaĹĽdego efektu moĹĽesz wybraÄ‡: <em>UzyskaĹ‚/a</em>, <em>UzyskaĹ‚/a czÄ™Ĺ›ciowo</em> (wymaga uwag) lub <em>Nie uzyskaĹ‚/a</em>.
       </span>
     </div>
   </div>
@@ -44,7 +44,7 @@
 
     <section class="karta u-mb-2">
       <header class="karta__naglowek">
-        <h3 class="karta__tytul">Ocena 13 efektów uczenia się</h3>
+        <h3 class="karta__tytul">Ocena 13 learning_outcomeĂłw uczenia siÄ™</h3>
       </header>
       <div class="karta__tresc u-p-0">
         <div class="tabela-wrapper">
@@ -57,40 +57,40 @@
               </tr>
             </thead>
             <tbody>
-              {% for efekt in efekty %}
-              {% set ocena = istniejace.get(efekt.id|string) %}
+              {% for learning_outcome in efekty %}
+              {% set ocena = istniejace.get(learning_outcome.id|string) %}
               <tr>
-                <td><strong>{{ efekt.description.split(':')[0] if ':' in efekt.description else efekt.id }}</strong></td>
+                <td><strong>{{ learning_outcome.description.split(':')[0] if ':' in learning_outcome.description else learning_outcome.id }}</strong></td>
                 <td class="u-fs-sm u-csp-053">
-                  {{ efekt.description.split(':', 1)[1].strip() if ':' in efekt.description else efekt.description }}
+                  {{ learning_outcome.description.split(':', 1)[1].strip() if ':' in learning_outcome.description else learning_outcome.description }}
                 </td>
                 <td>
                   <div class="u-flex--gap-05 u-csp-054">
                     <label class="radio-ocena">
-                      <input type="radio" name="wynik_{{ efekt.id }}" value="ACHIEVED"
+                      <input type="radio" name="wynik_{{ learning_outcome.id }}" value="ACHIEVED"
                              {% if ocena and ocena.result.name == 'ACHIEVED' %}checked{% endif %} required>
-                      <span>Uzyskał/a</span>
+                      <span>UzyskaĹ‚/a</span>
                     </label>
 
                     {% if is_bc %}
                     <label class="radio-ocena radio-ocena--czesc">
-                      <input type="radio" name="wynik_{{ efekt.id }}" value="PARTIALLY_ACHIEVED"
+                      <input type="radio" name="wynik_{{ learning_outcome.id }}" value="PARTIALLY_ACHIEVED"
                              {% if ocena and ocena.result.name == 'PARTIALLY_ACHIEVED' %}checked{% endif %}>
-                      <span>Częściowo</span>
+                      <span>CzÄ™Ĺ›ciowo</span>
                     </label>
                     {% endif %}
 
                     <label class="radio-ocena radio-ocena--nie">
-                      <input type="radio" name="wynik_{{ efekt.id }}" value="NOT_ACHIEVED"
+                      <input type="radio" name="wynik_{{ learning_outcome.id }}" value="NOT_ACHIEVED"
                              {% if ocena and ocena.result.name == 'NOT_ACHIEVED' %}checked{% endif %}>
-                      <span>Nie uzyskał/a</span>
+                      <span>Nie uzyskaĹ‚/a</span>
                     </label>
                   </div>
 
                   {% if is_bc %}
-                  <input class="u-csp-055" type="text" name="uwagi_{{ efekt.id }}"
+                  <input class="u-csp-055" type="text" name="uwagi_{{ learning_outcome.id }}"
                          value="{{ ocena.notes if ocena else '' }}"
-                         placeholder="Uwagi (wymagane przy częściowym)"
+                         placeholder="Uwagi (wymagane przy czÄ™Ĺ›ciowym)"
                         >
                   {% endif %}
                 </td>
@@ -104,7 +104,7 @@
 
     <div class="u-ta-center u-csp-056">
       <button type="submit" class="przycisk przycisk--glowny u-csp-057">
-        Zapisz arkusz oceny
+        Zapisz arkusz assessments
       </button>
     </div>
   </form>

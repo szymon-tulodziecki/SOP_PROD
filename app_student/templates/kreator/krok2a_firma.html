@@ -55,19 +55,19 @@
           {{ form.firma_typ(class="filtr-select u-w-full", id="firma_typ") }}
         </div>
 
-        <!-- Tryb: firma z bazy -->
+        <!-- Tryb: company z bazy -->
         <div id="blok-baza" class="{% if form.firma_typ.data == 'custom' %}u-csp-094{% endif %}">
           <div class="form-field">
-            {{ form.firma_id.label(class="form-field__label") }}
-            {{ form.firma_id(class="filtr-select u-w-full", id="firma_id_select") }}
+            {{ form.company_id.label(class="form-field__label") }}
+            {{ form.company_id(class="filtr-select u-w-full", id="firma_id_select") }}
           </div>
-          <div class="u-csp-323" id="firma-podglad"></div>
+          <div class="u-csp-323" id="company-podglad"></div>
         </div>
 
-        <!-- Tryb: własna firma -->
+        <!-- Tryb: własna company -->
         <div id="blok-custom" class="{% if form.firma_typ.data != 'custom' %}u-csp-094{% endif %}">
           <div class="u-csp-324">
-            Własna firma wymaga wygenerowania <strong>Zał. 9</strong> (oświadczenie instytucji) i <strong>Zał. 1</strong> (porozumienie). Możesz je wygenerować po wypełnieniu poniższych danych.
+            Własna company wymaga wygenerowania <strong>Zał. 9</strong> (oświadczenie instytucji) i <strong>Zał. 1</strong> (porozumienie). Możesz je wygenerować po wypełnieniu poniższych danych.
           </div>
           <div class="form-field">
             {{ form.company_name.label(class="form-field__label") }}
@@ -78,15 +78,15 @@
             {{ form.company_address(class="form-field__input", placeholder="ul. Przykładowa 1") }}
           </div>
           <div class="u-csp-325">
-            <div class="form-field {% if form.firma_kod_pocztowy.errors %}form-field--error{% endif %}">
-              {{ form.firma_kod_pocztowy.label(class="form-field__label") }}
-              {{ form.firma_kod_pocztowy(class="form-field__input", placeholder="82-300") }}
-              {% for e in form.firma_kod_pocztowy.errors %}<span class="form-field__error">{{ e }}</span>{% endfor %}
+            <div class="form-field {% if form.company_zip.errors %}form-field--error{% endif %}">
+              {{ form.company_zip.label(class="form-field__label") }}
+              {{ form.company_zip(class="form-field__input", placeholder="82-300") }}
+              {% for e in form.company_zip.errors %}<span class="form-field__error">{{ e }}</span>{% endfor %}
             </div>
-            <div class="form-field {% if form.firma_miasto.errors %}form-field--error{% endif %}">
-              {{ form.firma_miasto.label(class="form-field__label") }}
-              {{ form.firma_miasto(class="form-field__input", placeholder="Elbląg") }}
-              {% for e in form.firma_miasto.errors %}<span class="form-field__error">{{ e }}</span>{% endfor %}
+            <div class="form-field {% if form.company_city.errors %}form-field--error{% endif %}">
+              {{ form.company_city.label(class="form-field__label") }}
+              {{ form.company_city(class="form-field__input", placeholder="Elbląg") }}
+              {% for e in form.company_city.errors %}<span class="form-field__error">{{ e }}</span>{% endfor %}
             </div>
           </div>
           <div class="u-grid-2">
@@ -94,15 +94,15 @@
               {{ form.tax_id.label(class="form-field__label") }}
               {{ form.tax_id(class="form-field__input") }}
             </div>
-            <div class="form-field {% if form.firma_upowazniony_osoba.errors %}form-field--error{% endif %}">
-              {{ form.firma_upowazniony_osoba.label(class="form-field__label") }}
-              {{ form.firma_upowazniony_osoba(class="form-field__input", placeholder="Jan Kowalski") }}
-              {% for e in form.firma_upowazniony_osoba.errors %}<span class="form-field__error">{{ e }}</span>{% endfor %}
+            <div class="form-field {% if form.authorized_person.errors %}form-field--error{% endif %}">
+              {{ form.authorized_person.label(class="form-field__label") }}
+              {{ form.authorized_person(class="form-field__input", placeholder="Jan Kowalski") }}
+              {% for e in form.authorized_person.errors %}<span class="form-field__error">{{ e }}</span>{% endfor %}
             </div>
           </div>
           <div class="form-field">
-            {{ form.firma_upowazniony_stanowisko.label(class="form-field__label") }}
-            {{ form.firma_upowazniony_stanowisko(class="form-field__input") }}
+            {{ form.authorized_person_position.label(class="form-field__label") }}
+            {{ form.authorized_person_position(class="form-field__input") }}
           </div>
         </div>
       </div>
@@ -113,24 +113,24 @@
       <div class="karta__naglowek"><h2 class="karta__tytul">Opiekun zakładowy (ZOPZ)</h2></div>
       <div class="karta__tresc">
         <div class="u-grid-2">
-          <div class="form-field {% if form.zopz_imie_nazwisko.errors %}form-field--error{% endif %}">
-            {{ form.zopz_imie_nazwisko.label(class="form-field__label") }}
-            {{ form.zopz_imie_nazwisko(class="form-field__input", placeholder="Jan Kowalski") }}
-            {% for e in form.zopz_imie_nazwisko.errors %}<span class="form-field__error">{{ e }}</span>{% endfor %}
+          <div class="form-field {% if form.workplace_mentor_name.errors %}form-field--error{% endif %}">
+            {{ form.workplace_mentor_name.label(class="form-field__label") }}
+            {{ form.workplace_mentor_name(class="form-field__input", placeholder="Jan Kowalski") }}
+            {% for e in form.workplace_mentor_name.errors %}<span class="form-field__error">{{ e }}</span>{% endfor %}
           </div>
           <div class="form-field">
-            {{ form.zopz_stanowisko.label(class="form-field__label") }}
-            {{ form.zopz_stanowisko(class="form-field__input") }}
+            {{ form.workplace_mentor_position.label(class="form-field__label") }}
+            {{ form.workplace_mentor_position(class="form-field__input") }}
           </div>
         </div>
         <div class="u-grid-2">
           <div class="form-field">
-            {{ form.zopz_telefon.label(class="form-field__label") }}
-            {{ form.zopz_telefon(class="form-field__input") }}
+            {{ form.workplace_mentor_phone.label(class="form-field__label") }}
+            {{ form.workplace_mentor_phone(class="form-field__input") }}
           </div>
           <div class="form-field">
-            {{ form.zopz_email.label(class="form-field__label") }}
-            {{ form.zopz_email(class="form-field__input", type="email") }}
+            {{ form.workplace_mentor_email.label(class="form-field__label") }}
+            {{ form.workplace_mentor_email(class="form-field__input", type="email") }}
           </div>
         </div>
       </div>

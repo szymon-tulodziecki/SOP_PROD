@@ -1,4 +1,4 @@
-\documentclass[11pt,a4paper]{article}
+﻿\documentclass[11pt,a4paper]{article}
 \usepackage{fontspec}
 \usepackage{polyglossia}
 \setmainlanguage{polish}
@@ -11,7 +11,7 @@
 \begin{document}
 
 \noindent
-Akademia Nauk Stosowanych w Elblągu \\
+Akademia Nauk Stosowanych w ElblÄ…gu \\
 Instytut Informatyki Stosowanej im. Krzysztofa Brzeskiego
 
 \vspace{1.5em}
@@ -21,14 +21,14 @@ Instytut Informatyki Stosowanej im. Krzysztofa Brzeskiego
 \vspace{1em}
 
 \noindent Student: \textbf{<< student.imie|s >> << student.nazwisko|s >>} \hfill Nr albumu: \textbf{<< student.nr_albumu|s >>} \\
-Kierunek: informatyka \hfill W zakresie: \textbf{<< specjalnosc|s >>} \\
-Studia: inżynierskie, \textbf{<< student.tryb_studiow|s >>} \hfill Rok ak.: \textbf{<< praktyka.rok_uczelniany|s >>} \\
-Miejsce odbywania praktyki: \textbf{<< firma.nazwa|s >>} \\
-\textbf{<< firma.adres|s >>, << firma.miasto|s >>} \\
-Data rozpoczęcia praktyki: \textbf{<< terminy.od|s >>} \hfill Data zakończenia praktyki: \textbf{<< terminy.do|s >>}
+Kierunek: informatyka \hfill W zakresie: \textbf{<< specialization|s >>} \\
+Studia: inĹĽynierskie, \textbf{<< student.tryb_studiow|s >>} \hfill Rok ak.: \textbf{<< internship.rok_uczelniany|s >>} \\
+Miejsce odbywania praktyki: \textbf{<< company.nazwa|s >>} \\
+\textbf{<< company.adres|s >>, << company.miasto|s >>} \\
+Data rozpoczÄ™cia praktyki: \textbf{<< terminy.od|s >>} \hfill Data zakoĹ„czenia praktyki: \textbf{<< terminy.do|s >>}
 
 \vspace{1.5em}
-\noindent \textbf{WYKAZ ZAŁĄCZNIKÓW:} \\
+\noindent \textbf{WYKAZ ZAĹÄ„CZNIKĂ“W:} \\
 \dotfill \\
 \dotfill
 
@@ -39,15 +39,15 @@ Data rozpoczęcia praktyki: \textbf{<< terminy.od|s >>} \hfill Data zakończenia
 
 \begin{longtable}{|>{\centering\arraybackslash}p{1.3cm}|>{\centering\arraybackslash}p{2.2cm}|p{7.5cm}|>{\centering\arraybackslash}p{2.2cm}|>{\centering\arraybackslash}p{3.0cm}|}
 \hline
-\textbf{Dzień} & \textbf{Data} & \centering\textbf{Opis wykonanych prac} & \textbf{Nr. efektów uczenia się} & \textbf{Podpis osoby nadzorującej} \\ \hline
+\textbf{DzieĹ„} & \textbf{Data} & \centering\textbf{Opis wykonanych prac} & \textbf{Nr. learning_outcomeĂłw uczenia siÄ™} & \textbf{Podpis osoby nadzorujÄ…cej} \\ \hline
 \endfirsthead
 \hline
-\textbf{Dzień} & \textbf{Data} & \centering\textbf{Opis wykonanych prac} & \textbf{Nr. efektów uczenia się} & \textbf{Podpis osoby nadzorującej} \\ \hline
+\textbf{DzieĹ„} & \textbf{Data} & \centering\textbf{Opis wykonanych prac} & \textbf{Nr. learning_outcomeĂłw uczenia siÄ™} & \textbf{Podpis osoby nadzorujÄ…cej} \\ \hline
 \endhead
 \hline \endfoot
 
 <<% for wpis in wpisy %>>
-<< loop.index >> & << wpis.data|s >> & << wpis.opis|s >> & << wpis.efekt_nr|s >> & \\ \hline
+<< loop.index >> & << wpis.data|s >> & << wpis.description|s >> & << wpis.efekt_nr|s >> & \\ \hline
 <<% endfor %>>
 <<% if not wpisy %>>
  & & & & \\ \hline

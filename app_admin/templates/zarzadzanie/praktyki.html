@@ -1,4 +1,4 @@
-{% extends "layouts/base_panel.html" %}
+﻿{% extends "layouts/base_panel.html" %}
 {% block tytul %}Lista praktyk{% endblock %}
 {% block naglowek %}Praktyki{% endblock %}
 
@@ -6,10 +6,10 @@
 <div class="u-flex--gap-05">
   {% if current_user.role and current_user.role.value == 'ADMIN' %}
   <a href="{{ url_for('zarzadzanie.nowa_praktyka') }}" class="przycisk przycisk--glowny">
-    <span aria-hidden="true">+</span> Nowa praktyka
+    <span aria-hidden="true">+</span> Nowa internship
   </a>
   {% endif %}
-  <a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
+  <a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">â† PowrĂłt</a>
 </div>
 {% endblock %}
 
@@ -22,7 +22,7 @@
           <th scope="col">Rok uczelniany</th>
           <th scope="col">Semestr</th>
           <th scope="col">Wymiar godzin</th>
-          <th scope="col">Liczba zapisów</th>
+          <th scope="col">Liczba zapisĂłw</th>
           <th scope="col">Status</th>
           <th scope="col"><span class="sr-only">Akcje</span></th>
         </tr>
@@ -50,7 +50,7 @@
                 {{ csrf_form.hidden_tag() }}
                 <button type="submit"
                         class="przycisk {% if p.status.value == 'ACTIVE' %}przycisk--ostrzezenie{% else %}przycisk--drugorzedny{% endif %} przycisk--maly"
-                        onclick="return confirm('Zmienić status praktyki?')">
+                        onclick="return confirm('ZmieniÄ‡ status praktyki?')">
                   {{ 'Dezaktywuj' if p.status.value == 'ACTIVE' else 'Aktywuj' }}
                 </button>
               </form>
@@ -60,17 +60,17 @@
                 {{ csrf_form.hidden_tag() }}
                 <button type="submit"
                         class="przycisk przycisk--niebezpieczny przycisk--maly"
-                        onclick="return confirm('UWAGA: Czy na pewno chcesz trwale usunąć praktykę {{ p.academic_year }} ({{ p.semester_label }})?\n\nUsuną się wszystkie zapisy studentów i dokumenty. Tej operacji nie można cofnąć!')">
-                  Usuń
+                        onclick="return confirm('UWAGA: Czy na pewno chcesz trwale usunÄ…Ä‡ praktykÄ™ {{ p.academic_year }} ({{ p.semester_label }})?\n\nUsunÄ… siÄ™ wszystkie zapisy studentĂłw i dokumenty. Tej operacji nie moĹĽna cofnÄ…Ä‡!')">
+                  UsuĹ„
                 </button>
               </form>
             </div>
-            {% else %}—{% endif %}
+            {% else %}â€”{% endif %}
           </td>
         </tr>
         {% else %}
         <tr>
-          <td colspan="6" class="tabela--pusta">Brak praktyk. Utwórz pierwszą.</td>
+          <td colspan="6" class="tabela--pusta">Brak praktyk. UtwĂłrz pierwszÄ….</td>
         </tr>
         {% endfor %}
       </tbody>
@@ -89,7 +89,7 @@
              class="paginacja__przycisk {% if nr == praktyki.page %}paginacja__przycisk--aktywny{% endif %}"
              {% if nr == praktyki.page %}aria-current="page"{% endif %}>{{ nr }}</a>
         {% else %}
-          <span class="paginacja__przycisk" aria-hidden="true">…</span>
+          <span class="paginacja__przycisk" aria-hidden="true">â€¦</span>
         {% endif %}
       {% endfor %}
     </div>
@@ -101,8 +101,8 @@
 <div class="karta u-mt-2 praktyki-usuwane">
   <div class="karta__naglowek praktyki-usuwane__naglowek">
     <div>
-      <h2 class="karta__tytul">Oczekujące na trwałe usunięcie</h2>
-      <p class="praktyki-usuwane__opis">Zostaną automatycznie usunięte po 7 dniach od dezaktywacji.</p>
+      <h2 class="karta__tytul">OczekujÄ…ce na trwaĹ‚e usuniÄ™cie</h2>
+      <p class="praktyki-usuwane__opis">ZostanÄ… automatycznie usuniÄ™te po 7 dniach od dezaktywacji.</p>
     </div>
   </div>
   <div class="karta__tresc">
@@ -119,16 +119,16 @@
           <div class="praktyki-usuwane__data">{{ p.deleted_at.strftime('%d.%m.%Y %H:%M') }}</div>
         </div>
         <div>
-          <div class="u-etykieta">Usunięcie za</div>
+          <div class="u-etykieta">UsuniÄ™cie za</div>
           {% if dni_pozostale <= 1 %}
-            <span class="status u-status-danger">dziś / jutro</span>
+            <span class="status u-status-danger">dziĹ› / jutro</span>
           {% else %}
             <span class="status u-status-warning">{{ dni_pozostale }} dni</span>
           {% endif %}
         </div>
         <form class="u-csp-006" method="POST" action="{{ url_for('zarzadzanie.przywroc_praktyke', id=p.id) }}">
           {{ csrf_form.hidden_tag() }}
-          <button type="submit" class="przycisk przycisk--drugorzedny przycisk--maly">Przywróć</button>
+          <button type="submit" class="przycisk przycisk--drugorzedny przycisk--maly">PrzywrĂłÄ‡</button>
         </form>
       </div>
       {% endfor %}

@@ -1,10 +1,10 @@
-{% extends "layouts/base_panel.html" %}
+﻿{% extends "layouts/base_panel.html" %}
 
 {% block tytul %}Dzienniki praktyk{% endblock %}
-{% block naglowek %}Monitor dzienników{% endblock %}
+{% block naglowek %}Monitor dziennikĂłw{% endblock %}
 
 {% block naglowek_akcje %}
-<a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
+<a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">â† PowrĂłt</a>
 {% endblock %}
 
 {% block tresc %}
@@ -40,11 +40,11 @@
               <div class="u-meta">Album: {{ d.zapis.student.album_number or '-' }}</div>
             </td>
             <td>
-              <div>{{ d.zapis.praktyka.academic_year }}</div>
-              <div class="u-meta">{{ d.zapis.praktyka.semester_label }}</div>
+              <div>{{ d.zapis.internship.academic_year }}</div>
+              <div class="u-meta">{{ d.zapis.internship.semester_label }}</div>
             </td>
             <td>
-              <div class="u-fw-600">{{ d.zapis.total_hours_logged }} / {{ d.zapis.praktyka.required_hours }} h</div>
+              <div class="u-fw-600">{{ d.zapis.total_hours_logged }} / {{ d.zapis.internship.required_hours }} h</div>
               <div class="pasek-postep u-mt-05">
                 <div class="pasek-postep__wypelnienie {{ 'pasek-postep__wypelnienie--zakonczony' if d.zapis.progress_percent >= 100 else '' }}"
                      class="u-progress-{{ d.zapis.progress_percent|int }}"></div>
@@ -55,25 +55,25 @@
               {% if d.ostatni_wpis %}
                 {{ d.ostatni_wpis.strftime('%d.%m.%Y') }}
               {% else %}
-                <span class="u-tekst-trzeciorzed">Brak wpisów</span>
+                <span class="u-tekst-trzeciorzed">Brak wpisĂłw</span>
               {% endif %}
             </td>
             <td>
               {% if d.alert %}
                 <span class="status u-csp-095">
-                  ⚠ Przerwa &gt;3 dni
+                  âš  Przerwa &gt;3 dni
                 </span>
               {% else %}
                 <span class="status status--in-progress">OK</span>
               {% endif %}
             </td>
             <td>
-              <a href="{{ url_for('journal.dziennik_zapisu', id=d.zapis.id) }}" class="przycisk przycisk--drugorzedny przycisk--maly">Podgląd</a>
+              <a href="{{ url_for('journal.dziennik_zapisu', id=d.zapis.id) }}" class="przycisk przycisk--drugorzedny przycisk--maly">PodglÄ…d</a>
             </td>
           </tr>
           {% else %}
           <tr>
-            <td colspan="7" class="tabela--pusta">Brak aktywnych dzienników.</td>
+            <td colspan="7" class="tabela--pusta">Brak aktywnych dziennikĂłw.</td>
           </tr>
           {% endfor %}
         </tbody>

@@ -1,10 +1,10 @@
-{% extends "layouts/base_panel.html" %}
+﻿{% extends "layouts/base_panel.html" %}
 
 {% block tytul %}Decyzje Dyrektora Instytutu{% endblock %}
-{% block naglowek %}Wnioski oczekujące na decyzję Dyrektora Instytutu{% endblock %}
+{% block naglowek %}Wnioski oczekujÄ…ce na decyzjÄ™ Dyrektora Instytutu{% endblock %}
 
 {% block naglowek_akcje %}
-<a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
+<a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">â† PowrĂłt</a>
 {% endblock %}
 
 {% block tresc %}
@@ -18,8 +18,8 @@
           <thead>
             <tr>
               <th class="u-w-25">Student</th>
-              <th class="u-w-15">Ścieżka</th>
-              <th class="u-csp-123">Firma / Działalność</th>
+              <th class="u-w-15">ĹšcieĹĽka</th>
+              <th class="u-csp-123">company / DziaĹ‚alnoĹ›Ä‡</th>
               <th class="u-csp-124">Decyzja komisji</th>
               <th class="u-csp-125">Data komisji</th>
               <th class="u-ta-center u-csp-125">Akcje</th>
@@ -37,35 +37,35 @@
               </td>
               <td>
                 <span class="status status--w-trakcie">
-                  B — Uznanie efektów
+                  B â€” Uznanie learning_outcomeĂłw
                 </span>
               </td>
               <td>
-                <div class="u-fw-600">{{ wniosek.firma_nazwa or 'Nie podano' }}</div>
-                {% if wniosek.firma_miasto %}
-                <div class="u-meta">{{ wniosek.firma_miasto }}</div>
+                <div class="u-fw-600">{{ wniosek.company_display_name or 'Nie podano' }}</div>
+                {% if wniosek.company_city %}
+                <div class="u-meta">{{ wniosek.company_city }}</div>
                 {% endif %}
               </td>
               <td>
-                <span class="status status--completed">Zatwierdzone przez komisję</span>
-                {% if wniosek.komentarze_komisji %}
+                <span class="status status--completed">Zatwierdzone przez komisjÄ™</span>
+                {% if wniosek.committee_comment %}
                 <div class="u-tekst-drugor u-mt-05 u-csp-126">
-                  {{ wniosek.komentarze_komisji[:60] }}{% if wniosek.komentarze_komisji|length > 60 %}…{% endif %}
+                  {{ wniosek.committee_comment[:60] }}{% if wniosek.committee_comment|length > 60 %}â€¦{% endif %}
                 </div>
                 {% endif %}
               </td>
               <td class="u-fs-sm">
-                {% if wniosek.decyzja_komisji_o %}
-                {{ wniosek.decyzja_komisji_o.strftime('%d.%m.%Y') }}
+                {% if wniosek.committee_decision_at %}
+                {{ wniosek.committee_decision_at.strftime('%d.%m.%Y') }}
                 <div class="u-fs-xxs u-tekst-drugor">
-                  {{ wniosek.decyzja_komisji_o.strftime('%H:%M') }}
+                  {{ wniosek.committee_decision_at.strftime('%H:%M') }}
                 </div>
-                {% else %}—{% endif %}
+                {% else %}â€”{% endif %}
               </td>
               <td class="u-ta-center">
                 <a href="{{ url_for('zarzadzanie.dyrektor_decyzja', id=wniosek.id) }}"
                    class="przycisk przycisk--maly przycisk--glowny">
-                  Podejmij decyzję
+                  Podejmij decyzjÄ™
                 </a>
               </td>
             </tr>
@@ -79,7 +79,7 @@
   {% if wnioski.pages > 1 %}
   <div class="paginacja">
     {% if wnioski.has_prev %}
-      <a href="{{ url_for('zarzadzanie.dyrektor_lista', page=wnioski.prev_num) }}" class="paginacja__link">← Poprzednia</a>
+      <a href="{{ url_for('zarzadzanie.dyrektor_lista', page=wnioski.prev_num) }}" class="paginacja__link">â† Poprzednia</a>
     {% endif %}
     {% for page_num in wnioski.iter_pages() %}
       {% if page_num %}
@@ -89,11 +89,11 @@
           <span class="paginacja__link paginacja__link--aktywny">{{ page_num }}</span>
         {% endif %}
       {% else %}
-        <span class="paginacja__kropki">…</span>
+        <span class="paginacja__kropki">â€¦</span>
       {% endif %}
     {% endfor %}
     {% if wnioski.has_next %}
-      <a href="{{ url_for('zarzadzanie.dyrektor_lista', page=wnioski.next_num) }}" class="paginacja__link">Następna →</a>
+      <a href="{{ url_for('zarzadzanie.dyrektor_lista', page=wnioski.next_num) }}" class="paginacja__link">NastÄ™pna â†’</a>
     {% endif %}
   </div>
   {% endif %}
@@ -105,9 +105,9 @@
         <path d="M9 12l2 2 4-4"/>
         <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9c.83 0 1.63.11 2.38.32"/>
       </svg>
-      <h3 class="u-mb-05">Brak wniosków oczekujących na decyzję</h3>
+      <h3 class="u-mb-05">Brak wnioskĂłw oczekujÄ…cych na decyzjÄ™</h3>
       <p class="u-tekst-drugor u-p-0">
-        Wszystkie wnioski zostały już przetworzone lub nie ma nowych zgłoszeń zatwierdzonych przez komisję.
+        Wszystkie wnioski zostaĹ‚y juĹĽ przetworzone lub nie ma nowych zgĹ‚oszeĹ„ zatwierdzonych przez komisjÄ™.
       </p>
     </div>
   </div>

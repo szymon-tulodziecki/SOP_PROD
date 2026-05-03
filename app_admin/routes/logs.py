@@ -1,9 +1,9 @@
 ﻿from flask import Blueprint, render_template, request
 from flask_login import login_required
-from core.autoryzacja import roles_required
-from core.modele import UserRole
-from core.modele.internships import EventType
-from core.repozytoria import LogRepository
+from core.auth import roles_required
+from core.models import UserRole
+from core.models.internships import EventType
+from core.repositories import LogRepository
 
 logi_bp = Blueprint('logi', __name__)
 
@@ -22,7 +22,7 @@ _LABELS = {
 @roles_required(UserRole.ADMIN)
 def lista_logow():
     page              = request.args.get('strona', 1, type=int)
-    event_type_filter = request.args.get('typ', '')
+    event_type_filter = request.args.get('event_type', '')
     search_query      = request.args.get('szukaj', '').strip()
 
     events = _repo_logow.wszystkie_zdarzenia(

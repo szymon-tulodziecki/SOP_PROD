@@ -1,11 +1,11 @@
-{% extends "layouts/base_panel.html" %}
+﻿{% extends "layouts/base_panel.html" %}
 
-{% block tytul %}Moje zgłoszenia - UOPZ{% endblock %}
-{% block naglowek %}Zgłoszenia moich studentów{% endblock %}
+{% block tytul %}Moje zgĹ‚oszenia - UOPZ{% endblock %}
+{% block naglowek %}ZgĹ‚oszenia moich studentĂłw{% endblock %}
 
 {% block naglowek_akcje %}
 <div class="u-csp-136">
-  <a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← Dashboard</a>
+  <a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">â† Dashboard</a>
 </div>
 {% endblock %}
 
@@ -18,8 +18,8 @@
       <div>
         <div class="u-csp-139">Panel opiekuna uczelnianego (UOPZ)</div>
         <div class="u-csp-036">
-          Tutaj znajdziesz wszystkie zgłoszenia studentów, których masz pod opieką.
-          Możesz przeglądać szczegółowe dane wypełnione przez studentów i podejmować decyzje o zatwierdzeniu lub odrzuceniu zgłoszenia.
+          Tutaj znajdziesz wszystkie zgĹ‚oszenia studentĂłw, ktĂłrych masz pod opiekÄ….
+          MoĹĽesz przeglÄ…daÄ‡ szczegĂłĹ‚owe dane wypeĹ‚nione przez studentĂłw i podejmowaÄ‡ decyzje o zatwierdzeniu lub odrzuceniu zgĹ‚oszenia.
         </div>
       </div>
     </div>
@@ -29,7 +29,7 @@
   <div class="karta u-csp-011">
     <div class="karta__tresc">
       <div class="u-csp-140">
-        <span class="u-csp-141">Filtruj według statusu:</span>
+        <span class="u-csp-141">Filtruj wedĹ‚ug statusu:</span>
         <a href="{{ url_for('zarzadzanie.moje_zgloszenia') }}"
            class="przycisk przycisk--{% if not request.args.get('status') %}glowny{% else %}drugorzedny{% endif %} przycisk--maly">
           Wszystkie ({{ liczniki.wszystkie }})
@@ -50,7 +50,7 @@
   {% if pilne_oceny %}
   <div class="karta u-csp-142">
     <div class="karta__naglowek">
-      <h3 class="karta__tytul u-csp-143">Wymagają uwagi</h3>
+      <h3 class="karta__tytul u-csp-143">WymagajÄ… uwagi</h3>
     </div>
     <div class="karta__tresc">
       {% for item in pilne_oceny %}
@@ -60,18 +60,18 @@
             <div class="u-csp-141">{{ item.zapis.student.first_name }} {{ item.zapis.student.last_name }}</div>
             <div class="u-csp-144">
               {% if item.przekroczony %}
-                Przekroczony deadline oceny ({{ item.deadline.strftime('%d.%m.%Y') }})
+                Przekroczony deadline assessments ({{ item.deadline.strftime('%d.%m.%Y') }})
               {% elif item.dni_do_deadline == 0 %}
-                Dziś ostatni dzień na ocenę
+                DziĹ› ostatni dzieĹ„ na ocenÄ™
               {% else %}
-                Pozostało {{ item.dni_do_deadline }} dni do deadline ({{ item.deadline.strftime('%d.%m.%Y') }})
+                PozostaĹ‚o {{ item.dni_do_deadline }} dni do deadline ({{ item.deadline.strftime('%d.%m.%Y') }})
               {% endif %}
             </div>
           </div>
           <div>
             <a href="{{ url_for('evaluation.evaluate_internship', id=item.zapis.id) }}"
                class="przycisk przycisk--glowny przycisk--maly">
-              Wystaw ocenę
+              Wystaw ocenÄ™
             </a>
           </div>
         </div>
@@ -81,11 +81,11 @@
   </div>
   {% endif %}
 
-  <!-- Lista zgłoszeń -->
+  <!-- Lista zgĹ‚oszeĹ„ -->
   <div class="karta">
     <div class="karta__naglowek">
       <h2 class="karta__tytul">
-        Moje zgłoszenia
+        Moje zgĹ‚oszenia
         {% if zgloszenia.total > 0 %}
         <span class="u-csp-145">({{ zgloszenia.total }})</span>
         {% endif %}
@@ -99,9 +99,9 @@
             <tr>
               <th class="u-csp-127">Student</th>
               <th class="u-csp-128">Praktyka</th>
-              <th class="u-csp-128">Firma</th>
+              <th class="u-csp-128">company</th>
               <th class="u-csp-129">Status</th>
-              <th class="u-csp-130">Zgłoszono</th>
+              <th class="u-csp-130">ZgĹ‚oszono</th>
               <th class="u-csp-131">Akcje</th>
             </tr>
           </thead>
@@ -116,8 +116,8 @@
                 {% endif %}
               </td>
               <td>
-                <div class="u-csp-141">{{ z.praktyka.academic_year }}</div>
-                <div class="u-csp-146">Semestr {{ z.praktyka.semester_label }}</div>
+                <div class="u-csp-141">{{ z.internship.academic_year }}</div>
+                <div class="u-csp-146">Semestr {{ z.internship.semester_label }}</div>
                 {% if z.start_date and z.end_date %}
                 <div class="u-csp-147">
                   {{ z.start_date.strftime('%d.%m') }} - {{ z.end_date.strftime('%d.%m.%Y') }}
@@ -125,13 +125,13 @@
                 {% endif %}
               </td>
               <td>
-                <div class="u-csp-141">{{ z.firma_nazwa or 'Nie podano' }}</div>
-                {% if z.firma_miasto %}
-                <div class="u-csp-146">{{ z.firma_miasto }}</div>
+                <div class="u-csp-141">{{ z.company_display_name or 'Nie podano' }}</div>
+                {% if z.company_city %}
+                <div class="u-csp-146">{{ z.company_city }}</div>
                 {% endif %}
                 {% if z.track_type.value != 'STANDARD' %}
                 <div class="u-csp-148">
-                  Ścieżka B — Uznanie efektów
+                  ĹšcieĹĽka B â€” Uznanie learning_outcomeĂłw
                 </div>
                 {% endif %}
               </td>
@@ -139,9 +139,9 @@
                 <span class="status status--{{ z.status.value|lower|replace('_', '-') }}">
                   {{ translate_status(z.status.value) }}
                 </span>
-                {% if z.komentarze_admina or z.komentarze_uopz %}
+                {% if z.admin_comments or z.supervisor_comments %}
                 <div class="u-csp-149">
-                  Są komentarze
+                  SÄ… komentarze
                 </div>
                 {% endif %}
               </td>
@@ -156,7 +156,7 @@
                   <a href="{{ url_for('zarzadzanie.szczegoly_zgloszenia', id=z.id) }}"
                      class="przycisk przycisk--{% if z.status.value == 'AWAITING_APPROVAL' %}glowny{% else %}drugorzedny{% endif %} przycisk--maly u-csp-134"
                     >
-                    {% if z.status.value == 'AWAITING_APPROVAL' %}Oceń{% else %}Szczegóły{% endif %}
+                    {% if z.status.value == 'AWAITING_APPROVAL' %}OceĹ„{% else %}SzczegĂłĹ‚y{% endif %}
                   </a>
 
                   {% if z.status.value == 'IN_PROGRESS' %}
@@ -179,7 +179,7 @@
       <div class="u-csp-154">
         {% if zgloszenia.has_prev %}
         <a href="{{ url_for('zarzadzanie.moje_zgloszenia', page=zgloszenia.prev_num, **request.args) }}"
-           class="przycisk przycisk--drugorzedny przycisk--maly">← Poprzednia</a>
+           class="przycisk przycisk--drugorzedny przycisk--maly">â† Poprzednia</a>
         {% endif %}
 
         {% for page_num in zgloszenia.iter_pages() %}
@@ -191,13 +191,13 @@
             <span class="przycisk przycisk--glowny przycisk--maly">{{ page_num }}</span>
             {% endif %}
           {% else %}
-            <span>…</span>
+            <span>â€¦</span>
           {% endif %}
         {% endfor %}
 
         {% if zgloszenia.has_next %}
         <a href="{{ url_for('zarzadzanie.moje_zgloszenia', page=zgloszenia.next_num, **request.args) }}"
-           class="przycisk przycisk--drugorzedny przycisk--maly">Następna →</a>
+           class="przycisk przycisk--drugorzedny przycisk--maly">NastÄ™pna â†’</a>
         {% endif %}
       </div>
       {% endif %}
@@ -207,19 +207,19 @@
       <div class="u-csp-155">
         <div class="u-csp-156">-</div>
         <div class="u-csp-157">
-          Brak zgłoszeń
+          Brak zgĹ‚oszeĹ„
         </div>
         <div class="u-csp-036">
           {% if request.args.get('status') %}
-          Nie masz zgłoszeń o wybranym statusie.
+          Nie masz zgĹ‚oszeĹ„ o wybranym statusie.
           {% else %}
-          Nie zostały Ci jeszcze przypisani studenci do opieki.
+          Nie zostaĹ‚y Ci jeszcze przypisani studenci do opieki.
           {% endif %}
         </div>
         {% if request.args.get('status') %}
         <div class="u-csp-158">
           <a href="{{ url_for('zarzadzanie.moje_zgloszenia') }}" class="przycisk przycisk--drugorzedny">
-            Pokaż wszystkie zgłoszenia
+            PokaĹĽ wszystkie zgĹ‚oszenia
           </a>
         </div>
         {% endif %}

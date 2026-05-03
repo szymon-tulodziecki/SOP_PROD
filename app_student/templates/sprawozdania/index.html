@@ -5,7 +5,7 @@
 {% block naglowek_akcje %}
 <div class="u-csp-368">
   {% if zapis %}
-  <button type="submit" form="formularz-sprawozdania" class="przycisk przycisk--glowny">Zapisz sprawozdanie</button>
+  <button type="submit" form="formularz-sprawozdania" class="przycisk przycisk--glowny">Zapisz report</button>
   {% endif %}
   <a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
 </div>
@@ -34,7 +34,7 @@
       </div>
       <div class="karta__tresc">
         <p class="u-csp-369">
-          Krótki opis instytucji, w której odbywała się praktyka zawodowa
+          Krótki opis instytucji, w której odbywała się internship zawodowa
         </p>
         <div class="form-field {% if form.workplace_characteristics.errors %}form-field--error{% endif %}">
           {{ form.workplace_characteristics(class="form-field__input u-textarea-resize", rows="4", placeholder="Tutaj wpisz sekcję I...") }}
@@ -71,7 +71,7 @@
       </div>
       <div class="karta__tresc">
         <p class="u-csp-369">
-          Samoocena w zakresie nabytych kompetencji oraz osiągniętych efektów uczenia się — student opisuje, jakie kompetencje nabył w trakcie praktyki zawodowej oraz dokonuje samooceny w zakresie osiągniętych efektów uczenia się. Cytuje po kolei zakładane efekty uczenia się i wykazuje wykonane prace, które prowadziły do ich osiągnięcia.
+          Samoocena w zakresie nabytych kompetencji oraz osiągniętych learning_outcomeów uczenia się — student opisuje, jakie kompetencje nabył w trakcie praktyki zawodowej oraz dokonuje samooceny w zakresie osiągniętych learning_outcomeów uczenia się. Cytuje po kolei zakładane efekty uczenia się i wykazuje wykonane prace, które prowadziły do ich osiągnięcia.
         </p>
         <div class="form-field {% if form.acquired_knowledge.errors %}form-field--error{% endif %}">
           {{ form.acquired_knowledge(class="form-field__input u-textarea-resize", rows="5", placeholder="Tutaj wpisz sekcję III...") }}
@@ -81,7 +81,7 @@
     </div>
 
     <div class="u-csp-370">
-      <button type="submit" class="przycisk przycisk--glowny">Zapisz sprawozdanie</button>
+      <button type="submit" class="przycisk przycisk--glowny">Zapisz report</button>
     </div>
 
   </form>

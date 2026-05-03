@@ -5,10 +5,10 @@ from datetime import date
 from flask import Blueprint, abort, render_template, request, send_file
 from flask_login import current_user
 
-from core.modele import UserRole
-from core.repozytoria import EnrollmentRepository, JournalRepository
-from core.autoryzacja import roles_required
-from core.uslugi.journal import JournalService
+from core.models import UserRole
+from core.repositories import EnrollmentRepository, JournalRepository
+from core.auth import roles_required
+from core.services.journal import JournalService
 
 journal_bp = Blueprint('journal', __name__)
 
@@ -99,7 +99,7 @@ def pdf_dziennik(id):
         abort(403)
     try:
         from tex_service.compiler import compile_pdf
-        from core.uslugi.documents import build_context
+        from core.services.documents import build_context
 
         context = build_context(enrollment, 'ZAL_6')
         pdf_bytes = compile_pdf('zal6_dziennik.tex.j2', context)

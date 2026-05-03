@@ -43,9 +43,9 @@
                 ! Wymaga poprawek
               </span>
               {% if zapis_info.is_standard %}
-                <a href="{{ url_for('internships.kreator_firma', zapis_id=zapis_info.id) }}" class="przycisk przycisk--maly przycisk--glowny">Edytuj zgłoszenie</a>
-              {% elif zapis_info.sciezka in ('EMPLOYMENT', 'OWN_BUSINESS') %}
-                <a href="{{ url_for('internships.kreator_wniosek', zapis_id=zapis_info.id) }}" class="przycisk przycisk--maly przycisk--glowny">Edytuj zgłoszenie</a>
+                <a href="{{ url_for('internships.kreator_firma', enrollment_id=zapis_info.id) }}" class="przycisk przycisk--maly przycisk--glowny">Edytuj zgłoszenie</a>
+              {% elif zapis_info.path in ('EMPLOYMENT', 'OWN_BUSINESS') %}
+                <a href="{{ url_for('internships.kreator_wniosek', enrollment_id=zapis_info.id) }}" class="przycisk przycisk--maly przycisk--glowny">Edytuj zgłoszenie</a>
               {% else %}
                 <a href="{{ url_for('internships.kreator_sciezka', id=p.id) }}" class="przycisk przycisk--maly przycisk--glowny">Edytuj zgłoszenie</a>
               {% endif %}
@@ -53,9 +53,9 @@
             {% elif zapis_info.status == 'PENDING' %}
               <span class="status status--draft">Nieukończone</span>
               {% if zapis_info.is_standard %}
-                <a href="{{ url_for('internships.kreator_firma', zapis_id=zapis_info.id) }}" class="przycisk przycisk--maly przycisk--glowny">Kontynuuj zgłoszenie</a>
-              {% elif zapis_info.sciezka in ('EMPLOYMENT', 'OWN_BUSINESS') %}
-                <a href="{{ url_for('internships.kreator_wniosek', zapis_id=zapis_info.id) }}" class="przycisk przycisk--maly przycisk--glowny">Kontynuuj zgłoszenie</a>
+                <a href="{{ url_for('internships.kreator_firma', enrollment_id=zapis_info.id) }}" class="przycisk przycisk--maly przycisk--glowny">Kontynuuj zgłoszenie</a>
+              {% elif zapis_info.path in ('EMPLOYMENT', 'OWN_BUSINESS') %}
+                <a href="{{ url_for('internships.kreator_wniosek', enrollment_id=zapis_info.id) }}" class="przycisk przycisk--maly przycisk--glowny">Kontynuuj zgłoszenie</a>
               {% else %}
                 <a href="{{ url_for('internships.kreator_sciezka', id=p.id) }}" class="przycisk przycisk--maly przycisk--glowny">Kontynuuj zgłoszenie</a>
               {% endif %}

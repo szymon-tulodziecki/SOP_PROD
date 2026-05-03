@@ -1,4 +1,4 @@
-\documentclass[11pt,a4paper]{article}
+﻿\documentclass[11pt,a4paper]{article}
 \usepackage{fontspec}
 \usepackage{polyglossia}
 \setmainlanguage{polish}
@@ -11,21 +11,21 @@
 \begin{document}
 
 \begin{flushright}
-Zał. nr 2a
+ZaĹ‚. nr 2a
 \end{flushright}
 
 \noindent
-Akademia Nauk Stosowanych w Elblągu \\
+Akademia Nauk Stosowanych w ElblÄ…gu \\
 Instytut Informatyki Stosowanej im. Krzysztofa Brzeskiego \\
-Kierunek studiów: Informatyka
+Kierunek studiĂłw: Informatyka
 
 \vspace{1em}
 
 \noindent <<% if student.plec == 'K' %>>Studentka<<% else %>>Student<<% endif %>>: \textbf{<< student.imie|s >> << student.nazwisko|s >>} \\
 Nr albumu: \textbf{<< student.nr_albumu|s >>} \\
-Kierunek studiów: Informatyka \hfill Specjalność: \textbf{<< specjalnosc|s >>} \\
-Miejsce praktyki (instytucja): \textbf{<< firma.nazwa|s >>} \\
-\textbf{<< firma.adres|s >>, << firma.miasto|s >>} \\
+Kierunek studiĂłw: Informatyka \hfill SpecjalnoĹ›Ä‡: \textbf{<< specialization|s >>} \\
+Miejsce praktyki (instytucja): \textbf{<< company.nazwa|s >>} \\
+\textbf{<< company.adres|s >>, << company.miasto|s >>} \\
 Termin realizacji praktyki: od \textbf{<< terminy.od|s >>} do \textbf{<< terminy.do|s >>} \hfill Liczba dni roboczych: 120
 
 \vspace{2em}
@@ -36,12 +36,12 @@ Termin realizacji praktyki: od \textbf{<< terminy.od|s >>} do \textbf{<< terminy
 \renewcommand{\arraystretch}{1.5}
 \begin{longtable}{|c|p{8cm}|p{7cm}|}
 \hline
-\textbf{Lp.} & \textbf{Efekty kształcenia} & \textbf{Dział (komórka) / przykładowe prace wykonywane przez praktykanta} \\ \hline
+\textbf{Lp.} & \textbf{Efekty ksztaĹ‚cenia} & \textbf{DziaĹ‚ (komĂłrka) / przykĹ‚adowe prace wykonywane przez praktykanta} \\ \hline
 \endfirsthead
 \hline
-\textbf{Lp.} & \textbf{Efekty kształcenia} & \textbf{Dział (komórka) / przykładowe prace wykonywane przez praktykanta} \\ \hline
+\textbf{Lp.} & \textbf{Efekty ksztaĹ‚cenia} & \textbf{DziaĹ‚ (komĂłrka) / przykĹ‚adowe prace wykonywane przez praktykanta} \\ \hline
 \endhead
-<<% for item in harmonogram %>>
+<<% for item in schedule %>>
 \textbf{<< item.efekt_kod|s >>} & << item.efekt_opis|s >> & << item.dzial|s >> / << item.prace|s >> \\ \hline
 <<% endfor %>>
 \end{longtable}
@@ -56,17 +56,17 @@ Termin realizacji praktyki: od \textbf{<< terminy.od|s >>} do \textbf{<< terminy
 \renewcommand{\arraystretch}{1.5}
 \begin{tabular}{|c|p{8cm}|p{4cm}|}
 \hline
-\textbf{L.p.} & \textbf{Dział / komórka (miejsce odbywania praktyki)} & \textbf{Planowana liczba dni roboczych} \\ \hline
-<<% for item in harmonogram %>>
+\textbf{L.p.} & \textbf{DziaĹ‚ / komĂłrka (miejsce odbywania praktyki)} & \textbf{Planowana liczba dni roboczych} \\ \hline
+<<% for item in schedule %>>
 << loop.index >> & << item.dzial|s >> & \textbf{<< item.dni|num >>} \\ \hline
 <<% endfor %>>
-\multicolumn{2}{|r|}{\textbf{Łącznie}} & \\ \hline
+\multicolumn{2}{|r|}{\textbf{ĹÄ…cznie}} & \\ \hline
 \multicolumn{2}{|r|}{\textbf{Wymagana}} & \textbf{120} \\ \hline
 \end{tabular}
 \end{center}
 
 \vspace{3em}
-\noindent Opiekun uczelniany (UOPZ): \textbf{<< uopz.imie_nazwisko|s >>} \hfill Opiekun zakładowy (ZOPZ): \textbf{<< zopz.imie_nazwisko|s >>}
+\noindent Opiekun uczelniany (UOPZ): \textbf{<< supervisor.imie_nazwisko|s >>} \hfill Opiekun zakĹ‚adowy (ZOPZ): \textbf{<< zopz.imie_nazwisko|s >>}
 
 \vspace{4em}
 \noindent
@@ -79,7 +79,7 @@ Termin realizacji praktyki: od \textbf{<< terminy.od|s >>} do \textbf{<< terminy
 \begin{minipage}[t]{0.3\textwidth}
 \centering
 \dotfill\\
-\small podpis zakładowego opiekuna praktyki
+\small podpis zakĹ‚adowego opiekuna praktyki
 \end{minipage}
 \hfill
 \begin{minipage}[t]{0.3\textwidth}

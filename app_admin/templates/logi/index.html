@@ -1,9 +1,9 @@
-{% extends "layouts/base_panel.html" %}
+﻿{% extends "layouts/base_panel.html" %}
 {% block tytul %}Logi systemowe{% endblock %}
 {% block naglowek %}Logi systemowe{% endblock %}
 
 {% block naglowek_akcje %}
-<a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
+<a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">â† PowrĂłt</a>
 {% endblock %}
 
 {% block tresc %}
@@ -12,12 +12,12 @@
     <form method="GET" class="u-flex--gap-05 u-csp-096">
       <div class="pole-formularza u-csp-097">
         <label class="pole-formularza__etykieta" for="szukaj">Student</label>
-        <input id="szukaj" name="szukaj" class="pole-formularza__input" value="{{ search_query }}" placeholder="Imię lub nazwisko…">
+        <input id="szukaj" name="szukaj" class="pole-formularza__input" value="{{ search_query }}" placeholder="ImiÄ™ lub nazwiskoâ€¦">
       </div>
       <div class="pole-formularza u-csp-098">
-        <label class="pole-formularza__etykieta" for="typ">Typ zdarzenia</label>
-        <select id="typ" name="typ" class="pole-formularza__input">
-          <option value="">— wszystkie —</option>
+        <label class="pole-formularza__etykieta" for="event_type">Typ process_events</label>
+        <select id="event_type" name="event_type" class="pole-formularza__input">
+          <option value="">â€” wszystkie â€”</option>
           {% for t in event_types %}
           <option value="{{ t }}" {% if t == active_type %}selected{% endif %}>{{ labels.get(t, t) }}</option>
           {% endfor %}
@@ -26,7 +26,7 @@
       <div class="u-flex--gap-05 u-csp-099">
         <button type="submit" class="przycisk przycisk--drugorzedny">Filtruj</button>
         {% if search_query or active_type %}
-        <a href="{{ url_for('logi.lista_logow') }}" class="przycisk przycisk--drugorzedny">Wyczyść</a>
+        <a href="{{ url_for('logi.lista_logow') }}" class="przycisk przycisk--drugorzedny">WyczyĹ›Ä‡</a>
         {% endif %}
       </div>
     </form>
@@ -39,9 +39,9 @@
       <thead>
         <tr>
           <th>Data i czas</th>
-          <th>Typ zdarzenia</th>
+          <th>Typ process_events</th>
           <th>Student</th>
-          <th>Wykonał</th>
+          <th>WykonaĹ‚</th>
           <th>Decyzja</th>
           <th>Komentarz</th>
           <th></th>
@@ -51,7 +51,7 @@
         {% for z in events.items %}
         <tr>
           <td class="u-nowrap u-meta">
-            {{ z.executed_at.strftime('%Y-%m-%d %H:%M') if z.executed_at else '—' }}
+            {{ z.executed_at.strftime('%Y-%m-%d %H:%M') if z.executed_at else 'â€”' }}
           </td>
           <td>
             {% set rola = z.executed_by.role.value if z.executed_by and z.executed_by.role else '' %}
@@ -73,13 +73,13 @@
           <td>
             {% if z.enrollment and z.enrollment.student %}
               {{ z.enrollment.student.first_name }} {{ z.enrollment.student.last_name }}
-            {% else %}—{% endif %}
+            {% else %}â€”{% endif %}
           </td>
           <td class="u-fs-sm">
             {% if z.executed_by %}
               {{ z.executed_by.first_name }} {{ z.executed_by.last_name }}
               <div class="u-tekst-trzeciorzed u-fs-xs">{{ z.executed_by.role_label }}</div>
-            {% else %}—{% endif %}
+            {% else %}â€”{% endif %}
           </td>
           <td>
             {% if z.decision == 'APPROVED' %}
@@ -88,21 +88,21 @@
               <span class="status status--w-trakcie">Wymaga poprawek</span>
             {% elif z.decision == 'REJECTED' %}
               <span class="status status--odrzucona">Odrzucone</span>
-            {% else %}—{% endif %}
+            {% else %}â€”{% endif %}
           </td>
           <td class="u-meta u-csp-100">
-            {{ z.comment or '—' }}
+            {{ z.comment or 'â€”' }}
           </td>
           <td>
             {% if z.enrollment_id %}
             <a href="{{ url_for('zarzadzanie.szczegoly_zgloszenia', id=z.enrollment_id) }}"
-               class="przycisk przycisk--maly przycisk--drugorzedny">Szczegóły</a>
+               class="przycisk przycisk--maly przycisk--drugorzedny">SzczegĂłĹ‚y</a>
             {% endif %}
           </td>
         </tr>
         {% else %}
         <tr>
-          <td colspan="7" class="tabela--pusta">Brak zdarzeń spełniających kryteria.</td>
+          <td colspan="7" class="tabela--pusta">Brak zdarzeĹ„ speĹ‚niajÄ…cych kryteria.</td>
         </tr>
         {% endfor %}
       </tbody>
@@ -115,11 +115,11 @@
     <div class="paginacja__przyciski">
       {% for nr in events.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
         {% if nr %}
-          <a href="{{ url_for('logi.lista_logow', strona=nr, typ=active_type, szukaj=search_query) }}"
+          <a href="{{ url_for('logi.lista_logow', strona=nr, event_type=active_type, szukaj=search_query) }}"
              class="paginacja__przycisk {% if nr == events.page %}paginacja__przycisk--aktywny{% endif %}"
              {% if nr == events.page %}aria-current="page"{% endif %}>{{ nr }}</a>
         {% else %}
-          <span class="paginacja__przycisk" aria-hidden="true">…</span>
+          <span class="paginacja__przycisk" aria-hidden="true">â€¦</span>
         {% endif %}
       {% endfor %}
     </div>

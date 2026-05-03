@@ -7,8 +7,8 @@ from wtforms import TextAreaField
 from wtforms.validators import DataRequired, Optional
 
 from core.extensions import db
-from core.modele import InternshipReport, EnrollmentStatus
-from core.repozytoria import EnrollmentRepository
+from core.models import InternshipReport, EnrollmentStatus
+from core.repositories import EnrollmentRepository
 
 _repo_zapisow = EnrollmentRepository()
 
@@ -16,7 +16,7 @@ reports_bp = Blueprint('reports', __name__)
 
 
 class StandardReportForm(FlaskForm):
-    """Zał. 7, ścieżka A: standardowa praktyka."""
+    """Zał. 7, ścieżka A: standardowa internship."""
     workplace_characteristics = TextAreaField(
         'I. Charakterystyka miejsca odbywania praktyki',
         validators=[DataRequired()],
@@ -31,10 +31,10 @@ class StandardReportForm(FlaskForm):
     )
 
     def populate_to_model(self, model_instance):
-        model_instance.charakterystyka_miejsca = self.workplace_characteristics.data
-        model_instance.opis_i_analiza = self.work_description.data
+        model_instance.workplace_description = self.workplace_characteristics.data
+        model_instance.analysis = self.work_description.data
         if self.acquired_knowledge.data:
-            model_instance.wiedza = self.acquired_knowledge.data
+            model_instance.skills = self.acquired_knowledge.data
         return model_instance
 
 
@@ -54,10 +54,10 @@ class EmploymentReportForm(FlaskForm):
     )
 
     def populate_to_model(self, model_instance):
-        model_instance.charakterystyka_miejsca = self.workplace_characteristics.data
-        model_instance.opis_i_analiza = self.work_analysis.data
+        model_instance.workplace_description = self.workplace_characteristics.data
+        model_instance.analysis = self.work_analysis.data
         if self.acquired_knowledge.data:
-            model_instance.wiedza = self.acquired_knowledge.data
+            model_instance.skills = self.acquired_knowledge.data
         return model_instance
 
 
@@ -82,28 +82,28 @@ def index():
     form = FormClass()
 
     if form.validate_on_submit():
-        if not zapis.sprawozdanie:
+        if not zapis.report:
             new_report = InternshipReport(
                 id=uuid.uuid4(),
                 enrollment_id=zapis.id,
-                charakterystyka_miejsca='',
-                opis_i_analiza='',
+                workplace_description='',
+                analysis='',
             )
             db.session.add(new_report)
             db.session.flush()
             zapis = _repo_zapisow.znajdz_po_id(zapis.id)
-        form.populate_to_model(zapis.sprawozdanie)
+        form.populate_to_model(zapis.report)
         db.session.commit()
         flash('Sprawozdanie zostało zapisane.', 'success')
         return redirect(url_for('reports.index'))
 
-    sprawozdanie = zapis.sprawozdanie
-    form.workplace_characteristics.data = sprawozdanie.charakterystyka_miejsca if sprawozdanie else ''
+    report = zapis.report
+    form.workplace_characteristics.data = report.workplace_description if report else ''
     if is_standard:
-        form.work_description.data = sprawozdanie.opis_i_analiza if sprawozdanie else ''
+        form.work_description.data = report.analysis if report else ''
     else:
-        form.work_analysis.data = sprawozdanie.opis_i_analiza if sprawozdanie else ''
-    form.acquired_knowledge.data = sprawozdanie.wiedza if sprawozdanie else ''
+        form.work_analysis.data = report.analysis if report else ''
+    form.acquired_knowledge.data = report.skills if report else ''
 
     return render_template(
         'sprawozdania/index.html',
@@ -111,5 +111,5 @@ def index():
         form=form,
         ma_zapis=zapis,
         is_standard=is_standard,
-        sciezka=path_type,
+        path=path_type,
     )

@@ -7,14 +7,14 @@ from flask import Blueprint, abort, current_app, flash, make_response, redirect,
 from flask_login import current_user, login_required
 from flask_wtf import FlaskForm
 
-from core.autoryzacja import roles_required
+from core.auth import roles_required
 from core.extensions import db
-from core.modele import UserRole
-from core.repozytoria import AssessmentRepository, EnrollmentRepository, OutcomeRepository, UserRepository
-from core.uslugi import SerwisOceniania as GradingService
-from core.uslugi.documents import build_context
-from core.uslugi.evaluation import EvaluationService, GradeFormData
-from core.uslugi.workflow import ZapisFSM
+from core.models import UserRole
+from core.repositories import AssessmentRepository, EnrollmentRepository, OutcomeRepository, UserRepository
+from core.services import AssessmentService as GradingService
+from core.services.documents import build_context
+from core.services.evaluation import EvaluationService, GradeFormData
+from core.services.workflow import EnrollmentStateMachine
 
 outcome_repository = OutcomeRepository()
 assessment_repository = AssessmentRepository()
@@ -36,15 +36,15 @@ def _can_grade(enrollment) -> bool:
     return False
 
 
-def get_pilne_oceny(uopz_id=None):
-    return GradingService.get_pilne_oceny(uopz_id)
+def get_urgent_assessments(supervisor_id=None):
+    return GradingService.get_urgent_assessments(supervisor_id)
 
 
 @evaluation_bp.route('/', methods=['GET'])
 @login_required
 def lista_ocen():
     supervisor_id = current_user.id if current_user.role == UserRole.UOPZ else None
-    data = GradingService.przygotuj_liste_ocen(supervisor_id=supervisor_id, filtr=request.args.get('filtr'))
+    data = GradingService.prepare_grading_list(supervisor_id=supervisor_id, filtr=request.args.get('filtr'))
     return render_template(
         'evaluation/lista_ocen.html',
         widoczne=data['widoczne'],
@@ -53,7 +53,7 @@ def lista_ocen():
     )
 
 
-@evaluation_bp.route('/auto-zakoncz', methods=['POST'])
+@evaluation_bp.route('/auto-complete', methods=['POST'])
 @roles_required(UserRole.ADMIN)
 def auto_zakoncz_praktyki():
     """Endpoint for scheduled auto-completion of internships past their end date."""
@@ -76,32 +76,32 @@ def evaluate_internship(id):
     if request.method == 'POST':
         try:
             grade_data = GradeFormData(
-                report_grade=EvaluationService.parse_grade(request.form.get('ocena_sprawozdania', '')),
-                supervisor_grade=EvaluationService.parse_grade(request.form.get('ocena_uopz', '')),
-                workplace_grade=EvaluationService.parse_grade(request.form.get('ocena_zopz', '')),
-                supervisor_grade_description=request.form.get('ocena_opisowa_uopz'),
-                workplace_grade_description=request.form.get('ocena_opisowa_zopz'),
-                exam_question_1=request.form.get('sprawdzian_pytanie_1'),
-                exam_grade_1=EvaluationService.parse_grade(request.form.get('sprawdzian_ocena_1', '')),
-                exam_question_2=request.form.get('sprawdzian_pytanie_2'),
-                exam_grade_2=EvaluationService.parse_grade(request.form.get('sprawdzian_ocena_2', '')),
-                exam_question_3=request.form.get('sprawdzian_pytanie_3'),
-                exam_grade_3=EvaluationService.parse_grade(request.form.get('sprawdzian_ocena_3', '')),
+                report_grade=EvaluationService.parse_grade(request.form.get('report_grade', '')),
+                supervisor_grade=EvaluationService.parse_grade(request.form.get('supervisor_grade', '')),
+                workplace_grade=EvaluationService.parse_grade(request.form.get('workplace_grade', '')),
+                supervisor_grade_description=request.form.get('supervisor_grade_description'),
+                workplace_grade_description=request.form.get('workplace_grade_description'),
+                exam_question_1=request.form.get('exam_question_1'),
+                exam_grade_1=EvaluationService.parse_grade(request.form.get('exam_grade_1', '')),
+                exam_question_2=request.form.get('exam_question_2'),
+                exam_grade_2=EvaluationService.parse_grade(request.form.get('exam_grade_2', '')),
+                exam_question_3=request.form.get('exam_question_3'),
+                exam_grade_3=EvaluationService.parse_grade(request.form.get('exam_grade_3', '')),
                 commission_chair=request.form.get('komisja_przewodniczacy'),
                 commission_member_2=request.form.get('komisja_czlonek_2'),
                 commission_member_3=request.form.get('komisja_czlonek_3'),
-                finalize=bool(request.form.get('zakoncz')),
+                finalize=bool(request.form.get('complete')),
             )
         except ValueError as exc:
             flash(str(exc), 'danger')
             return redirect(url_for(GRADE_FORM_ENDPOINT, id=enrollment.id)), 400
 
-        result = GradingService.zapisz_oceny(enrollment, grade_data)
+        result = GradingService.save_grades(enrollment, grade_data)
         if not result.success:
             flash(result.error_message, 'danger')
             return redirect(url_for(GRADE_FORM_ENDPOINT, id=enrollment.id))
 
-        outcome_error = EvaluationService.waliduj_efekty_ocen(
+        outcome_error = EvaluationService.validate_outcome_grades(
             outcomes, request.form, enrollment.is_path_b, grade_data.finalize
         )
         if outcome_error:
@@ -139,7 +139,7 @@ def evaluate_internship(id):
     )
 
 
-@evaluation_bp.route('/zapis/<uuid:id>/sprawozdanie', methods=['GET'])
+@evaluation_bp.route('/zapis/<uuid:id>/report', methods=['GET'])
 @roles_required(UserRole.ADMIN, UserRole.UOPZ)
 def podglad_sprawozdania(id):
     enrollment = enrollment_repository.znajdz_po_id(id) or abort(404)
@@ -183,13 +183,13 @@ def ocen_zapis(id):
     )
 
 
-@evaluation_bp.route('/zapis/<uuid:id>/zakoncz', methods=['POST'])
+@evaluation_bp.route('/zapis/<uuid:id>/complete', methods=['POST'])
 @roles_required(UserRole.ADMIN, UserRole.UOPZ)
 def zakoncz_zapis(id):
     enrollment = enrollment_repository.znajdz_po_id(id) or abort(404)
     if not _can_grade(enrollment):
         abort(403)
-    ZapisFSM(enrollment).zakoncz()
+    EnrollmentStateMachine(enrollment).complete()
     db.session.commit()
     flash(
         f'Praktyka studenta {enrollment.student.first_name} {enrollment.student.last_name} została zakończona.',
@@ -206,7 +206,7 @@ def generuj_protokol(id):
     if not _can_grade(enrollment):
         abort(403)
     if not (enrollment.final_grades and enrollment.final_grades.supervisor_grade):
-        flash('Protokół dostępny dopiero po wystawieniu oceny UOPZ.', 'warning')
+        flash('Protokół dostępny dopiero po wystawieniu assessments UOPZ.', 'warning')
         return redirect(url_for(GRADE_FORM_ENDPOINT, id=id))
 
     context = build_context(enrollment, 'ZAL_8')

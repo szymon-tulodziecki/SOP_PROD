@@ -1,7 +1,7 @@
-{% extends "layouts/base_panel.html" %}
+﻿{% extends "layouts/base_panel.html" %}
 
 {% block tytul %}Dashboard{% endblock %}
-{% block naglowek %}Przegląd systemu{% endblock %}
+{% block naglowek %}PrzeglÄ…d systemu{% endblock %}
 
 {% block naglowek_akcje %}
   {% if current_user.role.value == 'ADMIN' %}
@@ -30,9 +30,9 @@
     <div>
       <div class="u-fw-600">
         {% if item.przekroczony %}
-          Przekroczony deadline oceny: {{ item.zapis.student.last_name }} {{ item.zapis.student.first_name }}
+          Przekroczony deadline assessments: {{ item.zapis.student.last_name }} {{ item.zapis.student.first_name }}
         {% elif item.deadline_is_today %}
-          Dziś ostatni dzień oceny: {{ item.zapis.student.last_name }} {{ item.zapis.student.first_name }}
+          DziĹ› ostatni dzieĹ„ assessments: {{ item.zapis.student.last_name }} {{ item.zapis.student.first_name }}
         {% else %}
           Pilna ocena za {{ item.dni_do_deadline }} dni: {{ item.zapis.student.last_name }} {{ item.zapis.student.first_name }}
         {% endif %}
@@ -41,7 +41,7 @@
         Deadline: {{ item.deadline.strftime('%d.%m.%Y') }}
         <a class="u-csp-003" href="{{ url_for('evaluation.evaluate_internship', id=item.zapis.id) }}"
           >
-          Wystaw ocenę →
+          Wystaw ocenÄ™ â†’
         </a>
       </div>
     </div>
@@ -50,7 +50,7 @@
 </div>
 {% endif %}
 
-<section class="siatka-statystyk" aria-label="Kluczowe wskaźniki">
+<section class="siatka-statystyk" aria-label="Kluczowe wskaĹşniki">
 
   <div class="karta-stat">
     <span class="karta-stat__ikona" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
@@ -61,19 +61,19 @@
   <div class="karta-stat">
     <span class="karta-stat__ikona" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>
     <span class="karta-stat__liczba">{{ statystyki.oczekujace_oceny }}</span>
-    <span class="karta-stat__etykieta">Czeka na ocenę</span>
+    <span class="karta-stat__etykieta">Czeka na ocenÄ™</span>
   </div>
 
   <div class="karta-stat">
     <span class="karta-stat__ikona" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 2 4 4 6 4s6-2 6-4v-5"/></svg></span>
     <span class="karta-stat__liczba">{{ statystyki.zakonczone }}</span>
-    <span class="karta-stat__etykieta">Zakończone</span>
+    <span class="karta-stat__etykieta">ZakoĹ„czone</span>
   </div>
 
   <div class="karta-stat">
     <span class="karta-stat__ikona" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
     <span class="karta-stat__liczba">{{ statystyki.liczba_studentow }}</span>
-    <span class="karta-stat__etykieta">Aktywnych studentów</span>
+    <span class="karta-stat__etykieta">Aktywnych studentĂłw</span>
   </div>
 
 </section>
@@ -82,7 +82,7 @@
 
   <section class="karta" aria-labelledby="tytul-ostatnie">
     <header class="karta__naglowek">
-      <h2 id="tytul-ostatnie" class="karta__tytul">Ostatnie aktywności</h2>
+      <h2 id="tytul-ostatnie" class="karta__tytul">Ostatnie aktywnoĹ›ci</h2>
       <a href="{{ url_for('zarzadzanie.lista_praktyk') }}" class="przycisk przycisk--drugorzedny przycisk--maly">Wszystkie</a>
     </header>
     <div class="karta__tresc">
@@ -100,7 +100,7 @@
             {% for z in ostatnie_zapisy %}
             <tr>
               <td>{{ z.student.first_name }} {{ z.student.last_name }}</td>
-              <td>{{ z.praktyka.academic_year }} ({{ z.praktyka.semester_label }})</td>
+              <td>{{ z.internship.academic_year }} ({{ z.internship.semester_label }})</td>
               <td>
                 <span class="status status--{{ z.status_css_class }}">
                   {{ z.status_label }}
@@ -110,14 +110,14 @@
                 {% if z.is_pending %}
                 <form class="u-csp-006" method="POST" action="{{ url_for('zarzadzanie.potwierdz_zapis', id=z.id) }}">
                   {{ csrf_form.hidden_tag() }}
-                  <button type="submit" class="przycisk przycisk--drugorzedny przycisk--maly" onclick="return confirm('Potwierdzić ten zapis?')">Zatwierdź</button>
+                  <button type="submit" class="przycisk przycisk--drugorzedny przycisk--maly" onclick="return confirm('PotwierdziÄ‡ ten zapis?')">ZatwierdĹş</button>
                 </form>
                 {% endif %}
               </td>
             </tr>
             {% else %}
             <tr>
-              <td colspan="3" class="tabela--pusta">Brak aktywnych zapisów.</td>
+              <td colspan="3" class="tabela--pusta">Brak aktywnych zapisĂłw.</td>
             </tr>
             {% endfor %}
           </tbody>
@@ -136,11 +136,11 @@
         <li class="u-flex--between u-csp-008">
           <div>
             <span class="u-fw-600 u-csp-009">{{ z.student.first_name }} {{ z.student.last_name }}</span>
-            <span class="u-meta">{{ z.praktyka.academic_year }}</span>
+            <span class="u-meta">{{ z.internship.academic_year }}</span>
           </div>
         </li>
         {% else %}
-        <li class="u-stan-pusty--sm">Brak zapisów.</li>
+        <li class="u-stan-pusty--sm">Brak zapisĂłw.</li>
         {% endfor %}
       </ul>
     </div>

@@ -1,14 +1,14 @@
-{% extends "layouts/base_panel.html" %}
+﻿{% extends "layouts/base_panel.html" %}
 
 {% set endpoint_listy = endpoint_listy|default('zarzadzanie.lista_zgloszen') %}
-{% set tytul_listy = tytul_listy|default('Zgłoszenia studentów') %}
-{% set naglowek_listy = naglowek_listy|default('Zarządzanie zgłoszeniami praktyk') %}
+{% set tytul_listy = tytul_listy|default('ZgĹ‚oszenia studentĂłw') %}
+{% set naglowek_listy = naglowek_listy|default('ZarzÄ…dzanie zgĹ‚oszeniami praktyk') %}
 
 {% block tytul %}{{ tytul_listy }}{% endblock %}
 {% block naglowek %}{{ naglowek_listy }}{% endblock %}
 
 {% block naglowek_akcje %}
-<a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
+<a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">â† PowrĂłt</a>
 {% endblock %}
 
 {% block tresc %}
@@ -25,7 +25,7 @@
         </a>
         <a href="{{ url_for(endpoint_listy, status='AWAITING_APPROVAL') }}"
            class="przycisk przycisk--{% if request.args.get('status') == 'AWAITING_APPROVAL' %}glowny{% else %}drugorzedny{% endif %} przycisk--maly">
-          Oczekujące
+          OczekujÄ…ce
         </a>
         <a href="{{ url_for(endpoint_listy, status='REVISION_REQUIRED') }}"
            class="przycisk przycisk--{% if request.args.get('status') == 'REVISION_REQUIRED' %}glowny{% else %}drugorzedny{% endif %} przycisk--maly">
@@ -35,10 +35,10 @@
     </div>
   </div>
 
-  <!-- Lista zgłoszeń -->
+  <!-- Lista zgĹ‚oszeĹ„ -->
   <div class="karta">
     <div class="karta__naglowek">
-      <h2 class="karta__tytul">Lista zgłoszeń ({{ zgloszenia.total }})</h2>
+      <h2 class="karta__tytul">Lista zgĹ‚oszeĹ„ ({{ zgloszenia.total }})</h2>
     </div>
     <div class="karta__tresc">
       <div class="tabela-wrapper">
@@ -47,9 +47,9 @@
             <tr>
               <th class="u-csp-127">Student</th>
               <th class="u-csp-128">Praktyka</th>
-              <th class="u-csp-128">Firma</th>
+              <th class="u-csp-128">company</th>
               <th class="u-csp-129">Status</th>
-              <th class="u-csp-130">Data zgłoszenia</th>
+              <th class="u-csp-130">Data zgĹ‚oszenia</th>
               <th class="u-csp-131">Akcje</th>
             </tr>
           </thead>
@@ -64,22 +64,22 @@
                 {% endif %}
               </td>
               <td>
-                <div class="u-fw-600">{{ z.praktyka.academic_year }}</div>
-                <div class="u-meta">{{ z.praktyka.semester_label }}</div>
+                <div class="u-fw-600">{{ z.internship.academic_year }}</div>
+                <div class="u-meta">{{ z.internship.semester_label }}</div>
               </td>
               <td>
-                <div>{{ z.firma_nazwa or 'Nie podano' }}</div>
-                {% if z.firma_miasto %}
-                <div class="u-meta">{{ z.firma_miasto }}</div>
+                <div>{{ z.company_display_name or 'Nie podano' }}</div>
+                {% if z.company_city %}
+                <div class="u-meta">{{ z.company_city }}</div>
                 {% endif %}
               </td>
               <td>
                 <span class="status status--{{ z.status_css_class }}">
                   {{ z.status_label }}
                 </span>
-                {% if z.uopz %}
+                {% if z.supervisor %}
                 <div class="u-tekst-drugor u-csp-132">
-                  UOPZ: {{ z.uopz.first_name }} {{ z.uopz.last_name }}
+                  UOPZ: {{ z.supervisor.first_name }} {{ z.supervisor.last_name }}
                 </div>
                 {% endif %}
               </td>
@@ -94,7 +94,7 @@
                   <a href="{{ url_for('zarzadzanie.szczegoly_zgloszenia', id=z.id) }}"
                      class="przycisk przycisk--drugorzedny przycisk--maly u-csp-134"
                     >
-                    Szczegóły
+                    SzczegĂłĹ‚y
                   </a>
                 </div>
               </td>
@@ -102,7 +102,7 @@
             {% else %}
             <tr>
               <td colspan="6" class="tabela--pusta">
-                Brak zgłoszeń{% if request.args.get('status') %} o wybranym statusie{% endif %}.
+                Brak zgĹ‚oszeĹ„{% if request.args.get('status') %} o wybranym statusie{% endif %}.
               </td>
             </tr>
             {% endfor %}
@@ -115,7 +115,7 @@
       <div class="u-flex--center u-mt-2 u-csp-135">
         {% if zgloszenia.has_prev %}
         <a href="{{ url_for(endpoint_listy, page=zgloszenia.prev_num, **request.args) }}"
-           class="przycisk przycisk--drugorzedny przycisk--maly">← Poprzednia</a>
+           class="przycisk przycisk--drugorzedny przycisk--maly">â† Poprzednia</a>
         {% endif %}
 
         {% for page_num in zgloszenia.iter_pages() %}
@@ -127,13 +127,13 @@
             <span class="przycisk przycisk--glowny przycisk--maly">{{ page_num }}</span>
             {% endif %}
           {% else %}
-            <span>…</span>
+            <span>â€¦</span>
           {% endif %}
         {% endfor %}
 
         {% if zgloszenia.has_next %}
         <a href="{{ url_for(endpoint_listy, page=zgloszenia.next_num, **request.args) }}"
-           class="przycisk przycisk--drugorzedny przycisk--maly">Następna →</a>
+           class="przycisk przycisk--drugorzedny przycisk--maly">NastÄ™pna â†’</a>
         {% endif %}
       </div>
       {% endif %}

@@ -10,9 +10,9 @@ from wtforms.widgets import ListWidget, CheckboxInput
 
 from sqlalchemy.exc import IntegrityError
 
-from core.modele import JournalEntry, EnrollmentStatus
+from core.models import JournalEntry, EnrollmentStatus
 from core.extensions import db
-from core.repozytoria import EnrollmentRepository, OutcomeRepository, JournalRepository
+from core.repositories import EnrollmentRepository, OutcomeRepository, JournalRepository
 from app_student.services import LogbookEntryDTO
 
 _repo_zapisow = EnrollmentRepository()
@@ -31,7 +31,7 @@ class JournalEntryForm(FlaskForm):
     description          = TextAreaField('Opis wykonanych prac', validators=[DataRequired()])
     outcome_ids    = SelectMultipleField(
         'Efekty uczenia się',
-        validators=[DataRequired(message='Wybierz co najmniej jeden efekt uczenia się.')],
+        validators=[DataRequired(message='Wybierz co najmniej jeden learning_outcome uczenia się.')],
         widget=ListWidget(prefix_label=False),
         option_widget=CheckboxInput(),
     )
@@ -110,7 +110,7 @@ def nowy_wpis():
         return redirect(url_for(_ROUTE_INDEX))
 
     efekty = _repo_efektow.wszystkie()
-    efekty_opisy = {str(e.id): f'{e.kod}: {e.description}' for e in efekty}
+    efekty_opisy = {str(e.id): f'{e.code}: {e.description}' for e in efekty}
     form = JournalEntryForm()
     form.outcome_ids.choices = [
         (str(e.id), e.description)
@@ -125,7 +125,7 @@ def nowy_wpis():
             return render_template(_TPL_NOWY_WPIS, form=form, zapis=zapis, efekty_opisy=efekty_opisy)
 
         godziny = int(form.hours_count.data)
-        wymagane = zapis.praktyka.required_hours
+        wymagane = zapis.internship.required_hours
         zalogowane = sum(w.duration_hours for w in _repo_wpisow.get_by_enrollment(zapis.id))
         if zalogowane + godziny > wymagane:
             pozostalo = wymagane - zalogowane
@@ -168,7 +168,7 @@ def edytuj_wpis(wpis_id):
         abort(403)
 
     efekty = _repo_efektow.wszystkie()
-    efekty_opisy = {str(e.id): f'{e.kod}: {e.description}' for e in efekty}
+    efekty_opisy = {str(e.id): f'{e.code}: {e.description}' for e in efekty}
     form = JournalEntryForm()
     form.outcome_ids.choices = [
         (str(e.id), e.description)
@@ -185,7 +185,7 @@ def edytuj_wpis(wpis_id):
         form.entry_date.data    = wpis.entry_date.isoformat()
         form.hours_count.data = str(wpis.duration_hours)
         form.description.data          = wpis.description
-        form.outcome_ids.data    = [str(e.id) for e in wpis.efekty_uczenia]
+        form.outcome_ids.data    = [str(e.id) for e in wpis.learning_outcomes]
 
     return render_template(_TPL_NOWY_WPIS, form=form, zapis=zapis, edycja=True, wpis=wpis, efekty_opisy=efekty_opisy)
 

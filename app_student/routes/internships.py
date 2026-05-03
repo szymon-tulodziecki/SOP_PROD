@@ -8,14 +8,14 @@ import re
 from flask_login import login_required, current_user
 from core.extensions import db
 import httpx
-from core.modele import (Internship, InternshipEnrollment, InternshipStatus, EnrollmentStatus,
+from core.models import (Internship, InternshipEnrollment, InternshipStatus, EnrollmentStatus,
                          InternshipPath, LearningOutcome, InternshipSchedule, Company,
                          IndividualProgram, DocumentStatus, UploadedDocument,
                          WorkplaceDetails, PathJustification)
-from core.modele.internships import EventType
-from core.uslugi.workflow import ZapisFSM, IllegalTransitionError
-from core.uslugi.internships import UslugaPraktyk
-from core.repozytoria import (InternshipRepository, EnrollmentRepository,
+from core.models.internships import EventType
+from core.services.workflow import EnrollmentStateMachine, IllegalTransitionError
+from core.services.internships import InternshipService
+from core.repositories import (InternshipRepository, EnrollmentRepository,
                                OutcomeRepository, CompanyRepository,
                                StudentDocumentRepository)
 
@@ -39,8 +39,8 @@ _TPL_KR2A           = 'kreator/krok2a_firma.html'
 class FormularzSciezka(FlaskForm):
     """Krok 1: Tylko wybór ścieżki."""
     track_type = SelectField('Ścieżka praktyki', choices=[
-        ('STANDARD',   'A — Standardowa praktyka'),
-        ('EMPLOYMENT', 'B — Uznanie efektów z pracy zawodowej'),
+        ('STANDARD',   'A — Standardowa internship'),
+        ('EMPLOYMENT', 'B — Uznanie learning_outcomeów z pracy zawodowej'),
     ], validators=[DataRequired(message='Wybierz ścieżkę.')])
 
 
@@ -53,31 +53,31 @@ class CompanyDataForm(FlaskForm):
 
     # Tryb znalezienia miejsca
     firma_typ  = SelectField('Jak znalazłeś/-aś miejsce praktyki?', choices=[
-        ('database', 'Uczelnia kieruje do zakładu (firma ma umowę z ANS)'),
+        ('database', 'Uczelnia kieruje do zakładu (company ma umowę z ANS)'),
         ('custom',   'Sam/a znalazłem/-am miejsce (wymaga Zał. 9 i Zał. 1)'),
     ], validators=[DataRequired()])
-    firma_id   = SelectField('Wybierz firmę z listy', choices=[], validators=[Optional()])
+    company_id   = SelectField('Wybierz firmę z listy', choices=[], validators=[Optional()])
 
     company_name                  = StringField('Nazwa zakładu pracy', validators=[Optional(), Length(max=255)])
     company_address                  = StringField('Adres (ulica, nr)', validators=[Optional(), Length(max=255)])
-    firma_kod_pocztowy           = StringField('Kod pocztowy', validators=[Optional(), Length(max=10)])
-    firma_miasto                 = StringField('Miasto', validators=[Optional(), Length(max=100)])
+    company_zip           = StringField('Kod pocztowy', validators=[Optional(), Length(max=10)])
+    company_city                 = StringField('Miasto', validators=[Optional(), Length(max=100)])
     tax_id                = StringField('NIP / KRS', validators=[Optional(), Length(max=50)])
-    firma_upowazniony_osoba      = StringField('Osoba upoważniona do podpisania porozumienia', validators=[Optional(), Length(max=255)])
-    firma_upowazniony_stanowisko = StringField('Stanowisko osoby upoważnionej', validators=[Optional(), Length(max=255)])
+    authorized_person      = StringField('Osoba upoważniona do podpisania porozumienia', validators=[Optional(), Length(max=255)])
+    authorized_person_position = StringField('Stanowisko osoby upoważnionej', validators=[Optional(), Length(max=255)])
 
-    zopz_imie_nazwisko = StringField('Opiekun zakładowy (ZOPZ) — imię i nazwisko', validators=[Optional(), Length(max=255)])
-    zopz_stanowisko    = StringField('Stanowisko ZOPZ', validators=[Optional(), Length(max=255)])
-    zopz_telefon       = StringField('Telefon ZOPZ', validators=[Optional(), Length(max=50)])
-    zopz_email         = StringField('E-mail ZOPZ', validators=[Optional(), Email(message='Nieprawidłowy email.')])
+    workplace_mentor_name = StringField('Opiekun zakładowy (ZOPZ) — imię i nazwisko', validators=[Optional(), Length(max=255)])
+    workplace_mentor_position    = StringField('Stanowisko ZOPZ', validators=[Optional(), Length(max=255)])
+    workplace_mentor_phone       = StringField('Telefon ZOPZ', validators=[Optional(), Length(max=50)])
+    workplace_mentor_email         = StringField('E-mail ZOPZ', validators=[Optional(), Email(message='Nieprawidłowy email.')])
 
-    def validate_firma_kod_pocztowy(self, field):
+    def validate_company_zip(self, field):
         if not field.data:
             return
         if not re.fullmatch(r'\d{2}-\d{3}', field.data.strip()):
             raise ValidationError('Podaj kod pocztowy w formacie XX-XXX (np. 82-300).')
 
-    def validate_zopz_imie_nazwisko(self, field):
+    def validate_workplace_mentor_name(self, field):
         if not field.data:
             return
         parts = field.data.strip().split()
@@ -86,7 +86,7 @@ class CompanyDataForm(FlaskForm):
         if any(char.isdigit() for char in field.data):
             raise ValidationError('Imię i nazwisko nie może zawierać cyfr.')
 
-    def validate_firma_upowazniony_osoba(self, field):
+    def validate_authorized_person(self, field):
         if not field.data:
             return
         parts = field.data.strip().split()
@@ -98,15 +98,15 @@ class CompanyDataForm(FlaskForm):
     def populate_to_model(self, model_instance):
         model_instance.company_name = self.company_name.data
         model_instance.company_address = self.company_address.data
-        model_instance.company_zip = self.firma_kod_pocztowy.data or None
-        model_instance.company_city = self.firma_miasto.data
+        model_instance.company_zip = self.company_zip.data or None
+        model_instance.company_city = self.company_city.data
         model_instance.company_tax_id = self.tax_id.data
-        model_instance.authorized_person = self.firma_upowazniony_osoba.data
-        model_instance.authorized_person_position = self.firma_upowazniony_stanowisko.data
-        model_instance.workplace_mentor_name = self.zopz_imie_nazwisko.data
-        model_instance.workplace_mentor_position = self.zopz_stanowisko.data
-        model_instance.workplace_mentor_phone = self.zopz_telefon.data
-        model_instance.workplace_mentor_email = self.zopz_email.data
+        model_instance.authorized_person = self.authorized_person.data
+        model_instance.authorized_person_position = self.authorized_person_position.data
+        model_instance.workplace_mentor_name = self.workplace_mentor_name.data
+        model_instance.workplace_mentor_position = self.workplace_mentor_position.data
+        model_instance.workplace_mentor_phone = self.workplace_mentor_phone.data
+        model_instance.workplace_mentor_email = self.workplace_mentor_email.data
         return model_instance
 
 
@@ -120,14 +120,14 @@ class FormularzWniosek(FlaskForm):
     pracodawca_adres    = StringField('Adres', validators=[Optional(), Length(max=255)])
     pracodawca_miasto   = StringField('Miasto', validators=[Optional(), Length(max=100)])
     stanowisko          = StringField('Stanowisko / zakres działalności', validators=[DataRequired(message='Podaj stanowisko.'), Length(max=255)])
-    uzasadnienie        = TextAreaField('Uzasadnienie wniosku', validators=[DataRequired(message='Napisz uzasadnienie.'), Length(min=500, max=2000, message='Uzasadnienie musi mieć od 500 do 2000 znaków.')])
+    justification        = TextAreaField('Uzasadnienie wniosku', validators=[DataRequired(message='Napisz justification.'), Length(min=500, max=2000, message='Uzasadnienie musi mieć od 500 do 2000 znaków.')])
 
 
 # ═══════════════════════════════════════════════════════════
 # NOWE ROUTE KREATORA
 # ═══════════════════════════════════════════════════════════
 
-def _get_or_create_zapis(praktyka_id, istniejacy, odrzucony):
+def _get_or_create_zapis(internship_id, istniejacy, odrzucony):
     if istniejacy:
         return istniejacy
     if odrzucony:
@@ -135,7 +135,7 @@ def _get_or_create_zapis(praktyka_id, istniejacy, odrzucony):
         _repo_zapisow.usun_zdarzenia_zapisu(odrzucony.id)
         return odrzucony
     zapis = InternshipEnrollment(
-        id=uuid.uuid4(), internship_id=praktyka_id,
+        id=uuid.uuid4(), internship_id=internship_id,
         student_id=current_user.id, status=EnrollmentStatus.PENDING,
         supervisor_id=getattr(current_user, 'supervisor_id', None),
     )
@@ -153,12 +153,12 @@ def _set_employment_subtype(zapis):
     uz.employment_subtype = employment_subtype
 
 
-@internships_bp.route('/<uuid:id>/kreator/sciezka', methods=['GET', 'POST'])
+@internships_bp.route('/<uuid:id>/kreator/path', methods=['GET', 'POST'])
 @login_required
 def kreator_sciezka(id):
     """Krok 1: Wybór ścieżki."""
-    praktyka = _repo_praktyk.znajdz_po_id(id)
-    if not praktyka:
+    internship = _repo_praktyk.znajdz_po_id(id)
+    if not internship:
         flash('Praktyka niedostępna.', 'danger')
         return redirect(url_for(_ROUTE_LISTA))
 
@@ -181,13 +181,13 @@ def kreator_sciezka(id):
         db.session.commit()
 
         if form.track_type.data == 'STANDARD':
-            return redirect(url_for('internships.kreator_firma', zapis_id=zapis.id))
-        return redirect(url_for('internships.kreator_wniosek', zapis_id=zapis.id))
+            return redirect(url_for('internships.kreator_firma', enrollment_id=zapis.id))
+        return redirect(url_for('internships.kreator_wniosek', enrollment_id=zapis.id))
 
     if istniejacy and request.method == 'GET':
         form.track_type.data = istniejacy.track_type.value if istniejacy.track_type else 'STANDARD'
 
-    return render_template('kreator/krok1_sciezka.html', form=form, praktyka=praktyka, istniejacy=istniejacy)
+    return render_template('kreator/krok1_sciezka.html', form=form, internship=internship, istniejacy=istniejacy)
 
 
 def _save_company_from_form(form, zapis, dm) -> str | None:
@@ -195,23 +195,23 @@ def _save_company_from_form(form, zapis, dm) -> str | None:
     if not form.ubezpieczenie_nw.data:
         return 'Ubezpieczenie NW jest wymagane.'
     if form.firma_typ.data == 'database':
-        if not form.firma_id.data:
+        if not form.company_id.data:
             return 'Wybierz firmę z listy.'
-        zapis.company_id = form.firma_id.data
+        zapis.company_id = form.company_id.data
         dm.company_name = dm.company_address = dm.company_city = None
         dm.company_tax_id = dm.authorized_person = dm.authorized_person_position = None
     else:
-        if not form.company_name.data or not form.company_address.data or not form.firma_miasto.data:
+        if not form.company_name.data or not form.company_address.data or not form.company_city.data:
             return 'Podaj nazwę, adres i miasto firmy.'
         zapis.company_id = None
         form.populate_to_model(dm)
-    if not form.zopz_imie_nazwisko.data or not form.zopz_email.data:
+    if not form.workplace_mentor_name.data or not form.workplace_mentor_email.data:
         return 'Podaj imię/nazwisko i email opiekuna zakładowego (ZOPZ).'
     if form.firma_typ.data == 'database':
-        dm.workplace_mentor_name = form.zopz_imie_nazwisko.data
-        dm.workplace_mentor_position = form.zopz_stanowisko.data
-        dm.workplace_mentor_phone = form.zopz_telefon.data
-        dm.workplace_mentor_email = form.zopz_email.data
+        dm.workplace_mentor_name = form.workplace_mentor_name.data
+        dm.workplace_mentor_position = form.workplace_mentor_position.data
+        dm.workplace_mentor_phone = form.workplace_mentor_phone.data
+        dm.workplace_mentor_email = form.workplace_mentor_email.data
     return None
 
 
@@ -220,18 +220,18 @@ def _populate_firma_form_from_zapis(form, zapis, dm) -> None:
     form.termin_do.data        = zapis.end_date
     form.ubezpieczenie_nw.data = zapis.accident_insurance
     form.firma_typ.data = 'database' if zapis.company_id else 'custom'
-    form.firma_id.data  = str(zapis.company_id) if zapis.company_id else ''
+    form.company_id.data  = str(zapis.company_id) if zapis.company_id else ''
     form.company_name.data                  = dm.company_name                  if dm else None
     form.company_address.data                  = dm.company_address               if dm else None
-    form.firma_kod_pocztowy.data           = dm.company_zip                   if dm else None
-    form.firma_miasto.data                 = dm.company_city                  if dm else None
+    form.company_zip.data           = dm.company_zip                   if dm else None
+    form.company_city.data                 = dm.company_city                  if dm else None
     form.tax_id.data                = dm.company_tax_id                if dm else None
-    form.firma_upowazniony_osoba.data      = dm.authorized_person             if dm else None
-    form.firma_upowazniony_stanowisko.data = dm.authorized_person_position    if dm else None
-    form.zopz_imie_nazwisko.data = dm.workplace_mentor_name     if dm else None
-    form.zopz_stanowisko.data    = dm.workplace_mentor_position  if dm else None
-    form.zopz_telefon.data       = dm.workplace_mentor_phone     if dm else None
-    form.zopz_email.data         = dm.workplace_mentor_email     if dm else None
+    form.authorized_person.data      = dm.authorized_person             if dm else None
+    form.authorized_person_position.data = dm.authorized_person_position    if dm else None
+    form.workplace_mentor_name.data = dm.workplace_mentor_name     if dm else None
+    form.workplace_mentor_position.data    = dm.workplace_mentor_position  if dm else None
+    form.workplace_mentor_phone.data       = dm.workplace_mentor_phone     if dm else None
+    form.workplace_mentor_email.data         = dm.workplace_mentor_email     if dm else None
 
 
 def _serialize_companies(companies):
@@ -246,18 +246,18 @@ def _serialize_companies(companies):
     }
 
 
-@internships_bp.route('/zgloszenie/<uuid:zapis_id>/kreator/firma', methods=['GET', 'POST'])
+@internships_bp.route('/zgloszenie/<uuid:enrollment_id>/kreator/company', methods=['GET', 'POST'])
 @login_required
-def kreator_firma(zapis_id):
+def kreator_firma(enrollment_id):
     """Krok 2A: Dane zakładu + ZOPZ (ścieżka A)."""
-    zapis = _repo_zapisow.znajdz_po_id(zapis_id)
+    zapis = _repo_zapisow.znajdz_po_id(enrollment_id)
     if not zapis or zapis.student_id != current_user.id or zapis.track_type != InternshipPath.STANDARD:
         abort(404)
 
     form = CompanyDataForm()
     firmy_list = company_repository.active()
     companies_data = _serialize_companies(firmy_list)
-    form.firma_id.choices = [('', '--- Wybierz firmę ---')] + [(str(f.id), f.name) for f in firmy_list]
+    form.company_id.choices = [('', '--- Wybierz firmę ---')] + [(str(f.id), f.name) for f in firmy_list]
 
     if form.validate_on_submit():
         zapis.start_date         = form.termin_od.data
@@ -283,7 +283,7 @@ def kreator_firma(zapis_id):
         byl_status = zapis.status
         db.session.commit()
         if byl_status == EnrollmentStatus.AWAITING_APPROVAL:
-            ZapisFSM(zapis).wyslij_do_komisji()
+            EnrollmentStateMachine(zapis).submit_to_committee()
             db.session.commit()
             flash('Dane zaktualizowane i zgłoszenie odesłane do komisji.', 'success')
             return redirect(url_for(_ROUTE_SZCZEGOLY, id=zapis.id))
@@ -308,7 +308,7 @@ def _populate_wniosek_form(form, zapis) -> None:
     form.pracodawca_adres.data   = dm.company_address           if dm else None
     form.pracodawca_miasto.data  = dm.company_city              if dm else None
     form.stanowisko.data         = dm.workplace_mentor_position if dm else None
-    form.uzasadnienie.data       = uz.justification             if uz else None
+    form.justification.data       = uz.justification             if uz else None
     form.employment_subtype.data = uz.employment_subtype        if uz else 'WORK'
 
 
@@ -324,19 +324,19 @@ def _save_wniosek_post(form, zapis) -> None:
     uz = zapis.path_justification or PathJustification(enrollment_id=zapis.id)
     if uz not in db.session:
         db.session.add(uz)
-    uz.justification      = form.uzasadnienie.data
+    uz.justification      = form.justification.data
     uz.employment_subtype = form.employment_subtype.data
 
 
-@internships_bp.route('/zgloszenie/<uuid:zapis_id>/kreator/wniosek', methods=['GET', 'POST'])
+@internships_bp.route('/zgloszenie/<uuid:enrollment_id>/kreator/wniosek', methods=['GET', 'POST'])
 @login_required
-def kreator_wniosek(zapis_id):
+def kreator_wniosek(enrollment_id):
     """Krok 2B/C: Wniosek dla ścieżek B i C."""
-    zapis = _repo_zapisow.znajdz_po_id(zapis_id)
+    zapis = _repo_zapisow.znajdz_po_id(enrollment_id)
     if not zapis or zapis.student_id != current_user.id:
         abort(404)
     if zapis.track_type == InternshipPath.STANDARD:
-        return redirect(url_for('internships.kreator_firma', zapis_id=zapis_id))
+        return redirect(url_for('internships.kreator_firma', enrollment_id=enrollment_id))
 
     form = FormularzWniosek()
 
@@ -358,7 +358,7 @@ def kreator_wniosek(zapis_id):
 def lista():
     available  = _repo_praktyk.active()
     status_map = {
-        str(z.internship_id): UslugaPraktyk.status_dla_studenta(z)
+        str(z.internship_id): InternshipService.student_status(z)
         for z in _repo_zapisow.dla_studenta(current_user.id)
     }
 
@@ -366,7 +366,7 @@ def lista():
     return render_template('praktyki/lista.html', dostepne=available, zapisy_data=status_map, csrf_form=csrf_form)
 
 
-@internships_bp.route('/zgloszenie/<uuid:id>/zakoncz', methods=['POST'])
+@internships_bp.route('/zgloszenie/<uuid:id>/complete', methods=['POST'])
 @login_required
 def zakoncz_praktyke(id):
     zapis = _repo_zapisow.znajdz_po_id(id)
@@ -378,12 +378,12 @@ def zakoncz_praktyke(id):
 
     path_val = zapis.path_type.value if hasattr(zapis.path_type, 'value') else str(zapis.path_type)
     if path_val == 'STANDARD':
-        ok, msg = UslugaPraktyk.waliduj_mozliwosc_zakonczenia(zapis)
+        ok, msg = InternshipService.validate_completion_allowed(zapis)
         if not ok:
             flash(msg, 'danger')
             return redirect(url_for(_ROUTE_LISTA))
 
-    ZapisFSM(zapis).zakoncz()
+    EnrollmentStateMachine(zapis).complete()
     db.session.commit()
     flash('Praktyka została zakończona. Dokumenty końcowe są dostępne w zakładce Moje Dokumenty.', 'success')
     return redirect(url_for(_ROUTE_LISTA))
@@ -476,12 +476,12 @@ def wyslij_do_zatwierdzenia(id):
     if zapis.status not in (EnrollmentStatus.PENDING, EnrollmentStatus.REVISION_REQUIRED):
         flash('Zgłoszenie zostało już wysłane.', 'info')
         return redirect(url_for(_ROUTE_SZCZEGOLY, id=id))
-    from core.uslugi.workflow import ZapisFSM
-    fsm = ZapisFSM(zapis)
+    from core.services.workflow import EnrollmentStateMachine
+    fsm = EnrollmentStateMachine(zapis)
     if zapis.path_type and zapis.path_type.value in ('EMPLOYMENT', 'OWN_BUSINESS'):
-        fsm.wyslij_do_komisji()
+        fsm.submit_to_committee()
     else:
-        fsm.wyslij_do_akceptacji()
+        fsm.submit_for_approval()
     db.session.commit()
     flash('Zgłoszenie zostało przesłane.', 'success')
     return redirect(url_for(_ROUTE_LISTA))
@@ -506,9 +506,9 @@ def szczegoly_zgloszenia(id):
         for d in rows
     ]
 
-    harmonogram = _repo_zapisow.harmonogram_dla_zapisu(id)
+    schedule = _repo_zapisow.harmonogram_dla_zapisu(id)
     efekty = _repo_efektow.wszystkie()
-    harmonogram_dict = {str(h.learning_outcome_id): h for h in harmonogram}
+    harmonogram_dict = {str(h.learning_outcome_id): h for h in schedule}
 
     from flask_wtf import FlaskForm
     komentarz_komisji = None
@@ -536,11 +536,11 @@ def resubmit_zgloszenia(id):
         flash('Zgłoszenie nie może być ponownie wysłane w tym statusie.', 'warning')
         return redirect(url_for(_ROUTE_SZCZEGOLY, id=id))
     try:
-        with ZapisFSM.lock(id) as fsm:
+        with EnrollmentStateMachine.lock(id) as fsm:
             if zapis.status == EnrollmentStatus.REVISION_REQUIRED:
-                fsm.wyslij_ponownie_po_poprawkach()
+                fsm.resubmit_after_revision()
             else:
-                fsm.wyslij_do_komisji()
+                fsm.submit_to_committee()
             db.session.commit()
     except IllegalTransitionError as e:
         flash(str(e), 'danger')

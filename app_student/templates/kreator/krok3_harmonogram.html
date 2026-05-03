@@ -30,7 +30,7 @@
       {% for e in efekty %}
       {% set h = istniejace_harmonogramy.get(e.id|string, {}) %}
       <div class="u-csp-338">
-        <div class="u-meta u-mb-035">{{ e.opis }}</div>
+        <div class="u-meta u-mb-035">{{ e.description }}</div>
         <div class="u-csp-339">
           <textarea name="dzial_{{ e.id }}" rows="1"
                  class="form-field__input u-csp-340 schedule-text-field" placeholder="Dział zakładu pracy">{{ h.get('dzial', '') }}</textarea>
@@ -47,8 +47,8 @@
     </div>
 
     <div class="u-csp-326">
-      <a href="{{ url_for('internships.kreator_firma', zapis_id=zapis.id) }}" class="przycisk przycisk--drugorzedny">← Wróć</a>
-      <button type="submit" class="przycisk przycisk--glowny">Zapisz harmonogram →</button>
+      <a href="{{ url_for('internships.kreator_firma', enrollment_id=zapis.id) }}" class="przycisk przycisk--drugorzedny">← Wróć</a>
+      <button type="submit" class="przycisk przycisk--glowny">Zapisz schedule →</button>
     </div>
   </form>
 

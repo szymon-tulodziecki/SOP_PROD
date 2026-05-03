@@ -11,7 +11,7 @@ from app_student.config import CONFIGURATION_MAP
 
 
 def _check_enrollment_requires_action(enrollments) -> bool:
-    from core.modele import EnrollmentStatus
+    from core.models import EnrollmentStatus
     for z in enrollments:
         s = z.status
         if s == EnrollmentStatus.PENDING and (z.admin_comments or z.supervisor_comments):
@@ -23,8 +23,8 @@ def _check_enrollment_requires_action(enrollments) -> bool:
 
 def _build_enrollment_context() -> dict:
     from flask_login import current_user
-    from core.modele import EnrollmentStatus
-    from core.repozytoria import EnrollmentRepository
+    from core.models import EnrollmentStatus
+    from core.repositories import EnrollmentRepository
     info = {'is_active': False, 'path_type': None, 'status': None}
     requires_attention = False
     try:
@@ -142,9 +142,9 @@ def create_app():
     login_manager.login_message = 'Zaloguj się, aby uzyskać dostęp.'
 
     with app.app_context():
-        from core.autoryzacja  import create_auth_blueprint
-        from core.pliki import create_files_blueprint
-        from core.modele import UserRole
+        from core.auth  import create_auth_blueprint
+        from core.files import create_files_blueprint
+        from core.models import UserRole
         from app_student.routes.dashboard   import dashboard_bp
         from app_student.routes.internships import internships_bp
         from app_student.routes.logbook     import logbook_bp
@@ -161,7 +161,7 @@ def create_app():
         app.register_blueprint(dashboard_bp,  url_prefix='/panel')
         app.register_blueprint(internships_bp, url_prefix='/praktyki')
         app.register_blueprint(logbook_bp,     url_prefix='/dziennik')
-        app.register_blueprint(reports_bp,     url_prefix='/sprawozdanie')
+        app.register_blueprint(reports_bp,     url_prefix='/report')
         app.register_blueprint(documents_bp,  url_prefix='/dokumenty')
         app.register_blueprint(uploads_bp,    url_prefix='/uploads')
 
@@ -171,14 +171,14 @@ def create_app():
     # Dodaj funkcje pomocnicze do szablonów
     @app.template_global()
     def translate_status(status_value):
-        from core.tlumaczenia import translate_status as core_translate_status
+        from core.translations import translate_status as core_translate_status
         return core_translate_status(status_value)
 
     @app.before_request
     def validate_student_role():
         from flask import request, redirect, url_for, abort
         from flask_login import current_user
-        from core.modele import UserRole
+        from core.models import UserRole
 
         if not current_user.is_authenticated:
             return
@@ -191,5 +191,5 @@ def create_app():
 
 @login_manager.user_loader
 def load_user(user_id):
-    from core.modele import User
+    from core.models import User
     return db.session.get(User, user_id)

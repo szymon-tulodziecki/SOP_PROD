@@ -18,15 +18,15 @@
 
   <div class="karta">
     <div class="karta__naglowek">
-      <h2 class="karta__tytul">Krok 2: Wniosek o uznanie efektów z pracy zawodowej</h2>
+      <h2 class="karta__tytul">Krok 2: Wniosek o uznanie learning_outcomeów z pracy zawodowej</h2>
     </div>
     <div class="karta__tresc">
 
       <!-- Procedura ogólna -->
       <div class="u-info-box--szary">
-        <div class="u-fw-600 u-mb-025 u-csp-314">Procedura — Ścieżka B: Uznanie efektów uczenia się</div>
+        <div class="u-fw-600 u-mb-025 u-csp-314">Procedura — Ścieżka B: Uznanie learning_outcomeów uczenia się</div>
         Niezależnie od rodzaju zatrudnienia student ubiega się o zaliczenie tych samych
-        <strong>trzynastu efektów uczenia się</strong> (zał. 4a + zał. 4b).
+        <strong>trzynastu learning_outcomeów uczenia się</strong> (zał. 4a + zał. 4b).
         Różnica polega wyłącznie na rodzaju dokumentów potwierdzających zakres realizowanych czynności zawodowych.
         Komisja ds. praktyk wydaje opinię, a Dyrektor Instytutu podejmuje ostateczną decyzję.
       </div>
@@ -127,11 +127,11 @@
           </div>
         </div>
 
-        <div class="form-field {% if form.uzasadnienie.errors %}form-field--error{% endif %} u-mb-15">
-          {{ form.uzasadnienie.label(class="form-field__label") }}
-          {{ form.uzasadnienie(class="form-field__input u-textarea-auto", rows=8, placeholder="Opisz zakres obowiązków/działalności i dlaczego spełniają wymagania praktyki zawodowej...", id="uzasadnienie_input", maxlength=2000) }}
+        <div class="form-field {% if form.justification.errors %}form-field--error{% endif %} u-mb-15">
+          {{ form.justification.label(class="form-field__label") }}
+          {{ form.justification(class="form-field__input u-textarea-auto", rows=8, placeholder="Opisz zakres obowiązków/działalności i dlaczego spełniają wymagania praktyki zawodowej...", id="uzasadnienie_input", maxlength=2000) }}
           <div class="u-flex--between u-csp-331">
-            <div>{% for e in form.uzasadnienie.errors %}<span class="form-field__error">{{ e }}</span>{% endfor %}</div>
+            <div>{% for e in form.justification.errors %}<span class="form-field__error">{{ e }}</span>{% endfor %}</div>
             <span id="uzasadnienie_licznik" class="u-meta u-csp-332">0 / min. 500 znaków</span>
           </div>
         </div>

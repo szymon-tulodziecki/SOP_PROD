@@ -1,6 +1,6 @@
-{% extends "layouts/base_panel.html" %}
-{% block tytul %}Użytkownicy{% endblock %}
-{% block naglowek %}Zarządzanie użytkownikami{% endblock %}
+﻿{% extends "layouts/base_panel.html" %}
+{% block tytul %}UĹĽytkownicy{% endblock %}
+{% block naglowek %}ZarzÄ…dzanie uĹĽytkownikami{% endblock %}
 
 {% block naglowek_akcje %}
 <div class="u-csp-028">
@@ -13,14 +13,14 @@
   <a href="{{ url_for('zarzadzanie.import_csv') }}" class="przycisk przycisk--drugorzedny">
     Import z CSV
   </a>
-  <a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
+  <a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">â† PowrĂłt</a>
 </div>
 {% endblock %}
 
 {% block tresc %}
 <div class="karta">
   <div class="karta__naglowek">
-    <form method="GET" class="pasek-filtrow" role="search" aria-label="Filtruj użytkowników">
+    <form method="GET" class="pasek-filtrow" role="search" aria-label="Filtruj uĹĽytkownikĂłw">
       <div class="filtr-szukaj">
         <span class="filtr-szukaj__ikona" aria-hidden="true">
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -35,7 +35,7 @@
           class="filtr-szukaj__input"
           value="{{ request.args.get('szukaj', '') }}"
           placeholder="Szukaj po imieniu, nazwisku, e-mailu..."
-          aria-label="Szukaj użytkowników"
+          aria-label="Szukaj uĹĽytkownikĂłw"
         >
       </div>
       <label for="rola" class="sr-only">Filtruj po roli</label>
@@ -48,21 +48,21 @@
       <button type="submit" class="przycisk przycisk--drugorzedny">Szukaj</button>
       {% if request.args.get('szukaj') or request.args.get('rola') %}
         <a href="{{ url_for('zarzadzanie.lista_uzytkownikow') }}" class="przycisk przycisk--drugorzedny">
-          Wyczyść filtry
+          WyczyĹ›Ä‡ filtry
         </a>
       {% endif %}
     </form>
 
     <span class="u-csp-038">
-      {{ uzytkownicy.total }} użytkowników
+      {{ uzytkownicy.total }} uĹĽytkownikĂłw
     </span>
   </div>
 
   <div class="tabela-wrapper">
-    <table class="tabela" aria-label="Lista użytkowników systemu">
+    <table class="tabela" aria-label="Lista uĹĽytkownikĂłw systemu">
       <thead>
         <tr>
-          <th scope="col">Użytkownik</th>
+          <th scope="col">UĹĽytkownik</th>
           <th scope="col">Rola</th>
           <th scope="col">Nr albumu</th>
           <th scope="col">Status</th>
@@ -80,11 +80,11 @@
             </div>
           </td>
           <td>
-            {% set mapa_rol = {'ADMIN': 'admin', 'UOPZ': 'uopz', 'STUDENT': 'student'} %}
+            {% set mapa_rol = {'ADMIN': 'admin', 'UOPZ': 'supervisor', 'STUDENT': 'student'} %}
             {% set klasa = mapa_rol.get(u.role.value, 'student') %}
             <span class="rola-odznaka rola-odznaka--{{ klasa }}">{{ u.role.value }}</span>
           </td>
-          <td>{{ u.album_number or '—' }}</td>
+          <td>{{ u.album_number or 'â€”' }}</td>
           <td>
             {% if u.is_active %}
               <span class="status status--zakonczona">Aktywny</span>
@@ -114,7 +114,7 @@
                   <button type="submit"
                           class="przycisk {% if u.is_active %}przycisk--ostrzezenie{% else %}przycisk--drugorzedny{% endif %} przycisk--maly"
                           aria-label="{{ 'Dezaktywuj' if u.is_active else 'Aktywuj' }} konto {{ u.first_name }} {{ u.last_name }}"
-                          onclick="return confirm('Czy na pewno chcesz zmienić status tego konta?')">
+                          onclick="return confirm('Czy na pewno chcesz zmieniÄ‡ status tego konta?')">
                     {{ 'Dezaktywuj' if u.is_active else 'Aktywuj' }}
                   </button>
                 </form>
@@ -125,9 +125,9 @@
                   {{ csrf_form.hidden_tag() }}
                   <button type="submit"
                           class="przycisk przycisk--niebezpieczny przycisk--maly"
-                          aria-label="Usuń konto {{ u.first_name }} {{ u.last_name }}"
-                          onclick="return confirm('Czy na pewno chcesz trwale usunąć konto {{ u.first_name }} {{ u.last_name }}? Tej operacji nie można cofnąć.')">
-                    Usuń
+                          aria-label="UsuĹ„ konto {{ u.first_name }} {{ u.last_name }}"
+                          onclick="return confirm('Czy na pewno chcesz trwale usunÄ…Ä‡ konto {{ u.first_name }} {{ u.last_name }}? Tej operacji nie moĹĽna cofnÄ…Ä‡.')">
+                    UsuĹ„
                   </button>
                 </form>
               {% endif %}
@@ -139,9 +139,9 @@
         <tr>
           <td colspan="6" class="tabela--pusta">
             {% if request.args.get('szukaj') %}
-              Nie znaleziono użytkowników pasujących do zapytania „{{ request.args.get('szukaj') }}".
+              Nie znaleziono uĹĽytkownikĂłw pasujÄ…cych do zapytania â€ž{{ request.args.get('szukaj') }}".
             {% else %}
-              Brak użytkowników w systemie.
+              Brak uĹĽytkownikĂłw w systemie.
             {% endif %}
           </td>
         </tr>
@@ -151,15 +151,15 @@
   </div>
 
   {% if uzytkownicy.pages > 1 %}
-  <nav class="paginacja" aria-label="Paginacja listy użytkowników">
+  <nav class="paginacja" aria-label="Paginacja listy uĹĽytkownikĂłw">
     <span class="paginacja__info">
-      Wyświetlanie {{ uzytkownicy.per_page * (uzytkownicy.page - 1) + 1 }}–{{ [uzytkownicy.per_page * uzytkownicy.page, uzytkownicy.total] | min }}
+      WyĹ›wietlanie {{ uzytkownicy.per_page * (uzytkownicy.page - 1) + 1 }}â€“{{ [uzytkownicy.per_page * uzytkownicy.page, uzytkownicy.total] | min }}
       z {{ uzytkownicy.total }}
     </span>
     <div class="paginacja__przyciski" role="list">
       {% if uzytkownicy.has_prev %}
         <a href="{{ url_for('zarzadzanie.lista_uzytkownikow', strona=uzytkownicy.prev_num, **request.args) }}"
-           class="paginacja__przycisk" aria-label="Poprzednia strona">←</a>
+           class="paginacja__przycisk" aria-label="Poprzednia strona">â†</a>
       {% endif %}
       {% for nr in uzytkownicy.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
         {% if nr %}
@@ -169,12 +169,12 @@
             {{ nr }}
           </a>
         {% else %}
-          <span class="paginacja__przycisk" aria-hidden="true">…</span>
+          <span class="paginacja__przycisk" aria-hidden="true">â€¦</span>
         {% endif %}
       {% endfor %}
       {% if uzytkownicy.has_next %}
         <a href="{{ url_for('zarzadzanie.lista_uzytkownikow', strona=uzytkownicy.next_num, **request.args) }}"
-           class="paginacja__przycisk" aria-label="Następna strona">→</a>
+           class="paginacja__przycisk" aria-label="NastÄ™pna strona">â†’</a>
       {% endif %}
     </div>
   </nav>

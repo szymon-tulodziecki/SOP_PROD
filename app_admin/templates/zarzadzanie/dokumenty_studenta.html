@@ -1,17 +1,17 @@
-{% extends "layouts/base_panel.html" %}
-{% block tytul %}Dokumenty – {{ student.first_name }} {{ student.last_name }}{% endblock %}
+﻿{% extends "layouts/base_panel.html" %}
+{% block tytul %}Dokumenty â€“ {{ student.first_name }} {{ student.last_name }}{% endblock %}
 {% block naglowek %}Dokumenty studenta{% endblock %}
 
 {% block naglowek_akcje %}
 <a href="{{ url_for('zarzadzanie.dokumenty_studentow') }}" class="przycisk przycisk--drugorzedny">
-  ← Powrót
+  â† PowrĂłt
 </a>
 {% endblock %}
 
 {% block tresc %}
 <div class="u-csp-058">
 
-  {# ── Info o studencie ─────────────────────────────────────────────────── #}
+  {# â”€â”€ Info o studencie â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ #}
   <div class="karta u-csp-208">
     <div class="karta__tresc">
       <div class="u-csp-209">
@@ -21,17 +21,17 @@
         <div>
           <div class="u-csp-211">{{ student.first_name }} {{ student.last_name }}</div>
           <div class="u-csp-212">
-            Nr albumu: <strong>{{ student.album_number or '—' }}</strong>
-            {% if student.field_of_study %} · {{ student.field_of_study }}{% endif %}
+            Nr albumu: <strong>{{ student.album_number or 'â€”' }}</strong>
+            {% if student.field_of_study %} Â· {{ student.field_of_study }}{% endif %}
             {% if student.study_mode %} ({{ {'full-time': 'Stacjonarne', 'part-time': 'Niestacjonarne'}.get(student.study_mode, student.study_mode) }}){% endif %}
-            {% if uopz %} · Opiekun: {{ uopz.first_name }} {{ uopz.last_name }}{% endif %}
+            {% if supervisor %} Â· Opiekun: {{ supervisor.first_name }} {{ supervisor.last_name }}{% endif %}
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  {# ── Brak praktyk ──────────────────────────────────────────────────────── #}
+  {# â”€â”€ Brak praktyk â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ #}
   {% if not dokumenty_list %}
   <div class="karta">
     <div class="karta__tresc u-csp-200">
@@ -39,32 +39,32 @@
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
         <polyline points="14 2 14 8 20 8"/>
       </svg>
-      <div class="u-csp-214">Brak dostępnych dokumentów</div>
-      <div class="u-csp-036">Student nie ma aktywnych ani zakończonych praktyk.</div>
+      <div class="u-csp-214">Brak dostÄ™pnych dokumentĂłw</div>
+      <div class="u-csp-036">Student nie ma aktywnych ani zakoĹ„czonych praktyk.</div>
     </div>
   </div>
   {% endif %}
 
-  {# ── Dokumenty per zapis ───────────────────────────────────────────────── #}
+  {# â”€â”€ Dokumenty per zapis â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ #}
   {% for wpis in dokumenty_list %}
   {% set zapis = wpis.zapis %}
   <div class="karta u-csp-208">
     <div class="karta__naglowek">
       <div>
         <div class="u-csp-141">
-          {{ zapis.praktyka.academic_year if zapis.praktyka else '—' }}
-          {% if zapis.praktyka %} · Semestr {{ zapis.praktyka.semester_label }}{% endif %}
+          {{ zapis.internship.academic_year if zapis.internship else 'â€”' }}
+          {% if zapis.internship %} Â· Semestr {{ zapis.internship.semester_label }}{% endif %}
         </div>
         <div class="u-csp-215">
-          {% if zapis.firma %}{{ zapis.firma.name }}
-          {% elif zapis.firma_nazwa %}{{ zapis.firma_nazwa }}{% endif %}
-          · Ścieżka:
-          {% if wpis.sciezka == 'STANDARD' %}A — Standardowa
-          {% else %}B — Uznanie efektów{% endif %}
+          {% if zapis.company %}{{ zapis.company.name }}
+          {% elif zapis.company_display_name %}{{ zapis.company_display_name }}{% endif %}
+          Â· ĹšcieĹĽka:
+          {% if wpis.path == 'STANDARD' %}A â€” Standardowa
+          {% else %}B â€” Uznanie learning_outcomeĂłw{% endif %}
         </div>
       </div>
       <div class="u-flex--gap-05">
-        {% if wpis.sciezka == 'STANDARD' %}
+        {% if wpis.path == 'STANDARD' %}
         <a href="{{ url_for('journal.dziennik_zapisu', id=zapis.id) }}"
            class="przycisk przycisk--drugorzedny przycisk--maly">Dziennik</a>
         {% endif %}
@@ -72,9 +72,9 @@
           {% if zapis.status.value == 'COMPLETED' %}status--zakonczona
           {% elif zapis.status.value == 'IN_PROGRESS' %}status--aktywna
           {% else %}status--oczekuje{% endif %}">
-          {% if zapis.status.value == 'COMPLETED' %}Zakończona
+          {% if zapis.status.value == 'COMPLETED' %}ZakoĹ„czona
           {% elif zapis.status.value == 'IN_PROGRESS' %}W trakcie
-          {% elif zapis.status.value == 'AWAITING_APPROVAL' %}Oczekuje na akceptację
+          {% elif zapis.status.value == 'AWAITING_APPROVAL' %}Oczekuje na akceptacjÄ™
           {% elif zapis.status.value == 'COMMISSION_REVIEW' %}Komisja
           {% elif zapis.status.value == 'DIRECTOR_APPROVAL' %}Dyrektor
           {% elif zapis.status.value == 'REVISION_REQUIRED' %}Czeka na poprawki
@@ -100,8 +100,8 @@
             <div class="u-doc-title {% if not doc.dostepny %}u-doc-title--disabled{% endif %}">
               {{ doc.name }}
             </div>
-            {% if doc.opis %}
-            <div class="u-csp-220">{{ doc.opis }}</div>
+            {% if doc.description %}
+            <div class="u-csp-220">{{ doc.description }}</div>
             {% endif %}
             {% if not doc.dostepny and doc.powod %}
             <div class="u-csp-221">{{ doc.powod }}</div>
@@ -113,11 +113,11 @@
             <a href="{{ url_for('zarzadzanie.dokumenty_pobierz_staly', klucz=doc.klucz_staly) }}"
                class="przycisk przycisk--drugorzedny przycisk--maly">Pobierz PDF</a>
             {% elif doc.dynamiczny is defined and doc.dynamiczny %}
-            <a href="{{ url_for('zarzadzanie.dokumenty_pobierz', zapis_id=doc.zapis_id, typ=doc.typ) }}"
+            <a href="{{ url_for('zarzadzanie.dokumenty_pobierz', enrollment_id=doc.enrollment_id, event_type=doc.event_type) }}"
                class="przycisk przycisk--drugorzedny przycisk--maly">Pobierz PDF</a>
             {% endif %}
           {% else %}
-          <span class="u-csp-222">Niedostępny</span>
+          <span class="u-csp-222">NiedostÄ™pny</span>
           {% endif %}
         </div>
         {% endif %}

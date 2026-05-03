@@ -1,10 +1,10 @@
-{% extends "layouts/base_panel.html" %}
+﻿{% extends "layouts/base_panel.html" %}
 
-{% block tytul %}Komisja weryfikująca{% endblock %}
-{% block naglowek %}Wnioski do weryfikacji przez komisję{% endblock %}
+{% block tytul %}Komisja weryfikujÄ…ca{% endblock %}
+{% block naglowek %}Wnioski do weryfikacji przez komisjÄ™{% endblock %}
 
 {% block naglowek_akcje %}
-<a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
+<a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">â† PowrĂłt</a>
 {% endblock %}
 
 {% block tresc %}
@@ -18,9 +18,9 @@
           <thead>
             <tr>
               <th class="u-csp-127">Student</th>
-              <th class="u-csp-129">Ścieżka</th>
-              <th class="u-csp-127">Firma/Działalność</th>
-              <th class="u-csp-130">Data zgłoszenia</th>
+              <th class="u-csp-129">ĹšcieĹĽka</th>
+              <th class="u-csp-127">company/DziaĹ‚alnoĹ›Ä‡</th>
+              <th class="u-csp-130">Data zgĹ‚oszenia</th>
               <th class="u-csp-125">Dokumenty</th>
               <th class="u-csp-197">Akcje</th>
             </tr>
@@ -37,20 +37,20 @@
               </td>
               <td>
                 <span class="status status--w-trakcie">
-                  B — Uznanie efektów
+                  B â€” Uznanie learning_outcomeĂłw
                 </span>
                 {% if wniosek.status.value == 'REVISION_REQUIRED' %}
                 <br><span class="status status--draft u-csp-198">Czeka na poprawki studenta</span>
                 {% endif %}
               </td>
               <td>
-                <div class="u-csp-141">{{ wniosek.firma_nazwa or 'Nie podano' }}</div>
-                {% if wniosek.firma_miasto %}
-                <div class="u-csp-146">{{ wniosek.firma_miasto }}</div>
+                <div class="u-csp-141">{{ wniosek.company_display_name or 'Nie podano' }}</div>
+                {% if wniosek.company_city %}
+                <div class="u-csp-146">{{ wniosek.company_city }}</div>
                 {% endif %}
                 {% if wniosek.track_type.value != 'STANDARD' %}
                 <div class="u-csp-148">
-                  B — Uznanie efektów
+                  B â€” Uznanie learning_outcomeĂłw
                 </div>
                 {% endif %}
               </td>
@@ -62,14 +62,14 @@
               </td>
               <td class="u-csp-152">
                 <span class="badge badge--neutral u-csp-199">
-                  {{ wniosek.uploaded_documents | length }} plików
+                  {{ wniosek.uploaded_documents | length }} plikĂłw
                 </span>
               </td>
               <td class="u-csp-152">
                 {% if wniosek.status.value == 'REVISION_REQUIRED' %}
                 <a href="{{ url_for('zarzadzanie.komisja_weryfikuj', id=wniosek.id) }}"
                    class="przycisk przycisk--maly przycisk--drugorzedny">
-                  Podgląd
+                  PodglÄ…d
                 </a>
                 {% else %}
                 <a href="{{ url_for('zarzadzanie.komisja_weryfikuj', id=wniosek.id) }}"
@@ -90,7 +90,7 @@
   {% if wnioski.pages > 1 %}
   <div class="paginacja">
     {% if wnioski.has_prev %}
-      <a href="{{ url_for('zarzadzanie.komisja_lista', page=wnioski.prev_num) }}" class="paginacja__link">← Poprzednia</a>
+      <a href="{{ url_for('zarzadzanie.komisja_lista', page=wnioski.prev_num) }}" class="paginacja__link">â† Poprzednia</a>
     {% endif %}
 
     {% for page_num in wnioski.iter_pages() %}
@@ -101,12 +101,12 @@
           <span class="paginacja__link paginacja__link--aktywny">{{ page_num }}</span>
         {% endif %}
       {% else %}
-        <span class="paginacja__kropki">…</span>
+        <span class="paginacja__kropki">â€¦</span>
       {% endif %}
     {% endfor %}
 
     {% if wnioski.has_next %}
-      <a href="{{ url_for('zarzadzanie.komisja_lista', page=wnioski.next_num) }}" class="paginacja__link">Następna →</a>
+      <a href="{{ url_for('zarzadzanie.komisja_lista', page=wnioski.next_num) }}" class="paginacja__link">NastÄ™pna â†’</a>
     {% endif %}
   </div>
   {% endif %}
@@ -118,9 +118,9 @@
         <path d="M9 12l2 2 4-4"/>
         <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9c.83 0 1.63.11 2.38.32"/>
       </svg>
-      <h3 class="u-csp-045">Brak wniosków do weryfikacji</h3>
+      <h3 class="u-csp-045">Brak wnioskĂłw do weryfikacji</h3>
       <p class="u-csp-202">
-        Wszystkie wnioski zostały już przetworzone lub nie ma nowych zgłoszeń.
+        Wszystkie wnioski zostaĹ‚y juĹĽ przetworzone lub nie ma nowych zgĹ‚oszeĹ„.
       </p>
     </div>
   </div>

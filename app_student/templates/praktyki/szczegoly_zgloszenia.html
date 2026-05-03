@@ -42,14 +42,14 @@
   <div class="karta u-mb-1">
     <div class="karta__naglowek"><h2 class="karta__tytul">Zakład pracy</h2></div>
     <div class="karta__tresc">
-      {% if not zapis.is_custom_company and zapis.firma %}
+      {% if not zapis.is_custom_company and zapis.company %}
       <div class="form-field u-mb-1">
         <label class="form-field__label">Jak znalazłeś/-aś miejsce praktyki?</label>
-        <input class="form-field__input" type="text" readonly value="Uczelnia kieruje do zakładu (firma ma umowę z ANS)">
+        <input class="form-field__input" type="text" readonly value="Uczelnia kieruje do zakładu (company ma umowę z ANS)">
       </div>
       <div class="form-field">
-        <label class="form-field__label">Wybrana firma</label>
-        <input class="form-field__input" type="text" readonly value="{{ zapis.firma.name }}">
+        <label class="form-field__label">Wybrana company</label>
+        <input class="form-field__input" type="text" readonly value="{{ zapis.company.name }}">
       </div>
       {% elif dm %}
       <div class="form-field u-mb-1">
@@ -130,7 +130,7 @@
     {% set h = harmonogram_dict.get(e.id|string) %}
     {% if h %}
     <div class="u-csp-338">
-      <div class="u-meta u-mb-035">{{ e.opis }}</div>
+      <div class="u-meta u-mb-035">{{ e.description }}</div>
       <div class="u-csp-363">
         <input type="text" readonly class="form-field__input u-csp-364" value="{{ h.department_name }}">
         <input type="text" readonly class="form-field__input u-csp-364" value="{{ h.example_tasks }}">
@@ -146,18 +146,18 @@
   {% endif %}
 
   <!-- === SEKCJA 5: UOPZ === -->
-  {% if zapis.uopz %}
+  {% if zapis.supervisor %}
   <div class="karta u-mb-1">
     <div class="karta__naglowek"><h2 class="karta__tytul">Opiekun uczelniany (UOPZ)</h2></div>
     <div class="karta__tresc">
       <div class="u-grid-2">
         <div class="form-field">
           <label class="form-field__label">Imię i nazwisko</label>
-          <input class="form-field__input" type="text" readonly value="{{ zapis.uopz.first_name }} {{ zapis.uopz.last_name }}">
+          <input class="form-field__input" type="text" readonly value="{{ zapis.supervisor.first_name }} {{ zapis.supervisor.last_name }}">
         </div>
         <div class="form-field">
           <label class="form-field__label">E-mail</label>
-          <input class="form-field__input" type="text" readonly value="{{ zapis.uopz.email or '' }}">
+          <input class="form-field__input" type="text" readonly value="{{ zapis.supervisor.email or '' }}">
         </div>
       </div>
     </div>
@@ -183,7 +183,7 @@
 
   <div class="karta">
     <div class="karta__naglowek">
-      <h2 class="karta__tytul">Krok 2: Wniosek o uznanie efektów z pracy zawodowej</h2>
+      <h2 class="karta__tytul">Krok 2: Wniosek o uznanie learning_outcomeów z pracy zawodowej</h2>
     </div>
     <div class="karta__tresc">
 
@@ -250,18 +250,18 @@
     </div>
   </div>
 
-  {% if zapis.uopz %}
+  {% if zapis.supervisor %}
   <div class="karta u-mt-1">
     <div class="karta__naglowek"><h2 class="karta__tytul">Opiekun uczelniany (UOPZ)</h2></div>
     <div class="karta__tresc">
       <div class="u-grid-2">
         <div class="form-field">
           <label class="form-field__label">Imię i nazwisko</label>
-          <input class="form-field__input" type="text" readonly value="{{ zapis.uopz.first_name }} {{ zapis.uopz.last_name }}">
+          <input class="form-field__input" type="text" readonly value="{{ zapis.supervisor.first_name }} {{ zapis.supervisor.last_name }}">
         </div>
         <div class="form-field">
           <label class="form-field__label">E-mail</label>
-          <input class="form-field__input" type="text" readonly value="{{ zapis.uopz.email or '' }}">
+          <input class="form-field__input" type="text" readonly value="{{ zapis.supervisor.email or '' }}">
         </div>
       </div>
     </div>

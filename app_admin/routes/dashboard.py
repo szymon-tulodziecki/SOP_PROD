@@ -1,8 +1,8 @@
-from flask import Blueprint, render_template
+﻿from flask import Blueprint, render_template
 from flask_login import login_required, current_user
-from core.modele import UserRole
-from core.repozytoria import EnrollmentRepository, InternshipRepository, UserRepository
-from core.uslugi import SerwisOceniania
+from core.models import UserRole
+from core.repositories import EnrollmentRepository, InternshipRepository, UserRepository
+from core.services import AssessmentService
 from flask_wtf import FlaskForm
 
 dashboard_bp = Blueprint('dashboard', __name__)
@@ -26,7 +26,7 @@ def index():
 
     recent_enrollments = enrollment_repository.recent(supervisor_id=supervisor_id, limit=8)
 
-    urgent_assessments = SerwisOceniania.get_pilne_oceny(current_user.id) if current_user.role == UserRole.UOPZ else []
+    urgent_assessments = AssessmentService.get_urgent_assessments(current_user.id) if current_user.role == UserRole.UOPZ else []
 
     csrf_form = FlaskForm()
     return render_template('dashboard/index.html',

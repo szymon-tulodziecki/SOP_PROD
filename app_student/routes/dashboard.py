@@ -1,8 +1,8 @@
 ﻿from flask import Blueprint, render_template
 from flask_login import login_required, current_user
-from core.modele import EnrollmentStatus
-from core.modele.internships import EventType
-from core.repozytoria import EnrollmentRepository
+from core.models import EnrollmentStatus
+from core.models.internships import EventType
+from core.repositories import EnrollmentRepository
 
 dashboard_bp = Blueprint('dashboard', __name__)
 

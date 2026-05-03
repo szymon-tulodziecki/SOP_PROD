@@ -1,15 +1,15 @@
-{% extends "layouts/base_panel.html" %}
+﻿{% extends "layouts/base_panel.html" %}
 
 {% block tytul %}Karta Ocen Praktyki{% endblock %}
-{% block naglowek %}Ocena praktyki — {{ zapis.student.first_name }} {{ zapis.student.last_name }}{% endblock %}
+{% block naglowek %}Ocena praktyki â€” {{ zapis.student.first_name }} {{ zapis.student.last_name }}{% endblock %}
 
 {% block naglowek_akcje %}
-<a href="{{ url_for('evaluation.lista_ocen') }}" class="przycisk przycisk--drugorzedny">Powrót do listy</a>
+<a href="{{ url_for('evaluation.lista_ocen') }}" class="przycisk przycisk--drugorzedny">PowrĂłt do listy</a>
 {% endblock %}
 
 {% block tresc %}
 {% set is_path_b = zapis.is_path_b %}
-{% set path_label = 'Staż/zatrudnienie' if zapis.path_type == zapis.path_type.EMPLOYMENT else 'Dział. gospod.' %}
+{% set path_label = 'StaĹĽ/zatrudnienie' if zapis.path_type == zapis.path_type.EMPLOYMENT else 'DziaĹ‚. gospod.' %}
 <div class="u-csp-058" data-evaluation-card data-path-b="{{ 'true' if is_path_b else 'false' }}">
 
   <!-- Info o studencie -->
@@ -19,9 +19,9 @@
         <h2 class="u-csp-040">{{ zapis.student.first_name }} {{ zapis.student.last_name }}</h2>
         <p class="u-tekst-drugor u-csp-041">
           {% if is_path_b %}
-          {{ path_label }} — Uznanie efektów · {{ zapis.firma_nazwa or 'Brak nazwy firmy' }}
+          {{ path_label }} â€” Uznanie learning_outcomeĂłw Â· {{ zapis.company_display_name or 'Brak nazwy firmy' }}
           {% else %}
-          Firma: {{ zapis.firma_nazwa or 'Brak nazwy firmy' }} | ZOPZ: {{ zapis.zopz_imie_nazwisko or 'Brak ZOPZ' }} | Godziny: {{ zapis.total_hours_logged }} h
+          company: {{ zapis.company_display_name or 'Brak nazwy firmy' }} | ZOPZ: {{ zapis.workplace_mentor_name or 'Brak ZOPZ' }} | Godziny: {{ zapis.total_hours_logged }} h
           {% endif %}
         </p>
       </div>
@@ -40,8 +40,8 @@
     {% if not is_path_b %}
     <div class="karta u-mb-2">
       <div class="karta__naglowek u-csp-031">
-        <h3 class="karta__tytul">Potwierdzenie efektów uczenia się (Zał. 4)</h3>
-        <span class="u-tekst-trzeciorzed u-csp-060">Uzupełnia UOPZ lub administrator przed wygenerowaniem Zał. 4.</span>
+        <h3 class="karta__tytul">Potwierdzenie learning_outcomeĂłw uczenia siÄ™ (ZaĹ‚. 4)</h3>
+        <span class="u-tekst-trzeciorzed u-csp-060">UzupeĹ‚nia UOPZ lub administrator przed wygenerowaniem ZaĹ‚. 4.</span>
       </div>
       <div class="karta__tresc u-p-0">
         <div class="tabela-wrapper">
@@ -49,29 +49,29 @@
             <thead>
               <tr>
                 <th class="u-csp-052">Kod</th>
-                <th>Efekt uczenia się</th>
-                <th class="u-ta-center">Uzyskał/a</th>
-                <th class="u-ta-center">Nie uzyskał/a</th>
+                <th>Efekt uczenia siÄ™</th>
+                <th class="u-ta-center">UzyskaĹ‚/a</th>
+                <th class="u-ta-center">Nie uzyskaĹ‚/a</th>
               </tr>
             </thead>
             <tbody>
-              {% for efekt in efekty %}
-              {% set ocena = istniejace.get(efekt.id|string) %}
+              {% for learning_outcome in efekty %}
+              {% set ocena = istniejace.get(learning_outcome.id|string) %}
               <tr>
-                <td><strong>{{ efekt.kod }}</strong></td>
-                <td class="u-fs-sm u-lh-15">{{ efekt.opis }}</td>
+                <td><strong>{{ learning_outcome.code }}</strong></td>
+                <td class="u-fs-sm u-lh-15">{{ learning_outcome.description }}</td>
                 <td class="u-ta-center">
                   <label class="zal4-radio">
-                    <input type="radio" name="outcome_{{ efekt.id }}" value="ACHIEVED"
+                    <input type="radio" name="outcome_{{ learning_outcome.id }}" value="ACHIEVED"
                            {% if ocena and ocena.result.value == 'ACHIEVED' %}checked{% endif %}>
-                    <span>✓</span>
+                    <span>âś“</span>
                   </label>
                 </td>
                 <td class="u-ta-center">
                   <label class="zal4-radio">
-                    <input type="radio" name="outcome_{{ efekt.id }}" value="NOT_ACHIEVED"
+                    <input type="radio" name="outcome_{{ learning_outcome.id }}" value="NOT_ACHIEVED"
                            {% if ocena and ocena.result.value == 'NOT_ACHIEVED' %}checked{% endif %}>
-                    <span>✕</span>
+                    <span>âś•</span>
                   </label>
                 </td>
               </tr>
@@ -89,31 +89,31 @@
       <div class="karta__naglowek u-csp-031">
         {% if is_path_b %}
         <h3 class="karta__tytul">Ocena sprawozdania</h3>
-        <span class="u-tekst-trzeciorzed u-csp-060">Uznanie efektów na podstawie {{ path_label|lower }} — brak ocen Z i U</span>
+        <span class="u-tekst-trzeciorzed u-csp-060">Uznanie learning_outcomeĂłw na podstawie {{ path_label|lower }} â€” brak ocen Z i U</span>
         {% else %}
-        <h3 class="karta__tytul">Karta oceny praktyki (Zał. 3c)</h3>
+        <h3 class="karta__tytul">Karta assessments praktyki (ZaĹ‚. 3c)</h3>
         {% endif %}
       </div>
       <div class="karta__tresc">
         {% if not is_path_b %}
         <p class="u-meta u-mb-1">
-          Wprowadź oceny parametryczne. Ocenę ZOPZ przepisz z dostarczonego formularza papierowego podpisanej Karty nr 3.
+          WprowadĹş assessments parametryczne. OcenÄ™ ZOPZ przepisz z dostarczonego formularza papierowego podpisanej Karty nr 3.
         </p>
         {% endif %}
 
         <div class="{% if is_path_b %}u-grid-grades-path-b{% else %}u-grid-grades-standard{% endif %}">
           <div class="pole-formularza">
             <label class="pole-formularza__etykieta">Ocena Sprawozdania (S)</label>
-            <input type="number" step="0.5" min="2" max="5" name="ocena_sprawozdania" class="pole-formularza__input ocen_field" value="{{ zapis.ocena_sprawozdania or '' }}" placeholder="2.0 - 5.0">
+            <input type="number" step="0.5" min="2" max="5" name="report_grade" class="pole-formularza__input ocen_field" value="{{ zapis.report_grade or '' }}" placeholder="2.0 - 5.0">
           </div>
           {% if not is_path_b %}
           <div class="pole-formularza">
             <label class="pole-formularza__etykieta">Ocena UOPZ (U)</label>
-            <input type="number" step="0.5" min="2" max="5" name="ocena_uopz" class="pole-formularza__input ocen_field" value="{{ zapis.ocena_uopz or '' }}" placeholder="2.0 - 5.0">
+            <input type="number" step="0.5" min="2" max="5" name="supervisor_grade" class="pole-formularza__input ocen_field" value="{{ zapis.supervisor_grade or '' }}" placeholder="2.0 - 5.0">
           </div>
           <div class="pole-formularza">
             <label class="pole-formularza__etykieta">Ocena z papierowej Karty ZOPZ (Z)</label>
-            <input type="number" step="0.5" min="2" max="5" name="ocena_zopz" class="pole-formularza__input ocen_field" value="{{ zapis.ocena_zopz or '' }}" placeholder="2.0 - 5.0">
+            <input type="number" step="0.5" min="2" max="5" name="workplace_grade" class="pole-formularza__input ocen_field" value="{{ zapis.workplace_grade or '' }}" placeholder="2.0 - 5.0">
           </div>
           {% endif %}
         </div>
@@ -122,11 +122,11 @@
         <div class="u-grid-2">
           <div class="pole-formularza u-csp-061">
             <label class="pole-formularza__etykieta u-csp-062">Opinia opisowa Uczelnianego Opiekuna Praktyk Zawodowych (UOPZ)</label>
-            <textarea name="ocena_opisowa_uopz" class="pole-formularza__input u-csp-063" rows="4" placeholder="Wpisz treść opinii...">{{ zapis.ocena_opisowa_uopz or '' }}</textarea>
+            <textarea name="supervisor_grade_description" class="pole-formularza__input u-csp-063" rows="4" placeholder="Wpisz treĹ›Ä‡ opinii...">{{ zapis.supervisor_grade_description or '' }}</textarea>
           </div>
           <div class="pole-formularza u-csp-061">
             <label class="pole-formularza__etykieta u-csp-062">Opinia opisowa z dostarczonej karty ZOPZ (opcjonalnie)</label>
-            <textarea name="ocena_opisowa_zopz" class="pole-formularza__input u-csp-063" rows="4" placeholder="Przepisz jeśli obecna...">{{ zapis.ocena_opisowa_zopz or '' }}</textarea>
+            <textarea name="workplace_grade_description" class="pole-formularza__input u-csp-063" rows="4" placeholder="Przepisz jeĹ›li obecna...">{{ zapis.workplace_grade_description or '' }}</textarea>
           </div>
         </div>
         {% endif %}
@@ -134,100 +134,100 @@
     </div>
 
 
-    <!-- Komisja Egzaminacyjna (Zał. 8) -->
+    <!-- Komisja Egzaminacyjna (ZaĹ‚. 8) -->
     <div class="karta u-mb-2">
       <div class="karta__naglowek u-csp-031">
-        <h3 class="karta__tytul">Protokół Egzaminacyjny (Zał. 8)</h3>
+        <h3 class="karta__tytul">ProtokĂłĹ‚ Egzaminacyjny (ZaĹ‚. 8)</h3>
       </div>
       <div class="karta__tresc">
 
-        <p class="u-fw-600 u-mb-1">Skład Komisji</p>
+        <p class="u-fw-600 u-mb-1">SkĹ‚ad Komisji</p>
 
         <div class="u-csp-064">
           <div class="pole-formularza">
-            <label class="pole-formularza__etykieta">Przewodniczący Komisji</label>
+            <label class="pole-formularza__etykieta">PrzewodniczÄ…cy Komisji</label>
             <input type="text" name="komisja_przewodniczacy" class="pole-formularza__input"
-                   value="{{ zapis.sprawdzian.commission_chair if zapis.sprawdzian and zapis.sprawdzian.commission_chair else '' }}"
-                   placeholder="Imię i nazwisko">
+                   value="{{ zapis.examination.commission_chair if zapis.examination and zapis.examination.commission_chair else '' }}"
+                   placeholder="ImiÄ™ i nazwisko">
           </div>
           <div class="pole-formularza">
-            <label class="pole-formularza__etykieta">Członek Komisji 2</label>
+            <label class="pole-formularza__etykieta">CzĹ‚onek Komisji 2</label>
             <input type="text" name="komisja_czlonek_2" class="pole-formularza__input"
-                   value="{{ zapis.sprawdzian.commission_member_2 if zapis.sprawdzian and zapis.sprawdzian.commission_member_2 else (zapis.uopz.first_name ~ ' ' ~ zapis.uopz.last_name if zapis.uopz else '') }}"
-                   placeholder="Imię i nazwisko">
+                   value="{{ zapis.examination.commission_member_2 if zapis.examination and zapis.examination.commission_member_2 else (zapis.supervisor.first_name ~ ' ' ~ zapis.supervisor.last_name if zapis.supervisor else '') }}"
+                   placeholder="ImiÄ™ i nazwisko">
           </div>
           <div class="pole-formularza">
-            <label class="pole-formularza__etykieta">Członek Komisji 3</label>
+            <label class="pole-formularza__etykieta">CzĹ‚onek Komisji 3</label>
             <input type="text" name="komisja_czlonek_3" class="pole-formularza__input"
-                   value="{{ zapis.sprawdzian.commission_member_3 if zapis.sprawdzian and zapis.sprawdzian.commission_member_3 else '' }}"
-                   placeholder="Imię i nazwisko">
+                   value="{{ zapis.examination.commission_member_3 if zapis.examination and zapis.examination.commission_member_3 else '' }}"
+                   placeholder="ImiÄ™ i nazwisko">
           </div>
         </div>
 
         <hr class="u-csp-065">
 
         <p class="u-meta u-mb-15">
-          Wprowadź 3 pytania zadane studentowi oraz ocenę (od 2.0 do 5.0) za każdą odpowiedź. Ocena E jest automatyczną średnią z poniższych.
+          WprowadĹş 3 pytania zadane studentowi oraz ocenÄ™ (od 2.0 do 5.0) za kaĹĽdÄ… odpowiedĹş. Ocena E jest automatycznÄ… Ĺ›redniÄ… z poniĹĽszych.
         </p>
 
         <div class="u-csp-066">
           <div class="pole-formularza">
             <label class="pole-formularza__etykieta">Pytanie 1</label>
-            <input type="text" name="sprawdzian_pytanie_1" class="pole-formularza__input" value="{{ zapis.sprawdzian_pytanie_1 or '' }}" placeholder="Treść pytania...">
+            <input type="text" name="exam_question_1" class="pole-formularza__input" value="{{ zapis.exam_question_1 or '' }}" placeholder="TreĹ›Ä‡ pytania...">
           </div>
           <div class="pole-formularza">
             <label class="pole-formularza__etykieta">Ocena z odp. 1</label>
-            <input type="number" step="0.5" min="2" max="5" name="sprawdzian_ocena_1" class="pole-formularza__input egzamin_odp" value="{{ zapis.sprawdzian_ocena_1 or '' }}" placeholder="2.0 - 5.0">
+            <input type="number" step="0.5" min="2" max="5" name="exam_grade_1" class="pole-formularza__input egzamin_odp" value="{{ zapis.exam_grade_1 or '' }}" placeholder="2.0 - 5.0">
           </div>
         </div>
 
         <div class="u-csp-066">
           <div class="pole-formularza">
             <label class="pole-formularza__etykieta">Pytanie 2</label>
-            <input type="text" name="sprawdzian_pytanie_2" class="pole-formularza__input" value="{{ zapis.sprawdzian_pytanie_2 or '' }}" placeholder="Treść pytania...">
+            <input type="text" name="exam_question_2" class="pole-formularza__input" value="{{ zapis.exam_question_2 or '' }}" placeholder="TreĹ›Ä‡ pytania...">
           </div>
           <div class="pole-formularza">
             <label class="pole-formularza__etykieta">Ocena z odp. 2</label>
-            <input type="number" step="0.5" min="2" max="5" name="sprawdzian_ocena_2" class="pole-formularza__input egzamin_odp" value="{{ zapis.sprawdzian_ocena_2 or '' }}" placeholder="2.0 - 5.0">
+            <input type="number" step="0.5" min="2" max="5" name="exam_grade_2" class="pole-formularza__input egzamin_odp" value="{{ zapis.exam_grade_2 or '' }}" placeholder="2.0 - 5.0">
           </div>
         </div>
 
         <div class="u-csp-067">
           <div class="pole-formularza">
             <label class="pole-formularza__etykieta">Pytanie 3</label>
-            <input type="text" name="sprawdzian_pytanie_3" class="pole-formularza__input" value="{{ zapis.sprawdzian_pytanie_3 or '' }}" placeholder="Treść pytania...">
+            <input type="text" name="exam_question_3" class="pole-formularza__input" value="{{ zapis.exam_question_3 or '' }}" placeholder="TreĹ›Ä‡ pytania...">
           </div>
           <div class="pole-formularza">
             <label class="pole-formularza__etykieta">Ocena z odp. 3</label>
-            <input type="number" step="0.5" min="2" max="5" name="sprawdzian_ocena_3" class="pole-formularza__input egzamin_odp" value="{{ zapis.sprawdzian_ocena_3 or '' }}" placeholder="2.0 - 5.0">
+            <input type="number" step="0.5" min="2" max="5" name="exam_grade_3" class="pole-formularza__input egzamin_odp" value="{{ zapis.exam_grade_3 or '' }}" placeholder="2.0 - 5.0">
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Podsumowanie Wyników -->
+    <!-- Podsumowanie WynikĂłw -->
     <div class="karta u-mb-2 u-csp-068">
       <div class="karta__tresc u-csp-069">
 
         <div class="u-ta-center">
-          <div class="u-etykieta">Średnia Egzaminu (E)</div>
-          <div class="u-csp-070" id="wynik-e">{{ "%.2f"|format(zapis.exam_grade) if zapis.exam_grade is not none else '—' }}</div>
+          <div class="u-etykieta">Ĺšrednia Egzaminu (E)</div>
+          <div class="u-csp-070" id="wynik-e">{{ "%.2f"|format(zapis.exam_grade) if zapis.exam_grade is not none else 'â€”' }}</div>
         </div>
 
-        <div class="u-csp-071">→</div>
+        <div class="u-csp-071">â†’</div>
 
         <div class="u-ta-center">
-          <div class="u-etykieta">Wzór</div>
+          <div class="u-etykieta">WzĂłr</div>
           <div class="u-csp-072">
-            {% if is_path_b %}K = 0.9·E + 0.1·S{% else %}K = 0.4·E + 0.1·S + 0.2·U + 0.3·Z{% endif %}
+            {% if is_path_b %}K = 0.9Â·E + 0.1Â·S{% else %}K = 0.4Â·E + 0.1Â·S + 0.2Â·U + 0.3Â·Z{% endif %}
           </div>
         </div>
 
         <div class="u-csp-071">=</div>
 
         <div class="u-ta-center">
-          <div class="u-etykieta">Ocena Końcowa (K)</div>
-          <div id="wynik-k" class="u-grade-final {% if zapis.final_grade is not none %}{% if zapis.final_grade >= 3.0 %}u-grade-final--pass{% else %}u-grade-final--fail{% endif %}{% endif %}">{{ "%.1f"|format(zapis.final_grade) if zapis.final_grade is not none else '—' }}</div>
+          <div class="u-etykieta">Ocena KoĹ„cowa (K)</div>
+          <div id="wynik-k" class="u-grade-final {% if zapis.final_grade is not none %}{% if zapis.final_grade >= 3.0 %}u-grade-final--pass{% else %}u-grade-final--fail{% endif %}{% endif %}">{{ "%.1f"|format(zapis.final_grade) if zapis.final_grade is not none else 'â€”' }}</div>
         </div>
 
       </div>
@@ -237,16 +237,16 @@
     <div class="u-flex--between u-csp-073">
       <span class="u-tekst-blad" id="ostrzezenie-z">
         {% if is_path_b %}Wymagane: ocena sprawozdania (S) oraz co najmniej jedna ocena ze sprawdzianu (E).
-        {% else %}Wymagane wszystkie oceny: S, U, Z oraz co najmniej jedna ocena ze sprawdzianu.{% endif %}
+        {% else %}Wymagane wszystkie assessments: S, U, Z oraz co najmniej jedna ocena ze sprawdzianu.{% endif %}
       </span>
 
       <div class="u-flex--gap-1 u-csp-054">
         <a href="{{ url_for('zarzadzanie.dokumenty_studenta', student_id=zapis.student_id) }}"
            class="przycisk przycisk--drugorzedny u-csp-074">
-          Dokumenty studenta →
+          Dokumenty studenta â†’
         </a>
-        <button type="submit" name="zapisz" value="1" class="przycisk przycisk--drugorzedny u-csp-074">Zapisz Wersję Roboczą</button>
-        <button type="submit" name="zakoncz" value="1" id="btn-zakoncz" class="przycisk przycisk--glowny u-csp-075" disabled>Zakończ i Zatwierdź Ocenę</button>
+        <button type="submit" name="zapisz" value="1" class="przycisk przycisk--drugorzedny u-csp-074">Zapisz WersjÄ™ RoboczÄ…</button>
+        <button type="submit" name="complete" value="1" id="btn-complete" class="przycisk przycisk--glowny u-csp-075" disabled>ZakoĹ„cz i ZatwierdĹş OcenÄ™</button>
       </div>
     </div>
 
@@ -261,16 +261,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.querySelector('[data-evaluation-card]')) return;
     const isPathB = {{ 'true' if is_path_b else 'false' }};
 
-    const p1 = document.querySelector('[name="sprawdzian_ocena_1"]');
-    const p2 = document.querySelector('[name="sprawdzian_ocena_2"]');
-    const p3 = document.querySelector('[name="sprawdzian_ocena_3"]');
-    const os = document.querySelector('[name="ocena_sprawozdania"]');
-    const ou = document.querySelector('[name="ocena_uopz"]');
-    const oz = document.querySelector('[name="ocena_zopz"]');
+    const p1 = document.querySelector('[name="exam_grade_1"]');
+    const p2 = document.querySelector('[name="exam_grade_2"]');
+    const p3 = document.querySelector('[name="exam_grade_3"]');
+    const os = document.querySelector('[name="report_grade"]');
+    const ou = document.querySelector('[name="supervisor_grade"]');
+    const oz = document.querySelector('[name="workplace_grade"]');
 
     const we = document.getElementById('wynik-e');
     const wk = document.getElementById('wynik-k');
-    const btnZakoncz = document.getElementById('btn-zakoncz');
+    const btnZakoncz = document.getElementById('btn-complete');
     const ostrzezenie = document.getElementById('ostrzezenie-z');
 
     function roundHalf(v) { return Math.round(v * 2) / 2; }
@@ -286,7 +286,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let numPyt = (e1 > 0 ? 1 : 0) + (e2 > 0 ? 1 : 0) + (e3 > 0 ? 1 : 0);
         let exam_avg = numPyt > 0 ? (e1 + e2 + e3) / numPyt : 0;
 
-        we.textContent = exam_avg > 0 ? exam_avg.toFixed(2) : '—';
+        we.textContent = exam_avg > 0 ? exam_avg.toFixed(2) : 'â€”';
 
         let canCalc = isPathB ? (exam_avg > 0 && s > 0) : (exam_avg > 0 && s > 0 && u > 0 && z > 0);
 
@@ -298,7 +298,7 @@ document.addEventListener('DOMContentLoaded', () => {
             btnZakoncz.disabled = false;
             ostrzezenie.style.display = 'none';
         } else {
-            wk.textContent = '—';
+            wk.textContent = 'â€”';
             wk.style.color = 'var(--kolor-glowny)';
             btnZakoncz.disabled = true;
             ostrzezenie.style.display = 'inline-block';
@@ -306,7 +306,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const serverK = wk.textContent.trim();
-    if (serverK !== '—') {
+    if (serverK !== 'â€”') {
         btnZakoncz.disabled = false;
         ostrzezenie.style.display = 'none';
     }

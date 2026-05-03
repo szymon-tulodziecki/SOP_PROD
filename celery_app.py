@@ -155,8 +155,8 @@ def generate_pdf_dziennik(self, enrollment_id: str) -> dict:
     from pathlib import Path
     import httpx
 
-    from core.uslugi.documents import build_context
-    from core.repozytoria import EnrollmentRepository
+    from core.services.documents import build_context
+    from core.repositories import EnrollmentRepository
 
     enrollment = EnrollmentRepository().znajdz_po_id(uuid.UUID(enrollment_id))
     if not enrollment:
@@ -233,14 +233,14 @@ def cleanup_old_pdfs(max_age_hours: int = 24) -> dict:
 def cleanup_deleted_internships() -> dict:
     """Trwale usuwa praktyki oznaczone do usunięcia ponad 7 dni temu."""
     from datetime import datetime, timedelta, timezone
-    from core.pliki import _fs_delete
+    from core.files import _fs_delete
 
     cutoff = datetime.now(timezone.utc) - timedelta(days=7)
     deleted = 0
 
     with _worker_app.app_context():
-        from core.modele.internships import Internship
-        from core.modele import UploadedDocument
+        from core.models.internships import Internship
+        from core.models import UploadedDocument
         from sqlalchemy.orm import selectinload
 
         stare = (db.session.query(Internship)
@@ -319,8 +319,8 @@ def generate_pdf_from_template(self, template_name: str, context: dict,
 @celery.task(name='auto_complete_internships')
 def auto_complete_internships_task() -> dict:
     """Automatycznie zamyka praktyki z przekroczonym terminem i wymaganą liczbą godzin."""
-    from core.uslugi.evaluation import SerwisOceniania
-    result = SerwisOceniania.auto_complete_internships()
+    from core.services.evaluation import AssessmentService
+    result = AssessmentService.auto_complete_internships()
     logger.info(
         "auto_complete_internships: zakończono %d, pominięto %d",
         result['completed'], result['skipped'],

@@ -30,17 +30,17 @@
 
         <div class="u-grid-2-mb u-csp-208">
           <div class="path-tile {% if form.track_type.data == 'STANDARD' %}path-tile--selected{% endif %}" data-value="STANDARD" role="button" tabindex="0">
-            <div class="u-fw-600 u-csp-308">[A] Standardowa praktyka</div>
+            <div class="u-fw-600 u-csp-308">[A] Standardowa internship</div>
             <div class="u-meta u-csp-309">
               Odbędę praktykę w firmie lub instytucji na podstawie porozumienia z uczelnią.
             </div>
             <div class="u-csp-310">
-              Porozumienie + dziennik + sprawozdanie
+              Porozumienie + dziennik + report
             </div>
           </div>
 
           <div class="path-tile {% if form.track_type.data in ('EMPLOYMENT', 'OWN_BUSINESS') %}path-tile--selected{% endif %}" data-value="EMPLOYMENT" role="button" tabindex="0">
-            <div class="u-fw-600 u-csp-308">[B] Uznanie efektów z pracy zawodowej</div>
+            <div class="u-fw-600 u-csp-308">[B] Uznanie learning_outcomeów z pracy zawodowej</div>
             <div class="u-meta u-csp-309">
               Pracuję lub pracowałem/am w branży IT (etat, staż) i chcę zaliczyć to jako praktykę.
             </div>
@@ -95,7 +95,7 @@
   </div>
 
   <div class="u-mt-1 u-meta u-ta-center">
-    Praktyka: <strong>{{ praktyka.academic_year }}</strong> · Semestr {{ praktyka.semester_label }} · {{ praktyka.required_hours }} h
+    Praktyka: <strong>{{ internship.academic_year }}</strong> · Semestr {{ internship.semester_label }} · {{ internship.required_hours }} h
   </div>
 </div>
 
