@@ -128,17 +128,17 @@ def _resolve_user(ms_email: str, allowed_roles):
         user = user_repository.find_by_email(ms_email)
     except SQLAlchemyError:
         current_app.logger.exception('Database error during Microsoft login')
-        return None, 'BĹ‚Ä…d poĹ‚Ä…czenia z bazÄ… danych.'
+        return None, 'Błąd połączenia z bazą danych.'
 
     if not user or not user.is_active:
         current_app.logger.info('Unknown Microsoft account login attempt: %s', ms_email)
         return None, (
             'Twoje konto Microsoft nie jest zarejestrowane w systemie. '
-            'Skontaktuj siÄ™ z administratorem.'
+            'Skontaktuj się z administratorem.'
         )
 
     if allowed_roles and user.role not in allowed_roles:
-        return None, 'Twoje konto nie ma dostÄ™pu do tego panelu.'
+        return None, 'Twoje konto nie ma dostępu do tego panelu.'
 
     return user, None
 
@@ -148,13 +148,13 @@ def _ms_callback_handler(allowed_roles):
     expected_state = session.pop('oauth_state', None) or _read_oauth_cookie('state')
     if not expected_state or request.args.get('state') != expected_state:
         current_app.logger.warning('OAuth state mismatch; possible CSRF attack')
-        flash('BĹ‚Ä…d bezpieczeĹ„stwa logowania. SprĂłbuj ponownie.', 'danger')
+        flash('Błąd bezpieczeństwa logowania. Spróbuj ponownie.', 'danger')
         return _redirect_clearing_oauth(url_for(_ROUTE_LOGIN))
 
     if 'error' in request.args:
         error_desc = request.args.get('error_description', request.args['error'])
         current_app.logger.warning('Microsoft OAuth error: %s', error_desc)
-        flash('Logowanie przez Microsoft nie powiodĹ‚o siÄ™.', 'danger')
+        flash('Logowanie przez Microsoft nie powiodło się.', 'danger')
         return _redirect_clearing_oauth(url_for(_ROUTE_LOGIN))
 
     code = request.args.get('code')
@@ -164,7 +164,7 @@ def _ms_callback_handler(allowed_roles):
 
     result = _acquire_token(code)
     if result is None:
-        flash('BĹ‚Ä…d komunikacji z Microsoft. SprĂłbuj ponownie.', 'danger')
+        flash('Błąd komunikacji z Microsoft. Spróbuj ponownie.', 'danger')
         return _redirect_clearing_oauth(url_for(_ROUTE_LOGIN))
 
     if 'error' in result:
@@ -173,12 +173,12 @@ def _ms_callback_handler(allowed_roles):
             result.get('error'),
             result.get('error_description'),
         )
-        flash('Nie udaĹ‚o siÄ™ uzyskaÄ‡ tokenu od Microsoft.', 'danger')
+        flash('Nie udało się uzyskać tokenu od Microsoft.', 'danger')
         return _redirect_clearing_oauth(url_for(_ROUTE_LOGIN))
 
     ms_email = (result.get('id_token_claims', {}).get('preferred_username') or '').lower().strip()
     if not ms_email:
-        flash('Nie udaĹ‚o siÄ™ odczytaÄ‡ adresu e-mail z konta Microsoft.', 'danger')
+        flash('Nie udało się odczytać adresu e-mail z konta Microsoft.', 'danger')
         return _redirect_clearing_oauth(url_for(_ROUTE_LOGIN))
 
     user, err = _resolve_user(ms_email, allowed_roles)
@@ -227,7 +227,7 @@ def create_auth_blueprint(
             )
         except Exception:
             current_app.logger.exception('Failed to build Microsoft authorization URL')
-            flash('BĹ‚Ä…d konfiguracji logowania. Skontaktuj siÄ™ z administratorem.', 'danger')
+            flash('Błąd konfiguracji logowania. Skontaktuj się z administratorem.', 'danger')
             return redirect(url_for(_ROUTE_LOGIN))
 
         response = make_response(redirect(auth_url))

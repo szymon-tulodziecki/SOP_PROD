@@ -1,10 +1,10 @@
-﻿{% extends "layouts/base_panel.html" %}
+{% extends "layouts/base_panel.html" %}
 
 {% block tytul %}Oceny i efekty{% endblock %}
-{% block naglowek %}Studenci â€” assessments i efekty{% endblock %}
+{% block naglowek %}Studenci — oceny i efekty{% endblock %}
 
 {% block naglowek_akcje %}
-<a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">â† PowrĂłt</a>
+<a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
 {% endblock %}
 
 {% block tresc %}
@@ -12,7 +12,7 @@
 
 <div class="karta">
   <div class="karta__naglowek u-csp-077">
-    <h2 class="karta__tytul">ZakoĹ„czone praktyki <span class="u-meta u-csp-078">({{ widoczne|length }}{% if filtr %} filtr aktywny{% endif %})</span></h2>
+    <h2 class="karta__tytul">Zakończone praktyki <span class="u-meta u-csp-078">({{ widoczne|length }}{% if filtr %} filtr aktywny{% endif %})</span></h2>
     <div class="u-flex--gap-05 u-csp-079">
       <a href="{{ url_for('evaluation.lista_ocen') }}"
          class="przycisk przycisk--maly {% if not filtr %}przycisk--glowny{% else %}przycisk--drugorzedny{% endif %}">
@@ -33,12 +33,12 @@
       <thead>
         <tr>
           <th>Student</th>
-          <th>ZakĹ‚ad pracy</th>
+          <th>Zakład pracy</th>
           <th class="u-ta-center" title="Ocena sprawozdania">Spr.</th>
           <th class="u-ta-center" title="Ocena UOPZ">UOPZ</th>
           <th class="u-ta-center" title="Ocena ZOPZ (z karty papierowej)">ZOPZ</th>
-          <th class="u-ta-center" title="Ĺšrednia z egzaminu komisyjnego">Egz.</th>
-          <th class="u-ta-center" title="Ocena koĹ„cowa: K = 0.4Â·E + 0.1Â·S + 0.2Â·U + 0.3Â·Z">Ocena K</th>
+          <th class="u-ta-center" title="Średnia z egzaminu komisyjnego">Egz.</th>
+          <th class="u-ta-center" title="Ocena końcowa: K = 0.4·E + 0.1·S + 0.2·U + 0.3·Z">Ocena K</th>
           <th class="u-ta-center">Akcje</th>
         </tr>
       </thead>
@@ -49,30 +49,30 @@
           <td>
             <div class="u-fw-600">{{ p.student.last_name }} {{ p.student.first_name }}</div>
             <div class="u-meta">Nr alb.: {{ p.student.album_number or '-' }}
-              {% if item.is_path_b %}<span class="status status--in-progress u-csp-080">{% if p.path_type == p.path_type.EMPLOYMENT %}StaĹĽ/zatrudnienie{% else %}DziaĹ‚. gospod.{% endif %}</span>{% else %}<span class="status status--completed u-csp-080">Praktyka</span>{% endif %}
+              {% if item.is_path_b %}<span class="status status--in-progress u-csp-080">{% if p.path_type == p.path_type.EMPLOYMENT %}Staż/zatrudnienie{% else %}Dział. gospod.{% endif %}</span>{% else %}<span class="status status--completed u-csp-080">Praktyka</span>{% endif %}
             </div>
           </td>
           <td class="u-fs-sm">{{ (p.company.name if p.company else p.company_display_name) or '-' }}</td>
-          <td class="u-ta-center">{{ p.report_grade or 'â€”' }}</td>
-          <td class="u-ta-center">{{ p.supervisor_grade or 'â€”' }}</td>
-          <td class="u-ta-center">{{ p.workplace_grade or 'â€”' }}</td>
-          <td class="u-ta-center">{{ p.exam_grade or 'â€”' }}</td>
+          <td class="u-ta-center">{{ p.report_grade or '—' }}</td>
+          <td class="u-ta-center">{{ p.supervisor_grade or '—' }}</td>
+          <td class="u-ta-center">{{ p.workplace_grade or '—' }}</td>
+          <td class="u-ta-center">{{ p.exam_grade or '—' }}</td>
           <td class="u-ta-center">
             {% if p.final_grade is not none %}
             <strong class="u-grade-final-list {% if p.final_grade_is_passing %}u-grade-final--pass{% else %}u-grade-final--fail{% endif %}">
               {{ "%.1f"|format(p.final_grade) }}
             </strong>
-            {% else %}â€”{% endif %}
+            {% else %}—{% endif %}
           </td>
           <td class="u-ta-center">
             <a href="{{ url_for('evaluation.evaluate_internship', id=p.id) }}"
                class="przycisk przycisk--maly {% if item.przekroczony %}przycisk--niebezpieczny{% elif not item.oceniony %}przycisk--glowny{% else %}przycisk--drugorzedny{% endif %}">
-              {% if item.przekroczony %}PILNE{% elif not item.oceniony %}Wystaw ocenÄ™{% else %}Edytuj{% endif %}
+              {% if item.przekroczony %}PILNE{% elif not item.oceniony %}Wystaw ocenę{% else %}Edytuj{% endif %}
             </a>
           </td>
         </tr>
         {% else %}
-        <tr><td colspan="8" class="tabela--pusta">Brak studentĂłw.</td></tr>
+        <tr><td colspan="8" class="tabela--pusta">Brak studentów.</td></tr>
         {% endfor %}
       </tbody>
     </table>

@@ -1,6 +1,6 @@
-﻿"""Documents service package.
+"""Pakiet usług dokumentów.
 
-Public API re-exports â€” keep import paths stable for callers.
+Publiczne API re-exports — keep import paths stable for callers.
 Submodules:
   - policy:     DOC_CONFIG, STATIC_TEMPLATES, DocumentEntry, resolve_documents, build_flags
   - context:    build_context (canonical TeX context)

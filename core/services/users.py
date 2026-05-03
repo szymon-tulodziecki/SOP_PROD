@@ -14,7 +14,7 @@ from core.repositories.users import UserRepository
 
 
 class UserService:
-    """Business logic for user accounts."""
+    """Logika biznesowa kont użytkowników."""
 
     def __init__(self, repository: Optional[UserRepository] = None) -> None:
         self._repo = repository or UserRepository()

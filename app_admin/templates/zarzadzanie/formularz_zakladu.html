@@ -1,7 +1,7 @@
-﻿{% extends "layouts/base_panel.html" %}
+{% extends "layouts/base_panel.html" %}
 
-{% block tytul %}{{ 'Edytuj zakĹ‚ad' if zaklad else 'Nowy zakĹ‚ad pracy' }}{% endblock %}
-{% block naglowek %}{{ 'Edytuj zakĹ‚ad' if zaklad else 'Nowy zakĹ‚ad pracy' }}{% endblock %}
+{% block tytul %}{{ 'Edytuj zakład' if zaklad else 'Nowy zakład pracy' }}{% endblock %}
+{% block naglowek %}{{ 'Edytuj zakład' if zaklad else 'Nowy zakład pracy' }}{% endblock %}
 
 {% block naglowek_akcje %}
 <a href="{{ url_for('zarzadzanie.lista_zakladow') }}" class="przycisk przycisk--drugorzedny">Anuluj</a>
@@ -14,7 +14,7 @@
       {{ form.hidden_tag() }}
 
       <div class="pole-formularza {% if form.nazwa.errors %}pole-formularza--blad{% endif %}">
-        <label for="nazwa" class="pole-formularza__etykieta">PeĹ‚na nazwa zakĹ‚adu</label>
+        <label for="nazwa" class="pole-formularza__etykieta">Pełna nazwa zakładu</label>
         {{ form.nazwa(class="pole-formularza__input", placeholder="np. Software House Sp. z o.o.") }}
         {% for error in form.nazwa.errors %}<span class="pole-formularza__blad">{{ error }}</span>{% endfor %}
       </div>
@@ -34,7 +34,7 @@
 
         <div class="pole-formularza {% if form.miasto.errors %}pole-formularza--blad{% endif %}">
           <label for="miasto" class="pole-formularza__etykieta">Miasto</label>
-          {{ form.miasto(class="pole-formularza__input", placeholder="np. ElblÄ…g") }}
+          {{ form.miasto(class="pole-formularza__input", placeholder="np. Elbląg") }}
           {% for error in form.miasto.errors %}<span class="pole-formularza__blad">{{ error }}</span>{% endfor %}
         </div>
       </div>
@@ -48,14 +48,14 @@
 
         <div class="pole-formularza {% if form.przedstawiciel_prawny.errors %}pole-formularza--blad{% endif %}">
           <label for="przedstawiciel_prawny" class="pole-formularza__etykieta">Przedstawiciel prawny</label>
-          {{ form.przedstawiciel_prawny(class="pole-formularza__input", placeholder="ImiÄ™ i nazwisko (np. Prezes ZarzÄ…du)") }}
+          {{ form.przedstawiciel_prawny(class="pole-formularza__input", placeholder="Imię i nazwisko (np. Prezes Zarządu)") }}
           {% for error in form.przedstawiciel_prawny.errors %}<span class="pole-formularza__blad">{{ error }}</span>{% endfor %}
         </div>
       </div>
 
       <div class="formularz-panel__akcje u-csp-238">
         <button type="submit" class="przycisk przycisk--glowny">
-          {{ 'Zapisz zmiany' if zaklad else 'Dodaj zakĹ‚ad pracy' }}
+          {{ 'Zapisz zmiany' if zaklad else 'Dodaj zakład pracy' }}
         </button>
       </div>
     </form>

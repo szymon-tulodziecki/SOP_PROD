@@ -1,7 +1,7 @@
-﻿"""Document availability policy and template configuration.
+"""Polityka dostępności dokumentów i konfiguracja szablonów.
 
-Determines which documents are available to a student based on enrollment
-state (path type, status, schedule, exam, grades).
+Określa, które dokumenty są dostępne dla studenta na podstawie stanu zapisu
+(ścieżka, status, harmonogram, egzamin i oceny).
 """
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from typing import Callable
 from core.extensions import db
 
 
-# â”€â”€ Template configuration â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── Konfiguracja szablonów ────────────────────────────────────────────────────
 
 DOC_CONFIG: dict[str, tuple[str, str]] = {
     'ZAL_1':  ('zal1_porozumienie.tex.j2',     'zal1_porozumienie.pdf'),
@@ -35,11 +35,11 @@ STATIC_TEMPLATES: dict[str, tuple[str, str]] = {
 }
 
 
-# â”€â”€ Specification objects â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── Obiekty specyfikacji ─────────────────────────────────────────────────────
 
 @dataclass
 class DocumentEntry:
-    """Declaration of one document with its availability rules."""
+    """Deklaracja jednego dokumentu wraz z zasadami dostępności."""
     name: str
     doc_type: str | None = None
     description: str | None = None
@@ -67,7 +67,7 @@ def _sep(name: str) -> dict:
     return {'separator': True, 'name': name}
 
 
-# â”€â”€ Availability rules â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── Zasady dostępności ────────────────────────────────────────────────────────
 
 def _zawsze(_ctx: dict) -> bool:
     return True
@@ -98,7 +98,7 @@ def _firma_bez_umowy(ctx: dict) -> bool:
 
 
 def _dyrektor_lub_zakonczona(ctx: dict) -> bool:
-    return ctx['dyrektor_zatwierdziĹ‚'] or ctx['zakonczona']
+    return ctx['dyrektor_zatwierdził'] or ctx['zakonczona']
 
 
 def _po_egzaminie(ctx: dict) -> bool:
@@ -106,74 +106,74 @@ def _po_egzaminie(ctx: dict) -> bool:
 
 
 def _powod_harmonogram(_ctx: dict) -> str:
-    return 'Wymaga wypeĹ‚nionego harmonogramu'
+    return 'Wymaga wypełnionego harmonogramu'
 
 
 def _powod_w_trakcie(_ctx: dict) -> str:
-    return 'DostÄ™pny po zatwierdzeniu praktyki'
+    return 'Dostępny po zatwierdzeniu praktyki'
 
 
 def _powod_zakonczona(_ctx: dict) -> str:
-    return 'DostÄ™pny po zakoĹ„czeniu praktyki'
+    return 'Dostępny po zakończeniu praktyki'
 
 
 def _powod_oceniona(_ctx: dict) -> str:
-    return 'DostÄ™pny po wystawieniu assessments przez UOPZ'
+    return 'Dostępny po wystawieniu oceny przez UOPZ'
 
 
 def _powod_egzamin(_ctx: dict) -> str:
-    return 'DostÄ™pny po egzaminie komisyjnym'
+    return 'Dostępny po egzaminie komisyjnym'
 
 
 def _powod_dyrektor(_ctx: dict) -> str:
-    return 'DostÄ™pny po decyzji dyrektora'
+    return 'Dostępny po decyzji dyrektora'
 
 
-# â”€â”€ Document lists per path â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ─── Listy dokumentów dla ścieżek ───────────────────────────────────────────────────
 
 def _docs_standard() -> list:
     return [
         _sep('Dokumenty startowe'),
-        DocumentEntry('ZaĹ‚. 9 â€“ OĹ›wiadczenie instytucji', 'ZAL_9',
-                      'Do wypeĹ‚nienia przez zakĹ‚ad pracy',
+        DocumentEntry('Zał. 9 — Oświadczenie instytucji', 'ZAL_9',
+                      'Do wypełnienia przez zakład pracy',
                       available_when=_firma_custom),
-        DocumentEntry('ZaĹ‚. 1 â€“ Porozumienie uczelnia â†” zakĹ‚ad', 'ZAL_1',
-                      'Dla firm bez staĹ‚ej umowy z ANS',
+        DocumentEntry('Zał. 1 — Porozumienie uczelnia ↔ zakład', 'ZAL_1',
+                      'Dla firm bez stałej umowy z ANS',
                       available_when=_firma_bez_umowy),
-        DocumentEntry('ZaĹ‚. 2 â€“ Program praktyki', 'ZAL_2',
+        DocumentEntry('Zał. 2 — Program praktyki', 'ZAL_2',
                       'Z danymi studenta i firmy'),
-        DocumentEntry('ZaĹ‚. 2a â€“ Indywidualny Program Praktyk', 'ZAL_2A',
-                      'Harmonogram learning_outcomeĂłw â€” student + UOPZ + ZOPZ',
+        DocumentEntry('Zał. 2a — Indywidualny Program Praktyk', 'ZAL_2A',
+                      'Harmonogram efektów uczenia się — student + UOPZ + ZOPZ',
                       available_when=_ma_harmonogram,
                       unavailable_reason=_powod_harmonogram),
-        _sep('ZaĹ‚Ä…cznik nr 3 â€” Karta Praktyki Zawodowej'),
-        DocumentEntry('ZaĹ‚. 3a â€“ Skierowanie na praktykÄ™', 'ZAL_3A',
-                      'Przepustka do firmy â€” drukujesz i przynosisz pierwszego dnia'),
+        _sep('Załącznik nr 3 — Karta Praktyki Zawodowej'),
+        DocumentEntry('Zał. 3a — Skierowanie na praktykę', 'ZAL_3A',
+                      'Przepustka do firmy — drukujesz i przynosisz pierwszego dnia'),
         _sep('W trakcie praktyki'),
-        DocumentEntry('ZaĹ‚. 3b â€“ Karta zakĹ‚adowa (druk do wypeĹ‚nienia)', 'ZAL_3B',
-                      'ZakĹ‚ad pracy wypeĹ‚nia i podpisuje przez 6 miesiÄ™cy'),
-        DocumentEntry('ZaĹ‚. 6 â€“ Dziennik praktyki', 'ZAL_6',
-                      'Generowany z wpisĂłw dziennika',
+        DocumentEntry('Zał. 3b — Karta zakładowa (druk do wypełnienia)', 'ZAL_3B',
+                      'Zakład pracy wypełnia i podpisuje przez 6 miesięcy'),
+        DocumentEntry('Zał. 6 — Dziennik praktyki', 'ZAL_6',
+                      'Generowany z wpisów dziennika',
                       available_when=_w_trakcie_lub_zakonczona,
                       unavailable_reason=_powod_w_trakcie),
-        _sep('DostÄ™pne po zakoĹ„czeniu praktyki'),
-        DocumentEntry('ZaĹ‚. 4 â€“ Potwierdzenie learning_outcomeĂłw uczenia siÄ™', 'ZAL_4',
+        _sep('Dostępne po zakończeniu praktyki'),
+        DocumentEntry('Zał. 4 — Potwierdzenie efektów uczenia się', 'ZAL_4',
                       'Podpisuje ZOPZ + UOPZ',
                       available_when=_oceniona,
                       unavailable_reason=_powod_oceniona),
-        DocumentEntry('ZaĹ‚. 7 â€“ Sprawozdanie koĹ„cowe', 'ZAL_7',
+        DocumentEntry('Zał. 7 — Sprawozdanie końcowe', 'ZAL_7',
                       'Podpisuje student',
                       available_when=_zakonczona,
                       unavailable_reason=_powod_zakonczona),
         _sep('Rozliczenie na uczelni'),
-        DocumentEntry('ZaĹ‚. 5 â€“ Ankieta assessments praktyki', static_key='ankieta',
+        DocumentEntry('Zał. 5 — Ankieta oceny praktyki', static_key='ankieta',
                       description='Formularz anonimowej ankiety'),
-        DocumentEntry('ZaĹ‚. 3c â€“ Ocena uczelniana (UOPZ)', 'ZAL_3C',
+        DocumentEntry('Zał. 3c — Ocena uczelniana (UOPZ)', 'ZAL_3C',
                       'Ocena UOPZ + ocena sprawozdania',
                       available_when=_oceniona,
                       unavailable_reason=_powod_oceniona),
-        DocumentEntry('ZaĹ‚. 8 â€“ ProtokĂłĹ‚ egzaminu komisji', 'ZAL_8',
-                      'SporzÄ…dzany przez KomisjÄ™ po ustnym egzaminie z praktyki',
+        DocumentEntry('Zał. 8 — Protokół egzaminu komisji', 'ZAL_8',
+                      'Sporządzany przez Komisję po ustnym egzaminie z praktyki',
                       available_when=_po_egzaminie,
                       unavailable_reason=_powod_egzamin),
     ]
@@ -181,19 +181,19 @@ def _docs_standard() -> list:
 
 def _docs_employment_own_business() -> list:
     return [
-        DocumentEntry('ZaĹ‚. 4b â€“ Wniosek o zaliczenie', 'ZAL_4B',
-                      'Praca etatowa / wĹ‚asna dziaĹ‚alnoĹ›Ä‡'),
-        DocumentEntry('ZaĹ‚. 7a â€“ Sprawozdanie z pracy/dziaĹ‚alnoĹ›ci', 'ZAL_7A',
-                      'Zatwierdza przeĹ‚oĹĽony/UOPZ',
+        DocumentEntry('Zał. 4b — Wniosek o zaliczenie', 'ZAL_4B',
+                      'Praca etatowa / własna działalność'),
+        DocumentEntry('Zał. 7a — Sprawozdanie z pracy/działalności', 'ZAL_7A',
+                      'Zatwierdza przełożony/UOPZ',
                       available_when=_w_trakcie_lub_zakonczona,
                       unavailable_reason=_powod_w_trakcie),
-        DocumentEntry('ZaĹ‚. 4a â€“ Potwierdzenie learning_outcomeĂłw (komisja)', 'ZAL_4A',
-                      '13 learning_outcomeĂłw: uzyskaĹ‚ / czÄ™Ĺ›ciowo / nie',
+        DocumentEntry('Zał. 4a — Potwierdzenie efektów uczenia się (komisja)', 'ZAL_4A',
+                      '13 efektów: uzyskał / częściowo / nie',
                       available_when=_dyrektor_lub_zakonczona,
                       unavailable_reason=_powod_dyrektor),
         _sep('Po egzaminie komisji'),
-        DocumentEntry('ZaĹ‚. 5 â€“ Ankieta', static_key='ankieta'),
-        DocumentEntry('ZaĹ‚. 8 â€“ ProtokĂłĹ‚ egzaminu komisji', 'ZAL_8',
+        DocumentEntry('Zał. 5 — Ankieta', static_key='ankieta'),
+        DocumentEntry('Zał. 8 — Protokół egzaminu komisji', 'ZAL_8',
                       available_when=_po_egzaminie,
                       unavailable_reason=_powod_egzamin),
     ]
@@ -206,10 +206,10 @@ _DOCUMENT_POLICY: dict[str, Callable[[], list]] = {
 }
 
 
-# â”€â”€ Public API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ─── Publiczne API ──────────────────────────────────────────────────────────────────
 
 def build_flags(zapis) -> dict:
-    """Computes enrollment-state flags consumed by the availability policy."""
+    """Wylicza flagi stanu zapisu używane przez politykę dostępności."""
     from core.models import EnrollmentStatus, InternshipSchedule
 
     w_trakcie  = zapis.status == EnrollmentStatus.IN_PROGRESS
@@ -219,7 +219,7 @@ def build_flags(zapis) -> dict:
         'w_trakcie':           w_trakcie,
         'zakonczona':          zakonczona,
         'oceniona':            zakonczona and (zapis.final_grades and zapis.final_grades.supervisor_grade) is not None,
-        'dyrektor_zatwierdziĹ‚': w_trakcie or zakonczona,
+        'dyrektor_zatwierdził': w_trakcie or zakonczona,
         'po_egzaminie':        zapis.final_grade is not None,
         'harmonogram_count':   db.session.execute(
                                  db.select(db.func.count()).select_from(InternshipSchedule).filter_by(enrollment_id=zapis.id)
@@ -230,7 +230,7 @@ def build_flags(zapis) -> dict:
 
 
 def resolve_documents(zapis) -> list[dict]:
-    """Returns the list of documents available for an enrollment per its path policy."""
+    """Zwraca listę dokumentów dostępnych dla zapisu zgodnie z polityką ścieżki."""
     path = zapis.track_type.value if zapis.track_type else 'STANDARD'
     factory = _DOCUMENT_POLICY.get(path, _docs_standard)
     ctx = build_flags(zapis)

@@ -1,12 +1,12 @@
 ﻿"""
 core/pliki.py
-Kanoniczny moduĹ‚ obsĹ‚ugi przesyĹ‚ania plikĂłw â€” jeden dla caĹ‚ej platformy SOP.
+Kanoniczny moduł obsługi przesyłania plików — jeden dla całej platformy SOP.
 
 Rejestracja w aplikacji:
     from core.files import create_files_blueprint
     app.register_blueprint(create_files_blueprint(), url_prefix='/uploads')
 
-Centralny punkt wszystkich zabezpieczeĹ„: walidacja MIME, rozszerzeĹ„,
+Centralny punkt wszystkich zabezpieczeń: walidacja MIME, rozszerzeń,
 rozmiaru, secure_filename oraz ochrona przed Path Traversal.
 """
 import os
@@ -31,7 +31,7 @@ _repo_enrollments = EnrollmentRepository()
 _repo_docs        = StudentDocumentRepository()
 
 
-# â”€â”€ Fileserver â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ─── Fileserver ────────────────────────────────────────────────────────────────
 
 FILESERVER_URL = os.environ['FILESERVER_URL']
 FILESERVER_KEY = get_secret('fileserver_api_key')
@@ -42,7 +42,7 @@ def _fs_headers():
 
 
 def _fs_put(filename: str, data) -> None:
-    """WysyĹ‚a plik na fileserver. data moĹĽe byÄ‡ bytes lub iteratorem bajtĂłw."""
+    """Wysyła plik na fileserver. data może być bytes lub iteratorem bajtów."""
     r = httpx.put(f'{FILESERVER_URL}/files/{filename}', content=data, headers=_fs_headers(), timeout=30)
     r.raise_for_status()
 
@@ -66,7 +66,7 @@ def _fs_delete(filename: str) -> None:
 
 MAX_FILE_SIZE   = 10 * 1024 * 1024  # 10 MB
 
-# Dozwolone rozszerzenia â€” wyĹ‚Ä…cznie te
+# Dozwolone rozszerzenia — wyłącznie te
 ALLOWED_EXTENSIONS = frozenset({
     '.pdf', '.doc', '.docx',
     '.jpg', '.jpeg', '.png',
@@ -85,13 +85,13 @@ ALLOWED_MIME_TYPES = frozenset({
     'application/vnd.rar',
 })
 
-# Magic bytes â†’ akceptowane typy rzeczywiste (druga warstwa, niefaĹ‚szowalna)
-# python-magic zwraca te wartoĹ›ci dla danych binarnych odczytanych z pliku.
+# Magic bytes → akceptowane typy rzeczywiste (druga warstwa, niefałszowalna)
+# python-magic zwraca te wartości dla danych binarnych odczytanych z pliku.
 _MAGIC_ALLOWED: frozenset[str] = frozenset({
     'application/pdf',
     'application/msword',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'application/zip',           # .docx/.xlsx sÄ… ZIP-em wewnÄ™trznie â€” OK
+    'application/zip',           # .docx/.xlsx są ZIP-em wewnętrznie — OK
     'image/jpeg',
     'image/png',
     'application/x-rar-compressed',
@@ -101,7 +101,7 @@ _MAGIC_ALLOWED: frozenset[str] = frozenset({
 
 
 def _is_file_allowed(filename: str, content_type: str) -> bool:
-    """Warstwa 1: walidacja rozszerzenia + nagĹ‚Ăłwka HTTP Content-Type."""
+    """Warstwa 1: walidacja rozszerzenia + nagłówka HTTP Content-Type."""
     if not filename:
         return False
     ext = Path(filename).suffix.lower()
@@ -109,38 +109,38 @@ def _is_file_allowed(filename: str, content_type: str) -> bool:
 
 
 class MagicBytesError(RuntimeError):
-    """Rzucany gdy weryfikacja magic bytes jest niemoĹĽliwa do przeprowadzenia."""
+    """Rzucany gdy weryfikacja magic bytes jest niemożliwa do przeprowadzenia."""
 
 
 def _verify_magic_bytes(raw_bytes: bytes) -> bool:
-    """Warstwa 2: weryfikacja rzeczywistego formatu przez analizÄ™ magic bytes.
+    """Warstwa 2: weryfikacja rzeczywistego formatu przez analizę magic bytes.
 
-    UĹĽywa python-magic (libmagic), ktĂłra analizuje sygnaturÄ™ binarnÄ… pliku
-    niezaleĹĽnie od rozszerzenia i nagĹ‚Ăłwka HTTP â€” odporna na spoofing.
+    Używa python-magic (libmagic), która analizuje sygnaturę binarną pliku
+    niezależnie od rozszerzenia i nagłówka HTTP — odporna na spoofing.
 
-    Fail-Closed: jeĹ›li libmagic jest niedostÄ™pna lub rzuci bĹ‚Ä…d, funkcja
-    propaguje wyjÄ…tek zamiast przepuszczaÄ‡ plik. Upload jest wtedy odrzucany
-    z HTTP 500, co zapobiega przemycaniu plikĂłw przez awariÄ™ walidatora.
+    Fail-Closed: jeśli libmagic jest niedostępna lub rzuci błąd, funkcja
+    propaguje wyjątek zamiast przepuszczać plik. Upload jest wtedy odrzucany
+    z HTTP 500, co zapobiega przemycaniu plików przez awarię walidatora.
     """
     try:
         import magic
     except ImportError as exc:
         raise MagicBytesError(
-            "python-magic (libmagic) jest niedostÄ™pna â€” weryfikacja binarna niemoĹĽliwa."
+            "python-magic (libmagic) jest niedostępna — weryfikacja binarna niemożliwa."
         ) from exc
 
     try:
         detected = magic.from_buffer(raw_bytes[:4096], mime=True)
     except Exception as exc:
         raise MagicBytesError(
-            f"BĹ‚Ä…d analizy magic bytes: {exc}"
+            f"Błąd analizy magic bytes: {exc}"
         ) from exc
 
     return detected in _MAGIC_ALLOWED
 
 
 def _can_access_enrollment(enrollment: InternshipEnrollment) -> bool:
-    """DomyĹ›lna kontrola dostÄ™pu: student widzi tylko swoje, admin/supervisor/komisja/dyrektor wszystko."""
+    """Domyślna kontrola dostępu: student widzi tylko swoje, admin/supervisor/komisja/dyrektor wszystko."""
     if current_user.role == UserRole.STUDENT:
         return enrollment.student_id == current_user.id
     if current_user.role == UserRole.UOPZ:
@@ -148,22 +148,20 @@ def _can_access_enrollment(enrollment: InternshipEnrollment) -> bool:
     return current_user.role in (UserRole.ADMIN, UserRole.KOMISJA, UserRole.DYREKTOR)
 
 
-# â”€â”€ Przetwarzanie uploadu â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
 def _process_upload_file(file, document_type: str, enrollment_id, user_id) -> UploadedDocument:
-    """Waliduje, szyfruje i wysyĹ‚a plik na fileserver; zwraca niezapisany UploadedDocument."""
+    """Waliduje, szyfruje i wysyła plik na fileserver; zwraca niezapisany UploadedDocument."""
     file.seek(0, os.SEEK_END)
     file_size = file.tell()
     file.seek(0)
 
     if file_size > MAX_FILE_SIZE:
-        raise ValueError(f'Plik zbyt duĹĽy (max {MAX_FILE_SIZE // (1024 * 1024)} MB)')
+        raise ValueError(f'Plik zbyt duży (max {MAX_FILE_SIZE // (1024 * 1024)} MB)')
     if not _is_file_allowed(file.filename, file.content_type):
         raise ValueError('Niedozwolony event_type pliku')
 
     original_filename = secure_filename(file.filename)
     if not original_filename:
-        raise ValueError('NieprawidĹ‚owa nazwa pliku')
+        raise ValueError('Nieprawidłowa nazwa pliku')
 
     file_ext        = Path(original_filename).suffix.lower()
     stored_filename = f"{uuid.uuid4().hex}{file_ext}"
@@ -191,7 +189,7 @@ def _process_upload_file(file, document_type: str, enrollment_id, user_id) -> Up
     )
 
 
-# â”€â”€ Handlery blueprintu (poza fabrykÄ… â€” redukuje cognitive complexity) â”€â”€â”€â”€â”€â”€â”€â”€
+# ─── Handlery blueprintu (poza fabryką — redukuje cognitive complexity) ────────────
 
 def _handle_upload(enrollment_id, access_checker):
     enrollment = _repo_enrollments.znajdz_po_id(enrollment_id)
@@ -207,17 +205,17 @@ def _handle_upload(enrollment_id, access_checker):
         doc = _process_upload_file(file, document_type, enrollment_id, current_user.id)
     except MagicBytesError as exc:
         logger.error("Magic bytes check failed: %s", exc)
-        return jsonify({'error': 'Weryfikacja formatu pliku chwilowo niedostÄ™pna.'}), 503
+        return jsonify({'error': 'Weryfikacja formatu pliku chwilowo niedostępna.'}), 503
     except ValueError as exc:
         return jsonify({'error': str(exc)}), 400
     except Exception as exc:
-        return jsonify({'error': f'BĹ‚Ä…d podczas zapisywania: {str(exc)}'}), 500
+        return jsonify({'error': f'Błąd podczas zapisywania: {str(exc)}'}), 500
     try:
         _repo_docs.zapisz(doc)
         db.session.commit()
     except Exception as exc:
         db.session.rollback()
-        return jsonify({'error': f'BĹ‚Ä…d podczas zapisywania: {str(exc)}'}), 500
+        return jsonify({'error': f'Błąd podczas zapisywania: {str(exc)}'}), 500
     return jsonify({'success': True, 'document_id': str(doc.id),
                     'filename': doc.original_filename, 'size': doc.file_size})
 
@@ -276,10 +274,10 @@ def _handle_list(enrollment_id, access_checker):
     } for d in docs])
 
 
-# â”€â”€ Fabryka blueprintu â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ─── Fabryka blueprintu ──────────────────────────────────────────────────────────
 
 def create_files_blueprint(access_checker=None) -> Blueprint:
-    """Tworzy blueprint 'uploads' ze scentralizowanÄ… logikÄ… bezpieczeĹ„stwa."""
+    """Tworzy blueprint 'uploads' ze scentralizowaną logiką bezpieczeństwa."""
     uploads_bp = Blueprint('uploads', __name__)
     checker = access_checker or _can_access_enrollment
 

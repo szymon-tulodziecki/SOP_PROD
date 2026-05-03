@@ -1,8 +1,8 @@
-﻿{% extends "layouts/base_panel.html" %}
+{% extends "layouts/base_panel.html" %}
 {% block tytul %}{{ 'Edytuj' if uzytkownik else 'Nowy' }} student{% endblock %}
 {% block naglowek %}{{ 'Edytuj studenta' if uzytkownik else 'Dodaj studenta' }}{% endblock %}
 {% block naglowek_akcje %}
-  <a href="{{ url_for('zarzadzanie.lista_uzytkownikow') }}" class="przycisk przycisk--drugorzedny">â† PowrĂłt</a>
+  <a href="{{ url_for('zarzadzanie.lista_uzytkownikow') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
 {% endblock %}
 {% block tresc %}
 <div class="u-csp-235">
@@ -11,7 +11,7 @@
     <h2 class="karta__tytul">Dane konta studenckiego</h2>
     {% if not uzytkownik %}
     <span class="u-csp-228">
-      Logowanie przez Microsoft â€” e-mail musi byÄ‡ kontem w domenie uczelni
+      Logowanie przez Microsoft — e-mail musi być kontem w domenie uczelni
     </span>
     {% endif %}
   </div>
@@ -21,7 +21,7 @@
 
       <div class="formularz-panel__siatka u-csp-208">
         <div class="pole-formularza {% if form.first_name.errors %}pole-formularza--blad{% endif %}">
-          <label for="first_name" class="pole-formularza__etykieta">ImiÄ™ <span class="pole-formularza__wymagane" aria-label="wymagane">*</span></label>
+          <label for="first_name" class="pole-formularza__etykieta">Imię <span class="pole-formularza__wymagane" aria-label="wymagane">*</span></label>
           <input type="text" id="first_name" name="first_name" class="pole-formularza__input"
                  value="{{ form.first_name.data or '' }}" required aria-required="true"
                  {% if form.first_name.errors %}aria-invalid="true" aria-describedby="first_name-blad"{% endif %}>
@@ -51,13 +51,13 @@
                  placeholder="np. 12345" maxlength="20"
                  {% if form.album_number.errors %}aria-invalid="true" aria-describedby="album-blad"{% endif %}>
           {% if form.album_number.errors %}<span id="album-blad" class="pole-formularza__blad" role="alert">{{ form.album_number.errors[0] }}</span>{% endif %}
-          {% if not uzytkownik %}<span class="u-csp-236">BÄ™dzie uĹĽyty jako hasĹ‚o tymczasowe</span>{% endif %}
+          {% if not uzytkownik %}<span class="u-csp-236">Będzie użyty jako hasło tymczasowe</span>{% endif %}
         </div>
         <div class="pole-formularza">
-          <label for="gender" class="pole-formularza__etykieta">PĹ‚eÄ‡</label>
+          <label for="gender" class="pole-formularza__etykieta">Płeć</label>
           <select id="gender" name="gender" class="filtr-select u-csp-233">
             <option value="" {% if not form.gender.data %}selected{% endif %}>--- Wybierz ---</option>
-            <option value="M" {% if form.gender.data == 'M' %}selected{% endif %}>MÄ™ĹĽczyzna</option>
+            <option value="M" {% if form.gender.data == 'M' %}selected{% endif %}>Mężczyzna</option>
             <option value="K" {% if form.gender.data == 'K' %}selected{% endif %}>Kobieta</option>
           </select>
         </div>
@@ -65,17 +65,17 @@
 
       <div class="u-csp-064">
         <div class="pole-formularza">
-          <label for="field_of_study" class="pole-formularza__etykieta">Kierunek studiĂłw</label>
+          <label for="field_of_study" class="pole-formularza__etykieta">Kierunek studiów</label>
           <input type="text" id="field_of_study" name="field_of_study" class="pole-formularza__input"
                  value="{{ form.field_of_study.data or '' }}" placeholder="np. Informatyka">
         </div>
         <div class="pole-formularza">
-          <label for="specialization" class="pole-formularza__etykieta">SpecjalnoĹ›Ä‡</label>
+          <label for="specialization" class="pole-formularza__etykieta">Specjalność</label>
           <input type="text" id="specialization" name="specialization" class="pole-formularza__input"
                  value="{{ form.specialization.data or '' }}" placeholder="np. PBDiOU">
         </div>
         <div class="pole-formularza">
-          <label for="study_mode" class="pole-formularza__etykieta">Tryb studiĂłw</label>
+          <label for="study_mode" class="pole-formularza__etykieta">Tryb studiów</label>
           <select id="study_mode" name="study_mode" class="filtr-select u-csp-233">
             <option value="">--- Wybierz ---</option>
             <option value="stacjonarne" {% if form.study_mode.data == 'stacjonarne' %}selected{% endif %}>Stacjonarne</option>
@@ -87,7 +87,7 @@
       <div class="pole-formularza {% if form.supervisor_id.errors %}pole-formularza--blad{% endif %} u-csp-208">
         <label for="supervisor_id" class="pole-formularza__etykieta">Opiekun uczelniany (UOPZ) <span class="pole-formularza__wymagane" aria-label="wymagane">*</span></label>
         <select id="supervisor_id" name="supervisor_id" class="filtr-select u-csp-233" required>
-          <option value="">â€” wybierz opiekuna â€”</option>
+          <option value="">— wybierz opiekuna —</option>
           {% for val, label in form.supervisor_id.choices %}
           <option value="{{ val }}" {% if form.supervisor_id.data == val %}selected{% endif %}>{{ label }}</option>
           {% endfor %}
@@ -97,13 +97,13 @@
 
       {% if not uzytkownik %}
       <div class="u-csp-237">
-        Student zaloguje siÄ™ e-mailem i hasĹ‚em tymczasowym (nr albumu), a nastÄ™pnie zostanie poproszony o ustawienie wĹ‚asnego hasĹ‚a.
+        Student zaloguje się e-mailem i hasłem tymczasowym (nr albumu), a następnie zostanie poproszony o ustawienie własnego hasła.
       </div>
       {% endif %}
 
       <div class="u-csp-230">
         <a href="{{ url_for('zarzadzanie.lista_uzytkownikow') }}" class="przycisk przycisk--drugorzedny">Anuluj</a>
-        <button type="submit" class="przycisk przycisk--glowny">{{ 'Zapisz zmiany' if uzytkownik else 'UtwĂłrz konto' }}</button>
+        <button type="submit" class="przycisk przycisk--glowny">{{ 'Zapisz zmiany' if uzytkownik else 'Utwórz konto' }}</button>
       </div>
     </form>
   </div>

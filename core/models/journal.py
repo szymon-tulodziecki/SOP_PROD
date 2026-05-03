@@ -1,6 +1,6 @@
-﻿"""core/modele/dziennik.py
+"""core/modele/dziennik.py
 
-Domain models: Internship journal, learning outcomes, assessments.
+Modele domenowe: dziennik praktyki, efekty uczenia się i oceny.
 """
 import uuid
 import enum
@@ -20,7 +20,7 @@ class AssessmentResult(enum.Enum):
 
 
 class LearningOutcome(db.Model):
-    """Learning outcomes â€” reference dictionary table."""
+    """Learning outcomes — reference dictionary table."""
     __tablename__ = 'learning_outcomes'
 
     id          = db.Column(db.Integer, primary_key=True)
@@ -31,7 +31,7 @@ class LearningOutcome(db.Model):
         return str(self.id).zfill(2)
 
 
-# Junction table: journal_entry â†” learning_outcomes
+# Tabela łącząca: journal_entry ↔ learning_outcomes
 entry_outcomes = db.Table(
     'entry_outcomes',
     db.Column(
@@ -88,7 +88,7 @@ class OutcomeAssessment(db.Model):
 
 
 class CommitteeOutcomeEvaluation(db.Model):
-    """Commission's per-outcome evaluation (ZaĹ‚Ä…cznik 4a) for path B submissions."""
+    """Commission's per-outcome evaluation (Załącznik 4a) for path B submissions."""
     __tablename__ = 'committee_outcome_evaluations'
 
     id                  = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)

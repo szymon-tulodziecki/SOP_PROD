@@ -1,4 +1,4 @@
-﻿"""core/repozytoria/assessments.py â€” Repozytorium ocen learning_outcomeĂłw uczenia siÄ™ praktyk."""
+"""core/repozytoria/assessments.py — Repozytorium ocen efektów uczenia się praktyk."""
 from __future__ import annotations
 
 import uuid
@@ -8,7 +8,7 @@ from core.models import OutcomeAssessment, CommitteeOutcomeEvaluation, Assessmen
 
 
 class AssessmentRepository:
-    """Jedyne miejsce zapytaĹ„ ORM dotyczÄ…cych tabeli ocen learning_outcomeĂłw uczenia siÄ™."""
+    """Jedyne miejsce zapytań ORM dotyczących tabeli ocen efektów uczenia się."""
 
     def get_by_enrollment(self, enrollment_id: uuid.UUID) -> list[OutcomeAssessment]:
         return db.session.execute(

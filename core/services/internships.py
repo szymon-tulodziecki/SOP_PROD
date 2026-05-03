@@ -1,6 +1,6 @@
-﻿"""core/uslugi/praktyki.py
+"""core/uslugi/praktyki.py
 
-Internship and enrollment management service.
+Serwis zarządzania praktykami i zapisami.
 """
 from __future__ import annotations
 
@@ -34,7 +34,7 @@ def _last_event_comment(enrollment_id, event_type, decision: str) -> str | None:
 
 
 class InternshipService:
-    """Business logic for internship editions and enrollment processing."""
+    """Logika biznesowa edycji praktyk i obsługi zapisów."""
 
     def __init__(
         self,
@@ -248,7 +248,7 @@ class InternshipService:
         EnrollmentStateMachine(zapis).complete()
         db.session.commit()
 
-    # ── Reports ───────────────────────────────────────────────────────────────
+    # ── Sprawozdania ───────────────────────────────────────────────────────────────
 
     def get_or_create_report(self, zapis: InternshipEnrollment) -> InternshipReport:
         if zapis.report is None:
@@ -258,7 +258,7 @@ class InternshipService:
             return report
         return zapis.report
 
-    # ── Helpers ───────────────────────────────────────────────────────────────
+    # ── Metody pomocnicze ───────────────────────────────────────────────────────────────
 
     def _dodaj_zdarzenie(
         self,
@@ -279,7 +279,7 @@ class InternshipService:
         db.session.add(zdarzenie)
         return zdarzenie
 
-    # ── Student-facing helpers ────────────────────────────────────────────────
+    # ── Pomocnicze metody dla panelu studenta ────────────────────────────────────────────────
 
     @staticmethod
     def validate_completion_allowed(zapis) -> tuple[bool, str]:

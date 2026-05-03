@@ -1,18 +1,18 @@
-﻿{% extends "layouts/base_panel.html" %}
+{% extends "layouts/base_panel.html" %}
 
-{% block tytul %}Decyzja Dyrektora Instytutu â€” {{ zapis.student.first_name }} {{ zapis.student.last_name }}{% endblock %}
+{% block tytul %}Decyzja Dyrektora Instytutu — {{ zapis.student.first_name }} {{ zapis.student.last_name }}{% endblock %}
 {% block naglowek %}Decyzja Dyrektora Instytutu{% endblock %}
 
 {% block naglowek_akcje %}
 <div class="u-flex--gap-05">
-  <a href="{{ url_for('zarzadzanie.dyrektor_lista') }}" class="przycisk przycisk--drugorzedny">â† PowrĂłt</a>
+  <a href="{{ url_for('zarzadzanie.dyrektor_lista') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
 </div>
 {% endblock %}
 
 {% block tresc %}
 <div class="u-csp-076">
 
-  {# â”€â”€ Karta identyfikacyjna â”€â”€ #}
+  {# ── Karta identyfikacyjna ── #}
   <div class="u-csp-101">
     <div class="u-csp-102">
 
@@ -35,21 +35,21 @@
           <div class="u-meta">Semestr {{ zapis.internship.semester_label }}</div>
         </div>
         <div>
-          <div class="u-etykieta">ĹšcieĹĽka</div>
+          <div class="u-etykieta">Ścieżka</div>
           <div class="u-wartosc">
-            {% if zapis.track_type.value == 'STANDARD' %}A â€” Standardowa
-            {% else %}B â€” Uznanie learning_outcomeĂłw{% endif %}
+            {% if zapis.track_type.value == 'STANDARD' %}A — Standardowa
+            {% else %}B — Uznanie efektów{% endif %}
           </div>
         </div>
         <div>
-          <div class="u-etykieta">Data zgĹ‚oszenia</div>
-          <div class="u-wartosc">{{ zapis.enrolled_at.strftime('%d.%m.%Y') if zapis.enrolled_at else 'â€”' }}</div>
+          <div class="u-etykieta">Data zgłoszenia</div>
+          <div class="u-wartosc">{{ zapis.enrolled_at.strftime('%d.%m.%Y') if zapis.enrolled_at else '—' }}</div>
           <div class="u-meta">{{ zapis.enrolled_at.strftime('%H:%M') if zapis.enrolled_at else '' }}</div>
         </div>
       </div>
 
       <div class="u-ta-center u-csp-107">
-        <span class="status status--planned u-csp-108">Oczekuje na decyzjÄ™</span>
+        <span class="status status--planned u-csp-108">Oczekuje na decyzję</span>
         {% if zapis.supervisor %}
         <div class="u-fs-xs u-tekst-trzeciorzed u-ta-center u-csp-109">
           UOPZ: <strong class="u-tekst-drugor">{{ zapis.supervisor.first_name }} {{ zapis.supervisor.last_name }}</strong>
@@ -60,22 +60,22 @@
     </div>
   </div>
 
-  {# â”€â”€ GĹ‚Ăłwna siatka treĹ›ci â”€â”€ #}
+  {# ── Główna siatka treści ── #}
   <div class="u-csp-110">
 
-    {# â•â•â• LEWA KOLUMNA â•â•â• #}
+    {# ═══ LEWA KOLUMNA ═══ #}
     <div class="u-flex--col-15">
 
-      {# Dane pracodawcy / dziaĹ‚alnoĹ›ci #}
+      {# Dane pracodawcy / działalności #}
       {% if zapis.company_display_name %}
       <div class="karta">
         <div class="karta__naglowek">
-          <h3 class="karta__tytul">Dane pracodawcy / dziaĹ‚alnoĹ›ci</h3>
+          <h3 class="karta__tytul">Dane pracodawcy / działalności</h3>
         </div>
         <div class="karta__tresc">
           <div class="u-grid-2-lg">
             <div class="pole-info">
-              <div class="pole-info__etykieta">Nazwa firmy / dziaĹ‚alnoĹ›ci</div>
+              <div class="pole-info__etykieta">Nazwa firmy / działalności</div>
               <div class="pole-info__wartosc u-fw-600">{{ zapis.company_display_name }}</div>
             </div>
             {% if zapis.company_city %}
@@ -113,13 +113,13 @@
       </div>
       {% endif %}
 
-      {# Ocena learning_outcomeĂłw uczenia siÄ™ przez komisjÄ™ #}
+      {# Ocena efektów uczenia się przez komisję #}
       {% if efekty %}
       <div class="karta">
         <div class="karta__naglowek">
           <h3 class="karta__tytul">
-            Ocena learning_outcomeĂłw uczenia siÄ™
-            <span class="u-fs-xs u-fw-500 u-tekst-trzeciorzed">wg Komisji ds. Praktyk Â· ZaĹ‚. 4a</span>
+            Ocena efektów uczenia się
+            <span class="u-fs-xs u-fw-500 u-tekst-trzeciorzed">wg Komisji ds. Praktyk · Zał. 4a</span>
           </h3>
           {# Podsumowanie statystyczne #}
           {% set n_ach = oceny_komisji.values() | selectattr('result.value', 'eq', 'ACHIEVED') | list | length %}
@@ -127,9 +127,9 @@
           {% set n_not = oceny_komisji.values() | selectattr('result.value', 'eq', 'NOT_ACHIEVED') | list | length %}
           {% if oceny_komisji %}
           <div class="u-flex--gap-05">
-            <span class="status status--completed u-csp-059">{{ n_ach }} uzyskaĹ‚/a</span>
-            <span class="status status--in-progress u-csp-059">{{ n_par }} czÄ™Ĺ›ciowo</span>
-            <span class="status status--odrzucona u-csp-059">{{ n_not }} nie uzyskaĹ‚/a</span>
+            <span class="status status--completed u-csp-059">{{ n_ach }} uzyskał/a</span>
+            <span class="status status--in-progress u-csp-059">{{ n_par }} częściowo</span>
+            <span class="status status--odrzucona u-csp-059">{{ n_not }} nie uzyskał/a</span>
           </div>
           {% endif %}
         </div>
@@ -139,7 +139,7 @@
             <thead>
               <tr>
                 <th class="u-csp-112">Nr</th>
-                <th>Efekt uczenia siÄ™</th>
+                <th>Efekt uczenia się</th>
                 <th class="u-csp-113">Wynik komisji</th>
               </tr>
             </thead>
@@ -157,14 +157,14 @@
                 <td class="u-ta-center u-csp-115">
                   {% if ev %}
                     {% if ev.result.value == 'ACHIEVED' %}
-                    <span class="status status--completed u-csp-059">UzyskaĹ‚/a</span>
+                    <span class="status status--completed u-csp-059">Uzyskał/a</span>
                     {% elif ev.result.value == 'PARTIALLY_ACHIEVED' %}
-                    <span class="status status--in-progress u-csp-059">CzÄ™Ĺ›ciowo</span>
+                    <span class="status status--in-progress u-csp-059">Częściowo</span>
                     {% else %}
-                    <span class="status status--odrzucona u-csp-059">Nie uzyskaĹ‚/a</span>
+                    <span class="status status--odrzucona u-csp-059">Nie uzyskał/a</span>
                     {% endif %}
                   {% else %}
-                  <span class="u-tekst-trzeciorzed u-meta">â€”</span>
+                  <span class="u-tekst-trzeciorzed u-meta">—</span>
                   {% endif %}
                 </td>
               </tr>
@@ -173,7 +173,7 @@
           </table>
           {% else %}
           <div class="u-stan-pusty--sm">
-            Komisja nie wypeĹ‚niĹ‚a jeszcze tabeli learning_outcomeĂłw.
+            Komisja nie wypełniła jeszcze tabeli efektów.
           </div>
           {% endif %}
         </div>
@@ -193,8 +193,8 @@
             <div class="u-csp-116">
               <div class="u-fw-600 u-csp-117">{{ dok.original_filename }}</div>
               <div class="u-fs-xs u-tekst-trzeciorzed u-csp-106">
-                {{ dok.document_type }}{% if dok.uploaded_at %} Â· {{ dok.uploaded_at.strftime('%d.%m.%Y') }}{% endif %}
-                {% if dok.file_size %} Â· {{ (dok.file_size / 1024)|round(1) }} KB{% endif %}
+                {{ dok.document_type }}{% if dok.uploaded_at %} · {{ dok.uploaded_at.strftime('%d.%m.%Y') }}{% endif %}
+                {% if dok.file_size %} · {{ (dok.file_size / 1024)|round(1) }} KB{% endif %}
               </div>
             </div>
             <a href="{{ url_for('uploads.download_document', document_id=dok.id) }}"
@@ -207,7 +207,7 @@
 
     </div>
 
-    {# â•â•â• PRAWA KOLUMNA â•â•â• #}
+    {# ═══ PRAWA KOLUMNA ═══ #}
     <div class="u-flex--col-15 u-csp-119">
 
       {# Opinia komisji #}
@@ -217,7 +217,7 @@
           <h3 class="karta__tytul">Opinia komisji</h3>
           <span class="status {% if zapis.committee_decision == 'APPROVED' %}status--completed{% elif zapis.committee_decision == 'PARTIALLY_APPROVED' %}status--in-progress{% else %}status--odrzucona{% endif %} u-csp-059">
             {% if zapis.committee_decision == 'APPROVED' %}Pozytywna
-            {% elif zapis.committee_decision == 'PARTIALLY_APPROVED' %}CzÄ™Ĺ›ciowo pozytywna
+            {% elif zapis.committee_decision == 'PARTIALLY_APPROVED' %}Częściowo pozytywna
             {% else %}Negatywna{% endif %}
           </span>
         </div>
@@ -243,7 +243,7 @@
             <div class="u-csp-121">
               {{ form.comment.label(class="pole-formularza__etykieta u-csp-076") }}
               {{ form.comment(class="pole-formularza__textarea u-form-resize", rows="6",
-                 placeholder="Uzasadnienie decyzji widoczne dla studenta i w dokumentacji (opcjonalne)â€¦") }}
+                 placeholder="Uzasadnienie decyzji widoczne dla studenta i w dokumentacji (opcjonalne)…") }}
               {% for error in form.comment.errors %}
                 <span class="pole-formularza__blad">{{ error }}</span>
               {% endfor %}
@@ -252,11 +252,11 @@
             <div class="u-flex--col u-csp-122">
               <button type="submit" name="decision" value="APPROVED"
                       class="przycisk przycisk--glowny u-w-full u-flex--center">
-                WyraĹĽam zgodÄ™ â€” zatwierdĹş praktykÄ™
+                Wyrażam zgodę — zatwierdź praktykę
               </button>
               <button type="submit" name="decision" value="REJECTED"
                       class="przycisk przycisk--niebezpieczny u-w-full u-flex--center">
-                Nie wyraĹĽam zgody â€” odrzuÄ‡ wniosek
+                Nie wyrażam zgody — odrzuć wniosek
               </button>
               <a href="{{ url_for('zarzadzanie.dyrektor_lista') }}"
                  class="przycisk przycisk--drugorzedny u-w-full u-flex--center">Anuluj</a>

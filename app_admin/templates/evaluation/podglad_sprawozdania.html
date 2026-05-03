@@ -1,11 +1,11 @@
-﻿{% extends "layouts/base_panel.html" %}
+{% extends "layouts/base_panel.html" %}
 
-{% block tytul %}PodglÄ…d Sprawozdania{% endblock %}
+{% block tytul %}Podgląd Sprawozdania{% endblock %}
 {% block naglowek %}Sprawozdanie: {{ zapis.student.first_name }} {{ zapis.student.last_name }}{% endblock %}
 
 {% block naglowek_akcje %}
-<a href="{{ url_for('zarzadzanie.szczegoly_praktyki', id=zapis.internship_id) }}" class="przycisk przycisk--drugorzedny">PowrĂłt do szczegĂłĹ‚Ăłw</a>
-<a href="{{ url_for('evaluation.evaluate_internship', id=zapis.id) }}" class="przycisk przycisk--glowny">PrzejdĹş do oceniania</a>
+<a href="{{ url_for('zarzadzanie.szczegoly_praktyki', id=zapis.internship_id) }}" class="przycisk przycisk--drugorzedny">Powrót do szczegółów</a>
+<a href="{{ url_for('evaluation.evaluate_internship', id=zapis.id) }}" class="przycisk przycisk--glowny">Przejdź do oceniania</a>
 {% endblock %}
 
 {% block tresc %}
@@ -13,7 +13,7 @@
 
   {% if not zapis.report %}
   <div class="karta u-stan-pusty">
-    <p class="u-tekst-drugor">Student jeszcze nie rozpoczÄ…Ĺ‚ generowania / pisania sprawozdania.</p>
+    <p class="u-tekst-drugor">Student jeszcze nie rozpoczął generowania / pisania sprawozdania.</p>
   </div>
   {% else %}
 
@@ -40,8 +40,8 @@
       <h2 class="karta__tytul">Sekcja III (Z Dziennika)</h2>
     </div>
     <div class="karta__tresc">
-      <p class="u-meta">Tabela zliczajÄ…ca godziny dla kaĹĽdego efektu z dziennika (w PDF).</p>
-      <a href="{{ url_for('journal.podglad', id=zapis.id) }}" class="przycisk przycisk--drugorzedny przycisk--maly u-mt-1">Zobacz peĹ‚ny dziennik wpisĂłw</a>
+      <p class="u-meta">Tabela zliczająca godziny dla każdego efektu z dziennika (w PDF).</p>
+      <a href="{{ url_for('journal.podglad', id=zapis.id) }}" class="przycisk przycisk--drugorzedny przycisk--maly u-mt-1">Zobacz pełny dziennik wpisów</a>
     </div>
   </div>
 

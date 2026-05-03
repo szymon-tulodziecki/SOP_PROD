@@ -1,4 +1,4 @@
-﻿"""
+"""
 core/uslugi/ocenianie.py
 
 Usługa oceniania praktyk.
@@ -67,7 +67,7 @@ class EvaluationService:
         try:
             grade = float(value.strip().replace(',', '.'))
         except (ValueError, AttributeError):
-            raise ValueError(f'Nieprawidłowa wartość assessments: {value!r}')
+            raise ValueError(f'Nieprawidłowa wartość oceny: {value!r}')
         if grade < 2 or grade > 5:
             raise ValueError('Ocena musi być z zakresu 2.0-5.0.')
         if abs(grade * 2 - round(grade * 2)) > 0.001:
@@ -76,7 +76,7 @@ class EvaluationService:
 
     @staticmethod
     def validate_outcome_grades(outcomes, form_data: dict, is_path_b: bool, finalize: bool) -> str | None:
-        """Waliduje wyniki learning_outcomeów z formularza. Zwraca komunikat błędu lub None."""
+        """Waliduje wyniki efektów uczenia się z formularza. Zwraca komunikat błędu lub None."""
         if not is_path_b:
             for outcome in outcomes:
                 if form_data.get(f'outcome_{outcome.id}') == 'PARTIALLY_ACHIEVED':
@@ -126,7 +126,7 @@ class AssessmentService(EvaluationService):
 
     @staticmethod
     def save_grades(zapis: InternshipEnrollment, dane: GradeFormData) -> GradeResult:
-        """Zapisuje assessments końcowe i examination dla zapisu praktyki.
+        """Zapisuje oceny końcowe i egzamin dla zapisu praktyki.
 
         Jeśli dane.finalize=True, weryfikuje kompletność przed zamknięciem.
         Nie wykonuje commit — wywołujący decyduje o transakcji.
@@ -191,7 +191,7 @@ class AssessmentService(EvaluationService):
 
     @staticmethod
     def deadline_info(enrollment) -> dict:
-        """Zwraca słownik z informacjami o terminie assessments dla danego zapisu."""
+        """Zwraca słownik z informacjami o terminie oceny dla danego zapisu."""
         deadline = days_to_deadline = None
         overdue = False
         if enrollment.end_date and enrollment.status == EnrollmentStatus.COMPLETED:

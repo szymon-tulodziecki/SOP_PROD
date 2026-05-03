@@ -1,13 +1,13 @@
-﻿{% extends "layouts/base_panel.html" %}
+{% extends "layouts/base_panel.html" %}
 
-{% block tytul %}SzczegĂłĹ‚y praktyki{% endblock %}
-{% block naglowek %}SzczegĂłĹ‚y praktyki{% endblock %}
+{% block tytul %}Szczegóły praktyki{% endblock %}
+{% block naglowek %}Szczegóły praktyki{% endblock %}
 
 {% block naglowek_akcje %}
 <div class="akcje-panelu">
-  <a href="{{ url_for('zarzadzanie.lista_praktyk') }}" class="przycisk przycisk--drugorzedny">PowrĂłt do listy</a>
+  <a href="{{ url_for('zarzadzanie.lista_praktyk') }}" class="przycisk przycisk--drugorzedny">Powrót do listy</a>
   {% if current_user.role.value in ['ADMIN', 'UOPZ'] %}
-  <a href="{{ url_for('evaluation.evaluate_internship', id=internship.id) }}" class="przycisk przycisk--glowny">OceĹ„ / Egzaminuj</a>
+  <a href="{{ url_for('evaluation.evaluate_internship', id=internship.id) }}" class="przycisk przycisk--glowny">Oceń / Egzaminuj</a>
   <a href="{{ url_for('evaluation.podglad_sprawozdania', id=internship.id) }}" class="przycisk przycisk--drugorzedny">Zobacz Sprawozdanie</a>
   <a href="{{ url_for('journal.podglad', id=internship.id) }}" class="przycisk przycisk--drugorzedny">Zobacz Dziennik</a>
   <a href="{{ url_for('zarzadzanie.dokumenty_studenta', student_id=internship.student_id) }}" class="przycisk przycisk--drugorzedny u-csp-261">Dokumenty (PDF)</a>
@@ -34,23 +34,23 @@
             <dd class="u-meta">Album: {{ internship.student.album_number or '-' }}</dd>
           </div>
           <div>
-            <dt class="u-etykieta">ZakĹ‚ad pracy</dt>
+            <dt class="u-etykieta">Zakład pracy</dt>
             <dd class="u-fw-600">{{ internship.zaklad.nazwa }}</dd>
             <dd class="u-meta">{{ internship.zaklad.miasto }}</dd>
           </div>
           <div>
             <dt class="u-etykieta">Termin</dt>
-            <dd>{{ internship.data_rozpoczecia }} â€” {{ internship.data_zakonczenia or '...' }}</dd>
+            <dd>{{ internship.data_rozpoczecia }} — {{ internship.data_zakonczenia or '...' }}</dd>
           </div>
           <div>
-            <dt class="u-etykieta">ĹšcieĹĽka</dt>
+            <dt class="u-etykieta">Ścieżka</dt>
             <dd>{{ internship.typ_sciezki.value }}</dd>
           </div>
         </dl>
       </div>
     </section>
 
-    <!-- PostÄ™p godzin -->
+    <!-- Postęp godzin -->
     <section class="karta">
       <header class="karta__naglowek">
         <h2 class="karta__tytul">Realizacja godzinowa</h2>
@@ -82,17 +82,17 @@
           <div class="u-fw-600">{{ internship.supervisor.first_name }} {{ internship.supervisor.last_name }}</div>
         </div>
         <div>
-          <div class="u-etykieta">ZakĹ‚adowy (ZOPZ)</div>
+          <div class="u-etykieta">Zakładowy (ZOPZ)</div>
           <div class="u-fw-600">{{ internship.zopz.first_name }} {{ internship.zopz.last_name }}</div>
         </div>
       </div>
     </section>
 
-    <!-- Oceny (jeĹ›li sÄ…) -->
+    <!-- Oceny (jeśli są) -->
     {% if internship.report_grade or internship.supervisor_grade %}
     <section class="karta">
       <header class="karta__naglowek">
-        <h2 class="karta__tytul">Wyniki assessments</h2>
+        <h2 class="karta__tytul">Wyniki oceny</h2>
       </header>
       <div class="karta__tresc">
         <dl class="u-flex--col">

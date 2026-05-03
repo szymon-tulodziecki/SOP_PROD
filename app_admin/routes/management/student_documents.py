@@ -1,4 +1,4 @@
-﻿"""Student document views for ADMIN and UOPZ roles."""
+"""Widoki dokumentów studentów dla ról ADMIN i UOPZ."""
 
 import logging
 import unicodedata

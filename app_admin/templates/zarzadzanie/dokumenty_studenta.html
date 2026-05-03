@@ -1,17 +1,17 @@
-﻿{% extends "layouts/base_panel.html" %}
-{% block tytul %}Dokumenty â€“ {{ student.first_name }} {{ student.last_name }}{% endblock %}
+{% extends "layouts/base_panel.html" %}
+{% block tytul %}Dokumenty — {{ student.first_name }} {{ student.last_name }}{% endblock %}
 {% block naglowek %}Dokumenty studenta{% endblock %}
 
 {% block naglowek_akcje %}
 <a href="{{ url_for('zarzadzanie.dokumenty_studentow') }}" class="przycisk przycisk--drugorzedny">
-  â† PowrĂłt
+  ← Powrót
 </a>
 {% endblock %}
 
 {% block tresc %}
 <div class="u-csp-058">
 
-  {# â”€â”€ Info o studencie â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ #}
+  {# ── Info o studencie ─────────────────────────────────────────────────── #}
   <div class="karta u-csp-208">
     <div class="karta__tresc">
       <div class="u-csp-209">
@@ -21,17 +21,17 @@
         <div>
           <div class="u-csp-211">{{ student.first_name }} {{ student.last_name }}</div>
           <div class="u-csp-212">
-            Nr albumu: <strong>{{ student.album_number or 'â€”' }}</strong>
-            {% if student.field_of_study %} Â· {{ student.field_of_study }}{% endif %}
+            Nr albumu: <strong>{{ student.album_number or '—' }}</strong>
+            {% if student.field_of_study %} · {{ student.field_of_study }}{% endif %}
             {% if student.study_mode %} ({{ {'full-time': 'Stacjonarne', 'part-time': 'Niestacjonarne'}.get(student.study_mode, student.study_mode) }}){% endif %}
-            {% if supervisor %} Â· Opiekun: {{ supervisor.first_name }} {{ supervisor.last_name }}{% endif %}
+            {% if supervisor %} · Opiekun: {{ supervisor.first_name }} {{ supervisor.last_name }}{% endif %}
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  {# â”€â”€ Brak praktyk â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ #}
+  {# ── Brak praktyk ──────────────────────────────────────────────────────── #}
   {% if not dokumenty_list %}
   <div class="karta">
     <div class="karta__tresc u-csp-200">
@@ -39,28 +39,28 @@
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
         <polyline points="14 2 14 8 20 8"/>
       </svg>
-      <div class="u-csp-214">Brak dostÄ™pnych dokumentĂłw</div>
-      <div class="u-csp-036">Student nie ma aktywnych ani zakoĹ„czonych praktyk.</div>
+      <div class="u-csp-214">Brak dostępnych dokumentów</div>
+      <div class="u-csp-036">Student nie ma aktywnych ani zakończonych praktyk.</div>
     </div>
   </div>
   {% endif %}
 
-  {# â”€â”€ Dokumenty per zapis â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ #}
+  {# ── Dokumenty per zapis ───────────────────────────────────────────────── #}
   {% for wpis in dokumenty_list %}
   {% set zapis = wpis.zapis %}
   <div class="karta u-csp-208">
     <div class="karta__naglowek">
       <div>
         <div class="u-csp-141">
-          {{ zapis.internship.academic_year if zapis.internship else 'â€”' }}
-          {% if zapis.internship %} Â· Semestr {{ zapis.internship.semester_label }}{% endif %}
+          {{ zapis.internship.academic_year if zapis.internship else '—' }}
+          {% if zapis.internship %} · Semestr {{ zapis.internship.semester_label }}{% endif %}
         </div>
         <div class="u-csp-215">
           {% if zapis.company %}{{ zapis.company.name }}
           {% elif zapis.company_display_name %}{{ zapis.company_display_name }}{% endif %}
-          Â· ĹšcieĹĽka:
-          {% if wpis.path == 'STANDARD' %}A â€” Standardowa
-          {% else %}B â€” Uznanie learning_outcomeĂłw{% endif %}
+          · Ścieżka:
+          {% if wpis.path == 'STANDARD' %}A — Standardowa
+          {% else %}B — Uznanie efektów{% endif %}
         </div>
       </div>
       <div class="u-flex--gap-05">
@@ -72,9 +72,9 @@
           {% if zapis.status.value == 'COMPLETED' %}status--zakonczona
           {% elif zapis.status.value == 'IN_PROGRESS' %}status--aktywna
           {% else %}status--oczekuje{% endif %}">
-          {% if zapis.status.value == 'COMPLETED' %}ZakoĹ„czona
+          {% if zapis.status.value == 'COMPLETED' %}Zakończona
           {% elif zapis.status.value == 'IN_PROGRESS' %}W trakcie
-          {% elif zapis.status.value == 'AWAITING_APPROVAL' %}Oczekuje na akceptacjÄ™
+          {% elif zapis.status.value == 'AWAITING_APPROVAL' %}Oczekuje na akceptację
           {% elif zapis.status.value == 'COMMISSION_REVIEW' %}Komisja
           {% elif zapis.status.value == 'DIRECTOR_APPROVAL' %}Dyrektor
           {% elif zapis.status.value == 'REVISION_REQUIRED' %}Czeka na poprawki
@@ -117,7 +117,7 @@
                class="przycisk przycisk--drugorzedny przycisk--maly">Pobierz PDF</a>
             {% endif %}
           {% else %}
-          <span class="u-csp-222">NiedostÄ™pny</span>
+          <span class="u-csp-222">Niedostępny</span>
           {% endif %}
         </div>
         {% endif %}

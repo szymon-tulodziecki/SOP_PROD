@@ -1,6 +1,6 @@
-﻿"""Internship domain models package.
+"""Internship domain models package.
 
-Public API re-exports â€” keep import paths stable for callers and Alembic.
+Publiczne API re-exports — keep import paths stable for callers and Alembic.
 Submodules:
   - enums:      InternshipStatus, EnrollmentStatus, InternshipPath, EventType
   - internship: Internship (academic edition)

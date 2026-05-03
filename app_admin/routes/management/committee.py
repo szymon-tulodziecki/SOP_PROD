@@ -1,4 +1,4 @@
-﻿from flask import abort, flash, redirect, render_template, request, url_for
+from flask import abort, flash, redirect, render_template, request, url_for
 from flask_login import current_user
 from flask_wtf import FlaskForm
 from wtforms import TextAreaField
@@ -35,14 +35,14 @@ _REVIEWABLE_COMMITTEE_STATUSES = (
 )
 _COMMITTEE_DECISION_LABELS = {
     'APPROVED':           'Opinia pozytywna',
-    'PARTIALLY_APPROVED': 'Opinia czÄ™Ĺ›ciowo pozytywna',
+    'PARTIALLY_APPROVED': 'Opinia częściowo pozytywna',
     'REJECTED':           'Opinia negatywna',
 }
 _COMMITTEE_DECISIONS = tuple(_COMMITTEE_DECISION_LABELS)
 
 
 class CommitteeForm(FlaskForm):
-    comment = TextAreaField('Komentarz ogĂłlny komisji', validators=[Optional()])
+    comment = TextAreaField('Komentarz ogólny komisji', validators=[Optional()])
 
 
 @zarzadzanie_bp.route('/komisja', methods=['GET'])
@@ -80,7 +80,7 @@ def _zapisz_oceny_komisji(enrollment_id, evaluations):
 def _przekaz_do_dyrektora(enrollment_id, committee_opinion, comment, evaluations):
     with EnrollmentStateMachine.lock(enrollment_id) as fsm:
         if fsm.zapis.status not in _ACTIVE_COMMITTEE_STATUSES:
-            flash('Wniosek zmieniĹ‚ status podczas przetwarzania - sprĂłbuj ponownie.', 'warning')
+            flash('Wniosek zmienił status podczas przetwarzania - spróbuj ponownie.', 'warning')
             return False
         _zapisz_oceny_komisji(enrollment_id, evaluations)
         fsm.send_to_director(decision=committee_opinion, actor_id=current_user.id, comment=comment)
@@ -105,12 +105,12 @@ def komisja_weryfikuj(id):
         return _render_weryfikuj_komisji(form, enrollment, outcomes, id)
 
     if enrollment.status not in _ACTIVE_COMMITTEE_STATUSES:
-        flash('Wniosek nie jest w stanie umoĹĽliwiajÄ…cym decyzjÄ™ komisji.', 'warning')
+        flash('Wniosek nie jest w stanie umożliwiającym decyzję komisji.', 'warning')
         return redirect(url_for(_ROUTE_KOMISJA_LISTA))
 
     committee_opinion = request.form.get('opinia')
     if committee_opinion not in _COMMITTEE_DECISIONS:
-        flash('Wybierz opiniÄ™ komisji (jeden z trzech przyciskĂłw).', 'warning')
+        flash('Wybierz opinię komisji (jeden z trzech przycisków).', 'warning')
         return _render_weryfikuj_komisji(form, enrollment, outcomes, id)
 
     errors, evaluations = CommitteeService.validate_outcome_grades(outcomes, request.form)

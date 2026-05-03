@@ -1,4 +1,4 @@
-﻿"""Internship model â€” academic year and semester edition."""
+﻿"""Internship model — academic year and semester edition."""
 import uuid
 
 from sqlalchemy.dialects.postgresql import UUID
@@ -9,7 +9,7 @@ from core.models.internships.enums import InternshipStatus
 
 
 class Internship(db.Model):
-    """Internship edition â€” academic year and semester."""
+    """Internship edition — academic year and semester."""
     __tablename__ = 'internships'
 
     id             = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)

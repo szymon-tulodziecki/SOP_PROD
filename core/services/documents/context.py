@@ -1,4 +1,4 @@
-﻿"""Canonical TeX template context builder.
+"""Canonical TeX template context builder.
 
 Single source of truth for context shape across all PDF generators
 (admin, student, celery worker).
@@ -11,7 +11,7 @@ from typing import Callable
 from core.extensions import db
 
 
-# â”€â”€ Formatting helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── Formatting helpers ────────────────────────────────────────────────────────
 
 def _fmt(value) -> str:
     if value is None:
@@ -35,13 +35,13 @@ def _g(obj, attr: str, default=''):
 
 
 _GENDER_FORMS: dict[str, dict[str, str]] = {
-    'M': {'pos': 'uzyskaĹ‚',  'par': 'uzyskaĹ‚ czÄ™Ĺ›ciowo',  'neg': 'nie uzyskaĹ‚'},
-    'F': {'pos': 'uzyskaĹ‚a', 'par': 'uzyskaĹ‚a czÄ™Ĺ›ciowo', 'neg': 'nie uzyskaĹ‚a'},
+    'M': {'pos': 'uzyskał',  'par': 'uzyskał częściowo',  'neg': 'nie uzyskał'},
+    'F': {'pos': 'uzyskała', 'par': 'uzyskała częściowo', 'neg': 'nie uzyskała'},
 }
-_GENDER_FORMS_DEFAULT = {'pos': 'uzyskaĹ‚/a', 'par': 'uzyskaĹ‚/a czÄ™Ĺ›ciowo', 'neg': 'nie uzyskaĹ‚/a'}
+_GENDER_FORMS_DEFAULT = {'pos': 'uzyskał/a', 'par': 'uzyskał/a częściowo', 'neg': 'nie uzyskał/a'}
 
 
-# â”€â”€ Per-doc-type context extension registry â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ─── Per-doc-type context extension registry ────────────────────────────────────
 
 _CTX_EXT: dict[str, Callable[[dict, object], None]] = {}
 
@@ -205,7 +205,7 @@ def _ext_zal8(ctx: dict, zapis) -> None:
     ctx['data_egzaminu'] = date.today().strftime('%d.%m.%Y')
 
 
-# â”€â”€ Sub-builders â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── Sub-builders ──────────────────────────────────────────────────────────────
 
 _STUDY_MODE_MAP = {
     'full-time':      'stacjonarne',
@@ -269,7 +269,7 @@ def _ctx_uopz(supervisor) -> dict:
     }
 
 
-# â”€â”€ Canonical builder â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── Canonical builder ─────────────────────────────────────────────────────────
 
 def build_context(enrollment, document_type: str) -> dict:
     """Builds the TeX template context dictionary for a given document type."""

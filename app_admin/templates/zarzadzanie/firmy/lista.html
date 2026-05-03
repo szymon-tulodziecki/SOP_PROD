@@ -1,15 +1,15 @@
 ﻿{% extends "layouts/base_panel.html" %}
 
-{% block tytul %}ZarzÄ…dzanie firmami{% endblock %}
+{% block tytul %}Zarządzanie firmami{% endblock %}
 {% block naglowek %}Firmy w systemie{% endblock %}
 
 {% block naglowek_akcje %}
 <div class="u-csp-136">
   <a href="{{ url_for('zarzadzanie.dodaj_firme') }}" class="przycisk przycisk--glowny">
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-    Dodaj firmÄ™
+    Dodaj firmę
   </a>
-  <a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">â† PowrĂłt</a>
+  <a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
 </div>
 {% endblock %}
 
@@ -46,7 +46,7 @@
         <button type="submit" class="przycisk przycisk--drugorzedny">Szukaj</button>
         {% if request.args.get('szukaj') or request.args.get('status', 'aktywne') != 'aktywne' %}
           <a href="{{ url_for('zarzadzanie.lista_firm') }}" class="przycisk przycisk--drugorzedny">
-            WyczyĹ›Ä‡ filtry
+            Wyczyść filtry
           </a>
         {% endif %}
       </form>
@@ -102,10 +102,10 @@
                 <form class="u-csp-194" method="POST" action="{{ url_for('zarzadzanie.przelacz_aktywnosc_firmy', id=company.id) }}"
                      >
                   {{ csrf_form.hidden_tag() }}
-                  {% set text = 'dezaktywowaÄ‡' if company.is_active else 'aktywowaÄ‡' %}
+                  {% set text = 'dezaktywować' if company.is_active else 'aktywować' %}
                   <button type="submit"
                           class="przycisk {% if company.is_active %}przycisk--ostrzezenie{% else %}przycisk--drugorzedny{% endif %} przycisk--maly"
-                          onclick="return confirm('Czy na pewno chcesz {{ text }} firmÄ™?')">
+                          onclick="return confirm('Czy na pewno chcesz {{ text }} firmę?')">
                     {{ 'Dezaktywuj' if company.is_active else 'Aktywuj' }}
                   </button>
                 </form>
@@ -114,8 +114,8 @@
                   {{ csrf_form.hidden_tag() }}
                   <button type="submit"
                           class="przycisk przycisk--niebezpieczny przycisk--maly"
-                          onclick="return confirm('Czy na pewno chcesz trwale usunÄ…Ä‡ firmÄ™ {{ company.name }}? Tej operacji nie moĹĽna cofnÄ…Ä‡.')">
-                    UsuĹ„
+                          onclick="return confirm('Czy na pewno chcesz trwale usunąć firmę {{ company.name }}? Tej operacji nie można cofnąć.')">
+                    Usuń
                   </button>
                 </form>
               </td>
@@ -130,7 +130,7 @@
       <div class="u-csp-154">
         {% if firmy.has_prev %}
         <a href="{{ url_for('zarzadzanie.lista_firm', page=firmy.prev_num, **request.args) }}"
-           class="przycisk przycisk--drugorzedny przycisk--maly">â† Poprzednia</a>
+           class="przycisk przycisk--drugorzedny przycisk--maly">← Poprzednia</a>
         {% endif %}
 
         {% for page_num in firmy.iter_pages() %}
@@ -142,13 +142,13 @@
             <span class="przycisk przycisk--glowny przycisk--maly">{{ page_num }}</span>
             {% endif %}
           {% else %}
-            <span>â€¦</span>
+            <span>…</span>
           {% endif %}
         {% endfor %}
 
         {% if firmy.has_next %}
         <a href="{{ url_for('zarzadzanie.lista_firm', page=firmy.next_num, **request.args) }}"
-           class="przycisk przycisk--drugorzedny przycisk--maly">NastÄ™pna â†’</a>
+           class="przycisk przycisk--drugorzedny przycisk--maly">Następna →</a>
         {% endif %}
       </div>
       {% endif %}
@@ -172,10 +172,10 @@
           Brak firm w systemie
         </div>
         <div class="u-csp-196">
-          Dodaj pierwszÄ… firmÄ™ do systemu praktyk.
+          Dodaj pierwszą firmę do systemu praktyk.
         </div>
         <a href="{{ url_for('zarzadzanie.dodaj_firme') }}" class="przycisk przycisk--glowny">
-          + Dodaj firmÄ™
+          + Dodaj firmę
         </a>
       </div>
       {% endif %}

@@ -58,7 +58,7 @@ def nowy_student():
         )
         flash(
             f'Konto studenta {student.first_name} {student.last_name} (nr alb. {student.album_number}) '
-            f'zostaĹ‚o utworzone. Student moĹĽe siÄ™ teraz zalogowaÄ‡ przez Microsoft ({student.email}).',
+            f'zostało utworzone. Student może się teraz zalogować przez Microsoft ({student.email}).',
             'success',
         )
         return redirect(url_for(USER_LIST_ENDPOINT))
@@ -90,7 +90,7 @@ def edytuj_studenta(id):
         student.specialization = form.specialization.data or None
         student.study_mode = form.study_mode.data or None
         db.session.commit()
-        flash('Dane studenta zostaĹ‚y zaktualizowane.', 'success')
+        flash('Dane studenta zostały zaktualizowane.', 'success')
         return redirect(url_for(USER_LIST_ENDPOINT))
 
     return render_template('zarzadzanie/formularz_studenta.html', form=form, uzytkownik=student)
@@ -116,7 +116,7 @@ def nowy_pracownik():
         db.session.commit()
         flash(
             f'Konto {user.first_name} {user.last_name} [{user.role.value}] utworzone. '
-            f'UĹĽytkownik moĹĽe siÄ™ zalogowaÄ‡ przez Microsoft ({user.email}).',
+            f'Użytkownik może się zalogować przez Microsoft ({user.email}).',
             'success',
         )
         return redirect(url_for(USER_LIST_ENDPOINT))
@@ -130,7 +130,7 @@ def nowy_pracownik():
 def import_csv():
     form = CsvImportForm()
     supervisors = user_repository.active_uopz()
-    form.supervisor_id.choices = [('', 'â€” wybierz â€”')] + [
+    form.supervisor_id.choices = [('', '— wybierz —')] + [
         (str(user.id), f"{user.first_name} {user.last_name}") for user in supervisors
     ]
     results = None
@@ -140,7 +140,7 @@ def import_csv():
         supervisor_id = form.supervisor_id.data or None
         results = user_service.import_from_csv(content, supervisor_id)
         if results['created']:
-            flash(f'Import zakoĹ„czony: {results["created"]} kont utworzonych.', 'success')
+            flash(f'Import zakończony: {results["created"]} kont utworzonych.', 'success')
 
     return render_template('zarzadzanie/import_csv.html', form=form, results=results)
 
@@ -150,13 +150,13 @@ def import_csv():
 def przelacz_aktywnosc(id):
     user = user_repository.find_by_id(id) or abort(404)
     if str(user.id) == str(current_user.id):
-        flash('Nie moĹĽesz dezaktywowaÄ‡ wĹ‚asnego konta.', 'danger')
+        flash('Nie możesz dezaktywować własnego konta.', 'danger')
         return redirect(url_for(USER_LIST_ENDPOINT))
 
     user.is_active = not user.is_active
     db.session.commit()
     status_label = 'aktywowane' if user.is_active else 'dezaktywowane'
-    flash(f'Konto {user.first_name} {user.last_name} zostaĹ‚o {status_label}.', 'success')
+    flash(f'Konto {user.first_name} {user.last_name} zostało {status_label}.', 'success')
     return redirect(url_for(USER_LIST_ENDPOINT))
 
 
@@ -166,11 +166,11 @@ def przelacz_aktywnosc(id):
 def usun_uzytkownika(id):
     user = user_repository.find_by_id(id) or abort(404)
     if str(user.id) == str(current_user.id):
-        flash('Nie moĹĽesz usunÄ…Ä‡ wĹ‚asnego konta.', 'danger')
+        flash('Nie możesz usunąć własnego konta.', 'danger')
         return redirect(url_for(USER_LIST_ENDPOINT))
 
     full_name = f'{user.first_name} {user.last_name}'
     user_repository.delete(user)
     db.session.commit()
-    flash(f'Konto {full_name} zostaĹ‚o trwale usuniÄ™te.', 'success')
+    flash(f'Konto {full_name} zostało trwale usunięte.', 'success')
     return redirect(url_for(USER_LIST_ENDPOINT))

@@ -37,7 +37,7 @@ class DocumentAuditLog(db.Model):
 class UploadedDocument(db.Model):
     """File uploaded by a student or staff member (contracts, certificates, etc.).
 
-    Soft-delete pattern: documents are never physically removed â€” only marked
+    Soft-delete pattern: documents are never physically removed — only marked
     is_deleted=True.  The FK to internship_enrollments uses SET NULL so that
     archival documents survive even after the enrollment record is deleted.
     """

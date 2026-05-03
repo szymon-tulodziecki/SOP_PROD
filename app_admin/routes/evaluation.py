@@ -1,4 +1,4 @@
-﻿"""Learning outcome grading routes for InternshipEnrollment."""
+"""Widoki oceny efektów uczenia się dla zapisów na praktykę."""
 from urllib.parse import quote
 
 import httpx
@@ -206,7 +206,7 @@ def generuj_protokol(id):
     if not _can_grade(enrollment):
         abort(403)
     if not (enrollment.final_grades and enrollment.final_grades.supervisor_grade):
-        flash('Protokół dostępny dopiero po wystawieniu assessments UOPZ.', 'warning')
+        flash('Protokół dostępny dopiero po wystawieniu oceny UOPZ.', 'warning')
         return redirect(url_for(GRADE_FORM_ENDPOINT, id=id))
 
     context = build_context(enrollment, 'ZAL_8')

@@ -37,7 +37,7 @@ class WorkplaceDetails(db.Model):
 
 
 class PathJustification(db.Model):
-    """Justification for choosing path B or C (optional)."""
+    """Uzasadnienie wyboru ścieżki B albo C (opcjonalne)."""
     __tablename__ = 'path_justifications'
 
     id            = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)

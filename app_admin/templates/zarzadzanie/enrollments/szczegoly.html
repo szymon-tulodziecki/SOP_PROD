@@ -1,18 +1,18 @@
-﻿{% extends "layouts/base_panel.html" %}
+{% extends "layouts/base_panel.html" %}
 
-{% block tytul %}SzczegĂłĹ‚y zgĹ‚oszenia â€” {{ zapis.student.first_name }} {{ zapis.student.last_name }}{% endblock %}
-{% block naglowek %}SzczegĂłĹ‚y zgĹ‚oszenia{% endblock %}
+{% block tytul %}Szczegóły zgłoszenia — {{ zapis.student.first_name }} {{ zapis.student.last_name }}{% endblock %}
+{% block naglowek %}Szczegóły zgłoszenia{% endblock %}
 
 {% block naglowek_akcje %}
 <div class="u-flex--gap-05">
-  <a href="{{ url_for('zarzadzanie.lista_zgloszen') }}" class="przycisk przycisk--drugorzedny">â† PowrĂłt do listy</a>
+  <a href="{{ url_for('zarzadzanie.lista_zgloszen') }}" class="przycisk przycisk--drugorzedny">← Powrót do listy</a>
 </div>
 {% endblock %}
 
 {% block tresc %}
 <div class="u-csp-076">
 
-  {# â”€â”€ Karta identyfikacyjna zgĹ‚oszenia â”€â”€ #}
+  {# ── Karta identyfikacyjna zgłoszenia ── #}
   {% set status_val = zapis.status.value %}
   {% if status_val == 'PENDING' %}
     {% set border_color = 'var(--kolor-akcent)' %}
@@ -21,15 +21,15 @@
   {% elif status_val == 'AWAITING_APPROVAL' %}
     {% set border_color = '#3b82f6' %}
     {% set status_cls = 'status--planned' %}
-    {% set status_label = 'Oczekuje na akceptacjÄ™ UOPZ' %}
+    {% set status_label = 'Oczekuje na akceptację UOPZ' %}
   {% elif status_val == 'IN_PROGRESS' %}
     {% set border_color = 'var(--kolor-sukces)' %}
     {% set status_cls = 'status--completed' %}
-    {% set status_label = 'Zatwierdzona â€” w realizacji' %}
+    {% set status_label = 'Zatwierdzona — w realizacji' %}
   {% elif status_val == 'COMPLETED' %}
     {% set border_color = 'var(--kolor-glowny)' %}
     {% set status_cls = 'status--completed' %}
-    {% set status_label = 'ZakoĹ„czona' %}
+    {% set status_label = 'Zakończona' %}
   {% elif status_val == 'REVISION_REQUIRED' %}
     {% set border_color = '#dc2626' %}
     {% set status_cls = 'status--odrzucona' %}
@@ -55,7 +55,7 @@
   <div class="u-enrollment-hero {% if status_val == 'PENDING' %}u-enrollment-hero--pending{% elif status_val == 'AWAITING_APPROVAL' %}u-enrollment-hero--awaiting{% elif status_val == 'COMMISSION_REVIEW' %}u-enrollment-hero--commission{% elif status_val == 'DIRECTOR_APPROVAL' %}u-enrollment-hero--director{% elif status_val == 'IN_PROGRESS' %}u-enrollment-hero--progress{% elif status_val == 'COMPLETED' %}u-enrollment-hero--completed{% elif status_val == 'REJECTED' %}u-enrollment-hero--rejected{% else %}u-enrollment-hero--default{% endif %}">
     <div class="u-csp-102">
 
-      {# Awatar inicjaĹ‚owy #}
+      {# Awatar inicjałowy #}
       <div class="u-csp-103">
         {{ zapis.student.first_name[0] }}{{ zapis.student.last_name[0] }}
       </div>
@@ -76,15 +76,15 @@
           <div class="u-meta">Semestr {{ zapis.internship.semester_label }}</div>
         </div>
         <div>
-          <div class="u-etykieta">ĹšcieĹĽka</div>
+          <div class="u-etykieta">Ścieżka</div>
           <div class="u-wartosc">
-            {% if zapis.track_type.value == 'STANDARD' %}A â€” Standardowa
-            {% else %}B â€” Uznanie learning_outcomeĂłw{% endif %}
+            {% if zapis.track_type.value == 'STANDARD' %}A — Standardowa
+            {% else %}B — Uznanie efektów{% endif %}
           </div>
         </div>
         <div>
-          <div class="u-etykieta">Data zgĹ‚oszenia</div>
-          <div class="u-wartosc">{{ zapis.enrolled_at.strftime('%d.%m.%Y') if zapis.enrolled_at else 'â€”' }}</div>
+          <div class="u-etykieta">Data zgłoszenia</div>
+          <div class="u-wartosc">{{ zapis.enrolled_at.strftime('%d.%m.%Y') if zapis.enrolled_at else '—' }}</div>
           <div class="u-meta">{{ zapis.enrolled_at.strftime('%H:%M') if zapis.enrolled_at else '' }}</div>
         </div>
       </div>
@@ -103,10 +103,10 @@
 
   </div>
 
-  {# â”€â”€ GĹ‚Ăłwna siatka treĹ›ci â”€â”€ #}
+  {# ── Główna siatka treści ── #}
   <div class="u-csp-160">
 
-    {# â•â•â• LEWA KOLUMNA â•â•â• #}
+    {# ═══ LEWA KOLUMNA ═══ #}
     <div class="u-flex--col-15">
 
       {# Dane podstawowe #}
@@ -117,22 +117,22 @@
         <div class="karta__tresc">
           <div class="u-grid-2-lg">
             <div class="pole-info">
-              <div class="pole-info__etykieta">ĹšcieĹĽka praktyki</div>
+              <div class="pole-info__etykieta">Ścieżka praktyki</div>
               <div class="pole-info__wartosc">
-                {% if zapis.track_type.value == 'STANDARD' %}A â€” Standardowa
-                {% else %}B â€” Uznanie learning_outcomeĂłw{% endif %}
+                {% if zapis.track_type.value == 'STANDARD' %}A — Standardowa
+                {% else %}B — Uznanie efektów{% endif %}
               </div>
             </div>
             <div class="pole-info">
-              <div class="pole-info__etykieta">SpecjalnoĹ›Ä‡</div>
-              <div class="pole-info__wartosc">{{ zapis.specialization or 'â€”' }}</div>
+              <div class="pole-info__etykieta">Specjalność</div>
+              <div class="pole-info__wartosc">{{ zapis.specialization or '—' }}</div>
             </div>
             {% if zapis.track_type.value == 'STANDARD' %}
             <div class="pole-info">
               <div class="pole-info__etykieta">Termin praktyki</div>
               <div class="pole-info__wartosc">
                 {{ zapis.start_date.strftime('%d.%m.%Y') if zapis.start_date else 'Brak' }}
-                <span class="u-tekst-trzeciorzed u-csp-161">â†’</span>
+                <span class="u-tekst-trzeciorzed u-csp-161">→</span>
                 {{ zapis.end_date.strftime('%d.%m.%Y') if zapis.end_date else 'Brak' }}
               </div>
             </div>
@@ -159,35 +159,35 @@
 
       {% if zapis.track_type.value == 'STANDARD' %}
 
-      {# Dane zakĹ‚adu pracy #}
+      {# Dane zakładu pracy #}
       <div class="karta">
         <div class="karta__naglowek">
-          <h3 class="karta__tytul">ZakĹ‚ad pracy</h3>
+          <h3 class="karta__tytul">Zakład pracy</h3>
         </div>
         <div class="karta__tresc">
           <div class="u-grid-2-lg">
             <div class="pole-info">
               <div class="pole-info__etykieta">Nazwa firmy</div>
-              <div class="pole-info__wartosc u-fw-600">{{ zapis.company_display_name or 'â€”' }}</div>
+              <div class="pole-info__wartosc u-fw-600">{{ zapis.company_display_name or '—' }}</div>
             </div>
             <div class="pole-info">
               <div class="pole-info__etykieta">NIP / KRS</div>
-              <div class="pole-info__wartosc">{{ zapis.company_display_tax_id or 'â€”' }}</div>
+              <div class="pole-info__wartosc">{{ zapis.company_display_tax_id or '—' }}</div>
             </div>
             <div class="pole-info">
               <div class="pole-info__etykieta">Adres</div>
-              <div class="pole-info__wartosc">{{ zapis.company_display_address or 'â€”' }}</div>
+              <div class="pole-info__wartosc">{{ zapis.company_display_address or '—' }}</div>
             </div>
             <div class="pole-info">
               <div class="pole-info__etykieta">Miasto</div>
-              <div class="pole-info__wartosc">{{ zapis.company_city or 'â€”' }}</div>
+              <div class="pole-info__wartosc">{{ zapis.company_city or '—' }}</div>
             </div>
             <div class="pole-info u-csp-164">
               <div class="pole-info__etykieta">Przedstawiciel firmy</div>
               <div class="pole-info__wartosc">
-                {{ zapis.authorized_person or 'â€”' }}
+                {{ zapis.authorized_person or '—' }}
                 {% if zapis.authorized_person_position %}
-                  <span class="u-tekst-drugor u-fw-500"> Â· {{ zapis.authorized_person_position }}</span>
+                  <span class="u-tekst-drugor u-fw-500"> · {{ zapis.authorized_person_position }}</span>
                 {% endif %}
               </div>
             </div>
@@ -195,28 +195,28 @@
         </div>
       </div>
 
-      {# Opiekun zakĹ‚adowy (ZOPZ) #}
+      {# Opiekun zakładowy (ZOPZ) #}
       <div class="karta">
         <div class="karta__naglowek">
-          <h3 class="karta__tytul">Opiekun zakĹ‚adowy (ZOPZ)</h3>
+          <h3 class="karta__tytul">Opiekun zakładowy (ZOPZ)</h3>
         </div>
         <div class="karta__tresc">
           <div class="u-grid-2-lg">
             <div class="pole-info">
-              <div class="pole-info__etykieta">ImiÄ™ i nazwisko</div>
-              <div class="pole-info__wartosc u-fw-600">{{ zapis.workplace_mentor_name or 'â€”' }}</div>
+              <div class="pole-info__etykieta">Imię i nazwisko</div>
+              <div class="pole-info__wartosc u-fw-600">{{ zapis.workplace_mentor_name or '—' }}</div>
             </div>
             <div class="pole-info">
               <div class="pole-info__etykieta">Stanowisko</div>
-              <div class="pole-info__wartosc">{{ zapis.workplace_mentor_position or 'â€”' }}</div>
+              <div class="pole-info__wartosc">{{ zapis.workplace_mentor_position or '—' }}</div>
             </div>
             <div class="pole-info">
               <div class="pole-info__etykieta">Telefon</div>
-              <div class="pole-info__wartosc">{{ zapis.workplace_mentor_phone or 'â€”' }}</div>
+              <div class="pole-info__wartosc">{{ zapis.workplace_mentor_phone or '—' }}</div>
             </div>
             <div class="pole-info">
               <div class="pole-info__etykieta">E-mail</div>
-              <div class="pole-info__wartosc">{{ zapis.workplace_mentor_email or 'â€”' }}</div>
+              <div class="pole-info__wartosc">{{ zapis.workplace_mentor_email or '—' }}</div>
             </div>
           </div>
         </div>
@@ -241,9 +241,9 @@
               <thead>
                 <tr>
                   <th class="u-w-25 u-ta-center u-csp-165">Nr</th>
-                  <th class="u-csp-166">Efekt uczenia siÄ™</th>
-                  <th class="u-w-25">DziaĹ‚ / Jednostka</th>
-                  <th class="u-w-25">PrzykĹ‚adowe zadania</th>
+                  <th class="u-csp-166">Efekt uczenia się</th>
+                  <th class="u-w-25">Dział / Jednostka</th>
+                  <th class="u-w-25">Przykładowe zadania</th>
                   <th class="u-ta-center u-csp-167">Dni</th>
                 </tr>
               </thead>
@@ -284,31 +284,31 @@
           </div>
           {% elif suma_dni.wartosc < 100 %}
           <div class="u-csp-172">
-            <strong>NiewystarczajÄ…ca liczba dni (min. 100).</strong> Harmonogram wymaga uzupeĹ‚nienia.
+            <strong>Niewystarczająca liczba dni (min. 100).</strong> Harmonogram wymaga uzupełnienia.
           </div>
           {% endif %}
         </div>
       </div>
 
       {% else %}
-      {# â”€â”€ ĹšcieĹĽka B/C â”€â”€ #}
+      {# ── Ścieżka B/C ── #}
       <div class="karta">
         <div class="karta__naglowek">
-          <h3 class="karta__tytul">Dane pracodawcy / dziaĹ‚alnoĹ›ci</h3>
+          <h3 class="karta__tytul">Dane pracodawcy / działalności</h3>
         </div>
         <div class="karta__tresc">
           <div class="u-grid-2-lg">
             <div class="pole-info">
-              <div class="pole-info__etykieta">Nazwa firmy / dziaĹ‚alnoĹ›ci</div>
-              <div class="pole-info__wartosc u-fw-600">{{ zapis.company_display_name or 'â€”' }}</div>
+              <div class="pole-info__etykieta">Nazwa firmy / działalności</div>
+              <div class="pole-info__wartosc u-fw-600">{{ zapis.company_display_name or '—' }}</div>
             </div>
             <div class="pole-info">
-              <div class="pole-info__etykieta">Stanowisko / zakres obowiÄ…zkĂłw</div>
-              <div class="pole-info__wartosc">{{ zapis.workplace_mentor_position or 'â€”' }}</div>
+              <div class="pole-info__etykieta">Stanowisko / zakres obowiązków</div>
+              <div class="pole-info__wartosc">{{ zapis.workplace_mentor_position or '—' }}</div>
             </div>
             <div class="pole-info u-csp-164">
               <div class="pole-info__etykieta">Adres</div>
-              <div class="pole-info__wartosc">{{ zapis.company_display_address or 'â€”' }}{% if zapis.company_city %}, {{ zapis.company_city }}{% endif %}</div>
+              <div class="pole-info__wartosc">{{ zapis.company_display_address or '—' }}{% if zapis.company_city %}, {{ zapis.company_city }}{% endif %}</div>
             </div>
           </div>
         </div>
@@ -336,7 +336,7 @@
             <div class="historia-decyzji__naglowek">
               <div>
                 <div class="historia-decyzji__tytul">{{ entry.stage_label }}</div>
-                <div class="historia-decyzji__meta">{{ entry.executed_at }} Â· {{ entry.actor_name }}{% if entry.actor_email %} Â· {{ entry.actor_email }}{% endif %} Â· {{ entry.role_label }}</div>
+                <div class="historia-decyzji__meta">{{ entry.executed_at }} · {{ entry.actor_name }}{% if entry.actor_email %} · {{ entry.actor_email }}{% endif %} · {{ entry.role_label }}</div>
               </div>
               <span class="status {{ entry.status_class }}">{{ entry.status_label }}</span>
             </div>
@@ -353,11 +353,11 @@
       {% endif %}
       {% endif %}
 
-      {# ZaĹ‚Ä…czniki studenta #}
+      {# Załączniki studenta #}
       {% if uploaded_docs %}
       <div class="karta">
         <div class="karta__naglowek">
-          <h3 class="karta__tytul">ZaĹ‚Ä…czniki studenta</h3>
+          <h3 class="karta__tytul">Załączniki studenta</h3>
           <span class="u-fs-xs u-fw-500 u-tekst-trzeciorzed">{{ uploaded_docs|length }} plik{% if uploaded_docs|length != 1 %}i{% endif %}</span>
         </div>
         <div class="karta__tresc u-flex--col-05">
@@ -365,7 +365,7 @@
           <div class="u-ramka u-csp-175">
             <div class="u-csp-116">
               <div class="u-fw-600 u-csp-117">{{ dok.original_filename }}</div>
-              <div class="u-fs-xs u-tekst-trzeciorzed u-csp-106">{{ dok.document_type }} Â· {{ dok.uploaded_at.strftime('%d.%m.%Y, %H:%M') }}</div>
+              <div class="u-fs-xs u-tekst-trzeciorzed u-csp-106">{{ dok.document_type }} · {{ dok.uploaded_at.strftime('%d.%m.%Y, %H:%M') }}</div>
             </div>
             <a href="{{ url_for('uploads.download_document', document_id=dok.id) }}"
                class="przycisk przycisk--maly przycisk--drugorzedny u-csp-118">Pobierz</a>
@@ -377,7 +377,7 @@
 
     </div>
 
-    {# â•â•â• PRAWA KOLUMNA â•â•â• #}
+    {# ═══ PRAWA KOLUMNA ═══ #}
     <div class="u-flex--col-15 u-csp-119">
 
       {# Panel decyzji #}
@@ -392,7 +392,7 @@
 
             <div class="u-mb-1 u-csp-121">
               <label class="pole-formularza__etykieta u-csp-176">Komentarz do studenta <span class="u-fw-500 u-tekst-trzeciorzed">(opcjonalny)</span></label>
-              {{ form.comment(class="pole-formularza__textarea u-form-full", rows="7", placeholder="Uwagi widoczne dla studenta w panelu praktykâ€¦") }}
+              {{ form.comment(class="pole-formularza__textarea u-form-full", rows="7", placeholder="Uwagi widoczne dla studenta w panelu praktyk…") }}
             </div>
 
             <div class="u-flex--col u-csp-122">
@@ -413,7 +413,7 @@
         <div class="karta__tresc u-stan-pusty--sm">
           <div class="u-csp-177">!</div>
           <div class="u-fw-600 u-csp-178">Oczekiwanie na poprawki studenta</div>
-          <div class="u-tekst-drugor u-csp-179">ZgĹ‚oszenie zostaĹ‚o zwrĂłcone do studenta. Po nadesĹ‚aniu poprawek pojawi siÄ™ tu ponownie do zatwierdzenia.</div>
+          <div class="u-tekst-drugor u-csp-179">Zgłoszenie zostało zwrócone do studenta. Po nadesłaniu poprawek pojawi się tu ponownie do zatwierdzenia.</div>
         </div>
       </div>
 
@@ -422,8 +422,8 @@
       {# Stan po zatwierdzeniu #}
       <div class="karta">
         <div class="karta__tresc u-stan-pusty--sm">
-          <div class="u-csp-180">âś“</div>
-          <div class="u-fw-600 u-tekst-sukces u-csp-181">ZgĹ‚oszenie zatwierdzone</div>
+          <div class="u-csp-180">✓</div>
+          <div class="u-fw-600 u-tekst-sukces u-csp-181">Zgłoszenie zatwierdzone</div>
           <div class="u-tekst-drugor u-csp-179">Praktyka jest w trakcie realizacji przez studenta.</div>
         </div>
       </div>
@@ -441,7 +441,7 @@
             <div class="historia-decyzji__naglowek">
               <div>
                 <div class="historia-decyzji__tytul">{{ entry.stage_label }}</div>
-                <div class="historia-decyzji__meta">{{ entry.executed_at }} Â· {{ entry.actor_name }}{% if entry.actor_email %} Â· {{ entry.actor_email }}{% endif %} Â· {{ entry.role_label }}</div>
+                <div class="historia-decyzji__meta">{{ entry.executed_at }} · {{ entry.actor_name }}{% if entry.actor_email %} · {{ entry.actor_email }}{% endif %} · {{ entry.role_label }}</div>
               </div>
               <span class="status {{ entry.status_class }}">{{ entry.status_label }}</span>
             </div>

@@ -1,9 +1,9 @@
-﻿{% extends "layouts/base_panel.html" %}
+{% extends "layouts/base_panel.html" %}
 {% block tytul %}Logi systemowe{% endblock %}
 {% block naglowek %}Logi systemowe{% endblock %}
 
 {% block naglowek_akcje %}
-<a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">â† PowrĂłt</a>
+<a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
 {% endblock %}
 
 {% block tresc %}
@@ -12,12 +12,12 @@
     <form method="GET" class="u-flex--gap-05 u-csp-096">
       <div class="pole-formularza u-csp-097">
         <label class="pole-formularza__etykieta" for="szukaj">Student</label>
-        <input id="szukaj" name="szukaj" class="pole-formularza__input" value="{{ search_query }}" placeholder="ImiÄ™ lub nazwiskoâ€¦">
+        <input id="szukaj" name="szukaj" class="pole-formularza__input" value="{{ search_query }}" placeholder="Imię lub nazwisko…">
       </div>
       <div class="pole-formularza u-csp-098">
         <label class="pole-formularza__etykieta" for="event_type">Typ process_events</label>
         <select id="event_type" name="event_type" class="pole-formularza__input">
-          <option value="">â€” wszystkie â€”</option>
+          <option value="">— wszystkie —</option>
           {% for t in event_types %}
           <option value="{{ t }}" {% if t == active_type %}selected{% endif %}>{{ labels.get(t, t) }}</option>
           {% endfor %}
@@ -26,7 +26,7 @@
       <div class="u-flex--gap-05 u-csp-099">
         <button type="submit" class="przycisk przycisk--drugorzedny">Filtruj</button>
         {% if search_query or active_type %}
-        <a href="{{ url_for('logi.lista_logow') }}" class="przycisk przycisk--drugorzedny">WyczyĹ›Ä‡</a>
+        <a href="{{ url_for('logi.lista_logow') }}" class="przycisk przycisk--drugorzedny">Wyczyść</a>
         {% endif %}
       </div>
     </form>
@@ -41,7 +41,7 @@
           <th>Data i czas</th>
           <th>Typ process_events</th>
           <th>Student</th>
-          <th>WykonaĹ‚</th>
+          <th>Wykonał</th>
           <th>Decyzja</th>
           <th>Komentarz</th>
           <th></th>
@@ -51,7 +51,7 @@
         {% for z in events.items %}
         <tr>
           <td class="u-nowrap u-meta">
-            {{ z.executed_at.strftime('%Y-%m-%d %H:%M') if z.executed_at else 'â€”' }}
+            {{ z.executed_at.strftime('%Y-%m-%d %H:%M') if z.executed_at else '—' }}
           </td>
           <td>
             {% set rola = z.executed_by.role.value if z.executed_by and z.executed_by.role else '' %}
@@ -73,13 +73,13 @@
           <td>
             {% if z.enrollment and z.enrollment.student %}
               {{ z.enrollment.student.first_name }} {{ z.enrollment.student.last_name }}
-            {% else %}â€”{% endif %}
+            {% else %}—{% endif %}
           </td>
           <td class="u-fs-sm">
             {% if z.executed_by %}
               {{ z.executed_by.first_name }} {{ z.executed_by.last_name }}
               <div class="u-tekst-trzeciorzed u-fs-xs">{{ z.executed_by.role_label }}</div>
-            {% else %}â€”{% endif %}
+            {% else %}—{% endif %}
           </td>
           <td>
             {% if z.decision == 'APPROVED' %}
@@ -88,21 +88,21 @@
               <span class="status status--w-trakcie">Wymaga poprawek</span>
             {% elif z.decision == 'REJECTED' %}
               <span class="status status--odrzucona">Odrzucone</span>
-            {% else %}â€”{% endif %}
+            {% else %}—{% endif %}
           </td>
           <td class="u-meta u-csp-100">
-            {{ z.comment or 'â€”' }}
+            {{ z.comment or '—' }}
           </td>
           <td>
             {% if z.enrollment_id %}
             <a href="{{ url_for('zarzadzanie.szczegoly_zgloszenia', id=z.enrollment_id) }}"
-               class="przycisk przycisk--maly przycisk--drugorzedny">SzczegĂłĹ‚y</a>
+               class="przycisk przycisk--maly przycisk--drugorzedny">Szczegóły</a>
             {% endif %}
           </td>
         </tr>
         {% else %}
         <tr>
-          <td colspan="7" class="tabela--pusta">Brak zdarzeĹ„ speĹ‚niajÄ…cych kryteria.</td>
+          <td colspan="7" class="tabela--pusta">Brak zdarzeń spełniających kryteria.</td>
         </tr>
         {% endfor %}
       </tbody>
@@ -119,7 +119,7 @@
              class="paginacja__przycisk {% if nr == events.page %}paginacja__przycisk--aktywny{% endif %}"
              {% if nr == events.page %}aria-current="page"{% endif %}>{{ nr }}</a>
         {% else %}
-          <span class="paginacja__przycisk" aria-hidden="true">â€¦</span>
+          <span class="paginacja__przycisk" aria-hidden="true">…</span>
         {% endif %}
       {% endfor %}
     </div>

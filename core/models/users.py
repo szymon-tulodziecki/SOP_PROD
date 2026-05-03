@@ -1,4 +1,4 @@
-﻿"""core/modele/uzytkownicy.py
+"""core/modele/uzytkownicy.py
 
 Domain models: System users.
 Joined Table Inheritance (JTI): shared `users` table extended by
@@ -14,22 +14,22 @@ from core.extensions import db
 
 _FK_USERS = 'users.id'
 
-# â”€â”€ Enums â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ─── Enums ──────────────────────────────────────────────────────────────────────
 
 class UserRole(enum.Enum):
     STUDENT   = 'STUDENT'
     UOPZ      = 'UOPZ'
-    KOMISJA   = 'KOMISJA'    # PrzewodniczÄ…cy komisji ds. praktyk
-    DYREKTOR  = 'DYREKTOR'   # Dyrektor Instytutu â€” ostateczna akceptacja
+    KOMISJA   = 'KOMISJA'    # Przewodniczący komisji ds. praktyk
+    DYREKTOR  = 'DYREKTOR'   # Dyrektor Instytutu — ostateczna akceptacja
     ADMIN     = 'ADMIN'
 
 
-# â”€â”€ Base model â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ─── Base model ──────────────────────────────────────────────────────────────────
 
 class User(UserMixin, db.Model):
     """Shared table for all system accounts.
 
-    Discriminator: `role` column â€” SQLAlchemy automatically returns
+    Discriminator: `role` column — SQLAlchemy automatically returns
     the correct subclass when querying through the base class.
     """
     __tablename__ = 'users'
@@ -63,10 +63,10 @@ class User(UserMixin, db.Model):
         return f'<User {self.email} ({self.role})>'
 
 
-# â”€â”€ JTI subclasses â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── JTI subclasses ────────────────────────────────────────────────────────────
 
 class Student(User):
-    """Student-specific data â€” `students` table."""
+    """Student-specific data — `students` table."""
     __tablename__ = 'students'
 
     id             = db.Column(UUID(as_uuid=True), db.ForeignKey(_FK_USERS, ondelete='CASCADE'), primary_key=True)
@@ -109,7 +109,7 @@ class UniversityMentor(User):
 
 
 class KomisjaUser(User):
-    """PrzewodniczÄ…cy Komisji ds. praktyk."""
+    """Przewodniczący Komisji ds. praktyk."""
     __tablename__ = 'komisja_users'
     __mapper_args__ = {'polymorphic_identity': UserRole.KOMISJA}
 

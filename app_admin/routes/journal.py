@@ -1,4 +1,4 @@
-﻿"""Admin journal monitoring routes."""
+"""Widoki administracyjnego monitorowania dzienników."""
 import io
 from datetime import date
 

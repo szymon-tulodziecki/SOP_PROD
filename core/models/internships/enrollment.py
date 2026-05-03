@@ -1,4 +1,4 @@
-﻿"""InternshipEnrollment â€” student enrollment record with computed properties."""
+"""InternshipEnrollment — student enrollment record with computed properties."""
 import uuid
 
 from sqlalchemy.dialects.postgresql import UUID
@@ -43,7 +43,7 @@ class InternshipEnrollment(db.Model):
     total_hours_logged = db.Column(db.Integer,     default=0)
     enrolled_at        = db.Column(db.DateTime,    server_default=db.func.now())
 
-    # â”€â”€ Relationships â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # ── Relacje ──────────────────────────────────────────
     student            = db.relationship('User',              foreign_keys=[student_id],   lazy='select')
     supervisor         = db.relationship('User',              foreign_keys=[supervisor_id], lazy='select')
     company            = db.relationship('Company',           foreign_keys=[company_id],   lazy='select')
@@ -57,7 +57,7 @@ class InternshipEnrollment(db.Model):
     schedule           = db.relationship('InternshipSchedule', backref='enrollment',       lazy='select', cascade=CASCADE_DELETE)
     report             = db.relationship('InternshipReport',  backref='enrollment',        uselist=False, lazy='select', cascade=CASCADE_DELETE)
 
-    # â”€â”€ Shortcuts to satellite entity data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # ── Skróty do danych encji powiązanych ────────────────────
 
     @property
     def company_display_name(self):
@@ -159,7 +159,7 @@ class InternshipEnrollment(db.Model):
     def exam_grade_3(self):
         return self.examination.grade_3 if self.examination else None
 
-    # â”€â”€ Process event helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # ── Metody pomocnicze zdarzeń procesu ──────────────────────────────────
 
     def _last_event(self, event_type: EventType):
         return next(
@@ -207,7 +207,7 @@ class InternshipEnrollment(db.Model):
         e = self._last_event(EventType.SUPERVISOR_COMMENT)
         return e.comment if e else None
 
-    # â”€â”€ Grade computations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # ── Grade computations ─────────────────────────────────────
 
     @hybrid_property
     def exam_grade(self):
@@ -244,7 +244,7 @@ class InternshipEnrollment(db.Model):
             return None
         return _round_half(0.4 * e + 0.1 * s + 0.2 * u + 0.3 * z)
 
-    # â”€â”€ Path helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # ── Metody pomocnicze ścieżek ───────────────────────────────────────────────
 
     @property
     def is_path_b(self) -> bool:

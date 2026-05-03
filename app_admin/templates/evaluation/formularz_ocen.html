@@ -1,10 +1,10 @@
-﻿{% extends "layouts/base_panel.html" %}
+{% extends "layouts/base_panel.html" %}
 
-{% block tytul %}Ocena learning_outcomeĂłw uczenia siÄ™{% endblock %}
-{% block naglowek %}Karta assessments learning_outcomeĂłw uczenia siÄ™ (ZaĹ‚. 4 / 4a){% endblock %}
+{% block tytul %}Ocena efektów uczenia się{% endblock %}
+{% block naglowek %}Karta oceny efektów uczenia się (Zał. 4 / 4a){% endblock %}
 
 {% block naglowek_akcje %}
-<a href="{{ url_for('evaluation.lista_ocen') }}" class="przycisk przycisk--drugorzedny">PowrĂłt do listy</a>
+<a href="{{ url_for('evaluation.lista_ocen') }}" class="przycisk przycisk--drugorzedny">Powrót do listy</a>
 {% endblock %}
 
 {% block tresc %}
@@ -17,11 +17,11 @@
       <div>
         <h2 class="u-csp-040">{{ zapis.student.last_name }} {{ zapis.student.first_name }}</h2>
         <p class="u-tekst-drugor u-csp-041">
-          company: {{ zapis.company_display_name or 'â€”' }}
-          &nbsp;Â·&nbsp;
-          ĹšcieĹĽka:
-          {% if zapis.path_type.value == 'STANDARD' %}A â€” Standardowa
-          {% else %}B â€” Uznanie learning_outcomeĂłw{% endif %}
+          Firma: {{ zapis.company_display_name or '—' }}
+          &nbsp;·&nbsp;
+          Ścieżka:
+          {% if zapis.path_type.value == 'STANDARD' %}A — Standardowa
+          {% else %}B — Uznanie efektów{% endif %}
         </p>
       </div>
       <span class="status status--{{ zapis.status.value|lower|replace('_', '-') }}">{{ translate_status(zapis.status.value) }}</span>
@@ -31,9 +31,9 @@
   {% if is_bc %}
   <div class="karta u-mb-15 u-csp-051">
     <div class="karta__tresc">
-      <strong>ĹšcieĹĽka B â€” trzystopniowa skala assessments learning_outcomeĂłw.</strong><br>
+      <strong>Ścieżka B — trzystopniowa skala oceny efektów.</strong><br>
       <span class="u-meta-sm">
-        Dla kaĹĽdego efektu moĹĽesz wybraÄ‡: <em>UzyskaĹ‚/a</em>, <em>UzyskaĹ‚/a czÄ™Ĺ›ciowo</em> (wymaga uwag) lub <em>Nie uzyskaĹ‚/a</em>.
+        Dla każdego efektu możesz wybrać: <em>Uzyskał/a</em>, <em>Uzyskał/a częściowo</em> (wymaga uwag) lub <em>Nie uzyskał/a</em>.
       </span>
     </div>
   </div>
@@ -44,7 +44,7 @@
 
     <section class="karta u-mb-2">
       <header class="karta__naglowek">
-        <h3 class="karta__tytul">Ocena 13 learning_outcomeĂłw uczenia siÄ™</h3>
+        <h3 class="karta__tytul">Ocena 13 efektów uczenia się</h3>
       </header>
       <div class="karta__tresc u-p-0">
         <div class="tabela-wrapper">
@@ -69,28 +69,28 @@
                     <label class="radio-ocena">
                       <input type="radio" name="wynik_{{ learning_outcome.id }}" value="ACHIEVED"
                              {% if ocena and ocena.result.name == 'ACHIEVED' %}checked{% endif %} required>
-                      <span>UzyskaĹ‚/a</span>
+                      <span>Uzyskał/a</span>
                     </label>
 
                     {% if is_bc %}
                     <label class="radio-ocena radio-ocena--czesc">
                       <input type="radio" name="wynik_{{ learning_outcome.id }}" value="PARTIALLY_ACHIEVED"
                              {% if ocena and ocena.result.name == 'PARTIALLY_ACHIEVED' %}checked{% endif %}>
-                      <span>CzÄ™Ĺ›ciowo</span>
+                      <span>Częściowo</span>
                     </label>
                     {% endif %}
 
                     <label class="radio-ocena radio-ocena--nie">
                       <input type="radio" name="wynik_{{ learning_outcome.id }}" value="NOT_ACHIEVED"
                              {% if ocena and ocena.result.name == 'NOT_ACHIEVED' %}checked{% endif %}>
-                      <span>Nie uzyskaĹ‚/a</span>
+                      <span>Nie uzyskał/a</span>
                     </label>
                   </div>
 
                   {% if is_bc %}
                   <input class="u-csp-055" type="text" name="uwagi_{{ learning_outcome.id }}"
                          value="{{ ocena.notes if ocena else '' }}"
-                         placeholder="Uwagi (wymagane przy czÄ™Ĺ›ciowym)"
+                         placeholder="Uwagi (wymagane przy częściowym)"
                         >
                   {% endif %}
                 </td>
@@ -104,7 +104,7 @@
 
     <div class="u-ta-center u-csp-056">
       <button type="submit" class="przycisk przycisk--glowny u-csp-057">
-        Zapisz arkusz assessments
+        Zapisz arkusz oceny
       </button>
     </div>
   </form>

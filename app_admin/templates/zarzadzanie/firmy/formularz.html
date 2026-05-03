@@ -1,11 +1,11 @@
-﻿{% extends "layouts/base_panel.html" %}
+{% extends "layouts/base_panel.html" %}
 
-{% block tytul %}{% if tryb == 'dodaj' %}Dodaj firmÄ™{% else %}Edytuj firmÄ™{% endif %}{% endblock %}
+{% block tytul %}{% if tryb == 'dodaj' %}Dodaj firmę{% else %}Edytuj firmę{% endif %}{% endblock %}
 {% block naglowek %}{% if tryb == 'dodaj' %}Dodawanie nowej firmy{% else %}Edycja firmy{% endif %}{% endblock %}
 
 {% block naglowek_akcje %}
 <div class="u-csp-136">
-  <a href="{{ url_for('zarzadzanie.lista_firm') }}" class="przycisk przycisk--drugorzedny">â† PowrĂłt</a>
+  <a href="{{ url_for('zarzadzanie.lista_firm') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
 </div>
 {% endblock %}
 
@@ -41,7 +41,7 @@
             {{ form.address(class="pole-formularza__input") }}
             {% for e in form.address.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
             <small class="u-csp-146">
-              PeĹ‚ny adres, np. "Kolejowa 15/3"
+              Pełny adres, np. "Kolejowa 15/3"
             </small>
           </div>
 
@@ -73,7 +73,7 @@
 
           <button type="submit" class="przycisk przycisk--glowny">
             {% if tryb == 'dodaj' %}
-            Dodaj firmÄ™
+            Dodaj firmę
             {% else %}
             Zapisz zmiany
             {% endif %}

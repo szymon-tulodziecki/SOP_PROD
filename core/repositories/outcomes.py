@@ -1,4 +1,4 @@
-﻿"""core/repozytoria/efekty.py — Repozytorium learning_outcomeów uczenia się."""
+"""core/repozytoria/efekty.py — Repozytorium efektów uczenia się."""
 from __future__ import annotations
 
 from core.extensions import db
@@ -6,7 +6,7 @@ from core.models.journal import LearningOutcome
 
 
 class OutcomeRepository:
-    """Jedyne miejsce zapytań ORM dotyczących tabeli learning_outcomeów uczenia się."""
+    """Jedyne miejsce zapytań ORM dotyczących tabeli efektów uczenia się."""
 
     def wszystkie(self) -> list[LearningOutcome]:
         return db.session.execute(db.select(LearningOutcome).order_by(LearningOutcome.id)).scalars().all()

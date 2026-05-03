@@ -8,24 +8,24 @@ from core.repositories import UserRepository
 user_repository = UserRepository()
 
 UOPZ_LABEL = 'Opiekun uczelniany (UOPZ)'
-EMAIL_EXISTS_ERROR = 'Konto z tym e-mailem juĹĽ istnieje.'
-ALBUM_EXISTS_ERROR = 'Student z tym nr albumu juĹĽ istnieje.'
+EMAIL_EXISTS_ERROR = 'Konto z tym e-mailem już istnieje.'
+ALBUM_EXISTS_ERROR = 'Student z tym nr albumu już istnieje.'
 
 
 class StudentForm(FlaskForm):
-    first_name = StringField('ImiÄ™', validators=[DataRequired(), Length(max=100)])
+    first_name = StringField('Imię', validators=[DataRequired(), Length(max=100)])
     last_name = StringField('Nazwisko', validators=[DataRequired(), Length(max=100)])
     email = StringField('E-mail', validators=[DataRequired(), Email(), Length(max=255)])
     album_number = StringField('Nr albumu', validators=[DataRequired(), Length(max=20)])
     gender = SelectField(
-        'PĹ‚eÄ‡',
-        choices=[('', '--- Wybierz ---'), ('M', 'MÄ™ĹĽczyzna'), ('K', 'Kobieta')],
+        'Płeć',
+        choices=[('', '--- Wybierz ---'), ('M', 'Mężczyzna'), ('K', 'Kobieta')],
         validators=[Optional()],
     )
-    field_of_study = StringField('Kierunek studiĂłw', validators=[Optional(), Length(max=100)])
-    specialization = StringField('SpecjalnoĹ›Ä‡', validators=[Optional(), Length(max=100)])
+    field_of_study = StringField('Kierunek studiów', validators=[Optional(), Length(max=100)])
+    specialization = StringField('Specjalność', validators=[Optional(), Length(max=100)])
     study_mode = SelectField(
-        'Tryb studiĂłw',
+        'Tryb studiów',
         choices=[('', '--- Wybierz ---'), ('stacjonarne', 'Stacjonarne'), ('niestacjonarne', 'Niestacjonarne')],
         validators=[Optional()],
     )
@@ -59,7 +59,7 @@ class StudentEditForm(StudentForm):
 
 
 class StaffForm(FlaskForm):
-    first_name = StringField('ImiÄ™', validators=[DataRequired(), Length(max=100)])
+    first_name = StringField('Imię', validators=[DataRequired(), Length(max=100)])
     last_name = StringField('Nazwisko', validators=[DataRequired(), Length(max=100)])
     email = StringField('E-mail', validators=[DataRequired(), Email(), Length(max=255)])
     role = SelectField('Rola', choices=[
@@ -102,12 +102,12 @@ class InternshipForm(FlaskForm):
             raise ValidationError('Podaj rok w formacie RRRR/RRRR (np. 2025/2026).')
         first_year, second_year = int(field.data[:4]), int(field.data[5:])
         if second_year != first_year + 1:
-            raise ValidationError('Drugi rok musi byÄ‡ o 1 wiÄ™kszy od pierwszego (np. 2025/2026).')
+            raise ValidationError('Drugi rok musi być o 1 większy od pierwszego (np. 2025/2026).')
 
     def validate_required_hours(self, field):
         try:
             value = int(field.data)
         except (ValueError, TypeError):
-            raise ValidationError('Podaj liczbÄ™ caĹ‚kowitÄ….')
+            raise ValidationError('Podaj liczbę całkowitą.')
         if value <= 0:
-            raise ValidationError('Wymiar godzin musi byÄ‡ wiÄ™kszy od zera.')
+            raise ValidationError('Wymiar godzin musi być większy od zera.')
