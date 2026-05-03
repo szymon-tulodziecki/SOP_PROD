@@ -5,7 +5,7 @@ from flask_login import current_user, login_required
 from flask_wtf import FlaskForm
 
 from core.autoryzacja import roles_required
-from core.extensions import db
+from core.extensions import db, limiter
 from core.modele import User, UserRole
 from core.repozytoria import UserRepository
 from core.uslugi import UserService
@@ -126,6 +126,7 @@ def nowy_pracownik():
 
 @zarzadzanie_bp.route('/uzytkownicy/import-csv', methods=['GET', 'POST'])
 @roles_required(UserRole.ADMIN)
+@limiter.limit("10 per hour", methods=['POST'])
 def import_csv():
     form = CsvImportForm()
     supervisors = user_repository.active_uopz()
@@ -161,6 +162,7 @@ def przelacz_aktywnosc(id):
 
 @zarzadzanie_bp.route('/uzytkownicy/<uuid:id>/usun', methods=['POST'])
 @roles_required(UserRole.ADMIN)
+@limiter.limit("30 per hour")
 def usun_uzytkownika(id):
     user = user_repository.find_by_id(id) or abort(404)
     if str(user.id) == str(current_user.id):

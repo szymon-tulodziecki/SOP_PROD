@@ -32,7 +32,15 @@
       "Bash(curl *)",
       "Bash(git check-ignore *)",
       "Bash(chmod +x scripts/create_swarm_secrets.sh scripts/rotate_secret.sh)",
-      "Bash(sort -t: -k2 -rn)"
+      "Bash(sort -t: -k2 -rn)",
+      "Bash(py -3 -c ' *)",
+      "Read(//usr/**)",
+      "Bash(ls /c/Python*/python.exe)",
+      "Read(//c/Users/Szymon/**)",
+      "Bash(/c/msys64/ucrt64/bin/python3 -c ' *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Szymon\\\\Desktop\\\\Repozytoria\\\\SOP\" -Recurse -Name)",
+      "Bash(Select-Object -First 50)",
+      "Bash(python -c \"import ast; [ast.parse\\(open\\(f, encoding='utf-8'\\).read\\(\\)\\) for f in ['app_admin/__init__.py','app_student/__init__.py','celery_app.py','app_student/routes/logbook.py','app_student/routes/documents.py','app_admin/routes/evaluation.py','app_admin/routes/journal.py','app_admin/routes/zarzadzanie/praktyki.py','app_admin/routes/zarzadzanie/uzytkownicy.py','app_admin/routes/zarzadzanie/dyrektor.py','app_admin/routes/zarzadzanie/komisja.py','app_admin/routes/zarzadzanie/dokumenty_studentow.py','core/uslugi/users.py','core/modele/journal.py','app_student/routes/internships.py']]; print\\('All OK'\\)\")"
     ]
   }
 }

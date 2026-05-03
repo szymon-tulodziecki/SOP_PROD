@@ -175,12 +175,35 @@ class UserService:
         except Exception as exc:
             return f"Wiersz {parsed_row['row_number']}: {exc}"
 
+    _REQUIRED_CSV_COLUMNS = (
+        ('imie', 'Imię'),
+        ('nazwisko', 'Nazwisko'),
+        ('email', 'Email'),
+        ('numer_albumu', 'Nr albumu'),
+        ('plec', 'Płeć'),
+        ('kierunek', 'Kierunek'),
+        ('tryb_studiow', 'Tryb'),
+    )
+
     def import_from_csv(self, content: str, supervisor_id, commit: bool = True) -> dict:
         """Parses CSV, validates rows, and creates student accounts."""
         reader = csv.DictReader(io.StringIO(content))
         created = skipped = 0
         errors: list[str] = []
         csv_rows: list[dict] = []
+
+        # Validate CSV header before processing rows — prevents wasting work on a wrong file.
+        header = set(reader.fieldnames or [])
+        missing = [
+            aliases[0] for aliases in self._REQUIRED_CSV_COLUMNS
+            if not any(name in header for name in aliases)
+        ]
+        if missing:
+            return {
+                'created': 0,
+                'skipped': 0,
+                'errors': [f'Brakujące kolumny w nagłówku CSV: {", ".join(missing)}'],
+            }
 
         for row_number, row in enumerate(reader, start=2):
             parsed, error = self._parse_csv_row(row_number, row)

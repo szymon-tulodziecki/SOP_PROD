@@ -1,12 +1,14 @@
 ﻿import uuid
 from datetime import date
 
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import Blueprint, abort, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
 from flask_wtf import FlaskForm
 from wtforms import StringField, SelectMultipleField, TextAreaField
 from wtforms.validators import DataRequired, ValidationError
 from wtforms.widgets import ListWidget, CheckboxInput
+
+from sqlalchemy.exc import IntegrityError
 
 from core.modele import JournalEntry, EnrollmentStatus
 from core.extensions import db
@@ -138,7 +140,13 @@ def nowy_wpis():
         )
         form.populate_to_model(wpis)
         _repo_wpisow.zapisz(wpis)
-        db.session.commit()
+        try:
+            db.session.commit()
+        except IntegrityError:
+            # Race: another tab/request inserted the same date between our check and insert.
+            db.session.rollback()
+            flash('Wpis na ten dzień już istnieje. Możesz go edytować.', 'danger')
+            return render_template(_TPL_NOWY_WPIS, form=form, zapis=zapis, efekty_opisy=efekty_opisy)
         flash(f'Wpis z dnia {data.strftime("%d.%m.%Y")} został dodany ({godziny} h).', 'success')
         return redirect(url_for(_ROUTE_INDEX))
 
@@ -153,12 +161,10 @@ def nowy_wpis():
 def edytuj_wpis(wpis_id):
     wpis = _repo_wpisow.znajdz_po_id(wpis_id)
     if not wpis:
-        from flask import abort
         abort(404)
 
     zapis = _repo_zapisow.znajdz_po_id(wpis.enrollment_id)
     if not zapis or zapis.student_id != current_user.id:
-        from flask import abort
         abort(403)
 
     efekty = _repo_efektow.wszystkie()
@@ -189,11 +195,9 @@ def edytuj_wpis(wpis_id):
 def usun_wpis(wpis_id):
     wpis = _repo_wpisow.znajdz_po_id(wpis_id)
     if not wpis:
-        from flask import abort
         abort(404)
     zapis = _repo_zapisow.znajdz_po_id(wpis.enrollment_id)
     if not zapis or zapis.student_id != current_user.id:
-        from flask import abort
         abort(403)
     _repo_wpisow.usun(wpis)
     db.session.commit()

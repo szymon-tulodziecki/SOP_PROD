@@ -5,7 +5,7 @@ from wtforms import TextAreaField
 from wtforms.validators import Optional
 
 from core.autoryzacja import roles_required
-from core.extensions import db
+from core.extensions import db, limiter
 from core.modele import AssessmentResult, EnrollmentStatus, UserRole
 from core.repozytoria import (
     AssessmentRepository,
@@ -90,6 +90,7 @@ def _przekaz_do_dyrektora(enrollment_id, committee_opinion, comment, evaluations
 
 @zarzadzanie_bp.route('/komisja/<uuid:id>/weryfikuj', methods=['GET', 'POST'])
 @roles_required(UserRole.ADMIN, UserRole.KOMISJA)
+@limiter.limit("60 per hour", methods=['POST'])
 def komisja_weryfikuj(id):
     enrollment = _repo_zapisow.znajdz_po_id(id) or abort(404)
 

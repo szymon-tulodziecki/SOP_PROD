@@ -417,7 +417,7 @@ def zapisz_krok2(id):
             dni_str = request.form.get(f'dni_{e.id}', '0')
             try:
                 dni = int(dni_str)
-            except Exception:
+            except (TypeError, ValueError):
                 dni = 0
 
             if dz.strip() and pr.strip():

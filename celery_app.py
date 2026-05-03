@@ -164,7 +164,7 @@ def generate_pdf_dziennik(self, enrollment_id: str) -> dict:
 
     context = build_context(enrollment, 'ZAL_6')
 
-    tex_url = _get_app().config.get('TEX_SERVICE_URL', TEX_SERVICE_URL)
+    tex_url = _get_app().config['TEX_SERVICE_URL']
     try:
         resp = httpx.post(
             f"{tex_url}/generuj",

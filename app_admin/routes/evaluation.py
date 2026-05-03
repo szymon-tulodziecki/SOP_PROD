@@ -232,7 +232,9 @@ def generuj_protokol(id):
                 f"attachment; filename=\"{ascii_fallback}\"; filename*=UTF-8''{utf8_encoded}"
             )
             return pdf_response
-        flash(f'Błąd generowania protokołu: {response.text[:200]}', 'danger')
-    except Exception as exc:
-        flash(f'Błąd połączenia z tex-service: {str(exc)}', 'danger')
+        current_app.logger.warning("tex-service returned %s for protokol %s", response.status_code, id)
+        flash('Błąd generowania protokołu. Spróbuj ponownie później.', 'danger')
+    except httpx.HTTPError as exc:
+        current_app.logger.error("tex-service unreachable for protokol %s: %s", id, exc)
+        flash('Błąd połączenia z serwisem PDF. Spróbuj ponownie później.', 'danger')
     return redirect(url_for(GRADE_FORM_ENDPOINT, id=id))

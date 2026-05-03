@@ -110,9 +110,11 @@ def pdf_dziennik(id):
             as_attachment=True,
             download_name=filename,
         )
-    except EnvironmentError:
+    except OSError:
         abort(503)
     except Exception:
+        from flask import current_app
+        current_app.logger.exception("PDF dziennik generation failed for %s", id)
         abort(500)
 
 

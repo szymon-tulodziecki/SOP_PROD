@@ -14,7 +14,7 @@ from werkzeug.security import generate_password_hash
 
 from core.modele import (User, Student, Internship, InternshipEnrollment, InternshipSchedule, LearningOutcome,
                     UserRole, InternshipStatus, EnrollmentStatus, InternshipPath, UploadedDocument, Company, EventType)
-from core.extensions import db
+from core.extensions import db, limiter
 from core.uslugi.internships import UslugaPraktyk
 _serwis_praktyk = UslugaPraktyk()
 from core.autoryzacja import roles_required
@@ -117,7 +117,7 @@ def nowa_praktyka():
         academic_year = (form.academic_year.data or '').strip()
         try:
             required_hours = int(form.required_hours.data)
-        except Exception:
+        except (TypeError, ValueError):
             flash('Wymiar godzin musi być liczbą całkowitą.', 'danger')
             return render_template('zarzadzanie/formularz_praktyki.html', form=form)
         p = Internship(
@@ -284,6 +284,7 @@ def moje_zgloszenia():
 
 @zarzadzanie_bp.route('/praktyki/<uuid:id>/usun', methods=['POST'])
 @roles_required(UserRole.ADMIN)
+@limiter.limit("30 per hour")
 def usun_praktyke(id):
     from datetime import datetime, timezone
     p    = _repo_praktyk.znajdz_po_id(id) or abort(404)

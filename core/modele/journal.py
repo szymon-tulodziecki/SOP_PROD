@@ -66,6 +66,10 @@ class JournalEntry(db.Model):
 
     learning_outcomes = db.relationship('LearningOutcome', secondary=entry_outcomes, lazy='subquery')
 
+    __table_args__ = (
+        db.UniqueConstraint('enrollment_id', 'entry_date', name='uq_journal_entry_enrollment_date'),
+    )
+
     # Backward-compat shims
     @property
     def zapis_id(self):

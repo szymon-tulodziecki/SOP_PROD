@@ -1,5 +1,10 @@
-﻿from flask import Flask
+﻿import logging
+import os
+
+from flask import Flask
 from jinja2 import select_autoescape
+from sqlalchemy.exc import SQLAlchemyError
+
 from core.extensions import db, login_manager, csrf, limiter
 from core.error_handlers import register_error_handlers
 from app_student.config import CONFIGURATION_MAP
@@ -43,8 +48,8 @@ def _build_enrollment_context() -> dict:
                 EnrollmentStatus.REJECTED,
             ])
             requires_attention = _check_enrollment_requires_action(zapisy_do_sprawdzenia)
-    except Exception:
-        pass
+    except SQLAlchemyError as exc:
+        logging.getLogger(__name__).warning("inject_enrollment_context error: %s", exc)
     return {
         'active_enrollment_info': info,
         'nav_requires_attention': requires_attention,
@@ -68,8 +73,12 @@ def create_app():
     app.jinja_options.update({
         'autoescape': select_autoescape(['html', 'xml'])
     })
-    env = __import__('os').environ.get('FLASK_ENV', 'development')
+    env = os.environ.get('FLASK_ENV', 'development')
     app.config.from_object(CONFIGURATION_MAP.get(env, CONFIGURATION_MAP['default']))
+
+    @app.route('/health', methods=['GET'])
+    def health():
+        return {'status': 'ok'}, 200
 
     db.init_app(app)
     login_manager.init_app(app)

@@ -37,12 +37,18 @@ def create_app():
         file_handler.setFormatter(formatter)
         app.logger.addHandler(file_handler)
         app.logger.setLevel(logging.INFO)
-    except Exception:
-        pass
+    except OSError as exc:
+        # Logs directory may be read-only in containerized environments;
+        # fall back to stderr-only logging.
+        logging.getLogger(__name__).warning("Cannot configure file logging: %s", exc)
 
     from app_admin.config import CONFIGURATION_MAP
     env = os.environ.get('FLASK_ENV', 'development')
     app.config.from_object(CONFIGURATION_MAP.get(env, CONFIGURATION_MAP['default']))
+
+    @app.route('/health', methods=['GET'])
+    def health():
+        return {'status': 'ok'}, 200
 
     db.init_app(app)
     login_manager.init_app(app)

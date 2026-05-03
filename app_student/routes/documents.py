@@ -76,8 +76,9 @@ def pobierz_staly(doc_key):
             pdf_response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
             return pdf_response
         flash('Błąd generowania dokumentu.', 'error')
-    except Exception as e:
-        flash(f'Błąd połączenia z serwisem PDF: {str(e)}', 'error')
+    except httpx.HTTPError as exc:
+        logger.error("tex-service unreachable for static doc %s: %s", doc_key, exc)
+        flash('Błąd połączenia z serwisem PDF. Spróbuj ponownie później.', 'error')
     return redirect(url_for('documents.my_documents'))
 
 
@@ -121,9 +122,11 @@ def download_dynamic(enrollment_id, doc_type):
                 f"attachment; filename=\"{ascii_fallback}\"; filename*=UTF-8''{utf8_filename}"
             )
             return pdf_response
-        flash(f'Błąd generowania dokumentu: {response.text[:200]}', 'error')
-    except Exception as e:
-        flash(f'Błąd połączenia z serwisem PDF: {str(e)}', 'error')
+        logger.warning("tex-service returned %s for doc %s", response.status_code, doc_type)
+        flash('Błąd generowania dokumentu. Spróbuj ponownie później.', 'error')
+    except httpx.HTTPError as exc:
+        logger.error("tex-service unreachable for doc %s: %s", doc_type, exc)
+        flash('Błąd połączenia z serwisem PDF. Spróbuj ponownie później.', 'error')
     return redirect(url_for('documents.my_documents'))
 
 
@@ -172,6 +175,9 @@ def generuj(doc_type: str):
             as_attachment=True,
             download_name=filename,
         )
-    except Exception as e:
-        logger.error("Błąd krytyczny generowania %s: %s", doc_type, e, exc_info=True)
-        return jsonify({'error': str(e)}), 500
+    except httpx.HTTPError as exc:
+        logger.error("tex-service unreachable for %s: %s", doc_type, exc)
+        return jsonify({'error': 'Serwis PDF jest niedostępny.'}), 502
+    except Exception:
+        logger.exception("Nieoczekiwany błąd generowania %s", doc_type)
+        return jsonify({'error': 'Wewnętrzny błąd serwera.'}), 500

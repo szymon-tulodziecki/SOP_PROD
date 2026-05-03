@@ -5,7 +5,7 @@ from wtforms import TextAreaField
 from wtforms.validators import Optional
 
 from core.modele import (InternshipEnrollment, UserRole, EnrollmentStatus)
-from core.extensions import db
+from core.extensions import db, limiter
 from core.uslugi.internships import UslugaPraktyk
 _serwis_praktyk = UslugaPraktyk()
 from core.autoryzacja import roles_required
@@ -35,6 +35,7 @@ def dyrektor_lista():
 
 @zarzadzanie_bp.route('/dyrektor/<uuid:id>/decyzja', methods=['GET', 'POST'])
 @roles_required(UserRole.ADMIN, UserRole.DYREKTOR)
+@limiter.limit("60 per hour", methods=['POST'])
 def dyrektor_decyzja(id):
     enrollment = _repo_zapisow.znajdz_po_id(id) or abort(404)
 

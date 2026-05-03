@@ -17,11 +17,11 @@ Projekt składa się z kilku serwisów uruchamianych przez Docker Compose:
 
 | Serwis | Port (host) | Opis |
 |--------|-------------|------|
-| `admin` | 5000 | Panel administracyjny (UOPZ, komisja, dziekan) — Flask |
-| `student` | 5001 | Panel studenta — Flask |
+| `admin` | 8080 | Panel administracyjny (UOPZ, komisja, dyrektor) — Flask |
+| `student` | 8081 | Panel studenta — Flask |
 | `tex-service` | — (wewn.) | Mikroserwis kompilujący szablony LaTeX do PDF (LuaLaTeX) |
 | `fileserver` | — (wewn.) | Szyfrowany magazyn plików z kluczem API |
-| `celery-worker` | — (wewn.) | Przetwarzanie zadań w tle (PDF, maile) |
+| `celery-worker` | — (wewn.) | Przetwarzanie zadań w tle (PDF i zadania konserwacyjne) |
 | `celery-beat` | — (wewn.) | Harmonogram zadań cyklicznych |
 | `db` | — (wewn.) | PostgreSQL 16 |
 | `redis` | — (wewn.) | Broker Celery + cache |
@@ -38,10 +38,13 @@ Wymagania: Docker Desktop (Windows/macOS) lub Docker Engine + Compose plugin (Li
    ```bash
    cp .env.example .env
    ```
-   Wygeneruj losowe wartości dla `SECRET_KEY`, `FILE_ENCRYPTION_KEY`
-   (klucz Fernet, 32 bajty base64) oraz `FILESERVER_API_KEY`.
+   Uzupełnij podstawowe wartości `POSTGRES_USER`, `POSTGRES_DB` i `FLASK_ENV`.
+   Sekrety używane przez Compose są czytane z plików w katalogu `secrets/`.
+   Wygeneruj losowe wartości dla `secret_key.txt`, `file_encryption_key.txt`
+   (klucz Fernet, 32 bajty base64), `fileserver_api_key.txt` oraz
+   `postgres_password.txt`.
    Uzupełnij poświadczenia Azure AD (`AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`,
-   `AZURE_TENANT_ID`).
+   `AZURE_TENANT_ID`) w odpowiadających im plikach sekretów.
 
 2. Zbuduj i uruchom:
    ```bash
@@ -50,8 +53,8 @@ Wymagania: Docker Desktop (Windows/macOS) lub Docker Engine + Compose plugin (Li
    ```
 
 3. Aplikacje będą dostępne pod adresami:
-   - panel administracyjny — http://localhost:5000
-   - panel studenta — http://localhost:5001
+   - panel administracyjny — http://localhost:8080
+   - panel studenta — http://localhost:8081
 
 Schemat bazy inicjalizowany jest przy pierwszym starcie z pliku
 `database/init.sql` (mapowanego do `/docker-entrypoint-initdb.d/`).
@@ -64,16 +67,20 @@ docker compose build --no-cache
 docker compose up -d
 ```
 
-## Zmienne środowiskowe
+## Zmienne środowiskowe i sekrety
 
-Minimalna lista (pełna w `.env.example`):
+Minimalna lista zmiennych konfiguracyjnych znajduje się w `.env.example`.
+Wrażliwe wartości w `docker-compose.yml` są podawane przez pliki sekretów
+z katalogu `secrets/`.
 
-- `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` — konto bazy.
-- `SECRET_KEY` — klucz sesji Flask.
-- `FILE_ENCRYPTION_KEY` — klucz Fernet do szyfrowania plików w `fileserver`.
-- `FILESERVER_API_KEY` — klucz uwierzytelniający wywołania do `fileserver`.
-- `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `AZURE_TENANT_ID` — MSAL / SSO.
-- `FLASK_ENV` — `production` / `development` / `testing`.
+- `POSTGRES_USER`, `POSTGRES_DB`, `POSTGRES_HOST`, `POSTGRES_PORT` — parametry bazy.
+- `FLASK_ENV` — `production`, `development` albo `testing`.
+- `TEX_SERVICE_URL`, `FILESERVER_URL` — adresy usług w sieci Docker.
+- `postgres_password.txt` — hasło bazy PostgreSQL.
+- `secret_key.txt` — klucz sesji Flask.
+- `file_encryption_key.txt` — klucz Fernet do szyfrowania plików przed zapisem w `fileserver`.
+- `fileserver_api_key.txt` — klucz uwierzytelniający wywołania do `fileserver`.
+- `azure_client_id.txt`, `azure_client_secret.txt`, `azure_tenant_id.txt` — MSAL / Microsoft Entra ID.
 
 Pliku `.env` nigdy nie commituj.
 
@@ -95,35 +102,28 @@ Pliku `.env` nigdy nie commituj.
 │   └── szyfrowanie.py # Fernet wrapper
 ├── tex_service/       # Mikroserwis LaTeX → PDF
 │   └── templates/     # Szablony .tex.j2 załączników (ZAL_1…ZAL_9, ZAL_4B itd.)
-├── fileserver/        # Szyfrowany magazyn plików (Flask + Fernet)
+├── fileserver/        # Wewnętrzny magazyn zaszyfrowanych plików (Flask)
 ├── celery_worker/     # Dockerfile workera Celery
 ├── celery_app.py      # Konfiguracja Celery i zadania w tle
 ├── database/
 │   └── init.sql       # Schemat bazy ładowany przy pierwszym starcie
 ├── docker-compose.yml
-├── .env.example
-└── tests/             # Testy e2e (Playwright) — nie wchodzą w obraz produkcyjny
+└── .env.example
 ```
 
 ## Modele domenowe (skrót)
 
-- **User** — użytkownicy z rolami `ADMIN`, `UOPZ`, `COMMISSION`, `DEAN`, `SUPERVISOR`, `STUDENT`.
+- **User** — użytkownicy z rolami `ADMIN`, `UOPZ`, `KOMISJA`, `DYREKTOR`, `STUDENT`.
 - **Enrollment (Zapis)** — zgłoszenie studenta na praktykę; maszyna stanów:
   `PENDING → AWAITING_APPROVAL → IN_PROGRESS → COMPLETED`,
   dla ścieżek „praca/staż" i „działalność gospodarcza" dochodzą stany
-  `COMMISSION_REVIEW → DEAN_APPROVAL`.
+  `COMMISSION_REVIEW → DIRECTOR_APPROVAL`.
 - **JournalEntry** — wpisy w dzienniku praktyk.
 - **Evaluation / LearningOutcomeResult** — oceny efektów uczenia się
   (`ACHIEVED`, `PARTIALLY_ACHIEVED`, `NOT_ACHIEVED`).
-- **Document** — dynamicznie generowane załączniki (ZAL_1 … ZAL_9, ZAL_2A, ZAL_4A, ZAL_4B, ZAL_7A)
-  w zależności od `path_type` (`STANDARD`, `EMPLOYMENT`, `OWN_BUSINESS`).
-
-## Testy e2e
-
-Testy end-to-end w `tests/` używają Playwrighta i osobnej nakładki Compose
-(`docker-compose.test.yml` + `tests/seed_test.sql`). Katalog `tests/` nie
-powinien trafiać do obrazów produkcyjnych. Artefakty (`test-results/`,
-`playwright-report/`, `node_modules/`) są ignorowane przez `.gitignore`.
+- **UploadedDocument / DocumentAuditLog** — przesłane pliki studentów i audyt operacji na dokumentach.
+- **Dokumenty PDF** — dynamicznie generowane załączniki (ZAL_1 … ZAL_9, ZAL_2A, ZAL_4A, ZAL_4B, ZAL_7A)
+  dobierane przez `core.uslugi.documents` według `path_type` (`STANDARD`, `EMPLOYMENT`, `OWN_BUSINESS`).
 
 ## Licencja
 

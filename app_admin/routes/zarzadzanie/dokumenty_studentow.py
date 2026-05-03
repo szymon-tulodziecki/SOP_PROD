@@ -155,9 +155,9 @@ def dokumenty_pobierz(zapis_id, typ):
             enrollment.student.last_name or 'student',
         )
         return pdf_response
-    except Exception:
-        logger.exception("Błąd generowania %s dla %s", typ, zapis_id)
-        abort(500)
+    except httpx.HTTPError as exc:
+        logger.error("tex-service unreachable for %s/%s: %s", typ, zapis_id, exc)
+        abort(503)
 
 
 @zarzadzanie_bp.route('/dokumenty/staly/<klucz>', methods=['GET'])
@@ -180,6 +180,6 @@ def dokumenty_pobierz_staly(klucz):
         pdf_response.headers['Content-Type'] = 'application/pdf'
         pdf_response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
         return pdf_response
-    except Exception:
-        logger.exception("Błąd pobierania stałego dokumentu %s", klucz)
-        abort(500)
+    except httpx.HTTPError as exc:
+        logger.error("tex-service unreachable for static doc %s: %s", klucz, exc)
+        abort(503)
