@@ -465,5 +465,4 @@ secret_key
 Żaden sekret nie pojawia się jako wartość w `docker-stack.yml` — tylko nazwa referencji.
 Zmienne środowiskowe (nie-sekretne) są w blokach `environment:` w `docker-stack.yml`
 i mogą być commitowane do repozytorium.
-#   S O P _ P R O D  
- 
+#
