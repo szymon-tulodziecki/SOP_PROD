@@ -38,7 +38,7 @@
           >
         </div>
         <label for="status" class="sr-only">Filtruj po statusie</label>
-        <select name="status" id="status" class="filtr-select" onchange="this.form.submit()">
+        <select name="status" id="status" class="filtr-select" data-autosubmit>
           <option value="wszystkie" {% if request.args.get('status', 'wszystkie') == 'wszystkie' %}selected{% endif %}>Wszystkie</option>
           <option value="aktywne" {% if request.args.get('status') == 'aktywne' %}selected{% endif %}>Tylko aktywne</option>
           <option value="nieaktywne" {% if request.args.get('status') == 'nieaktywne' %}selected{% endif %}>Tylko nieaktywne</option>
@@ -105,7 +105,7 @@
                   {% set text = 'dezaktywować' if company.is_active else 'aktywować' %}
                   <button type="submit"
                           class="przycisk {% if company.is_active %}przycisk--ostrzezenie{% else %}przycisk--drugorzedny{% endif %} przycisk--maly"
-                          onclick="return confirm('Czy na pewno chcesz {{ text }} firmę?')">
+                          data-confirm="Czy na pewno chcesz {{ text }} firmę?">
                     {{ 'Dezaktywuj' if company.is_active else 'Aktywuj' }}
                   </button>
                 </form>
@@ -114,7 +114,7 @@
                   {{ csrf_form.hidden_tag() }}
                   <button type="submit"
                           class="przycisk przycisk--niebezpieczny przycisk--maly"
-                          onclick="return confirm('Czy na pewno chcesz trwale usunąć firmę {{ company.name }}? Tej operacji nie można cofnąć.')">
+                          data-confirm="Czy na pewno chcesz trwale usunąć firmę {{ company.name }}? Tej operacji nie można cofnąć.">
                     Usuń
                   </button>
                 </form>

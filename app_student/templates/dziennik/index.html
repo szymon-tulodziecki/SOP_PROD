@@ -86,7 +86,7 @@
         <form class="u-csp-006" method="POST" action="{{ url_for('internships.zakoncz_praktyke', id=zapis.id) }}">
           {{ csrf_form.hidden_tag() }}
           <button type="submit" class="przycisk przycisk--glowny"
-                  onclick="return confirm('Czy na pewno chcesz oznaczyć praktykę jako zakończoną? Po zakończeniu zostaną udostępnione dokumenty końcowe.')">
+                  data-confirm="Czy na pewno chcesz oznaczyć praktykę jako zakończoną? Po zakończeniu zostaną udostępnione dokumenty końcowe.">
             Zakończ praktykę
           </button>
         </form>
@@ -130,8 +130,8 @@
             <td class="u-csp-193">{{ entry.hours_count }} h</td>
             <td class="u-csp-301">
               {% if entry.description | length > 120 %}
-                <span class="opis-skrot">{{ entry.description[:120] }}&hellip; <button type="button" class="btn-rozwin" onclick="expandDescription(this)">Rozwiń</button></span>
-                <span class="opis-pelny u-csp-094">{{ entry.description }} <button type="button" class="btn-rozwin" onclick="collapseDescription(this)">Zwiń</button></span>
+                <span class="opis-skrot">{{ entry.description[:120] }}&hellip; <button type="button" class="btn-rozwin">Rozwiń</button></span>
+                <span class="opis-pelny u-csp-094">{{ entry.description }} <button type="button" class="btn-rozwin">Zwiń</button></span>
               {% else %}
                 {{ entry.description }}
               {% endif %}
@@ -148,7 +148,7 @@
               <form class="u-csp-006" method="POST" action="{{ url_for('logbook.usun_wpis', wpis_id=entry.id) }}">
                 {{ csrf_form.hidden_tag() }}
                 <button type="submit" class="przycisk przycisk--maly przycisk--niebezpieczny"
-                        onclick="return confirm('Usunąć ten wpis?')">Usuń</button>
+                        data-confirm="Usunąć ten wpis?">Usuń</button>
               </form>
             </td>
           </tr>
@@ -162,18 +162,4 @@
   </div>
 
 {% endif %}
-<script>
-function expandDescription(btn) {
-  const skrot = btn.closest('.description-skrot');
-  skrot.style.display = 'none';
-  skrot.nextElementSibling.classList.remove('u-csp-094');
-  skrot.nextElementSibling.style.display = '';
-}
-function collapseDescription(btn) {
-  const pelny = btn.closest('.description-pelny');
-  pelny.classList.add('u-csp-094');
-  pelny.style.display = 'none';
-  pelny.previousElementSibling.style.display = '';
-}
-</script>
 {% endblock %}

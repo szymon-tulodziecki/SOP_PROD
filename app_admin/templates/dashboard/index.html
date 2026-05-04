@@ -110,7 +110,7 @@
                 {% if z.is_pending %}
                 <form class="u-csp-006" method="POST" action="{{ url_for('zarzadzanie.potwierdz_zapis', id=z.id) }}">
                   {{ csrf_form.hidden_tag() }}
-                  <button type="submit" class="przycisk przycisk--drugorzedny przycisk--maly" onclick="return confirm('Potwierdzić ten zapis?')">Zatwierdź</button>
+                  <button type="submit" class="przycisk przycisk--drugorzedny przycisk--maly" data-confirm="Potwierdzić ten zapis?">Zatwierdź</button>
                 </form>
                 {% endif %}
               </td>

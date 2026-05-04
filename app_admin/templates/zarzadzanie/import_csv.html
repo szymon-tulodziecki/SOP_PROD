@@ -23,7 +23,7 @@
           </label>
           <input class="u-csp-243" type="file" id="file" name="file" accept=".csv" required
 
-                 onchange="document.getElementById('file-label').textContent = this.files[0]?.name || 'Wybierz plik CSV'">
+                 data-file-label="file-label">
           {% if form.file.errors %}
             <span class="pole-formularza__blad" role="alert">{{ form.file.errors[0] }}</span>
           {% endif %}

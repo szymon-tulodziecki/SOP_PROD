@@ -1,4 +1,4 @@
-"""core/modele/uzytkownicy.py
+﻿"""core/modele/uzytkownicy.py
 
 Domain models: System users.
 Joined Table Inheritance (JTI): shared `users` table extended by
@@ -61,7 +61,6 @@ class User(UserMixin, db.Model):
 
     def __repr__(self) -> str:
         return f'<User {self.email} ({self.role})>'
-
 
 # ── JTI subclasses ────────────────────────────────────────────────────────────
 

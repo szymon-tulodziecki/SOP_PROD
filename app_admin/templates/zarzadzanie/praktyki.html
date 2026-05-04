@@ -50,7 +50,7 @@
                 {{ csrf_form.hidden_tag() }}
                 <button type="submit"
                         class="przycisk {% if p.status.value == 'ACTIVE' %}przycisk--ostrzezenie{% else %}przycisk--drugorzedny{% endif %} przycisk--maly"
-                        onclick="return confirm('Zmienić status praktyki?')">
+                        data-confirm="Zmienić status praktyki?">
                   {{ 'Dezaktywuj' if p.status.value == 'ACTIVE' else 'Aktywuj' }}
                 </button>
               </form>
@@ -60,7 +60,7 @@
                 {{ csrf_form.hidden_tag() }}
                 <button type="submit"
                         class="przycisk przycisk--niebezpieczny przycisk--maly"
-                        onclick="return confirm('UWAGA: Czy na pewno chcesz trwale usunąć praktykę {{ p.academic_year }} ({{ p.semester_label }})?\n\nUsuną się wszystkie zapisy studentów i dokumenty. Tej operacji nie można cofnąć!')">
+                        data-confirm="UWAGA: Czy na pewno chcesz trwale usunąć praktykę {{ p.academic_year }} ({{ p.semester_label }})? Usuną się wszystkie zapisy studentów i dokumenty. Tej operacji nie można cofnąć!">
                   Usuń
                 </button>
               </form>

@@ -77,7 +77,7 @@
               <form class="u-csp-006" method="POST" action="{{ url_for('internships.zakoncz_praktyke', id=zapis_info.id) }}">
                 {{ csrf_form.hidden_tag() }}
                 <button type="submit" class="przycisk przycisk--maly przycisk--glowny"
-                        onclick="return confirm('Czy na pewno chcesz oznaczyć praktykę jako zakończoną? Po zakończeniu zostaną udostępnione dokumenty końcowe.')">
+                        data-confirm="Czy na pewno chcesz oznaczyć praktykę jako zakończoną? Po zakończeniu zostaną udostępnione dokumenty końcowe.">
                   Zakończ praktykę
                 </button>
               </form>

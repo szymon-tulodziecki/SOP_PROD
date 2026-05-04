@@ -1,8 +1,15 @@
-﻿(function () {
+(function () {
   document.addEventListener('click', (event) => {
     const dismissButton = event.target.closest('[data-dismiss-flash]');
     if (dismissButton) {
       dismissButton.closest('.komunikat')?.remove();
+      return;
+    }
+
+    const confirmButton = event.target.closest('[data-confirm]');
+    if (confirmButton && !confirm(confirmButton.dataset.confirm)) {
+      event.preventDefault();
+      event.stopPropagation();
       return;
     }
 
@@ -35,6 +42,20 @@
     if (submitButton) {
       const formId = submitButton.dataset.submitForm;
       document.getElementById(formId)?.submit();
+    }
+  });
+
+  document.addEventListener('change', (event) => {
+    if (event.target.matches('[data-autosubmit]')) {
+      event.target.form?.submit();
+      return;
+    }
+    const labelId = event.target.dataset.fileLabel;
+    if (labelId) {
+      const label = document.getElementById(labelId);
+      if (label) {
+        label.textContent = event.target.files?.[0]?.name || 'Wybierz plik CSV';
+      }
     }
   });
 }());

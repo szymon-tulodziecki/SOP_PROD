@@ -39,7 +39,7 @@
         >
       </div>
       <label for="rola" class="sr-only">Filtruj po roli</label>
-      <select name="rola" id="rola" class="filtr-select" onchange="this.form.submit()">
+      <select name="rola" id="rola" class="filtr-select" data-autosubmit>
         <option value="">Wszystkie role</option>
         <option value="STUDENT" {% if request.args.get('rola') == 'STUDENT' %}selected{% endif %}>Studenci</option>
         <option value="UOPZ"    {% if request.args.get('rola') == 'UOPZ'    %}selected{% endif %}>Opiekunowie uczelniani</option>
@@ -114,7 +114,7 @@
                   <button type="submit"
                           class="przycisk {% if u.is_active %}przycisk--ostrzezenie{% else %}przycisk--drugorzedny{% endif %} przycisk--maly"
                           aria-label="{{ 'Dezaktywuj' if u.is_active else 'Aktywuj' }} konto {{ u.first_name }} {{ u.last_name }}"
-                          onclick="return confirm('Czy na pewno chcesz zmienić status tego konta?')">
+                          data-confirm="Czy na pewno chcesz zmienić status tego konta?">
                     {{ 'Dezaktywuj' if u.is_active else 'Aktywuj' }}
                   </button>
                 </form>
@@ -126,7 +126,7 @@
                   <button type="submit"
                           class="przycisk przycisk--niebezpieczny przycisk--maly"
                           aria-label="Usuń konto {{ u.first_name }} {{ u.last_name }}"
-                          onclick="return confirm('Czy na pewno chcesz trwale usunąć konto {{ u.first_name }} {{ u.last_name }}? Tej operacji nie można cofnąć.')">
+                          data-confirm="Czy na pewno chcesz trwale usunąć konto {{ u.first_name }} {{ u.last_name }}? Tej operacji nie można cofnąć.">
                     Usuń
                   </button>
                 </form>

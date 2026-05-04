@@ -17,16 +17,16 @@
     if (!root) return;
 
     const isPathB = root.dataset.pathB === 'true';
-    const p1 = document.querySelector('[name="sprawdzian_ocena_1"]');
-    const p2 = document.querySelector('[name="sprawdzian_ocena_2"]');
-    const p3 = document.querySelector('[name="sprawdzian_ocena_3"]');
-    const os = document.querySelector('[name="ocena_sprawozdania"]');
-    const ou = document.querySelector('[name="ocena_uopz"]');
-    const oz = document.querySelector('[name="ocena_zopz"]');
+    const p1 = document.querySelector('[name="exam_grade_1"]');
+    const p2 = document.querySelector('[name="exam_grade_2"]');
+    const p3 = document.querySelector('[name="exam_grade_3"]');
+    const os = document.querySelector('[name="report_grade"]');
+    const ou = document.querySelector('[name="supervisor_grade"]');
+    const oz = document.querySelector('[name="workplace_grade"]');
 
     const we = document.getElementById('wynik-e');
     const wk = document.getElementById('wynik-k');
-    const btnZakoncz = document.getElementById('btn-zakoncz');
+    const btnZakoncz = document.getElementById('btn-complete');
     const ostrzezenie = document.getElementById('ostrzezenie-z');
     if (!we || !wk || !btnZakoncz || !ostrzezenie) return;
 
@@ -43,14 +43,14 @@
         ? examGrades.reduce((sum, grade) => sum + grade, 0) / examGrades.length
         : 0;
 
-      we.textContent = examAverage > 0 ? examAverage.toFixed(2) : '-';
+      we.textContent = examAverage > 0 ? examAverage.toFixed(2) : '—';
 
       const canCalculate = isPathB
         ? examAverage > 0 && s > 0
         : examAverage > 0 && s > 0 && u > 0 && z > 0;
 
       if (!canCalculate) {
-        wk.textContent = '-';
+        wk.textContent = '—';
         wk.style.color = 'var(--kolor-glowny)';
         btnZakoncz.disabled = true;
         ostrzezenie.style.display = 'inline-block';
@@ -64,6 +64,12 @@
 
       wk.textContent = finalGrade.toFixed(1);
       wk.style.color = finalGrade >= 3.0 ? 'var(--kolor-sukces)' : 'var(--kolor-blad)';
+      btnZakoncz.disabled = false;
+      ostrzezenie.style.display = 'none';
+    }
+
+    const serverK = wk.textContent.trim();
+    if (serverK !== '—' && serverK !== '') {
       btnZakoncz.disabled = false;
       ostrzezenie.style.display = 'none';
     }
