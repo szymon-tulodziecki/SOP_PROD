@@ -85,6 +85,7 @@ services:
       TEX_SERVICE_URL: http://tex-service:5002
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0
+      ALLOWED_EMAIL_DOMAIN: ans-elblag.pl
     secrets:
       - secret_key
       - postgres_password
@@ -147,6 +148,7 @@ services:
       TEX_SERVICE_URL: http://tex-service:5002
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0
+      ALLOWED_EMAIL_DOMAIN: ans-elblag.pl
     secrets:
       - secret_key
       - postgres_password

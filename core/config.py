@@ -30,6 +30,8 @@ class BaseConfig:
         os.environ.get('REDIS_URL', 'redis://localhost:6379/0'),
     )
 
+    ALLOWED_EMAIL_DOMAIN = os.environ.get('ALLOWED_EMAIL_DOMAIN', 'ans-elblag.pl')
+
     WTF_CSRF_ENABLED = True
     WTF_CSRF_TIME_LIMIT = None
 

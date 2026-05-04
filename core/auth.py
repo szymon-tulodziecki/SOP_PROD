@@ -124,6 +124,16 @@ def _acquire_token(code: str) -> dict | None:
 
 def _resolve_user(ms_email: str, allowed_roles):
     """Return (user, error_message); exactly one element is None."""
+    allowed_domain = current_app.config.get('ALLOWED_EMAIL_DOMAIN')
+    if allowed_domain:
+        email_domain = ms_email.split('@')[-1] if '@' in ms_email else ''
+        if not email_domain.endswith(allowed_domain):
+            current_app.logger.warning(
+                'Login blocked — email domain %s not in allowed domain %s',
+                email_domain, allowed_domain,
+            )
+            return None, 'Logowanie jest dostępne tylko dla kont uczelnianych (@ans-elblag.pl).'
+
     try:
         user = user_repository.find_by_email(ms_email)
     except SQLAlchemyError:
