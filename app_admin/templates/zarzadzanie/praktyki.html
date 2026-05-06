@@ -6,7 +6,7 @@
 <div class="u-flex--gap-05">
   {% if current_user.role and current_user.role.value == 'ADMIN' %}
   <a href="{{ url_for('zarzadzanie.nowa_praktyka') }}" class="przycisk przycisk--glowny">
-    <span aria-hidden="true">+</span> Nowa internship
+    <span aria-hidden="true">+</span> Nowa praktyka
   </a>
   {% endif %}
   <a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
