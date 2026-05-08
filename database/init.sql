@@ -300,6 +300,15 @@ CREATE TABLE process_events (
 CREATE INDEX idx_process_events_enrollment ON process_events (enrollment_id);
 CREATE INDEX idx_process_events_type       ON process_events (enrollment_id, event_type);
 
+-- Indeksy na często filtrowanych kolumnach internship_enrollments
+CREATE INDEX idx_enrollments_student    ON internship_enrollments (student_id);
+CREATE INDEX idx_enrollments_supervisor ON internship_enrollments (supervisor_id);
+CREATE INDEX idx_enrollments_status     ON internship_enrollments (status);
+CREATE INDEX idx_enrollments_internship ON internship_enrollments (internship_id);
+
+-- Indeksy na journal_entries
+CREATE INDEX idx_journal_entries_enrollment ON journal_entries (enrollment_id);
+
 -- ============================================================
 -- 16. Document audit log
 -- ============================================================
@@ -331,6 +340,9 @@ CREATE TABLE uploaded_documents (
     uploaded_by_id    UUID REFERENCES users(id) ON DELETE SET NULL,
     is_deleted        BOOLEAN NOT NULL DEFAULT FALSE
 );
+
+CREATE INDEX idx_uploaded_docs_enrollment ON uploaded_documents (enrollment_id);
+CREATE INDEX idx_uploaded_docs_active     ON uploaded_documents (enrollment_id, is_deleted);
 
 -- ============================================================
 -- 18. Individual internship programs
@@ -402,46 +414,46 @@ FOR EACH ROW EXECUTE FUNCTION update_total_hours();
 
 INSERT INTO users (email, password_hash, first_name, last_name, role, is_active, require_password_change)
 VALUES
-    ('admin@tulodzieckiallgmail.onmicrosoft.com',    '', 'Szymon',    'Tułodziecki', 'ADMIN',    TRUE, FALSE),
-    ('uopz@tulodzieckiallgmail.onmicrosoft.com',     '', 'Piotr',     'Nowak',       'UOPZ',     TRUE, FALSE),
-    ('komisja@tulodzieckiallgmail.onmicrosoft.com',  '', 'Joanna',    'Kamińska',    'KOMISJA',  TRUE, FALSE),
-    ('dyrektor@tulodzieckiallgmail.onmicrosoft.com', '', 'Tomasz',    'Zając',       'DYREKTOR', TRUE, FALSE),
-    ('12345@tulodzieckiallgmail.onmicrosoft.com',    '', 'Katarzyna', 'Kowalczyk',   'STUDENT',  TRUE, FALSE),
-    ('21312@tulodzieckiallgmail.onmicrosoft.com',    '', 'Marek',     'Wiśniewski',  'STUDENT',  TRUE, FALSE),
-    ('21313@tulodzieckiallgmail.onmicrosoft.com',    '', 'Anna',      'Kowalska',    'STUDENT',  TRUE, FALSE)
+    ('admin@ans-elblag.pl',    '', 'Szymon',    'Tułodziecki', 'ADMIN',    TRUE, FALSE),
+    ('uopz@ans-elblag.pl',     '', 'Piotr',     'Nowak',       'UOPZ',     TRUE, FALSE),
+    ('komisja@ans-elblag.pl',  '', 'Joanna',    'Kamińska',    'KOMISJA',  TRUE, FALSE),
+    ('dyrektor@ans-elblag.pl', '', 'Tomasz',    'Zając',       'DYREKTOR', TRUE, FALSE),
+    ('s12345@ans-elblag.pl',   '', 'Katarzyna', 'Kowalczyk',   'STUDENT',  TRUE, FALSE),
+    ('s21312@ans-elblag.pl',   '', 'Marek',     'Wiśniewski',  'STUDENT',  TRUE, FALSE),
+    ('s21313@ans-elblag.pl',   '', 'Anna',      'Kowalska',    'STUDENT',  TRUE, FALSE)
 ON CONFLICT (email) DO NOTHING;
 
 INSERT INTO administrators (id)
-SELECT id FROM users WHERE email = 'admin@tulodzieckiallgmail.onmicrosoft.com'
+SELECT id FROM users WHERE email = 'admin@ans-elblag.pl'
 ON CONFLICT DO NOTHING;
 
 INSERT INTO university_mentors (id)
-SELECT id FROM users WHERE email = 'uopz@tulodzieckiallgmail.onmicrosoft.com'
+SELECT id FROM users WHERE email = 'uopz@ans-elblag.pl'
 ON CONFLICT DO NOTHING;
 
 INSERT INTO komisja_users (id)
-SELECT id FROM users WHERE email = 'komisja@tulodzieckiallgmail.onmicrosoft.com'
+SELECT id FROM users WHERE email = 'komisja@ans-elblag.pl'
 ON CONFLICT DO NOTHING;
 
 INSERT INTO dyrektor_users (id)
-SELECT id FROM users WHERE email = 'dyrektor@tulodzieckiallgmail.onmicrosoft.com'
+SELECT id FROM users WHERE email = 'dyrektor@ans-elblag.pl'
 ON CONFLICT DO NOTHING;
 
 -- Studenci z przypisanym opiekunem UOPZ
 INSERT INTO students (id, album_number, gender, field_of_study, specialization, study_mode, supervisor_id)
 SELECT u.id, '12345', 'F', 'Informatyka', 'Aplikacje sieciowe i mobilne', 'full-time',
-       (SELECT id FROM users WHERE email = 'uopz@tulodzieckiallgmail.onmicrosoft.com')
-FROM users u WHERE u.email = '12345@tulodzieckiallgmail.onmicrosoft.com'
+       (SELECT id FROM users WHERE email = 'uopz@ans-elblag.pl')
+FROM users u WHERE u.email = 's12345@ans-elblag.pl'
 ON CONFLICT DO NOTHING;
 
 INSERT INTO students (id, album_number, gender, field_of_study, specialization, study_mode, supervisor_id)
 SELECT u.id, '21312', 'M', 'Informatyka', 'Aplikacje sieciowe i mobilne', 'full-time',
-       (SELECT id FROM users WHERE email = 'uopz@tulodzieckiallgmail.onmicrosoft.com')
-FROM users u WHERE u.email = '21312@tulodzieckiallgmail.onmicrosoft.com'
+       (SELECT id FROM users WHERE email = 'uopz@ans-elblag.pl')
+FROM users u WHERE u.email = 's21312@ans-elblag.pl'
 ON CONFLICT DO NOTHING;
 
 INSERT INTO students (id, album_number, gender, field_of_study, specialization, study_mode, supervisor_id)
 SELECT u.id, '21313', 'F', 'Informatyka', 'Systemy informatyczne', 'full-time',
-       (SELECT id FROM users WHERE email = 'uopz@tulodzieckiallgmail.onmicrosoft.com')
-FROM users u WHERE u.email = '21313@tulodzieckiallgmail.onmicrosoft.com'
+       (SELECT id FROM users WHERE email = 'uopz@ans-elblag.pl')
+FROM users u WHERE u.email = 's21313@ans-elblag.pl'
 ON CONFLICT DO NOTHING;

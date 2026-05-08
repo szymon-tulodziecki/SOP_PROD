@@ -9,8 +9,7 @@ from flask_login import login_required, current_user
 from core.extensions import db
 import httpx
 from core.models import (Internship, InternshipEnrollment, InternshipStatus, EnrollmentStatus,
-                         InternshipPath, LearningOutcome, InternshipSchedule, Company,
-                         IndividualProgram, DocumentStatus, UploadedDocument,
+                         InternshipPath, InternshipSchedule,
                          WorkplaceDetails, PathJustification)
 from core.models.internships import EventType
 from core.services.workflow import EnrollmentStateMachine, IllegalTransitionError
@@ -39,8 +38,8 @@ _TPL_KR2A           = 'kreator/krok2a_firma.html'
 class FormularzSciezka(FlaskForm):
     """Krok 1: Tylko wybór ścieżki."""
     track_type = SelectField('Ścieżka praktyki', choices=[
-        ('STANDARD',   'A — Standardowa internship'),
-        ('EMPLOYMENT', 'B — Uznanie learning_outcomeów z pracy zawodowej'),
+        ('STANDARD',   'A — Standardowa praktyka zawodowa'),
+        ('EMPLOYMENT', 'B — Uznanie efektów uczenia się z pracy zawodowej'),
     ], validators=[DataRequired(message='Wybierz ścieżkę.')])
 
 
@@ -120,7 +119,7 @@ class FormularzWniosek(FlaskForm):
     pracodawca_adres    = StringField('Adres', validators=[Optional(), Length(max=255)])
     pracodawca_miasto   = StringField('Miasto', validators=[Optional(), Length(max=100)])
     stanowisko          = StringField('Stanowisko / zakres działalności', validators=[DataRequired(message='Podaj stanowisko.'), Length(max=255)])
-    justification        = TextAreaField('Uzasadnienie wniosku', validators=[DataRequired(message='Napisz justification.'), Length(min=500, max=2000, message='Uzasadnienie musi mieć od 500 do 2000 znaków.')])
+    justification        = TextAreaField('Uzasadnienie wniosku', validators=[DataRequired(message='Napisz uzasadnienie.'), Length(min=500, max=2000, message='Uzasadnienie musi mieć od 500 do 2000 znaków.')])
 
 
 # ═══════════════════════════════════════════════════════════
@@ -173,7 +172,7 @@ def kreator_sciezka(id):
 
     if form.validate_on_submit():
         zapis = _get_or_create_zapis(id, istniejacy, odrzucony)
-        zapis.track_type = InternshipPath(form.track_type.data)
+        zapis.path_type = InternshipPath(form.track_type.data)
 
         if form.track_type.data != 'STANDARD':
             _set_employment_subtype(zapis)
@@ -185,7 +184,7 @@ def kreator_sciezka(id):
         return redirect(url_for('internships.kreator_wniosek', enrollment_id=zapis.id))
 
     if istniejacy and request.method == 'GET':
-        form.track_type.data = istniejacy.track_type.value if istniejacy.track_type else 'STANDARD'
+        form.track_type.data = istniejacy.path_type.value if istniejacy.path_type else 'STANDARD'
 
     return render_template('kreator/krok1_sciezka.html', form=form, internship=internship, istniejacy=istniejacy)
 
@@ -251,7 +250,7 @@ def _serialize_companies(companies):
 def kreator_firma(enrollment_id):
     """Krok 2A: Dane zakładu + ZOPZ (ścieżka A)."""
     zapis = _repo_zapisow.znajdz_po_id(enrollment_id)
-    if not zapis or zapis.student_id != current_user.id or zapis.track_type != InternshipPath.STANDARD:
+    if not zapis or zapis.student_id != current_user.id or zapis.path_type != InternshipPath.STANDARD:
         abort(404)
 
     form = CompanyDataForm()
@@ -335,7 +334,7 @@ def kreator_wniosek(enrollment_id):
     zapis = _repo_zapisow.znajdz_po_id(enrollment_id)
     if not zapis or zapis.student_id != current_user.id:
         abort(404)
-    if zapis.track_type == InternshipPath.STANDARD:
+    if zapis.path_type == InternshipPath.STANDARD:
         return redirect(url_for('internships.kreator_firma', enrollment_id=enrollment_id))
 
     form = FormularzWniosek()

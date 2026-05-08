@@ -251,7 +251,7 @@ def create_auth_blueprint(
     def ms_callback():
         return _ms_callback_handler(allowed_roles)
 
-    @auth_bp.route('/wylogowanie', methods=['GET', 'POST'])
+    @auth_bp.route('/wylogowanie', methods=['POST'])
     @login_required
     def wylogowanie():
         logout_user()

@@ -123,12 +123,13 @@ class EnrollmentStateMachine:
 
         Blokada wierszowa w PostgreSQL gwarantuje, że żaden inny proces
         Gunicorn nie zmodyfikuje statusu między odczytem a commitem.
-        Blokada jest utrzymana do końca transakcji (db.session.commit/rollback).
+        Blokada jest utrzymana do końca transakcji — wywołujący musi
+        samodzielnie wywołać db.session.commit() przed wyjściem z bloku.
 
         Użycie jako context manager (zalecane):
             with EnrollmentStateMachine.lock(id) as fsm:
                 fsm.approve_by_committee()
-                db.session.commit()
+                db.session.commit()  # commit PRZED __exit__; rollback przy wyjątku
 
         Użycie bez context managera:
             fsm = EnrollmentStateMachine.lock(id)

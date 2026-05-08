@@ -47,7 +47,6 @@ from core.models.journal import (
 )
 
 from core.models.documents import (
-    DocumentStatus,
     DocumentAuditLog,
     UploadedDocument,
 )
@@ -68,5 +67,5 @@ __all__ = [
     'AssessmentResult', 'LearningOutcome', 'entry_outcomes',
     'JournalEntry', 'OutcomeAssessment', 'CommitteeOutcomeEvaluation',
     # dokumenty
-    'DocumentStatus', 'DocumentAuditLog', 'UploadedDocument',
+    'DocumentAuditLog', 'UploadedDocument',
 ]

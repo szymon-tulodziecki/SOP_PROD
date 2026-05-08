@@ -8,7 +8,7 @@ from flask_login import current_user, login_required
 from flask_wtf import FlaskForm
 
 from core.auth import roles_required
-from core.extensions import db
+from core.extensions import db, limiter
 from core.models import UserRole
 from core.repositories import AssessmentRepository, EnrollmentRepository, OutcomeRepository, UserRepository
 from core.services import AssessmentService as GradingService
@@ -55,6 +55,7 @@ def lista_ocen():
 
 @evaluation_bp.route('/auto-complete', methods=['POST'])
 @roles_required(UserRole.ADMIN)
+@limiter.limit("5 per minute")
 def auto_zakoncz_praktyki():
     """Endpoint for scheduled auto-completion of internships past their end date."""
     result = GradingService.auto_complete_internships()
@@ -63,6 +64,7 @@ def auto_zakoncz_praktyki():
 
 @evaluation_bp.route('/zapis/<uuid:id>/karta_ocen', methods=['GET', 'POST'])
 @roles_required(UserRole.ADMIN, UserRole.UOPZ)
+@limiter.limit("60 per hour", methods=['POST'])
 def evaluate_internship(id):
     enrollment = enrollment_repository.znajdz_po_id(id) or abort(404)
     if not _can_grade(enrollment):

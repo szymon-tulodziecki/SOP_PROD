@@ -24,7 +24,7 @@ class LearningOutcome(db.Model):
     __tablename__ = 'learning_outcomes'
 
     id          = db.Column(db.Integer, primary_key=True)
-    description = db.Column(db.String(500), nullable=False)
+    description = db.Column(db.Text, nullable=False)
 
     @property
     def code(self) -> str:
@@ -80,11 +80,6 @@ class OutcomeAssessment(db.Model):
     notes = db.Column(db.Text, nullable=True)
 
     learning_outcome = db.relationship('LearningOutcome', lazy='select')
-
-
-    @property
-    def learning_outcome(self):
-        return self.learning_outcome
 
 
 class CommitteeOutcomeEvaluation(db.Model):

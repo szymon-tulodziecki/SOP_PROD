@@ -25,7 +25,7 @@ def _get_tex_url() -> str:
 
 
 def _track_name(enrollment) -> str:
-    return enrollment.track_type.value if enrollment.track_type else 'STANDARD'
+    return enrollment.path_type.value if enrollment.path_type else 'STANDARD'
 
 
 def _pdf_content_disposition(base_name: str, last_name: str) -> str:

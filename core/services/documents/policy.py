@@ -218,7 +218,7 @@ def build_flags(zapis) -> dict:
         'enrollment_id':            str(zapis.id),
         'w_trakcie':           w_trakcie,
         'zakonczona':          zakonczona,
-        'oceniona':            zakonczona and (zapis.final_grades and zapis.final_grades.supervisor_grade) is not None,
+        'oceniona':            zakonczona and zapis.final_grades is not None and zapis.final_grades.supervisor_grade is not None,
         'dyrektor_zatwierdził': w_trakcie or zakonczona,
         'po_egzaminie':        zapis.final_grade is not None,
         'harmonogram_count':   db.session.execute(
@@ -231,7 +231,7 @@ def build_flags(zapis) -> dict:
 
 def resolve_documents(zapis) -> list[dict]:
     """Zwraca listę dokumentów dostępnych dla zapisu zgodnie z polityką ścieżki."""
-    path = zapis.track_type.value if zapis.track_type else 'STANDARD'
+    path = zapis.path_type.value if zapis.path_type else 'STANDARD'
     factory = _DOCUMENT_POLICY.get(path, _docs_standard)
     ctx = build_flags(zapis)
     result = []

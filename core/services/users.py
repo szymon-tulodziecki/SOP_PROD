@@ -119,10 +119,12 @@ class UserService:
         last_name = _s((row.get('nazwisko') or row.get('Nazwisko') or '').strip())
         email = (row.get('email') or row.get('Email') or '').strip().lower()
         album_number = (row.get('numer_albumu') or row.get('Nr albumu') or '').strip()
-        gender = (row.get('plec') or row.get('Płeć') or '').strip().upper() or None
+        _gender_raw = (row.get('plec') or row.get('Płeć') or '').strip().upper()
+        gender = 'F' if _gender_raw == 'K' else (_gender_raw or None)
         field_of_study = _s((row.get('kierunek') or row.get('Kierunek') or '').strip()) or None
         specialization = _s((row.get('specialization') or row.get('Specjalność') or '').strip()) or None
-        study_mode = (row.get('tryb_studiow') or row.get('Tryb') or '').strip().lower() or None
+        _study_mode_raw = (row.get('tryb_studiow') or row.get('Tryb') or '').strip().lower()
+        study_mode = {'stacjonarne': 'full-time', 'niestacjonarne': 'part-time'}.get(_study_mode_raw, _study_mode_raw) or None
 
         if not all([first_name, last_name, email, album_number, gender, field_of_study, study_mode]):
             return None, (

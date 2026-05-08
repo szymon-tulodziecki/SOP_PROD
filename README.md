@@ -100,16 +100,23 @@ docker secret ls
 
 ### 3.2 Inicjalizacja bazy danych
 
-Schemat bazy (tabele, indeksy, constrainty) inicjalizowany jest automatycznie przez
-PostgreSQL przy pierwszym starcie z pliku `database/init.sql`.
+W trybie Docker Swarm (`docker-stack.yml`) plik `init.sql` **nie** jest montowany
+automatycznie — schemat trzeba zaaplikować ręcznie po pierwszym starcie bazy.
 
 ```bash
-# Uruchom stos — PostgreSQL zainicjuje schemat automatycznie
+# 1. Uruchom stos (PostgreSQL wystartuje z pustą bazą)
 docker stack deploy -c docker-stack.yml sop
 
-# Zaczekaj ~30 sekund, sprawdź logi bazy
+# 2. Zaczekaj ~30 sekund na gotowość bazy, sprawdź logi
 docker service logs sop_db
+
+# 3. Zaaplikuj schemat (jednorazowo przy pierwszym wdrożeniu)
+docker exec -i $(docker ps -qf name=sop_db) \
+  psql -U ans_admin ans_praktyki < database/init.sql
 ```
+
+> W środowisku deweloperskim (`docker-compose.yml`) `init.sql` jest montowany do
+> `/docker-entrypoint-initdb.d/` i uruchamiany automatycznie przy pierwszym starcie.
 
 Jeśli przenosisz dane z istniejącej bazy:
 
@@ -160,8 +167,8 @@ docker login $REGISTRY
 docker build -t $REGISTRY/sop-admin:$IMAGE_TAG      -f app_admin/Dockerfile      .
 docker build -t $REGISTRY/sop-student:$IMAGE_TAG    -f app_student/Dockerfile    .
 docker build -t $REGISTRY/sop-celery:$IMAGE_TAG     -f celery_worker/Dockerfile  .
-docker build -t $REGISTRY/sop-tex:$IMAGE_TAG        -f documents_tex/Dockerfile  .
-docker build -t $REGISTRY/sop-fileserver:$IMAGE_TAG -f fileserver/Dockerfile     .
+docker build -t $REGISTRY/sop-tex:$IMAGE_TAG        tex_service
+docker build -t $REGISTRY/sop-fileserver:$IMAGE_TAG -f fileserver/Dockerfile     fileserver
 
 # Push do rejestru
 docker push $REGISTRY/sop-admin:$IMAGE_TAG
@@ -465,4 +472,3 @@ secret_key
 Żaden sekret nie pojawia się jako wartość w `docker-stack.yml` — tylko nazwa referencji.
 Zmienne środowiskowe (nie-sekretne) są w blokach `environment:` w `docker-stack.yml`
 i mogą być commitowane do repozytorium.
-#

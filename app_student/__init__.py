@@ -38,7 +38,7 @@ def _build_enrollment_context() -> dict:
             if z:
                 info = {
                     'is_active': True,
-                    'path_type': z.track_type.value if z.track_type else 'STANDARD',
+                    'path_type': z.path_type.value if z.path_type else 'STANDARD',
                     'status': z.status.value,
                 }
             zapisy_do_sprawdzenia = _repo.aktywne_dla_studenta(current_user.id, [

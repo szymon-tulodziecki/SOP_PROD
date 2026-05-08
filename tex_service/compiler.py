@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 TEMPLATES_DIR = Path(__file__).parent / "templates"
 
 COMPILE_TIMEOUT = int(os.environ.get('LATEX_TIMEOUT', '60'))
-COMPILE_PASSES = 1
+COMPILE_PASSES = 2
 
 
 class TexCompilationError(RuntimeError):

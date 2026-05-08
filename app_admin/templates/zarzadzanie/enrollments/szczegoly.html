@@ -1,4 +1,4 @@
-{% extends "layouts/base_panel.html" %}
+﻿{% extends "layouts/base_panel.html" %}
 
 {% block tytul %}Szczegóły zgłoszenia — {{ zapis.student.first_name }} {{ zapis.student.last_name }}{% endblock %}
 {% block naglowek %}Szczegóły zgłoszenia{% endblock %}
@@ -78,7 +78,7 @@
         <div>
           <div class="u-etykieta">Ścieżka</div>
           <div class="u-wartosc">
-            {% if zapis.track_type.value == 'STANDARD' %}A — Standardowa
+            {% if zapis.path_type.value == 'STANDARD' %}A — Standardowa
             {% else %}B — Uznanie efektów{% endif %}
           </div>
         </div>
@@ -119,7 +119,7 @@
             <div class="pole-info">
               <div class="pole-info__etykieta">Ścieżka praktyki</div>
               <div class="pole-info__wartosc">
-                {% if zapis.track_type.value == 'STANDARD' %}A — Standardowa
+                {% if zapis.path_type.value == 'STANDARD' %}A — Standardowa
                 {% else %}B — Uznanie efektów{% endif %}
               </div>
             </div>
@@ -127,7 +127,7 @@
               <div class="pole-info__etykieta">Specjalność</div>
               <div class="pole-info__wartosc">{{ zapis.specialization or '—' }}</div>
             </div>
-            {% if zapis.track_type.value == 'STANDARD' %}
+            {% if zapis.path_type.value == 'STANDARD' %}
             <div class="pole-info">
               <div class="pole-info__etykieta">Termin praktyki</div>
               <div class="pole-info__wartosc">
@@ -157,7 +157,7 @@
         </div>
       </div>
 
-      {% if zapis.track_type.value == 'STANDARD' %}
+      {% if zapis.path_type.value == 'STANDARD' %}
 
       {# Dane zakładu pracy #}
       <div class="karta">

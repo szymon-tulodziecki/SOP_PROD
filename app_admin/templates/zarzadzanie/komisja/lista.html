@@ -1,4 +1,4 @@
-{% extends "layouts/base_panel.html" %}
+﻿{% extends "layouts/base_panel.html" %}
 
 {% block tytul %}Komisja weryfikująca{% endblock %}
 {% block naglowek %}Wnioski do weryfikacji przez komisję{% endblock %}
@@ -48,7 +48,7 @@
                 {% if wniosek.company_city %}
                 <div class="u-csp-146">{{ wniosek.company_city }}</div>
                 {% endif %}
-                {% if wniosek.track_type.value != 'STANDARD' %}
+                {% if wniosek.path_type.value != 'STANDARD' %}
                 <div class="u-csp-148">
                   B — Uznanie efektów
                 </div>

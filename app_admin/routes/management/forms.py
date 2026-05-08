@@ -19,14 +19,14 @@ class StudentForm(FlaskForm):
     album_number = StringField('Nr albumu', validators=[DataRequired(), Length(max=20)])
     gender = SelectField(
         'Płeć',
-        choices=[('', '--- Wybierz ---'), ('M', 'Mężczyzna'), ('K', 'Kobieta')],
+        choices=[('', '--- Wybierz ---'), ('M', 'Mężczyzna'), ('F', 'Kobieta')],
         validators=[Optional()],
     )
     field_of_study = StringField('Kierunek studiów', validators=[Optional(), Length(max=100)])
     specialization = StringField('Specjalność', validators=[Optional(), Length(max=100)])
     study_mode = SelectField(
         'Tryb studiów',
-        choices=[('', '--- Wybierz ---'), ('stacjonarne', 'Stacjonarne'), ('niestacjonarne', 'Niestacjonarne')],
+        choices=[('', '--- Wybierz ---'), ('full-time', 'Stacjonarne'), ('part-time', 'Niestacjonarne')],
         validators=[Optional()],
     )
     supervisor_id = SelectField(UOPZ_LABEL, choices=[], validators=[DataRequired(message='Wybierz opiekuna UOPZ.')])
@@ -64,6 +64,8 @@ class StaffForm(FlaskForm):
     email = StringField('E-mail', validators=[DataRequired(), Email(), Length(max=255)])
     role = SelectField('Rola', choices=[
         ('UOPZ', UOPZ_LABEL),
+        ('KOMISJA', 'Komisja ds. praktyk'),
+        ('DYREKTOR', 'Dyrektor Instytutu'),
         ('ADMIN', 'Administrator'),
     ], validators=[DataRequired()])
 
@@ -91,8 +93,8 @@ class CompanyForm(FlaskForm):
 class InternshipForm(FlaskForm):
     academic_year = StringField('Rok uczelniany', validators=[DataRequired(), Length(max=9)])
     semester = SelectField('Semestr', choices=[
-        ('zimowy', 'Zimowy'),
-        ('letni', 'Letni'),
+        ('winter', 'Zimowy'),
+        ('summer', 'Letni'),
     ], validators=[DataRequired()])
     required_hours = StringField('Wymiar godzin (h)', validators=[DataRequired()])
 

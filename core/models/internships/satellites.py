@@ -82,6 +82,8 @@ class FinalGrades(db.Model):
     workplace_grade               = db.Column(db.Numeric(3, 1), nullable=True)
     supervisor_grade_description  = db.Column(db.Text,          nullable=True)
     workplace_grade_description   = db.Column(db.Text,          nullable=True)
+    supervisor_notes              = db.Column(db.Text,          nullable=True)
+    workplace_notes               = db.Column(db.Text,          nullable=True)
 
     enrollment = db.relationship('InternshipEnrollment', back_populates='final_grades')
 

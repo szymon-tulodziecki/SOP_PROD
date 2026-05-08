@@ -1,7 +1,7 @@
 ﻿import uuid
 
 from flask import abort, flash, redirect, render_template, request, url_for
-from flask_login import current_user, login_required
+from flask_login import current_user
 from flask_wtf import FlaskForm
 
 from core.auth import roles_required
@@ -20,7 +20,7 @@ USER_LIST_ENDPOINT = 'zarzadzanie.lista_uzytkownikow'
 
 
 @zarzadzanie_bp.route('/uzytkownicy', methods=['GET'])
-@login_required
+@roles_required(UserRole.ADMIN)
 def lista_uzytkownikow():
     page = request.args.get('strona', 1, type=int)
     search_query = request.args.get('szukaj', '').strip()

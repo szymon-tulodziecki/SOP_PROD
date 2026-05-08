@@ -58,11 +58,6 @@ def _key() -> bytes:
     return _KEY
 
 
-def _cipher(_nonce: bytes):
-    from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-    return AESGCM(_key())
-
-
 # ── Szyfrowanie (v2 chunked) ──────────────────────────────────────────────────
 
 def encrypt(data: bytes) -> bytes:

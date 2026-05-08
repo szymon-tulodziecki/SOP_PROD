@@ -66,8 +66,8 @@ def _ext_zal2a(ctx: dict, zapis) -> None:
     )
     ctx['schedule'] = [
         {
-            'efekt_kod':  _g(h.learning_outcome, 'kod') if h.learning_outcome else str(h.learning_outcome_id).zfill(2),
-            'efekt_opis': _g(h.learning_outcome, 'opis') if h.learning_outcome else '',
+            'efekt_kod':  h.learning_outcome.code if h.learning_outcome else str(h.learning_outcome_id).zfill(2),
+            'efekt_opis': h.learning_outcome.description if h.learning_outcome else '',
             'dzial':      _g(h, 'department_name', ''),
             'prace':      _g(h, 'example_tasks', ''),
             'dni':        _g(h, 'days_count', 0),
@@ -86,7 +86,7 @@ def _ext_zal6(ctx: dict, zapis) -> None:
         .all()
     )
     ctx.update({
-        'path':          zapis.track_type.value if zapis.track_type else 'STANDARD',
+        'path':          zapis.path_type.value if zapis.path_type else 'STANDARD',
         'data_rozpoczecia': _iso(zapis.start_date),
         'data_zakonczenia': _iso(zapis.end_date),
         'wpisy': [
@@ -137,7 +137,7 @@ def _ext_zal4(ctx: dict, zapis) -> None:
     ctx.update({
         'assessments': [
             {
-                'learning_outcome': {'id': e.id, 'opis': _g(e, 'opis') or _g(e, 'description', ''), 'kod': _g(e, 'kod', '')},
+                'learning_outcome': {'id': e.id, 'opis': e.description, 'kod': e.code},
                 'wynik': _wynik_str(e),
             }
             for e in wszystkie_efekty
@@ -164,8 +164,8 @@ def _ext_zal4a(ctx: dict, zapis) -> None:
     forma = _GENDER_FORMS.get(gender, _GENDER_FORMS_DEFAULT)
     ctx['oceny_komisji'] = [
         {
-            'efekt_kod':  str(e.id).zfill(2),
-            'efekt_opis': _g(e, 'opis') or _g(e, 'description', ''),
+            'efekt_kod':  e.code,
+            'efekt_opis': e.description,
             'wynik':      oceny_map[e.id].result.value if e.id in oceny_map else None,
             'uwagi':      (oceny_map[e.id].notes or '') if e.id in oceny_map else '',
         }
@@ -303,7 +303,7 @@ def build_context(enrollment, document_type: str) -> dict:
         'lacznie_godzin': _g(zapis, 'total_hours_logged', 0),
         'data_wniosku':   '',
         'zapis': {
-            'path':      zapis.track_type.value if zapis.track_type else 'STANDARD',
+            'path':      zapis.path_type.value if zapis.path_type else 'STANDARD',
             'company_display_name':  company_display_name,
             'company_display_address':  company_display_address,
             'company_city': company_city,

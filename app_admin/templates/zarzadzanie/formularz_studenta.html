@@ -58,7 +58,7 @@
           <select id="gender" name="gender" class="filtr-select u-csp-233">
             <option value="" {% if not form.gender.data %}selected{% endif %}>--- Wybierz ---</option>
             <option value="M" {% if form.gender.data == 'M' %}selected{% endif %}>Mężczyzna</option>
-            <option value="K" {% if form.gender.data == 'K' %}selected{% endif %}>Kobieta</option>
+            <option value="F" {% if form.gender.data == 'F' %}selected{% endif %}>Kobieta</option>
           </select>
         </div>
       </div>
@@ -78,8 +78,8 @@
           <label for="study_mode" class="pole-formularza__etykieta">Tryb studiów</label>
           <select id="study_mode" name="study_mode" class="filtr-select u-csp-233">
             <option value="">--- Wybierz ---</option>
-            <option value="stacjonarne" {% if form.study_mode.data == 'stacjonarne' %}selected{% endif %}>Stacjonarne</option>
-            <option value="niestacjonarne" {% if form.study_mode.data == 'niestacjonarne' %}selected{% endif %}>Niestacjonarne</option>
+            <option value="full-time" {% if form.study_mode.data == 'full-time' %}selected{% endif %}>Stacjonarne</option>
+            <option value="part-time" {% if form.study_mode.data == 'part-time' %}selected{% endif %}>Niestacjonarne</option>
           </select>
         </div>
       </div>

@@ -233,43 +233,42 @@ def cleanup_old_pdfs(max_age_hours: int = 24) -> dict:
 def cleanup_deleted_internships() -> dict:
     """Trwale usuwa praktyki oznaczone do usunięcia ponad 7 dni temu."""
     from datetime import datetime, timedelta, timezone
+    from core.extensions import db
     from core.files import _fs_delete
+    from core.models.internships import Internship
+    from core.models import UploadedDocument
+    from sqlalchemy.orm import selectinload
 
     cutoff = datetime.now(timezone.utc) - timedelta(days=7)
     deleted = 0
 
-    with _worker_app.app_context():
-        from core.models.internships import Internship
-        from core.models import UploadedDocument
-        from sqlalchemy.orm import selectinload
+    stare = (db.session.query(Internship)
+             .options(selectinload(Internship.enrollments))
+             .filter(Internship.deleted_at.isnot(None))
+             .filter(Internship.deleted_at <= cutoff)
+             .all())
 
-        stare = (db.session.query(Internship)
-                 .options(selectinload(Internship.enrollments))
-                 .filter(Internship.deleted_at.isnot(None))
-                 .filter(Internship.deleted_at <= cutoff)
-                 .all())
+    if not stare:
+        return {'deleted': 0}
 
-        if not stare:
-            return {'deleted': 0}
+    all_enrollment_ids = [e.id for p in stare for e in p.enrollments]
+    if all_enrollment_ids:
+        all_docs = db.session.execute(
+            db.select(UploadedDocument).where(
+                UploadedDocument.enrollment_id.in_(all_enrollment_ids)
+            )
+        ).scalars().all()
+        for doc in all_docs:
+            try:
+                _fs_delete(doc.file_path)
+            except Exception as exc:
+                logger.warning("Nie udało się usunąć pliku %s: %s", doc.file_path, exc)
+            db.session.delete(doc)
 
-        all_enrollment_ids = [e.id for p in stare for e in p.enrollments]
-        if all_enrollment_ids:
-            all_docs = db.session.execute(
-                db.select(UploadedDocument).where(
-                    UploadedDocument.enrollment_id.in_(all_enrollment_ids)
-                )
-            ).scalars().all()
-            for doc in all_docs:
-                try:
-                    _fs_delete(doc.file_path)
-                except Exception as exc:
-                    logger.warning("Nie udało się usunąć pliku %s: %s", doc.file_path, exc)
-                db.session.delete(doc)
-
-        for p in stare:
-            db.session.delete(p)
-            deleted += 1
-        db.session.commit()
+    for p in stare:
+        db.session.delete(p)
+        deleted += 1
+    db.session.commit()
 
     logger.info("Czyszczenie praktyk: trwale usunięto %d", deleted)
     return {'deleted': deleted}
@@ -293,12 +292,19 @@ def generate_pdf_from_template(self, template_name: str, context: dict,
     import uuid
     from datetime import date
     from pathlib import Path
+    import httpx
 
+    tex_url = _get_app().config['TEX_SERVICE_URL']
     try:
-        from tex_service.compiler import compile_pdf
-        pdf_bytes = compile_pdf(template_name, context)
-    except Exception as exc:
-        logger.warning("LaTeX compile error (retry %d/%d): %s",
+        resp = httpx.post(
+            f"{tex_url}/generuj",
+            json={'template': template_name, 'context': context},
+            timeout=90.0,
+        )
+        resp.raise_for_status()
+        pdf_bytes = resp.content
+    except httpx.HTTPError as exc:
+        logger.warning("Tex-service error (retry %d/%d): %s",
                        self.request.retries, self.max_retries, exc)
         raise self.retry(exc=exc, countdown=10 * (self.request.retries + 1))
 

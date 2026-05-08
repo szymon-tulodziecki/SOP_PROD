@@ -1,4 +1,4 @@
-{% extends "layouts/base_panel.html" %}
+﻿{% extends "layouts/base_panel.html" %}
 
 {% block tytul %}Decyzja Dyrektora Instytutu — {{ zapis.student.first_name }} {{ zapis.student.last_name }}{% endblock %}
 {% block naglowek %}Decyzja Dyrektora Instytutu{% endblock %}
@@ -37,7 +37,7 @@
         <div>
           <div class="u-etykieta">Ścieżka</div>
           <div class="u-wartosc">
-            {% if zapis.track_type.value == 'STANDARD' %}A — Standardowa
+            {% if zapis.path_type.value == 'STANDARD' %}A — Standardowa
             {% else %}B — Uznanie efektów{% endif %}
           </div>
         </div>

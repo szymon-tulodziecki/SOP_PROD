@@ -99,7 +99,7 @@ def _decision_history_entries(enrollment):
 # ── Praktyki ──────────────────────────────────────────────────────────────────
 
 @zarzadzanie_bp.route('/praktyki', methods=['GET'])
-@login_required
+@roles_required(UserRole.ADMIN)
 def lista_praktyk():
     page = request.args.get('strona', 1, type=int)
     praktyki = _repo_praktyk.lista_strona(strona=page)

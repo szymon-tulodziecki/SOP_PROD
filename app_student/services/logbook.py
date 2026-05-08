@@ -16,5 +16,5 @@ class LogbookEntryDTO:
             entry_date=entry.entry_date,
             hours_count=entry.duration_hours,
             description=entry.description,
-            learning_outcomes=list(getattr(entry, 'efekty_uczenia', None) or []),
+            learning_outcomes=list(entry.learning_outcomes),
         )

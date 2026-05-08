@@ -2,7 +2,8 @@
 import io
 from datetime import date
 
-from flask import Blueprint, abort, render_template, request, send_file
+import httpx
+from flask import Blueprint, abort, current_app, render_template, request, send_file
 from flask_login import current_user
 
 from core.models import UserRole
@@ -98,22 +99,26 @@ def pdf_dziennik(id):
     if not _uopz_can_access(enrollment):
         abort(403)
     try:
-        from tex_service.compiler import compile_pdf
         from core.services.documents import build_context
 
         context = build_context(enrollment, 'ZAL_6')
-        pdf_bytes = compile_pdf('zal6_dziennik.tex.j2', context)
+        tex_url = current_app.config['TEX_SERVICE_URL']
+        resp = httpx.post(
+            f"{tex_url}/generuj",
+            json={'template': 'zal6_dziennik.tex.j2', 'context': context},
+            timeout=90.0,
+        )
+        resp.raise_for_status()
         filename = f"dziennik_{enrollment.student.last_name}_{enrollment.student.first_name}.pdf"
         return send_file(
-            io.BytesIO(pdf_bytes),
+            io.BytesIO(resp.content),
             mimetype='application/pdf',
             as_attachment=True,
             download_name=filename,
         )
-    except OSError:
+    except httpx.HTTPError:
         abort(503)
     except Exception:
-        from flask import current_app
         current_app.logger.exception("PDF dziennik generation failed for %s", id)
         abort(500)
 

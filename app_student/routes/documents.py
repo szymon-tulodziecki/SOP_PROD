@@ -47,7 +47,7 @@ def my_documents():
     documents_list = [
         {
             'enrollment': enrollment,
-            'path_type': enrollment.track_type.value if enrollment.track_type else 'STANDARD',
+            'path_type': enrollment.path_type.value if enrollment.path_type else 'STANDARD',
             'docs': resolve_documents(enrollment),
         }
         for enrollment in enrollments

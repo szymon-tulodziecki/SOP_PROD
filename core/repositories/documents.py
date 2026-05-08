@@ -49,7 +49,7 @@ class StudentDocumentRepository:
                              student_id: uuid.UUID) -> list[UploadedDocument]:
         return (
             db.session.query(UploadedDocument)
-            .filter_by(enrollment_id=enrollment_id, uploaded_by_id=student_id)
+            .filter_by(enrollment_id=enrollment_id, uploaded_by_id=student_id, is_deleted=False)
             .order_by(UploadedDocument.uploaded_at.desc())
             .all()
         )
@@ -59,13 +59,13 @@ class StudentDocumentRepository:
 
     def dokumenty_zapisu(self, enrollment_id: uuid.UUID) -> list[UploadedDocument]:
         return (db.session.execute(
-            db.select(UploadedDocument).filter_by(enrollment_id=enrollment_id)
+            db.select(UploadedDocument).filter_by(enrollment_id=enrollment_id, is_deleted=False)
         ).scalars().all())
 
     def dokumenty_zapisu_posortowane(self, enrollment_id: uuid.UUID) -> list[UploadedDocument]:
         return (db.session.execute(
             db.select(UploadedDocument)
-            .filter_by(enrollment_id=enrollment_id)
+            .filter_by(enrollment_id=enrollment_id, is_deleted=False)
             .order_by(UploadedDocument.uploaded_at.desc())
         ).scalars().all())
 

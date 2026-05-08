@@ -3,19 +3,11 @@
 Domain models: Uploaded documents, audit log.
 """
 import uuid
-import enum
 
 from sqlalchemy.dialects.postgresql import UUID
 from core.extensions import db
 
 _ON_SET_NULL = 'SET NULL'
-
-
-class DocumentStatus(enum.Enum):
-    DRAFT = 'DRAFT'
-    AWAITING_APPROVAL = 'AWAITING_APPROVAL'
-    APPROVED = 'APPROVED'
-    REJECTED = 'REJECTED'
 
 
 class DocumentAuditLog(db.Model):

@@ -99,7 +99,7 @@ class InternshipService:
             EnrollmentStatus.AWAITING_APPROVAL: fsm.submit_for_approval,
             EnrollmentStatus.COMMISSION_REVIEW: fsm.submit_to_committee,
             EnrollmentStatus.IN_PROGRESS:       fsm.approve_by_supervisor,
-            EnrollmentStatus.DIRECTOR_APPROVAL:     fsm.approve_by_committee,
+            EnrollmentStatus.DIRECTOR_APPROVAL: lambda: fsm.send_to_director('APPROVED'),
             EnrollmentStatus.COMPLETED:         fsm.complete,
             EnrollmentStatus.REJECTED:          fsm.reject,
         }
@@ -198,16 +198,12 @@ class InternshipService:
         executed_by_id: Optional[uuid.UUID] = None,
     ) -> None:
         from core.services.workflow import EnrollmentStateMachine
-        self._dodaj_zdarzenie(
-            zapis, EventType.COMMITTEE_DECISION,
-            decision=decision, comment=comment,
-            executed_by_id=executed_by_id,
-        )
         fsm = EnrollmentStateMachine(zapis)
         if decision == 'APPROVED':
-            fsm.approve_by_committee()
+            fsm.approve_by_committee(actor_id=executed_by_id, comment=comment or '')
         else:
-            fsm.reject()
+            fsm.reject(actor_id=executed_by_id, comment=comment or '',
+                       event_type=EventType.COMMITTEE_DECISION)
         db.session.commit()
 
     def approve_by_director(
@@ -218,16 +214,12 @@ class InternshipService:
         executed_by_id: Optional[uuid.UUID] = None,
     ) -> None:
         from core.services.workflow import EnrollmentStateMachine
-        self._dodaj_zdarzenie(
-            zapis, EventType.DIRECTOR_DECISION,
-            decision=decision, comment=comment,
-            executed_by_id=executed_by_id,
-        )
         fsm = EnrollmentStateMachine(zapis)
         if decision == 'APPROVED':
-            fsm.approve_by_director()
+            fsm.approve_by_director(actor_id=executed_by_id, comment=comment or '')
         else:
-            fsm.reject()
+            fsm.reject(actor_id=executed_by_id, comment=comment or '',
+                       event_type=EventType.DIRECTOR_DECISION)
         db.session.commit()
 
     def notify_student(

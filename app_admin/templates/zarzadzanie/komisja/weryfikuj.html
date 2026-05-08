@@ -1,4 +1,4 @@
-{% extends "layouts/base_panel.html" %}
+﻿{% extends "layouts/base_panel.html" %}
 
 {% block tytul %}Weryfikacja wniosku — {{ zapis.student.first_name }} {{ zapis.student.last_name }}{% endblock %}
 {% block naglowek %}Weryfikacja wniosku komisji{% endblock %}
@@ -63,7 +63,7 @@
         <div>
           <div class="u-etykieta">Ścieżka</div>
           <div class="u-wartosc">
-            {% if zapis.track_type.value == 'STANDARD' %}A — Standardowa
+            {% if zapis.path_type.value == 'STANDARD' %}A — Standardowa
             {% else %}B — Uznanie efektów{% endif %}
           </div>
         </div>
@@ -103,7 +103,7 @@
             <div class="pole-info">
               <div class="pole-info__etykieta">Ścieżka praktyki</div>
               <div class="pole-info__wartosc">
-                {% if zapis.track_type.value == 'STANDARD' %}A — Standardowa
+                {% if zapis.path_type.value == 'STANDARD' %}A — Standardowa
                 {% else %}B — Uznanie efektów{% endif %}
               </div>
             </div>

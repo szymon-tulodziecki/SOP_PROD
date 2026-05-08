@@ -1,4 +1,4 @@
-{% extends "layouts/base_panel.html" %}
+﻿{% extends "layouts/base_panel.html" %}
 
 {% block tytul %}Moje zgłoszenia - UOPZ{% endblock %}
 {% block naglowek %}Zgłoszenia moich studentów{% endblock %}
@@ -129,7 +129,7 @@
                 {% if z.company_city %}
                 <div class="u-csp-146">{{ z.company_city }}</div>
                 {% endif %}
-                {% if z.track_type.value != 'STANDARD' %}
+                {% if z.path_type.value != 'STANDARD' %}
                 <div class="u-csp-148">
                   Ścieżka B — Uznanie efektów
                 </div>

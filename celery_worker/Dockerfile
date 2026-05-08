@@ -25,3 +25,5 @@ RUN addgroup --system appgroup \
     && chown -R appuser:appgroup /app
 
 USER appuser
+
+CMD ["celery", "-A", "celery_app", "worker", "--loglevel=info", "--concurrency=2"]
