@@ -80,9 +80,15 @@
             </div>
           </td>
           <td>
-            {% set mapa_rol = {'ADMIN': 'admin', 'UOPZ': 'supervisor', 'STUDENT': 'student'} %}
-            {% set klasa = mapa_rol.get(u.role.value, 'student') %}
-            <span class="rola-odznaka rola-odznaka--{{ klasa }}">{{ u.role.value }}</span>
+            {% set mapa_rol = {'ADMIN': 'admin', 'UOPZ': 'supervisor', 'KOMISJA': 'komisja', 'DYREKTOR': 'dyrektor', 'STUDENT': 'student'} %}
+            {% set kolejnosc = ['ADMIN', 'DYREKTOR', 'KOMISJA', 'UOPZ', 'STUDENT'] %}
+            {% set role_wartosci = (u.roles | map(attribute='value') | list) or [u.role.value] %}
+            {% set role_posortowane = kolejnosc | select('in', role_wartosci) | list %}
+            <div class="rola-odznaki">
+              {% for r in role_posortowane %}
+                <span class="rola-odznaka rola-odznaka--{{ mapa_rol.get(r, 'student') }}">{{ r }}</span>
+              {% endfor %}
+            </div>
           </td>
           <td>{{ u.album_number or '—' }}</td>
           <td>
@@ -102,6 +108,12 @@
                 <a href="{{ url_for('zarzadzanie.edytuj_studenta', id=u.id) }}"
                    class="przycisk przycisk--drugorzedny przycisk--maly"
                    aria-label="Edytuj studenta {{ u.first_name }} {{ u.last_name }}">
+                  Edytuj
+                </a>
+              {% else %}
+                <a href="{{ url_for('zarzadzanie.edytuj_pracownika', id=u.id) }}"
+                   class="przycisk przycisk--drugorzedny przycisk--maly"
+                   aria-label="Edytuj pracownika {{ u.first_name }} {{ u.last_name }}">
                   Edytuj
                 </a>
               {% endif %}

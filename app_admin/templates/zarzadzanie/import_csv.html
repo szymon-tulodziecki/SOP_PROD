@@ -53,14 +53,10 @@
 
       <div class="import-csv__format">
         <div class="import-csv__format-tytul">Format pliku CSV</div>
-        <p>
-          Pierwsza linia musi zawierać nagłówki. Wszystkie kolumny są wymagane.
-          Kolumna email musi zawierać konto Microsoft w domenie uczelni. Kodowanie: UTF-8 lub UTF-8 z BOM.
-        </p>
-        <code>imie,nazwisko,email,numer_albumu,plec,kierunek,tryb_studiow
-Jan,Kowalski,54321@ans-elblag.pl,54321,M,Informatyka,full-time
-Anna,Nowak,67890@ans-elblag.pl,67890,K,Informatyka,part-time</code>
-        <p>Akceptowane wartości dla tryb_studiow: <code>full-time</code> (stacjonarne) lub <code>part-time</code> (niestacjonarne).</p>
+        <p>Pierwsza linia musi zawierać nagłówki. Kolumna <code>specjalizacja</code> jest opcjonalna — pozostałe są wymagane.</p>
+        <pre class="import-csv__przyklad"><code>imie,nazwisko,email,numer_albumu,plec,kierunek,specjalizacja,tryb_studiow
+Jan,Kowalski,54321@ans-elblag.pl,54321,M,Informatyka,PBDiOU,stacjonarne
+Anna,Nowak,67890@ans-elblag.pl,67890,K,Informatyka,PBDiOU,niestacjonarne</code></pre>
       </div>
     </div>
   </div>

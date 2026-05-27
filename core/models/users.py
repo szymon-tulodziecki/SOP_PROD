@@ -9,6 +9,7 @@ import enum
 
 from flask_login import UserMixin
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.ext.associationproxy import association_proxy
 
 from core.extensions import db
 
@@ -22,6 +23,29 @@ class UserRole(enum.Enum):
     KOMISJA   = 'KOMISJA'    # Przewodniczący komisji ds. praktyk
     DYREKTOR  = 'DYREKTOR'   # Dyrektor Instytutu — ostateczna akceptacja
     ADMIN     = 'ADMIN'
+
+
+# ─── User ↔ Role association (M:N) ────────────────────────────────────────────
+
+class UserRoleAssoc(db.Model):
+    """Mapowanie wielu ról na jednego użytkownika (pracownicy)."""
+    __tablename__ = 'user_roles'
+
+    user_id = db.Column(
+        UUID(as_uuid=True),
+        db.ForeignKey(_FK_USERS, ondelete='CASCADE'),
+        primary_key=True,
+    )
+    role = db.Column(
+        db.Enum(UserRole, name='user_role', values_callable=lambda e: [x.value for x in e],
+                create_type=False),
+        primary_key=True,
+    )
+
+    def __init__(self, role=None, **kw):
+        super().__init__(**kw)
+        if role is not None:
+            self.role = role if isinstance(role, UserRole) else UserRole[role]
 
 
 # ─── Base model ──────────────────────────────────────────────────────────────────
@@ -51,10 +75,46 @@ class User(UserMixin, db.Model):
     require_password_change  = db.Column(db.Boolean, default=True)
     created_at               = db.Column(db.DateTime, server_default=db.func.now())
 
+    _role_assocs = db.relationship(
+        'UserRoleAssoc',
+        cascade='all, delete-orphan',
+        lazy='joined',
+        collection_class=set,
+    )
+    roles = association_proxy(
+        '_role_assocs', 'role',
+        creator=lambda r: UserRoleAssoc(role=r),
+    )
+
+    def has_role(self, role) -> bool:
+        if role is None:
+            return False
+        if isinstance(role, str):
+            try:
+                role = UserRole[role]
+            except KeyError:
+                return False
+        if role in self.roles:
+            return True
+        return self.role == role
+
+    def has_any_role(self, *roles) -> bool:
+        return any(self.has_role(r) for r in roles)
+
+    @property
+    def is_supervisor_only(self) -> bool:
+        """True gdy widoczność jest ograniczona do własnych studentów (jako UOPZ).
+        ADMIN zawsze widzi wszystko; każdy inny user z rolą UOPZ — tylko swoje."""
+        return self.has_role(UserRole.UOPZ) and not self.has_role(UserRole.ADMIN)
+
     @property
     def role_label(self) -> str:
+        """Human-friendly label, połączone ' + ' dla użytkowników z wieloma rolami."""
         from core.translations import translate_role
-        return translate_role(self.role.value if self.role else '')
+        values = {r.value for r in self.roles} or ({self.role.value} if self.role else set())
+        order = ['ADMIN', 'DYREKTOR', 'KOMISJA', 'UOPZ', 'STUDENT']
+        ordered = sorted(values, key=lambda v: order.index(v) if v in order else 99)
+        return ' + '.join(translate_role(v) for v in ordered if v)
 
     def get_id(self) -> str:
         return str(self.id)
@@ -85,39 +145,21 @@ class Student(User):
         return f'<Student {self.email} album={self.album_number}>'
 
 
+# STI subclasses dla pracowników — istnieją tylko po to, żeby SQLAlchemy
+# miał polymorphic_identity dla każdej wartości w `users.role`. Wiele ról
+# jednocześnie żyje w `user_roles`.
+
 class Administrator(User):
-    """Administrator account."""
-    __tablename__ = 'administrators'
     __mapper_args__ = {'polymorphic_identity': UserRole.ADMIN}
-
-    id = db.Column(UUID(as_uuid=True), db.ForeignKey(_FK_USERS, ondelete='CASCADE'), primary_key=True)
-
-    def __repr__(self) -> str:
-        return f'<Administrator {self.email}>'
 
 
 class UniversityMentor(User):
-    """University Internship Supervisor (UOPZ)."""
-    __tablename__ = 'university_mentors'
     __mapper_args__ = {'polymorphic_identity': UserRole.UOPZ}
-
-    id = db.Column(UUID(as_uuid=True), db.ForeignKey(_FK_USERS, ondelete='CASCADE'), primary_key=True)
-
-    def __repr__(self) -> str:
-        return f'<UniversityMentor {self.email}>'
 
 
 class KomisjaUser(User):
-    """Przewodniczący Komisji ds. praktyk."""
-    __tablename__ = 'komisja_users'
     __mapper_args__ = {'polymorphic_identity': UserRole.KOMISJA}
-
-    id = db.Column(UUID(as_uuid=True), db.ForeignKey(_FK_USERS, ondelete='CASCADE'), primary_key=True)
 
 
 class DyrektorUser(User):
-    """Dyrektor Instytutu."""
-    __tablename__ = 'dyrektor_users'
     __mapper_args__ = {'polymorphic_identity': UserRole.DYREKTOR}
-
-    id = db.Column(UUID(as_uuid=True), db.ForeignKey(_FK_USERS, ondelete='CASCADE'), primary_key=True)

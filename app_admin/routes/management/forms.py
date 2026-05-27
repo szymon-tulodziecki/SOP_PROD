@@ -1,6 +1,7 @@
-﻿from flask_wtf import FlaskForm
+﻿from flask import current_app
+from flask_wtf import FlaskForm
 from flask_wtf.file import FileAllowed, FileField
-from wtforms import SelectField, StringField
+from wtforms import SelectField, SelectMultipleField, StringField, widgets
 from wtforms.validators import DataRequired, Email, Length, Optional, ValidationError
 
 from core.repositories import UserRepository
@@ -10,6 +11,25 @@ user_repository = UserRepository()
 UOPZ_LABEL = 'Opiekun uczelniany (UOPZ)'
 EMAIL_EXISTS_ERROR = 'Konto z tym e-mailem już istnieje.'
 ALBUM_EXISTS_ERROR = 'Student z tym nr albumu już istnieje.'
+
+
+class MultiCheckboxField(SelectMultipleField):
+    """SelectMultipleField wyświetlone jako lista checkboxów."""
+    widget = widgets.ListWidget(prefix_label=False)
+    option_widget = widgets.CheckboxInput()
+
+
+def _validate_university_domain(field):
+    """Wymusza domenę uczelni (z ALLOWED_EMAIL_DOMAIN, lista po przecinku)."""
+    allowed_raw = current_app.config.get('ALLOWED_EMAIL_DOMAIN') or ''
+    allowed = [d.strip().lower() for d in allowed_raw.split(',') if d.strip()]
+    if not allowed:
+        return
+    email = (field.data or '').lower().strip()
+    domain = email.split('@')[-1] if '@' in email else ''
+    if not any(domain == d or domain.endswith('.' + d) for d in allowed):
+        domeny = ', '.join('@' + d for d in allowed)
+        raise ValidationError(f'E-mail musi być w domenie uczelni ({domeny}).')
 
 
 class StudentForm(FlaskForm):
@@ -32,6 +52,7 @@ class StudentForm(FlaskForm):
     supervisor_id = SelectField(UOPZ_LABEL, choices=[], validators=[DataRequired(message='Wybierz opiekuna UOPZ.')])
 
     def validate_email(self, field):
+        _validate_university_domain(field)
         user = user_repository.find_by_email(field.data.lower().strip())
         if user:
             raise ValidationError(EMAIL_EXISTS_ERROR)
@@ -48,6 +69,7 @@ class StudentEditForm(StudentForm):
         self._user_id = user_id
 
     def validate_email(self, field):
+        _validate_university_domain(field)
         user = user_repository.find_by_email(field.data.lower().strip())
         if user and str(user.id) != str(self._user_id):
             raise ValidationError(EMAIL_EXISTS_ERROR)
@@ -62,16 +84,40 @@ class StaffForm(FlaskForm):
     first_name = StringField('Imię', validators=[DataRequired(), Length(max=100)])
     last_name = StringField('Nazwisko', validators=[DataRequired(), Length(max=100)])
     email = StringField('E-mail', validators=[DataRequired(), Email(), Length(max=255)])
-    role = SelectField('Rola', choices=[
-        ('UOPZ', UOPZ_LABEL),
-        ('KOMISJA', 'Komisja ds. praktyk'),
-        ('DYREKTOR', 'Dyrektor Instytutu'),
-        ('ADMIN', 'Administrator'),
-    ], validators=[DataRequired()])
+    roles = MultiCheckboxField(
+        'Role w systemie',
+        choices=[
+            ('UOPZ', UOPZ_LABEL),
+            ('KOMISJA', 'Komisja ds. praktyk'),
+            ('DYREKTOR', 'Dyrektor Instytutu'),
+            ('ADMIN', 'Administrator'),
+        ],
+        validators=[DataRequired(message='Zaznacz co najmniej jedną rolę.')],
+    )
 
     def validate_email(self, field):
+        _validate_university_domain(field)
         user = user_repository.find_by_email(field.data.lower().strip())
         if user:
+            raise ValidationError(EMAIL_EXISTS_ERROR)
+
+    def validate_roles(self, field):
+        selected = set(field.data or [])
+        if 'ADMIN' in selected and len(selected) > 1:
+            raise ValidationError('Rola Administrator nie może być łączona z innymi rolami.')
+        if 'STUDENT' in selected:
+            raise ValidationError('Rola Student nie jest dostępna w tym formularzu.')
+
+
+class StaffEditForm(StaffForm):
+    def __init__(self, user_id=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._user_id = user_id
+
+    def validate_email(self, field):
+        _validate_university_domain(field)
+        user = user_repository.find_by_email(field.data.lower().strip())
+        if user and str(user.id) != str(self._user_id):
             raise ValidationError(EMAIL_EXISTS_ERROR)
 
 

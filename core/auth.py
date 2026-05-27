@@ -83,12 +83,12 @@ def _redirect_clearing_oauth(location: str):
 
 
 def roles_required(*allowed_roles):
-    """Require the current user to have one of the allowed roles."""
+    """Require the current user to have at least one of the allowed roles."""
     def decorator(func):
         @wraps(func)
         @login_required
         def wrapper(*args, **kwargs):
-            if current_user.role not in allowed_roles:
+            if not current_user.has_any_role(*allowed_roles):
                 abort(403)
             return func(*args, **kwargs)
         return wrapper
@@ -126,11 +126,14 @@ def _resolve_user(ms_email: str, allowed_roles):
     """Return (user, error_message); exactly one element is None."""
     allowed_domain = current_app.config.get('ALLOWED_EMAIL_DOMAIN')
     if allowed_domain:
-        email_domain = ms_email.split('@')[-1] if '@' in ms_email else ''
-        if not email_domain.endswith(allowed_domain):
+        # Akceptuje domenę dokładną (pracownicy: @ans-elblag.pl) oraz jej
+        # subdomeny (studenci: @student.ans-elblag.pl). Obsługuje listę po przecinku.
+        allowed = [d.strip().lower() for d in allowed_domain.split(',') if d.strip()]
+        email_domain = ms_email.split('@')[-1].lower() if '@' in ms_email else ''
+        if not any(email_domain == d or email_domain.endswith('.' + d) for d in allowed):
             current_app.logger.warning(
-                'Login blocked — email domain %s not in allowed domain %s',
-                email_domain, allowed_domain,
+                'Login blocked — email domain %s not in allowed domains %s',
+                email_domain, allowed,
             )
             return None, 'Logowanie jest dostępne tylko dla kont uczelnianych (@ans-elblag.pl).'
 
@@ -147,7 +150,7 @@ def _resolve_user(ms_email: str, allowed_roles):
             'Skontaktuj się z administratorem.'
         )
 
-    if allowed_roles and user.role not in allowed_roles:
+    if allowed_roles and not user.has_any_role(*allowed_roles):
         return None, 'Twoje konto nie ma dostępu do tego panelu.'
 
     return user, None

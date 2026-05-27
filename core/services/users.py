@@ -9,7 +9,15 @@ from typing import Optional
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from core.extensions import db
-from core.models.users import Administrator, Student, UniversityMentor, User, UserRole
+from core.models.users import (
+    Administrator,
+    DyrektorUser,
+    KomisjaUser,
+    Student,
+    UniversityMentor,
+    User,
+    UserRole,
+)
 from core.repositories.users import UserRepository
 
 
@@ -54,6 +62,7 @@ class UserService:
             album_number=album_number,
             **student_data,
         )
+        student.roles.add(UserRole.STUDENT)
         self._repo.save(student)
         if commit:
             db.session.commit()
@@ -72,6 +81,50 @@ class UserService:
         self._repo.save(admin)
         db.session.commit()
         return admin
+
+    # Priorytet wyboru głównej roli (JTI discriminator) gdy pracownik ma kilka.
+    _STAFF_ROLE_PRIORITY = (UserRole.ADMIN, UserRole.DYREKTOR, UserRole.KOMISJA, UserRole.UOPZ)
+    _STAFF_JTI_CLASS = {
+        UserRole.ADMIN: Administrator,
+        UserRole.DYREKTOR: DyrektorUser,
+        UserRole.KOMISJA: KomisjaUser,
+        UserRole.UOPZ: UniversityMentor,
+    }
+
+    def create_staff(
+        self,
+        email: str,
+        first_name: str,
+        last_name: str,
+        roles: list[UserRole],
+    ) -> User:
+        """Tworzy konto pracownika z 1+ rolami. ADMIN i STUDENT są wyłączne;
+        UOPZ/KOMISJA/DYREKTOR mogą się łączyć dowolnie."""
+        if not roles:
+            raise ValueError('Musisz wybrać co najmniej jedną rolę.')
+        if UserRole.STUDENT in roles:
+            raise ValueError('Rola STUDENT nie jest dostępna w formularzu pracownika.')
+        if UserRole.ADMIN in roles and len(roles) > 1:
+            raise ValueError('Rola ADMIN nie może być łączona z innymi rolami.')
+        if self._repo.email_exists(email):
+            raise ValueError(f'Konto z adresem {email} już istnieje.')
+
+        primary = next(r for r in self._STAFF_ROLE_PRIORITY if r in roles)
+        cls = self._STAFF_JTI_CLASS[primary]
+        user = cls(
+            email=email,
+            password_hash='',
+            first_name=first_name,
+            last_name=last_name,
+            role=primary,
+            is_active=True,
+            require_password_change=False,
+        )
+        for r in roles:
+            user.roles.add(r)
+        self._repo.save(user)
+        db.session.commit()
+        return user
 
     def create_mentor(self, email: str, password: str, first_name: str, last_name: str) -> UniversityMentor:
         if self._repo.email_exists(email):
@@ -122,7 +175,7 @@ class UserService:
         _gender_raw = (row.get('plec') or row.get('Płeć') or '').strip().upper()
         gender = 'F' if _gender_raw == 'K' else (_gender_raw or None)
         field_of_study = _s((row.get('kierunek') or row.get('Kierunek') or '').strip()) or None
-        specialization = _s((row.get('specialization') or row.get('Specjalność') or '').strip()) or None
+        specialization = _s((row.get('specjalizacja') or row.get('specialization') or row.get('Specjalność') or '').strip()) or None
         _study_mode_raw = (row.get('tryb_studiow') or row.get('Tryb') or '').strip().lower()
         study_mode = {'stacjonarne': 'full-time', 'niestacjonarne': 'part-time'}.get(_study_mode_raw, _study_mode_raw) or None
 

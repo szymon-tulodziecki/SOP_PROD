@@ -11,7 +11,7 @@ from core.repositories import UserRepository
 from core.services import UserService
 
 from . import zarzadzanie_bp
-from .forms import CsvImportForm, StaffForm, StudentEditForm, StudentForm
+from .forms import CsvImportForm, StaffEditForm, StaffForm, StudentEditForm, StudentForm
 
 user_service = UserService()
 user_repository = UserRepository()
@@ -102,26 +102,61 @@ def nowy_pracownik():
     form = StaffForm()
 
     if form.validate_on_submit():
-        user = User(
-            id=uuid.uuid4(),
-            first_name=form.first_name.data.strip(),
-            last_name=form.last_name.data.strip(),
-            email=form.email.data.lower().strip(),
-            role=UserRole[form.role.data],
-            password_hash='',
-            require_password_change=False,
-            is_active=True,
-        )
-        user_repository.save(user)
-        db.session.commit()
+        try:
+            user = user_service.create_staff(
+                email=form.email.data.lower().strip(),
+                first_name=form.first_name.data.strip(),
+                last_name=form.last_name.data.strip(),
+                roles=[UserRole[name] for name in form.roles.data],
+            )
+        except ValueError as exc:
+            flash(str(exc), 'danger')
+            return render_template('zarzadzanie/formularz_pracownika.html', form=form, uzytkownik=None)
+
         flash(
-            f'Konto {user.first_name} {user.last_name} [{user.role.value}] utworzone. '
+            f'Konto {user.first_name} {user.last_name} [{user.role_label}] utworzone. '
             f'Użytkownik może się zalogować przez Microsoft ({user.email}).',
             'success',
         )
         return redirect(url_for(USER_LIST_ENDPOINT))
 
     return render_template('zarzadzanie/formularz_pracownika.html', form=form, uzytkownik=None)
+
+
+@zarzadzanie_bp.route('/uzytkownicy/<uuid:id>/edytuj-pracownika', methods=['GET', 'POST'])
+@roles_required(UserRole.ADMIN)
+def edytuj_pracownika(id):
+    user = user_repository.find_by_id(id) or abort(404)
+    if user.has_role(UserRole.STUDENT):
+        return redirect(url_for('zarzadzanie.edytuj_studenta', id=id))
+
+    form = StaffEditForm(user_id=id, obj=user)
+
+    if request.method == 'GET':
+        form.first_name.data = user.first_name
+        form.last_name.data = user.last_name
+        form.email.data = user.email
+        form.roles.data = [r.value for r in user.roles] or [user.role.value]
+
+    if form.validate_on_submit():
+        user.first_name = form.first_name.data.strip()
+        user.last_name = form.last_name.data.strip()
+        user.email = form.email.data.lower().strip()
+
+        new_roles = {UserRole[name] for name in form.roles.data}
+        primary = next(r for r in user_service._STAFF_ROLE_PRIORITY if r in new_roles)
+        user.role = primary
+        current_set = set(user.roles)
+        for r in current_set - new_roles:
+            user.roles.discard(r)
+        for r in new_roles - current_set:
+            user.roles.add(r)
+
+        db.session.commit()
+        flash(f'Dane pracownika {user.first_name} {user.last_name} zostały zaktualizowane.', 'success')
+        return redirect(url_for(USER_LIST_ENDPOINT))
+
+    return render_template('zarzadzanie/formularz_pracownika.html', form=form, uzytkownik=user)
 
 
 @zarzadzanie_bp.route('/uzytkownicy/import-csv', methods=['GET', 'POST'])

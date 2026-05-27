@@ -58,21 +58,15 @@ CREATE TABLE students (
     supervisor_id  UUID REFERENCES users(id) ON DELETE SET NULL
 );
 
-CREATE TABLE administrators (
-    id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE
+-- ── Wiele ról na jednego pracownika (M:N) ─────────────────────────
+-- ADMIN i STUDENT są wyłączne; UOPZ/KOMISJA/DYREKTOR można łączyć.
+CREATE TABLE user_roles (
+    user_id UUID      NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    role    user_role NOT NULL,
+    PRIMARY KEY (user_id, role)
 );
 
-CREATE TABLE university_mentors (
-    id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE
-);
-
-CREATE TABLE komisja_users (
-    id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE
-);
-
-CREATE TABLE dyrektor_users (
-    id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE
-);
+CREATE INDEX idx_user_roles_role ON user_roles (role);
 
 -- ============================================================
 -- 3. Companies
@@ -408,52 +402,19 @@ AFTER INSERT OR UPDATE OR DELETE ON journal_entries
 FOR EACH ROW EXECUTE FUNCTION update_total_hours();
 
 -- ============================================================
--- Predefiniowane konta (logowanie przez Microsoft)
--- password_hash = '' — konto MS nie używa hasła lokalnego
+-- Bootstrap kont administratorów
 -- ============================================================
-
-INSERT INTO users (email, password_hash, first_name, last_name, role, is_active, require_password_change)
-VALUES
-    ('admin@ans-elblag.pl',    '', 'Szymon',    'Tułodziecki', 'ADMIN',    TRUE, FALSE),
-    ('uopz@ans-elblag.pl',     '', 'Piotr',     'Nowak',       'UOPZ',     TRUE, FALSE),
-    ('komisja@ans-elblag.pl',  '', 'Joanna',    'Kamińska',    'KOMISJA',  TRUE, FALSE),
-    ('dyrektor@ans-elblag.pl', '', 'Tomasz',    'Zając',       'DYREKTOR', TRUE, FALSE),
-    ('s12345@ans-elblag.pl',   '', 'Katarzyna', 'Kowalczyk',   'STUDENT',  TRUE, FALSE),
-    ('s21312@ans-elblag.pl',   '', 'Marek',     'Wiśniewski',  'STUDENT',  TRUE, FALSE),
-    ('s21313@ans-elblag.pl',   '', 'Anna',      'Kowalska',    'STUDENT',  TRUE, FALSE)
-ON CONFLICT (email) DO NOTHING;
-
-INSERT INTO administrators (id)
-SELECT id FROM users WHERE email = 'admin@ans-elblag.pl'
-ON CONFLICT DO NOTHING;
-
-INSERT INTO university_mentors (id)
-SELECT id FROM users WHERE email = 'uopz@ans-elblag.pl'
-ON CONFLICT DO NOTHING;
-
-INSERT INTO komisja_users (id)
-SELECT id FROM users WHERE email = 'komisja@ans-elblag.pl'
-ON CONFLICT DO NOTHING;
-
-INSERT INTO dyrektor_users (id)
-SELECT id FROM users WHERE email = 'dyrektor@ans-elblag.pl'
-ON CONFLICT DO NOTHING;
-
--- Studenci z przypisanym opiekunem UOPZ
-INSERT INTO students (id, album_number, gender, field_of_study, specialization, study_mode, supervisor_id)
-SELECT u.id, '12345', 'F', 'Informatyka', 'Aplikacje sieciowe i mobilne', 'full-time',
-       (SELECT id FROM users WHERE email = 'uopz@ans-elblag.pl')
-FROM users u WHERE u.email = 's12345@ans-elblag.pl'
-ON CONFLICT DO NOTHING;
-
-INSERT INTO students (id, album_number, gender, field_of_study, specialization, study_mode, supervisor_id)
-SELECT u.id, '21312', 'M', 'Informatyka', 'Aplikacje sieciowe i mobilne', 'full-time',
-       (SELECT id FROM users WHERE email = 'uopz@ans-elblag.pl')
-FROM users u WHERE u.email = 's21312@ans-elblag.pl'
-ON CONFLICT DO NOTHING;
-
-INSERT INTO students (id, album_number, gender, field_of_study, specialization, study_mode, supervisor_id)
-SELECT u.id, '21313', 'F', 'Informatyka', 'Systemy informatyczne', 'full-time',
-       (SELECT id FROM users WHERE email = 'uopz@ans-elblag.pl')
-FROM users u WHERE u.email = 's21313@ans-elblag.pl'
-ON CONFLICT DO NOTHING;
+-- Realne konta admina (imię, nazwisko, e-mail) trzymamy w osobnym pliku
+-- `seed_admins.sql`, który NIE jest commitowany do repo (patrz .gitignore).
+-- Plik trafia do `/docker-entrypoint-initdb.d/` obok `init.sql` i Postgres
+-- uruchamia go automatycznie w kolejności alfabetycznej po `init.sql`.
+--
+-- Wzorzec wpisu w `seed_admins.sql`:
+--
+--   INSERT INTO users (email, password_hash, first_name, last_name, role, is_active, require_password_change)
+--   VALUES ('<email@ans-elblag.pl>', '', '<Imie>', '<Nazwisko>', 'ADMIN', TRUE, FALSE)
+--   ON CONFLICT (email) DO NOTHING;
+--
+--   INSERT INTO user_roles (user_id, role)
+--   SELECT id, role FROM users WHERE email = '<email@ans-elblag.pl>'
+--   ON CONFLICT DO NOTHING;

@@ -36,9 +36,8 @@
         <div>
           <div class="u-etykieta">Postęp godzin</div>
           <div class="u-fw-600 u-csp-086">{{ total_hours }} / {{ zapis.internship.required_hours }} h</div>
-          <div class="pasek-postep u-mt-05 u-csp-087">
-            <div class="pasek-postep__wypelnienie {{ 'pasek-postep__wypelnienie--zakonczony' if zapis.progress_percent >= 100 else '' }}"
-                 class="u-progress-{{ zapis.progress_percent|int }}"></div>
+          <div class="pasek-postep u-csp-292">
+            <div class="pasek-postep__wypelnienie u-progress-{{ zapis.progress_percent|int }} {{ 'pasek-postep__wypelnienie--zakonczony' if zapis.progress_percent >= 100 else '' }}"></div>
           </div>
         </div>
       </div>
@@ -103,9 +102,9 @@
                 {% endif %}
               </td>
               <td class="u-nowrap u-ta-center">
-                {% if w.efektów %}
-                  {% for e in w.efektów %}
-                    <span class="learning_outcome-kod">{{ e.code }}</span>
+                {% if w.learning_outcomes %}
+                  {% for e in w.learning_outcomes %}
+                    <span class="u-csp-302">{{ e.code }}</span>
                   {% endfor %}
                 {% else %}—{% endif %}
               </td>

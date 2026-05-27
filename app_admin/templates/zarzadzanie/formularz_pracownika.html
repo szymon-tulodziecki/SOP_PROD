@@ -1,6 +1,6 @@
 {% extends "layouts/base_panel.html" %}
-{% block tytul %}Nowy pracownik{% endblock %}
-{% block naglowek %}Dodaj pracownika{% endblock %}
+{% block tytul %}{% if uzytkownik %}Edycja pracownika{% else %}Nowy pracownik{% endif %}{% endblock %}
+{% block naglowek %}{% if uzytkownik %}Edytuj pracownika{% else %}Dodaj pracownika{% endif %}{% endblock %}
 {% block naglowek_akcje %}
   <a href="{{ url_for('zarzadzanie.lista_uzytkownikow') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
 {% endblock %}
@@ -36,22 +36,36 @@
         {% if form.email.errors %}<span class="pole-formularza__blad" role="alert">{{ form.email.errors[0] }}</span>{% endif %}
       </div>
       
-      <div class="pole-formularza {% if form.role.errors %}pole-formularza--blad{% endif %}">
-        <label for="role" class="pole-formularza__etykieta">Rola w systemie <span class="pole-formularza__wymagane" aria-label="wymagane">*</span></label>
-        {{ form.role(class="filtr-select u-select-full") }}
-        {% if form.role.errors %}<span class="pole-formularza__blad" role="alert">{{ form.role.errors[0] }}</span>{% endif %}
+      <div class="pole-formularza {% if form.roles.errors %}pole-formularza--blad{% endif %}">
+        <span class="pole-formularza__etykieta">Role w systemie <span class="pole-formularza__wymagane" aria-label="wymagane">*</span></span>
+        <div class="role-checkbox-grid" role="group" aria-label="Role w systemie">
+          {% for subfield in form.roles %}
+            <label class="role-checkbox-pozycja" for="{{ subfield.id }}">
+              {{ subfield(class="role-checkbox-pozycja__input") }}
+              <span class="role-checkbox-pozycja__label">{{ subfield.label.text }}</span>
+            </label>
+          {% endfor %}
+        </div>
+        <p class="role-checkbox-grid__hint">Administrator nie łączy się z innymi rolami. UOPZ, Komisja i Dyrektor można dowolnie łączyć.</p>
+        {% if form.roles.errors %}<span class="pole-formularza__blad" role="alert">{{ form.roles.errors[0] }}</span>{% endif %}
       </div>
 
+      {% if not uzytkownik %}
       <div class="u-csp-229">
-        Pracownik zaloguje się e-mailem i hasłem tymczasowym (adres z e-mail, wszystko przed znakiem @), a następnie zostanie poproszony o ustawienie własnego hasła.
+        Pracownik zaloguje się przez Microsoft. Konto zostanie aktywne natychmiast po utworzeniu.
       </div>
+      {% endif %}
 
       <div class="u-csp-230">
         <a href="{{ url_for('zarzadzanie.lista_uzytkownikow') }}" class="przycisk przycisk--drugorzedny">Anuluj</a>
-        <button type="submit" class="przycisk przycisk--glowny">Utwórz konto pracownika</button>
+        <button type="submit" class="przycisk przycisk--glowny">{% if uzytkownik %}Zapisz zmiany{% else %}Utwórz konto pracownika{% endif %}</button>
       </div>
     </form>
   </div>
   </div>
 </div>
+{% endblock %}
+
+{% block scripts_extra %}
+<script src="{{ url_for('static', filename='js/staff_roles.js') }}" defer></script>
 {% endblock %}

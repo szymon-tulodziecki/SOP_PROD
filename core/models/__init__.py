@@ -7,6 +7,7 @@ before it can generate migration scripts — hence the star-style imports.
 
 from core.models.users import (
     UserRole,
+    UserRoleAssoc,
     User,
     Student,
     Administrator,
@@ -53,7 +54,7 @@ from core.models.documents import (
 
 __all__ = [
     # uzytkownicy
-    'UserRole', 'User', 'Student', 'Administrator', 'UniversityMentor',
+    'UserRole', 'UserRoleAssoc', 'User', 'Student', 'Administrator', 'UniversityMentor',
     'KomisjaUser', 'DyrektorUser',
     # firmy
     'Company',

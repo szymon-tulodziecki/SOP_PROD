@@ -93,6 +93,64 @@
   gap: 1rem;
 }
 
+/* Multi-role checkboxy w formularzu pracownika */
+.role-checkbox-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.5rem;
+  margin-top: 0.4rem;
+  list-style: none;
+  padding: 0;
+}
+
+.role-checkbox-grid > li {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.role-checkbox-pozycja {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.6rem 0.85rem;
+  background: var(--kolor-tlo);
+  border: 1px solid var(--kolor-ramka);
+  border-radius: var(--promien);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  font-size: 0.9rem;
+}
+
+.role-checkbox-pozycja:hover {
+  background: var(--kolor-biale);
+  border-color: var(--kolor-glowny-jasny);
+}
+
+.role-checkbox-pozycja__input {
+  margin: 0;
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--kolor-glowny);
+}
+
+.role-checkbox-pozycja:has(.role-checkbox-pozycja__input:checked) {
+  background: var(--kolor-biale);
+  border-color: var(--kolor-glowny);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--kolor-glowny) 18%, transparent);
+}
+
+.role-checkbox-pozycja.is-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.role-checkbox-grid__hint {
+  margin: 0.5rem 0 0;
+  font-size: 0.8rem;
+  color: var(--kolor-tekst-drugor);
+}
+
 .import-csv__upload {
   display: flex;
   align-items: center;
@@ -135,16 +193,56 @@
 }
 
 .import-csv__format code {
-  display: block;
+  padding: 0.1rem 0.35rem;
+  background: var(--kolor-tlo);
+  border: 1px solid var(--kolor-ramka);
+  border-radius: 4px;
+  color: var(--kolor-tekst);
+  font-size: 0.8rem;
+}
+
+.import-csv__przyklad {
+  margin: 0.5rem 0 0;
   padding: 0.75rem;
   background: var(--kolor-tlo);
   border: 1px solid var(--kolor-ramka);
   border-radius: var(--promien);
-  color: var(--kolor-tekst);
   font-size: 0.78rem;
-  line-height: 1.7;
-  white-space: pre;
+  line-height: 1.6;
   overflow-x: auto;
+}
+
+.import-csv__przyklad code {
+  padding: 0;
+  background: transparent;
+  border: 0;
+  font-size: inherit;
+}
+
+.import-csv__kolumny {
+  width: 100%;
+  margin: 0.75rem 0;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.import-csv__kolumny th,
+.import-csv__kolumny td {
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid var(--kolor-ramka);
+  text-align: left;
+  vertical-align: top;
+}
+
+.import-csv__kolumny th {
+  font-weight: 600;
+  color: var(--kolor-tekst);
+  background: var(--kolor-tlo);
+}
+
+.import-csv__kolumny td:nth-child(2) {
+  white-space: nowrap;
+  color: var(--kolor-tekst-drugor);
 }
 
 .import-csv__wyniki {
