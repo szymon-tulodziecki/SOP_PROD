@@ -1,6 +1,6 @@
 ﻿import uuid
 
-from flask import abort, flash, redirect, render_template, request, url_for
+from flask import abort, current_app, flash, redirect, render_template, request, url_for
 from flask_login import current_user
 from flask_wtf import FlaskForm
 
@@ -80,6 +80,8 @@ def edytuj_studenta(id):
         form.email.data = student.email
         form.album_number.data = student.album_number
 
+    if request.method == 'POST':
+        current_app.logger.info('edytuj_studenta POST: validate=%s errors=%s', form.validate(), form.errors)
     if form.validate_on_submit():
         student.first_name = form.first_name.data.strip()
         student.last_name = form.last_name.data.strip()
@@ -89,9 +91,13 @@ def edytuj_studenta(id):
         student.field_of_study = form.field_of_study.data or None
         student.specialization = form.specialization.data or None
         student.study_mode = form.study_mode.data or None
+        if form.supervisor_id.data:
+            student.supervisor_id = uuid.UUID(form.supervisor_id.data)
         db.session.commit()
         flash('Dane studenta zostały zaktualizowane.', 'success')
         return redirect(url_for(USER_LIST_ENDPOINT))
+    if request.method == 'POST':
+        flash('Formularz zawiera błędy — zmiany nie zostały zapisane.', 'danger')
 
     return render_template('zarzadzanie/formularz_studenta.html', form=form, uzytkownik=student)
 
@@ -138,6 +144,8 @@ def edytuj_pracownika(id):
         form.email.data = user.email
         form.roles.data = [r.value for r in user.roles] or [user.role.value]
 
+    if request.method == 'POST':
+        current_app.logger.info('edytuj_pracownika POST: validate=%s errors=%s', form.validate(), form.errors)
     if form.validate_on_submit():
         user.first_name = form.first_name.data.strip()
         user.last_name = form.last_name.data.strip()
@@ -155,6 +163,8 @@ def edytuj_pracownika(id):
         db.session.commit()
         flash(f'Dane pracownika {user.first_name} {user.last_name} zostały zaktualizowane.', 'success')
         return redirect(url_for(USER_LIST_ENDPOINT))
+    if request.method == 'POST':
+        flash('Formularz zawiera błędy — zmiany nie zostały zapisane.', 'danger')
 
     return render_template('zarzadzanie/formularz_pracownika.html', form=form, uzytkownik=user)
 

@@ -42,7 +42,7 @@
       <div class="formularz-panel__siatka">
         <div class="pole-formularza {% if form.nip_krs.errors %}pole-formularza--blad{% endif %}">
           <label for="nip_krs" class="pole-formularza__etykieta">NIP / KRS</label>
-          {{ form.nip_krs(class="pole-formularza__input", placeholder="NIP lub number rejestrowy") }}
+          {{ form.nip_krs(class="pole-formularza__input", placeholder="NIP lub numer rejestrowy") }}
           {% for error in form.nip_krs.errors %}<span class="pole-formularza__blad">{{ error }}</span>{% endfor %}
         </div>
 

@@ -15,7 +15,7 @@
         <input id="szukaj" name="szukaj" class="pole-formularza__input" value="{{ search_query }}" placeholder="Imię lub nazwisko…">
       </div>
       <div class="pole-formularza u-csp-098">
-        <label class="pole-formularza__etykieta" for="event_type">Typ process_events</label>
+        <label class="pole-formularza__etykieta" for="event_type">Typ zdarzenia</label>
         <select id="event_type" name="event_type" class="pole-formularza__input">
           <option value="">— wszystkie —</option>
           {% for t in event_types %}
@@ -39,7 +39,7 @@
       <thead>
         <tr>
           <th>Data i czas</th>
-          <th>Typ process_events</th>
+          <th>Typ zdarzenia</th>
           <th>Student</th>
           <th>Wykonał</th>
           <th>Decyzja</th>
