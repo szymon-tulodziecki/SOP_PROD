@@ -6,6 +6,7 @@ from flask_wtf import FlaskForm
 from core.auth import roles_required
 from core.extensions import db
 from core.models import Company, EnrollmentStatus, UserRole
+from core.presenters import active_toggle
 from core.repositories import CompanyRepository
 
 from . import zarzadzanie_bp
@@ -45,8 +46,13 @@ def lista_firm():
     status = request.args.get('status', 'wszystkie')
 
     companies = company_repository.paginated_list(search=search_query, status=status, page=page)
+    wiersze = [
+        {'company': c, 'aktywnosc': active_toggle(c.is_active, feminine=True)}
+        for c in companies.items
+    ]
     csrf_form = FlaskForm()
-    return render_template('zarzadzanie/firmy/lista.html', firmy=companies, csrf_form=csrf_form)
+    return render_template('zarzadzanie/firmy/lista.html', firmy=companies,
+                           wiersze=wiersze, csrf_form=csrf_form)
 
 
 @zarzadzanie_bp.route('/firmy/dodaj', methods=['GET', 'POST'])

@@ -9,6 +9,7 @@ from flask import abort, current_app, make_response, render_template, request
 from flask_login import current_user, login_required
 
 from core.models import EnrollmentStatus, UserRole
+from core.presenters import document_status_badge, path_label, study_mode_label
 from core.repositories import EnrollmentRepository, UserRepository
 from core.services.documents import DOC_CONFIG, STATIC_TEMPLATES, build_context, resolve_documents
 
@@ -109,20 +110,24 @@ def dokumenty_studenta(student_id):
             abort(403)
 
     supervisor = user_repository.find_by_id(student.supervisor_id) if student.supervisor_id else None
-    document_items = [
-        {
+    document_items = []
+    for enrollment in enrollments:
+        firma_nazwa = enrollment.company.name if enrollment.company else enrollment.company_display_name
+        document_items.append({
             'zapis': enrollment,
             'docs': resolve_documents(enrollment),
             'path': _track_name(enrollment),
-        }
-        for enrollment in enrollments
-    ]
+            'sciezka_label': path_label(_track_name(enrollment)),
+            'status_odznaka': document_status_badge(enrollment.status.value),
+            'firma_nazwa': firma_nazwa,
+        })
 
     return render_template(
         'zarzadzanie/dokumenty_studenta.html',
         student=student,
         supervisor=supervisor,
         dokumenty_list=document_items,
+        tryb_studiow=study_mode_label(student.study_mode),
     )
 
 

@@ -44,3 +44,12 @@ STATUS_TRANSLATIONS = {
 
 def translate_status(val: str) -> str:
     return STATUS_TRANSLATIONS.get(val, val)
+
+
+LOG_EVENT_LABELS = {
+    'ADMIN_KOMENTARZ':        'Komentarz admina',
+    'UOPZ_KOMENTARZ':         'Komentarz UOPZ',
+    'POWIADOMIENIE_STUDENTA': 'Powiadomienie studenta',
+    'KOMISJA_DECYZJA':        'Decyzja weryfikacji',
+    'DYREKTOR_DECYZJA':       'Decyzja Dyrektora',
+}

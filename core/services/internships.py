@@ -326,11 +326,16 @@ class InternshipService:
         jest_odrzucone = zapis.status == EnrollmentStatus.REJECTED
         border_alert   = zwrocone or jest_odrzucone
 
+        # Ścieżki B/C w statusie IN_PROGRESS student widzi jako "W rozpatrzeniu"
+        status_label = zapis.status_label
+        if zapis.status == EnrollmentStatus.IN_PROGRESS and path != 'STANDARD':
+            status_label = 'W rozpatrzeniu'
+
         return {
             'id':                   str(zapis.id),
             'status':               zapis.status.value,
             'status_css_class':     zapis.status_css_class,
-            'status_label':         zapis.status_label,
+            'status_label':         status_label,
             'path':              path,
             'is_standard':          path == 'STANDARD',
             'zwrocone':             zwrocone,

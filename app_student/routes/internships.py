@@ -352,14 +352,24 @@ def kreator_wniosek(enrollment_id):
 
 
 
+def _kreator_url(info: dict, internship_id) -> str:
+    """Adres kroku kreatora, do którego wraca student przy edycji/kontynuacji."""
+    if info['is_standard']:
+        return url_for('internships.kreator_firma', enrollment_id=info['id'])
+    if info['path'] in ('EMPLOYMENT', 'OWN_BUSINESS'):
+        return url_for('internships.kreator_wniosek', enrollment_id=info['id'])
+    return url_for('internships.kreator_sciezka', id=internship_id)
+
+
 @internships_bp.route('/', methods=['GET'])
 @login_required
 def lista():
     available  = _repo_praktyk.active()
-    status_map = {
-        str(z.internship_id): InternshipService.student_status(z)
-        for z in _repo_zapisow.dla_studenta(current_user.id)
-    }
+    status_map = {}
+    for z in _repo_zapisow.dla_studenta(current_user.id):
+        info = InternshipService.student_status(z)
+        info['kreator_url'] = _kreator_url(info, z.internship_id)
+        status_map[str(z.internship_id)] = info
 
     csrf_form = FlaskForm()
     return render_template('praktyki/lista.html', dostepne=available, zapisy_data=status_map, csrf_form=csrf_form)

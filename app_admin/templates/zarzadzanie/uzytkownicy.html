@@ -71,7 +71,8 @@
         </tr>
       </thead>
       <tbody>
-        {% for u in uzytkownicy.items %}
+        {% for w in wiersze %}
+        {% set u = w.u %}
         <tr>
           <td>
             <div class="u-csp-223">
@@ -80,23 +81,15 @@
             </div>
           </td>
           <td>
-            {% set mapa_rol = {'ADMIN': 'admin', 'UOPZ': 'supervisor', 'KOMISJA': 'komisja', 'DYREKTOR': 'dyrektor', 'STUDENT': 'student'} %}
-            {% set kolejnosc = ['ADMIN', 'DYREKTOR', 'KOMISJA', 'UOPZ', 'STUDENT'] %}
-            {% set role_wartosci = (u.roles | map(attribute='value') | list) or [u.role.value] %}
-            {% set role_posortowane = kolejnosc | select('in', role_wartosci) | list %}
             <div class="rola-odznaki">
-              {% for r in role_posortowane %}
-                <span class="rola-odznaka rola-odznaka--{{ mapa_rol.get(r, 'student') }}">{{ r }}</span>
+              {% for r in w.role %}
+                <span class="rola-odznaka rola-odznaka--{{ r.css }}">{{ r.value }}</span>
               {% endfor %}
             </div>
           </td>
           <td>{{ u.album_number or '—' }}</td>
           <td>
-            {% if u.is_active %}
-              <span class="status status--zakonczona">Aktywny</span>
-            {% else %}
-              <span class="status status--szkic">Nieaktywny</span>
-            {% endif %}
+            <span class="status {{ w.aktywnosc.status_cls }}">{{ w.aktywnosc.status_label }}</span>
           </td>
           <td class="u-csp-266">
             {{ u.created_at.strftime('%d.%m.%Y') }}
@@ -124,10 +117,10 @@
                      >
                   {{ csrf_form.hidden_tag() }}
                   <button type="submit"
-                          class="przycisk {% if u.is_active %}przycisk--ostrzezenie{% else %}przycisk--drugorzedny{% endif %} przycisk--maly"
-                          aria-label="{{ 'Dezaktywuj' if u.is_active else 'Aktywuj' }} konto {{ u.first_name }} {{ u.last_name }}"
+                          class="przycisk {{ w.aktywnosc.przycisk_cls }} przycisk--maly"
+                          aria-label="{{ w.aktywnosc.przycisk }} konto {{ u.first_name }} {{ u.last_name }}"
                           data-confirm="Czy na pewno chcesz zmienić status tego konta?">
-                    {{ 'Dezaktywuj' if u.is_active else 'Aktywuj' }}
+                    {{ w.aktywnosc.przycisk }}
                   </button>
                 </form>
 

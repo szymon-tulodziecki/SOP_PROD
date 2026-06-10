@@ -42,7 +42,7 @@
             {% for kategoria, wiadomosc in wiadomosci %}
               <div class="komunikat komunikat--{{ kategoria }}">
                 <span class="komunikat__ikona" aria-hidden="true">
-                  {% if kategoria == 'danger' %}✕{% elif kategoria == 'success' %}✓{% else %}ℹ{% endif %}
+                  {{ ikona_komunikatu(kategoria) }}
                 </span>
                 <span>{{ wiadomosc }}</span>
               </div>

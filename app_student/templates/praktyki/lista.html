@@ -42,36 +42,18 @@
               <span class="u-csp-353">
                 ! Wymaga poprawek
               </span>
-              {% if zapis_info.is_standard %}
-                <a href="{{ url_for('internships.kreator_firma', enrollment_id=zapis_info.id) }}" class="przycisk przycisk--maly przycisk--glowny">Edytuj zgłoszenie</a>
-              {% elif zapis_info.path in ('EMPLOYMENT', 'OWN_BUSINESS') %}
-                <a href="{{ url_for('internships.kreator_wniosek', enrollment_id=zapis_info.id) }}" class="przycisk przycisk--maly przycisk--glowny">Edytuj zgłoszenie</a>
-              {% else %}
-                <a href="{{ url_for('internships.kreator_sciezka', id=p.id) }}" class="przycisk przycisk--maly przycisk--glowny">Edytuj zgłoszenie</a>
-              {% endif %}
+              <a href="{{ zapis_info.kreator_url }}" class="przycisk przycisk--maly przycisk--glowny">Edytuj zgłoszenie</a>
               <a href="{{ url_for('internships.szczegoly_zgloszenia', id=zapis_info.id) }}" class="przycisk przycisk--maly przycisk--drugorzedny">Szczegóły</a>
             {% elif zapis_info.status == 'PENDING' %}
               <span class="status status--draft">Nieukończone</span>
-              {% if zapis_info.is_standard %}
-                <a href="{{ url_for('internships.kreator_firma', enrollment_id=zapis_info.id) }}" class="przycisk przycisk--maly przycisk--glowny">Kontynuuj zgłoszenie</a>
-              {% elif zapis_info.path in ('EMPLOYMENT', 'OWN_BUSINESS') %}
-                <a href="{{ url_for('internships.kreator_wniosek', enrollment_id=zapis_info.id) }}" class="przycisk przycisk--maly przycisk--glowny">Kontynuuj zgłoszenie</a>
-              {% else %}
-                <a href="{{ url_for('internships.kreator_sciezka', id=p.id) }}" class="przycisk przycisk--maly przycisk--glowny">Kontynuuj zgłoszenie</a>
-              {% endif %}
+              <a href="{{ zapis_info.kreator_url }}" class="przycisk przycisk--maly przycisk--glowny">Kontynuuj zgłoszenie</a>
             {% elif zapis_info.wymaga_uwagi %}
               <span class="u-csp-354">
                 ! Wymaga uzupełnienia
               </span>
               <a href="{{ url_for('internships.szczegoly_zgloszenia', id=zapis_info.id) }}" class="przycisk przycisk--maly przycisk--drugorzedny">Szczegóły</a>
             {% else %}
-              <span class="status status--{{ zapis_info.status_css_class }}">
-                {% if zapis_info.status == 'IN_PROGRESS' and not zapis_info.is_standard %}
-                  W rozpatrzeniu
-                {% else %}
-                  {{ zapis_info.status_label }}
-                {% endif %}
-              </span>
+              <span class="status status--{{ zapis_info.status_css_class }}">{{ zapis_info.status_label }}</span>
               <a href="{{ url_for('internships.szczegoly_zgloszenia', id=zapis_info.id) }}" class="przycisk przycisk--maly przycisk--drugorzedny">Szczegóły</a>
               {% if zapis_info.status == 'IN_PROGRESS' and zapis_info.is_standard %}
               <form class="u-csp-006" method="POST" action="{{ url_for('internships.zakoncz_praktyke', id=zapis_info.id) }}">

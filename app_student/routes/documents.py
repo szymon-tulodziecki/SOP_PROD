@@ -13,6 +13,7 @@ from flask_login import login_required, current_user
 
 from core.extensions import limiter
 from core.models import EnrollmentStatus
+from core.presenters import student_path_label
 from core.services.documents import (
     DOC_CONFIG,
     STATIC_TEMPLATES,
@@ -44,14 +45,17 @@ def my_documents():
         [EnrollmentStatus.AWAITING_APPROVAL, EnrollmentStatus.IN_PROGRESS, EnrollmentStatus.COMPLETED],
     )
 
-    documents_list = [
-        {
+    documents_list = []
+    for enrollment in enrollments:
+        path_type = enrollment.path_type.value if enrollment.path_type else 'STANDARD'
+        firma_nazwa = enrollment.company.name if enrollment.company else enrollment.company_display_name
+        documents_list.append({
             'enrollment': enrollment,
-            'path_type': enrollment.path_type.value if enrollment.path_type else 'STANDARD',
+            'path_type': path_type,
+            'sciezka_label': student_path_label(path_type),
+            'firma_nazwa': firma_nazwa,
             'docs': resolve_documents(enrollment),
-        }
-        for enrollment in enrollments
-    ]
+        })
 
     return render_template('dokumenty/moje_dokumenty.html', documents_list=documents_list)
 

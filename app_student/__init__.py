@@ -174,6 +174,11 @@ def create_app():
         from core.translations import translate_status as core_translate_status
         return core_translate_status(status_value)
 
+    @app.template_global()
+    def ikona_komunikatu(kategoria):
+        from core.presenters import flash_icon
+        return flash_icon(kategoria)
+
     @app.before_request
     def validate_student_role():
         from flask import request, redirect, url_for, abort

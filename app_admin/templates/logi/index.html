@@ -48,27 +48,14 @@
         </tr>
       </thead>
       <tbody>
-        {% for z in events.items %}
+        {% for w in wiersze %}
+        {% set z = w.z %}
         <tr>
           <td class="u-nowrap u-meta">
             {{ z.executed_at.strftime('%Y-%m-%d %H:%M') if z.executed_at else '—' }}
           </td>
           <td>
-            {% set rola = z.executed_by.role.value if z.executed_by and z.executed_by.role else '' %}
-            {% if z.event_type.value == 'DYREKTOR_DECYZJA' %}
-              {% set label = 'Decyzja Dyrektora' %}{% set cls = 'status--zakonczona' %}
-            {% elif z.event_type.value == 'KOMISJA_DECYZJA' and rola == 'KOMISJA' %}
-              {% set label = 'Decyzja Komisji' %}{% set cls = 'status--w-trakcie' %}
-            {% elif z.event_type.value == 'KOMISJA_DECYZJA' and rola == 'UOPZ' %}
-              {% set label = 'Decyzja UOPZ' %}{% set cls = 'status--w-trakcie' %}
-            {% elif z.event_type.value == 'KOMISJA_DECYZJA' %}
-              {% set label = 'Decyzja Admina' %}{% set cls = 'status--szkic' %}
-            {% elif z.event_type.value in ['ADMIN_KOMENTARZ', 'UOPZ_KOMENTARZ'] %}
-              {% set label = labels.get(z.event_type.value, z.event_type.value) %}{% set cls = 'status--szkic' %}
-            {% else %}
-              {% set label = labels.get(z.event_type.value, z.event_type.value) %}{% set cls = 'status--szkic' %}
-            {% endif %}
-            <span class="status {{ cls }}">{{ label }}</span>
+            <span class="status {{ w.typ.cls }}">{{ w.typ.label }}</span>
           </td>
           <td>
             {% if z.enrollment and z.enrollment.student %}
@@ -82,12 +69,8 @@
             {% else %}—{% endif %}
           </td>
           <td>
-            {% if z.decision == 'APPROVED' %}
-              <span class="status status--zakonczona">Zatwierdzone</span>
-            {% elif z.decision == 'PARTIALLY_APPROVED' %}
-              <span class="status status--w-trakcie">Wymaga poprawek</span>
-            {% elif z.decision == 'REJECTED' %}
-              <span class="status status--odrzucona">Odrzucone</span>
+            {% if w.decyzja %}
+              <span class="status {{ w.decyzja.cls }}">{{ w.decyzja.label }}</span>
             {% else %}—{% endif %}
           </td>
           <td class="u-meta u-csp-100">

@@ -18,6 +18,7 @@ from core.extensions import db, limiter
 from core.services.internships import InternshipService
 _serwis_praktyk = InternshipService()
 from core.auth import roles_required
+from core.presenters import dni_do_usuniecia, enrollment_status_badge, path_label, schedule_summary
 from core.services.workflow import IllegalTransitionError
 from core.repositories import (InternshipRepository, EnrollmentRepository,
                                UserRepository, OutcomeRepository,
@@ -103,7 +104,11 @@ def _decision_history_entries(enrollment):
 def lista_praktyk():
     page = request.args.get('strona', 1, type=int)
     praktyki = _repo_praktyk.lista_strona(strona=page)
-    do_usuniecia = _repo_praktyk.do_usuniecia()
+    teraz = datetime.datetime.utcnow()
+    do_usuniecia = []
+    for p in _repo_praktyk.do_usuniecia():
+        dni = dni_do_usuniecia(p.deleted_at, teraz)
+        do_usuniecia.append({'praktyka': p, 'dni_pozostale': dni, 'pilne': dni <= 1})
     csrf_form = FlaskForm()
     return render_template('zarzadzanie/praktyki.html', praktyki=praktyki,
                            do_usuniecia=do_usuniecia, csrf_form=csrf_form)
@@ -227,9 +232,21 @@ def szczegoly_zgloszenia(id):
 
     uploaded_docs = _repo_docs.dla_zapisu_studenta(id, enrollment.student_id)
 
+    status_val = enrollment.status.value
+    if status_val in ('PENDING', 'AWAITING_APPROVAL'):
+        panel_decyzji = 'formularz'
+    elif status_val == 'REVISION_REQUIRED':
+        panel_decyzji = 'poprawki'
+    else:
+        panel_decyzji = 'zatwierdzone'
+
     return render_template('zarzadzanie/enrollments/szczegoly.html',
-                           zapis=enrollment, harmonogram_dict=schedule_dict,
-                           efekty=outcomes, form=form, uploaded_docs=uploaded_docs,
+                           zapis=enrollment,
+                           form=form, uploaded_docs=uploaded_docs,
+                           status_odznaka=enrollment_status_badge(status_val),
+                           sciezka_label=path_label(enrollment.path_type.value),
+                           harmonogram=schedule_summary(outcomes, schedule_dict),
+                           panel_decyzji=panel_decyzji,
                            decision_history_entries=_decision_history_entries(enrollment))
 
 

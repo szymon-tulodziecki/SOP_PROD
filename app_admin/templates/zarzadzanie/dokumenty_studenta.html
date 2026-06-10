@@ -23,7 +23,7 @@
           <div class="u-csp-212">
             Nr albumu: <strong>{{ student.album_number or '—' }}</strong>
             {% if student.field_of_study %} · {{ student.field_of_study }}{% endif %}
-            {% if student.study_mode %} ({{ {'full-time': 'Stacjonarne', 'part-time': 'Niestacjonarne'}.get(student.study_mode, student.study_mode) }}){% endif %}
+            {% if tryb_studiow %} ({{ tryb_studiow }}){% endif %}
             {% if supervisor %} · Opiekun: {{ supervisor.first_name }} {{ supervisor.last_name }}{% endif %}
           </div>
         </div>
@@ -56,11 +56,8 @@
           {% if zapis.internship %} · Semestr {{ zapis.internship.semester_label }}{% endif %}
         </div>
         <div class="u-csp-215">
-          {% if zapis.company %}{{ zapis.company.name }}
-          {% elif zapis.company_display_name %}{{ zapis.company_display_name }}{% endif %}
-          · Ścieżka:
-          {% if wpis.path == 'STANDARD' %}A — Standardowa
-          {% else %}B — Uznanie efektów{% endif %}
+          {% if wpis.firma_nazwa %}{{ wpis.firma_nazwa }}{% endif %}
+          · Ścieżka: {{ wpis.sciezka_label }}
         </div>
       </div>
       <div class="u-flex--gap-05">
@@ -68,20 +65,7 @@
         <a href="{{ url_for('journal.dziennik_zapisu', id=zapis.id) }}"
            class="przycisk przycisk--drugorzedny przycisk--maly">Dziennik</a>
         {% endif %}
-        <span class="status
-          {% if zapis.status.value == 'COMPLETED' %}status--zakonczona
-          {% elif zapis.status.value == 'IN_PROGRESS' %}status--aktywna
-          {% else %}status--oczekuje{% endif %}">
-          {% if zapis.status.value == 'COMPLETED' %}Zakończona
-          {% elif zapis.status.value == 'IN_PROGRESS' %}W trakcie
-          {% elif zapis.status.value == 'AWAITING_APPROVAL' %}Oczekuje na akceptację
-          {% elif zapis.status.value == 'COMMISSION_REVIEW' %}Komisja
-          {% elif zapis.status.value == 'DIRECTOR_APPROVAL' %}Dyrektor
-          {% elif zapis.status.value == 'REVISION_REQUIRED' %}Czeka na poprawki
-          {% elif zapis.status.value == 'REJECTED' %}Odrzucona
-          {% elif zapis.status.value == 'PENDING' %}Oczekuje
-          {% else %}{{ zapis.status.value }}{% endif %}
-        </span>
+        <span class="status {{ wpis.status_odznaka.cls }}">{{ wpis.status_odznaka.label }}</span>
       </div>
     </div>
 

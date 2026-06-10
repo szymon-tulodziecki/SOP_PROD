@@ -291,8 +291,21 @@ class AssessmentService(EvaluationService):
         completed_list = [z for z in enriched
                           if z['zakonczona'] or (z['w_trakcie'] and z['is_path_b'])]
 
+        from core.presenters import employment_path_label
+
         for z in completed_list:
             z['oceniony'] = _ma_oceny(z['zapis'])
+            if z['przekroczony']:
+                z['akcja'] = {'cls': 'przycisk--niebezpieczny', 'label': 'PILNE'}
+            elif not z['oceniony']:
+                z['akcja'] = {'cls': 'przycisk--glowny', 'label': 'Wystaw ocenę'}
+            else:
+                z['akcja'] = {'cls': 'przycisk--drugorzedny', 'label': 'Edytuj'}
+            if z['is_path_b']:
+                z['sciezka_badge'] = {'cls': 'status--in-progress',
+                                      'label': employment_path_label(z['zapis'].path_type)}
+            else:
+                z['sciezka_badge'] = {'cls': 'status--completed', 'label': 'Praktyka'}
 
         completed_list.sort(key=lambda z: z['oceniony'])
 
@@ -303,4 +316,11 @@ class AssessmentService(EvaluationService):
         else:
             visible = completed_list
 
-        return {'widoczne': visible, 'zakonczone': completed_list, 'filtr': filtr}
+        liczba_ocenione = sum(1 for z in completed_list if z['oceniony'])
+        return {
+            'widoczne': visible,
+            'zakonczone': completed_list,
+            'filtr': filtr,
+            'liczba_ocenione': liczba_ocenione,
+            'liczba_nieocenione': len(completed_list) - liczba_ocenione,
+        }

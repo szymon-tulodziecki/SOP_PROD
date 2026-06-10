@@ -31,15 +31,7 @@
       <div class="sidebar__uzytkownik-info">
         {% if current_user.is_authenticated %}
         <span class="sidebar__uzytkownik-imie">{{ current_user.first_name }} {{ current_user.last_name }}</span>
-        <span class="sidebar__uzytkownik-rola">
-          {% if current_user.role %}
-            {% if current_user.role.value == 'ADMIN' %}Administrator
-            {% elif current_user.role.value == 'UOPZ' %}Opiekun uczelniany (UOPZ)
-            {% elif current_user.role.value == 'KOMISJA' %}Przewodniczący Komisji
-            {% elif current_user.role.value == 'DYREKTOR' %}Dyrektor Instytutu
-            {% endif %}
-          {% endif %}
-        </span>
+        <span class="sidebar__uzytkownik-rola">{{ rola_sidebar }}</span>
         {% else %}
         <span class="sidebar__uzytkownik-imie">Niezalogowany</span>
         {% endif %}
@@ -155,7 +147,7 @@
         {% for kategoria, wiadomosc in wiadomosci %}
           <div class="komunikat komunikat--{{ kategoria }} komunikat--minimal" role="alert">
             <span class="komunikat__ikona" aria-hidden="true">
-              {% if kategoria == 'danger' %}✕{% elif kategoria == 'success' %}✓{% else %}ℹ{% endif %}
+              {{ ikona_komunikatu(kategoria) }}
             </span>
             <span class="komunikat__tekst">{{ wiadomosc }}</span>
             <button type="button" class="komunikat__zamknij" aria-label="Zamknij powiadomienie" data-dismiss-flash>×</button>

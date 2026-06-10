@@ -30,11 +30,8 @@
       <div>
         <div class="u-csp-141">{{ item.enrollment.internship.academic_year }} · Semestr {{ item.enrollment.internship.semester_label }}</div>
         <div class="u-csp-283">
-          {% if item.enrollment.company %}{{ item.enrollment.company.name }}{% elif item.enrollment.company_display_name %}{{ item.enrollment.company_display_name }}{% endif %}
-          · Ścieżka:
-          {% if item.path_type == 'STANDARD' %}Standardowa
-          {% elif item.path_type == 'EMPLOYMENT' %}Praca etatowa
-          {% else %}Działalność gospodarcza{% endif %}
+          {% if item.firma_nazwa %}{{ item.firma_nazwa }}{% endif %}
+          · Ścieżka: {{ item.sciezka_label }}
         </div>
       </div>
       <span class="status status--{{ item.enrollment.status_css_class }}">{{ item.enrollment.status_label }}</span>

@@ -108,7 +108,19 @@ def create_app():
     @app.context_processor
     def inject_tlumacz():
         from core.translations import translate_status
-        return {'translate_status': translate_status}
+        from core.presenters import flash_icon
+        return {
+            'translate_status': translate_status,
+            'ikona_komunikatu': flash_icon,
+        }
+
+    @app.context_processor
+    def inject_rola_sidebar():
+        from flask_login import current_user
+        from core.presenters import sidebar_role_label
+        if current_user.is_authenticated:
+            return {'rola_sidebar': sidebar_role_label(current_user)}
+        return {'rola_sidebar': ''}
 
     return app
 

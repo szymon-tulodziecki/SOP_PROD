@@ -20,11 +20,11 @@
       </a>
       <a href="{{ url_for('evaluation.lista_ocen', filtr='nieocenione') }}"
          class="przycisk przycisk--maly {% if filtr == 'nieocenione' %}przycisk--glowny{% else %}przycisk--drugorzedny{% endif %}">
-        Nieocenione ({{ zakonczone|selectattr('oceniony', 'equalto', false)|list|length }})
+        Nieocenione ({{ liczba_nieocenione }})
       </a>
       <a href="{{ url_for('evaluation.lista_ocen', filtr='ocenione') }}"
          class="przycisk przycisk--maly {% if filtr == 'ocenione' %}przycisk--glowny{% else %}przycisk--drugorzedny{% endif %}">
-        Ocenione ({{ zakonczone|selectattr('oceniony')|list|length }})
+        Ocenione ({{ liczba_ocenione }})
       </a>
     </div>
   </div>
@@ -49,7 +49,7 @@
           <td>
             <div class="u-fw-600">{{ p.student.last_name }} {{ p.student.first_name }}</div>
             <div class="u-meta">Nr alb.: {{ p.student.album_number or '-' }}
-              {% if item.is_path_b %}<span class="status status--in-progress u-csp-080">{% if p.path_type == p.path_type.EMPLOYMENT %}Staż/zatrudnienie{% else %}Dział. gospod.{% endif %}</span>{% else %}<span class="status status--completed u-csp-080">Praktyka</span>{% endif %}
+              <span class="status {{ item.sciezka_badge.cls }} u-csp-080">{{ item.sciezka_badge.label }}</span>
             </div>
           </td>
           <td class="u-fs-sm">{{ (p.company.name if p.company else p.company_display_name) or '-' }}</td>
@@ -66,8 +66,8 @@
           </td>
           <td class="u-ta-center">
             <a href="{{ url_for('evaluation.evaluate_internship', id=p.id) }}"
-               class="przycisk przycisk--maly {% if item.przekroczony %}przycisk--niebezpieczny{% elif not item.oceniony %}przycisk--glowny{% else %}przycisk--drugorzedny{% endif %}">
-              {% if item.przekroczony %}PILNE{% elif not item.oceniony %}Wystaw ocenę{% else %}Edytuj{% endif %}
+               class="przycisk przycisk--maly {{ item.akcja.cls }}">
+              {{ item.akcja.label }}
             </a>
           </td>
         </tr>

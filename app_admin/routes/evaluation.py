@@ -10,6 +10,7 @@ from flask_wtf import FlaskForm
 from core.auth import roles_required
 from core.extensions import db, limiter
 from core.models import UserRole
+from core.presenters import employment_path_label, path_label, split_outcome_description
 from core.repositories import AssessmentRepository, EnrollmentRepository, OutcomeRepository, UserRepository
 from core.services import AssessmentService as GradingService
 from core.services.documents import build_context
@@ -50,6 +51,8 @@ def lista_ocen():
         widoczne=data['widoczne'],
         zakonczone=data['zakonczone'],
         filtr=data['filtr'],
+        liczba_ocenione=data['liczba_ocenione'],
+        liczba_nieocenione=data['liczba_nieocenione'],
     )
 
 
@@ -138,6 +141,7 @@ def evaluate_internship(id):
         csrf_form=csrf_form,
         efekty=outcomes,
         istniejace=existing_assessments,
+        path_label=employment_path_label(enrollment.path_type),
     )
 
 
@@ -177,11 +181,16 @@ def ocen_zapis(id):
         flash('Oceny zostały zapisane.', 'success')
         return redirect(url_for('evaluation.ocen_zapis', id=id))
 
+    efekty_wiersze = [
+        {'efekt': o, **split_outcome_description(o.description, o.id)}
+        for o in outcomes
+    ]
     return render_template(
         'evaluation/formularz_ocen.html',
         zapis=enrollment,
-        efekty=outcomes,
+        efekty_wiersze=efekty_wiersze,
         istniejace=existing_assessments,
+        sciezka_label=path_label(enrollment.path_type.value),
     )
 
 

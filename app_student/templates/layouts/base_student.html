@@ -101,7 +101,7 @@
         {% for kategoria, wiadomosc in wiadomosci %}
           <div class="komunikat komunikat--{{ kategoria }} komunikat--minimal" role="alert">
             <span class="komunikat__ikona" aria-hidden="true">
-              {% if kategoria == 'danger' %}✕{% elif kategoria == 'success' %}✓{% else %}ℹ{% endif %}
+              {{ ikona_komunikatu(kategoria) }}
             </span>
             <span class="komunikat__tekst">{{ wiadomosc }}</span>
             <button type="button" class="komunikat__zamknij" aria-label="Zamknij powiadomienie" data-dismiss-flash>×</button>

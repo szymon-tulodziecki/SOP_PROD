@@ -7,6 +7,7 @@ from flask_wtf import FlaskForm
 from core.auth import roles_required
 from core.extensions import db, limiter
 from core.models import User, UserRole
+from core.presenters import active_toggle, role_badges
 from core.repositories import UserRepository
 from core.services import UserService
 
@@ -27,10 +28,15 @@ def lista_uzytkownikow():
     role_filter = request.args.get('rola', '').strip()
 
     users = user_repository.search_page(search=search_query, role_filter=role_filter, page=page)
+    wiersze = [
+        {'u': u, 'role': role_badges(u), 'aktywnosc': active_toggle(u.is_active)}
+        for u in users.items
+    ]
     csrf_form = FlaskForm()
     return render_template(
         'zarzadzanie/uzytkownicy.html',
         uzytkownicy=users,
+        wiersze=wiersze,
         csrf_form=csrf_form,
     )
 

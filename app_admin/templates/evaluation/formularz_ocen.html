@@ -19,9 +19,7 @@
         <p class="u-tekst-drugor u-csp-041">
           Firma: {{ zapis.company_display_name or '—' }}
           &nbsp;·&nbsp;
-          Ścieżka:
-          {% if zapis.path_type.value == 'STANDARD' %}A — Standardowa
-          {% else %}B — Uznanie efektów{% endif %}
+          Ścieżka: {{ sciezka_label }}
         </p>
       </div>
       <span class="status status--{{ zapis.status.value|lower|replace('_', '-') }}">{{ translate_status(zapis.status.value) }}</span>
@@ -57,13 +55,12 @@
               </tr>
             </thead>
             <tbody>
-              {% for learning_outcome in efekty %}
+              {% for w in efekty_wiersze %}
+              {% set learning_outcome = w.efekt %}
               {% set ocena = istniejace.get(learning_outcome.id|string) %}
               <tr>
-                <td><strong>{{ learning_outcome.description.split(':')[0] if ':' in learning_outcome.description else learning_outcome.id }}</strong></td>
-                <td class="u-fs-sm u-csp-053">
-                  {{ learning_outcome.description.split(':', 1)[1].strip() if ':' in learning_outcome.description else learning_outcome.description }}
-                </td>
+                <td><strong>{{ w.kod }}</strong></td>
+                <td class="u-fs-sm u-csp-053">{{ w.opis }}</td>
                 <td>
                   <div class="u-flex--gap-05 u-csp-054">
                     <label class="radio-ocena">

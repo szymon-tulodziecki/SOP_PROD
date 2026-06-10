@@ -36,10 +36,7 @@
         </div>
         <div>
           <div class="u-etykieta">Ścieżka</div>
-          <div class="u-wartosc">
-            {% if zapis.path_type.value == 'STANDARD' %}A — Standardowa
-            {% else %}B — Uznanie efektów{% endif %}
-          </div>
+          <div class="u-wartosc">{{ sciezka_label }}</div>
         </div>
         <div>
           <div class="u-etykieta">Data zgłoszenia</div>
@@ -114,7 +111,7 @@
       {% endif %}
 
       {# Ocena efektów uczenia się przez komisję #}
-      {% if efekty %}
+      {% if efekty_wiersze %}
       <div class="karta">
         <div class="karta__naglowek">
           <h3 class="karta__tytul">
@@ -122,14 +119,11 @@
             <span class="u-fs-xs u-fw-500 u-tekst-trzeciorzed">wg Komisji ds. Praktyk · Zał. 4a</span>
           </h3>
           {# Podsumowanie statystyczne #}
-          {% set n_ach = oceny_komisji.values() | selectattr('result.value', 'eq', 'ACHIEVED') | list | length %}
-          {% set n_par = oceny_komisji.values() | selectattr('result.value', 'eq', 'PARTIALLY_ACHIEVED') | list | length %}
-          {% set n_not = oceny_komisji.values() | selectattr('result.value', 'eq', 'NOT_ACHIEVED') | list | length %}
           {% if oceny_komisji %}
           <div class="u-flex--gap-05">
-            <span class="status status--completed u-csp-059">{{ n_ach }} uzyskał/a</span>
-            <span class="status status--in-progress u-csp-059">{{ n_par }} częściowo</span>
-            <span class="status status--odrzucona u-csp-059">{{ n_not }} nie uzyskał/a</span>
+            <span class="status status--completed u-csp-059">{{ oceny_stats.uzyskal }} uzyskał/a</span>
+            <span class="status status--in-progress u-csp-059">{{ oceny_stats.czesciowo }} częściowo</span>
+            <span class="status status--odrzucona u-csp-059">{{ oceny_stats.nie }} nie uzyskał/a</span>
           </div>
           {% endif %}
         </div>
@@ -144,25 +138,18 @@
               </tr>
             </thead>
             <tbody>
-              {% for learning_outcome in efekty %}
-              {% set ev = oceny_komisji.get(learning_outcome.id) %}
-              <tr class="{% if ev and ev.result.value == 'PARTIALLY_ACHIEVED' %}u-row-partial{% elif ev and ev.result.value == 'NOT_ACHIEVED' %}u-row-negative{% endif %}">
-                <td class="nr-efektu">{{ learning_outcome.code }}</td>
+              {% for w in efekty_wiersze %}
+              <tr class="{{ w.badge.row_cls if w.badge else '' }}">
+                <td class="nr-efektu">{{ w.efekt.code }}</td>
                 <td>
-                  <div class="u-fs-sm u-lh-15 u-tekst">{{ learning_outcome.description }}</div>
-                  {% if ev and ev.notes %}
-                  <div class="u-csp-114">{{ ev.notes }}</div>
+                  <div class="u-fs-sm u-lh-15 u-tekst">{{ w.efekt.description }}</div>
+                  {% if w.ocena and w.ocena.notes %}
+                  <div class="u-csp-114">{{ w.ocena.notes }}</div>
                   {% endif %}
                 </td>
                 <td class="u-ta-center u-csp-115">
-                  {% if ev %}
-                    {% if ev.result.value == 'ACHIEVED' %}
-                    <span class="status status--completed u-csp-059">Uzyskał/a</span>
-                    {% elif ev.result.value == 'PARTIALLY_ACHIEVED' %}
-                    <span class="status status--in-progress u-csp-059">Częściowo</span>
-                    {% else %}
-                    <span class="status status--odrzucona u-csp-059">Nie uzyskał/a</span>
-                    {% endif %}
+                  {% if w.badge %}
+                  <span class="status {{ w.badge.cls }} u-csp-059">{{ w.badge.label }}</span>
                   {% else %}
                   <span class="u-tekst-trzeciorzed u-meta">—</span>
                   {% endif %}
@@ -211,15 +198,11 @@
     <div class="u-flex--col-15 u-csp-119">
 
       {# Opinia komisji #}
-      {% if zapis.committee_decision %}
-      <div class="karta {% if zapis.committee_decision == 'APPROVED' %}u-card-border-top-success{% elif zapis.committee_decision == 'PARTIALLY_APPROVED' %}u-card-border-top-warning{% else %}u-card-border-top-danger{% endif %}">
+      {% if opinia_komisji %}
+      <div class="karta {{ opinia_komisji.border }}">
         <div class="karta__naglowek">
           <h3 class="karta__tytul">Opinia komisji</h3>
-          <span class="status {% if zapis.committee_decision == 'APPROVED' %}status--completed{% elif zapis.committee_decision == 'PARTIALLY_APPROVED' %}status--in-progress{% else %}status--odrzucona{% endif %} u-csp-059">
-            {% if zapis.committee_decision == 'APPROVED' %}Pozytywna
-            {% elif zapis.committee_decision == 'PARTIALLY_APPROVED' %}Częściowo pozytywna
-            {% else %}Negatywna{% endif %}
-          </span>
+          <span class="status {{ opinia_komisji.cls }} u-csp-059">{{ opinia_komisji.label_short }}</span>
         </div>
         <div class="karta__tresc">
           {% if zapis.committee_decision_at %}

@@ -13,46 +13,7 @@
 <div class="u-csp-076">
 
   {# ── Karta identyfikacyjna zgłoszenia ── #}
-  {% set status_val = zapis.status.value %}
-  {% if status_val == 'PENDING' %}
-    {% set border_color = 'var(--kolor-akcent)' %}
-    {% set status_cls = 'status--in-progress' %}
-    {% set status_label = 'Oczekuje na zatwierdzenie' %}
-  {% elif status_val == 'AWAITING_APPROVAL' %}
-    {% set border_color = '#3b82f6' %}
-    {% set status_cls = 'status--planned' %}
-    {% set status_label = 'Oczekuje na akceptację UOPZ' %}
-  {% elif status_val == 'IN_PROGRESS' %}
-    {% set border_color = 'var(--kolor-sukces)' %}
-    {% set status_cls = 'status--completed' %}
-    {% set status_label = 'Zatwierdzona — w realizacji' %}
-  {% elif status_val == 'COMPLETED' %}
-    {% set border_color = 'var(--kolor-glowny)' %}
-    {% set status_cls = 'status--completed' %}
-    {% set status_label = 'Zakończona' %}
-  {% elif status_val == 'REVISION_REQUIRED' %}
-    {% set border_color = '#dc2626' %}
-    {% set status_cls = 'status--odrzucona' %}
-    {% set status_label = 'Czeka na poprawki' %}
-  {% elif status_val == 'COMMISSION_REVIEW' %}
-    {% set border_color = '#3b82f6' %}
-    {% set status_cls = 'status--planned' %}
-    {% set status_label = 'Weryfikacja komisji' %}
-  {% elif status_val == 'DIRECTOR_APPROVAL' %}
-    {% set border_color = 'var(--kolor-glowny)' %}
-    {% set status_cls = 'status--planned' %}
-    {% set status_label = 'Decyzja dyrektora' %}
-  {% elif status_val == 'REJECTED' %}
-    {% set border_color = '#dc2626' %}
-    {% set status_cls = 'status--odrzucona' %}
-    {% set status_label = 'Odrzucona' %}
-  {% else %}
-    {% set border_color = 'var(--kolor-ramka)' %}
-    {% set status_cls = 'status--draft' %}
-    {% set status_label = status_val %}
-  {% endif %}
-
-  <div class="u-enrollment-hero {% if status_val == 'PENDING' %}u-enrollment-hero--pending{% elif status_val == 'AWAITING_APPROVAL' %}u-enrollment-hero--awaiting{% elif status_val == 'COMMISSION_REVIEW' %}u-enrollment-hero--commission{% elif status_val == 'DIRECTOR_APPROVAL' %}u-enrollment-hero--director{% elif status_val == 'IN_PROGRESS' %}u-enrollment-hero--progress{% elif status_val == 'COMPLETED' %}u-enrollment-hero--completed{% elif status_val == 'REJECTED' %}u-enrollment-hero--rejected{% else %}u-enrollment-hero--default{% endif %}">
+  <div class="u-enrollment-hero {{ status_odznaka.hero }}">
     <div class="u-csp-102">
 
       {# Awatar inicjałowy #}
@@ -77,10 +38,7 @@
         </div>
         <div>
           <div class="u-etykieta">Ścieżka</div>
-          <div class="u-wartosc">
-            {% if zapis.path_type.value == 'STANDARD' %}A — Standardowa
-            {% else %}B — Uznanie efektów{% endif %}
-          </div>
+          <div class="u-wartosc">{{ sciezka_label }}</div>
         </div>
         <div>
           <div class="u-etykieta">Data zgłoszenia</div>
@@ -91,7 +49,7 @@
 
       {# Odznaka statusu #}
       <div class="u-ta-center u-csp-107">
-        <span class="status {{ status_cls }} u-csp-108">{{ status_label }}</span>
+        <span class="status {{ status_odznaka.cls }} u-csp-108">{{ status_odznaka.label }}</span>
         {% if zapis.supervisor %}
         <div class="u-fs-xs u-tekst-trzeciorzed u-ta-center u-csp-109">
           UOPZ: <strong class="u-tekst-drugor">{{ zapis.supervisor.first_name }} {{ zapis.supervisor.last_name }}</strong>
@@ -118,16 +76,13 @@
           <div class="u-grid-2-lg">
             <div class="pole-info">
               <div class="pole-info__etykieta">Ścieżka praktyki</div>
-              <div class="pole-info__wartosc">
-                {% if zapis.path_type.value == 'STANDARD' %}A — Standardowa
-                {% else %}B — Uznanie efektów{% endif %}
-              </div>
+              <div class="pole-info__wartosc">{{ sciezka_label }}</div>
             </div>
             <div class="pole-info">
               <div class="pole-info__etykieta">Specjalność</div>
               <div class="pole-info__wartosc">{{ zapis.specialization or '—' }}</div>
             </div>
-            {% if zapis.path_type.value == 'STANDARD' %}
+            {% if zapis.is_standard %}
             <div class="pole-info">
               <div class="pole-info__etykieta">Termin praktyki</div>
               <div class="pole-info__wartosc">
@@ -157,7 +112,7 @@
         </div>
       </div>
 
-      {% if zapis.path_type.value == 'STANDARD' %}
+      {% if zapis.is_standard %}
 
       {# Dane zakładu pracy #}
       <div class="karta">
@@ -226,13 +181,8 @@
       <div class="karta">
         <div class="karta__naglowek">
           <h3 class="karta__tytul">Harmonogram praktyki</h3>
-          {% set suma_dni = namespace(wartosc=0) %}
-          {% for e in efekty %}
-            {% set h = harmonogram_dict.get(e.id) %}
-            {% if h and h.days_count > 0 %}{% set suma_dni.wartosc = suma_dni.wartosc + h.days_count %}{% endif %}
-          {% endfor %}
-          <span class="status {% if suma_dni.wartosc > 120 %}status--draft u-status-danger{% elif suma_dni.wartosc < 100 %}status--in-progress{% else %}status--completed{% endif %}">
-            {{ suma_dni.wartosc }} / 120 dni
+          <span class="status {{ harmonogram.badge_cls }}">
+            {{ harmonogram.suma }} / {{ harmonogram.limit }} dni
           </span>
         </div>
         <div class="karta__tresc u-p-0">
@@ -248,22 +198,20 @@
                 </tr>
               </thead>
               <tbody>
-                {% for e in efekty %}
-                {% set h = harmonogram_dict.get(e.id) %}
-                {% set brak = not h or h.days_count == 0 %}
-                <tr class="{% if brak %}u-row-muted{% endif %}">
-                  <td class="u-ta-center u-fw-600 u-tekst-trzeciorzed u-fs-xxs">{{ '%02d'|format(e.id) }}</td>
-                  <td class="u-csp-168">{{ e.description }}</td>
+                {% for w in harmonogram.wiersze %}
+                <tr class="{% if w.brak %}u-row-muted{% endif %}">
+                  <td class="u-ta-center u-fw-600 u-tekst-trzeciorzed u-fs-xxs">{{ w.nr }}</td>
+                  <td class="u-csp-168">{{ w.efekt.description }}</td>
                   <td class="u-fs-sm">
-                    {% if h and h.department_name %}{{ h.department_name }}
+                    {% if w.dzial %}{{ w.dzial }}
                     {% else %}<span class="u-tekst-trzeciorzed u-csp-169">Nie przypisano</span>{% endif %}
                   </td>
                   <td class="u-fs-sm">
-                    {% if h and h.example_tasks %}{{ h.example_tasks }}
+                    {% if w.zadania %}{{ w.zadania }}
                     {% else %}<span class="u-tekst-trzeciorzed u-csp-169">Nie podano</span>{% endif %}
                   </td>
-                  <td class="u-ta-center u-fw-600 u-day-value {% if brak %}u-day-value--missing{% endif %}">
-                    {{ h.days_count if h else 0 }}
+                  <td class="u-ta-center u-fw-600 u-day-value {% if w.brak %}u-day-value--missing{% endif %}">
+                    {{ w.dni }}
                   </td>
                 </tr>
                 {% endfor %}
@@ -271,18 +219,18 @@
               <tfoot>
                 <tr class="u-bg-tlo">
                   <td colspan="4" class="u-fw-600 u-fs-sm u-tekst-drugor u-csp-170">Suma dni:</td>
-                  <td class="u-ta-center u-fw-600 u-day-total {% if suma_dni.wartosc > 120 %}u-day-total--high{% elif suma_dni.wartosc < 100 %}u-day-total--low{% else %}u-day-total--ok{% endif %}">
-                    {{ suma_dni.wartosc }}
+                  <td class="u-ta-center u-fw-600 u-day-total {{ harmonogram.total_cls }}">
+                    {{ harmonogram.suma }}
                   </td>
                 </tr>
               </tfoot>
             </table>
           </div>
-          {% if suma_dni.wartosc > 120 %}
+          {% if harmonogram.alert == 'za_duzo' %}
           <div class="u-csp-171">
             <strong>Przekroczono limit 120 dni.</strong> Harmonogram wymaga korekty przed zatwierdzeniem.
           </div>
-          {% elif suma_dni.wartosc < 100 %}
+          {% elif harmonogram.alert == 'za_malo' %}
           <div class="u-csp-172">
             <strong>Niewystarczająca liczba dni (min. 100).</strong> Harmonogram wymaga uzupełnienia.
           </div>
@@ -381,7 +329,7 @@
     <div class="u-flex--col-15 u-csp-119">
 
       {# Panel decyzji #}
-      {% if zapis.status.value in ['PENDING', 'AWAITING_APPROVAL'] %}
+      {% if panel_decyzji == 'formularz' %}
       <div class="karta">
         <div class="karta__naglowek">
           <h3 class="karta__tytul">Decyzja</h3>
@@ -406,7 +354,7 @@
         </div>
       </div>
 
-      {% elif zapis.status.value == 'REVISION_REQUIRED' %}
+      {% elif panel_decyzji == 'poprawki' %}
 
       {# Czeka na poprawki studenta #}
       <div class="karta">

@@ -7,6 +7,8 @@ from wtforms.validators import Optional
 from core.auth import roles_required
 from core.extensions import db, limiter
 from core.models import AssessmentResult, EnrollmentStatus, UserRole
+from core.presenters import (committee_decision_badge, committee_status_badge,
+                             dean_decision_badge, path_label)
 from core.repositories import (
     AssessmentRepository,
     EnrollmentRepository,
@@ -64,6 +66,12 @@ def _render_weryfikuj_komisji(form, enrollment, outcomes, enrollment_id):
         dokumenty=doc,
         efekty=outcomes,
         istniejace=ev,
+        status_odznaka=committee_status_badge(enrollment.status.value),
+        sciezka_label=path_label(enrollment.path_type.value),
+        form_active=enrollment.status in _ACTIVE_COMMITTEE_STATUSES,
+        czeka_na_poprawki=enrollment.status == EnrollmentStatus.REVISION_REQUIRED,
+        opinia_komisji=committee_decision_badge(enrollment.committee_decision),
+        decyzja_dyrektora=dean_decision_badge(enrollment.dean_decision),
     )
 
 

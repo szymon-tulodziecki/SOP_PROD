@@ -9,6 +9,8 @@ from core.extensions import db, limiter
 from core.services.internships import InternshipService
 _serwis_praktyk = InternshipService()
 from core.auth import roles_required
+from core.presenters import (committee_decision_badge, outcome_result_badge,
+                             outcome_result_counts, path_label)
 from core.services.workflow import IllegalTransitionError
 from core.repositories import EnrollmentRepository, StudentDocumentRepository, OutcomeRepository, AssessmentRepository
 
@@ -67,6 +69,18 @@ def dyrektor_decyzja(id):
     documents             = _repo_docs.dokumenty_zapisu(id)
     outcomes              = _repo_efektow.wszystkie()
     committee_evaluations = _repo_ocen.dla_komisji_dict(id)
-    return render_template('zarzadzanie/dyrektor/decision.html',
+    efekty_wiersze = []
+    for lo in outcomes:
+        ev = committee_evaluations.get(lo.id)
+        efekty_wiersze.append({
+            'efekt': lo,
+            'ocena': ev,
+            'badge': outcome_result_badge(ev.result.value) if ev else None,
+        })
+    return render_template('zarzadzanie/dyrektor/decyzja.html',
                            form=form, zapis=enrollment, dokumenty=documents,
-                           efekty=outcomes, oceny_komisji=committee_evaluations)
+                           oceny_komisji=committee_evaluations,
+                           efekty_wiersze=efekty_wiersze,
+                           oceny_stats=outcome_result_counts(committee_evaluations),
+                           sciezka_label=path_label(enrollment.path_type.value),
+                           opinia_komisji=committee_decision_badge(enrollment.committee_decision))

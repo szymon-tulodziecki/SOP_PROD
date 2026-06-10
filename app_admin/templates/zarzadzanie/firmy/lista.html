@@ -69,7 +69,8 @@
             </tr>
           </thead>
           <tbody>
-            {% for company in firmy.items %}
+            {% for w in wiersze %}
+            {% set company = w.company %}
             <tr>
               <td>
                 <div class="u-csp-141">{{ company.name }}</div>
@@ -88,11 +89,7 @@
                 {{ company.tax_id or '-' }}
               </td>
               <td class="u-csp-152">
-                {% if company.is_active %}
-                  <span class="status status--zakonczona">Aktywna</span>
-                {% else %}
-                  <span class="status status--szkic">Nieaktywna</span>
-                {% endif %}
+                <span class="status {{ w.aktywnosc.status_cls }}">{{ w.aktywnosc.status_label }}</span>
               </td>
               <td class="u-csp-193">
                 <a href="{{ url_for('zarzadzanie.edytuj_firme', id=company.id) }}"
@@ -102,11 +99,10 @@
                 <form class="u-csp-194" method="POST" action="{{ url_for('zarzadzanie.przelacz_aktywnosc_firmy', id=company.id) }}"
                      >
                   {{ csrf_form.hidden_tag() }}
-                  {% set text = 'dezaktywować' if company.is_active else 'aktywować' %}
                   <button type="submit"
-                          class="przycisk {% if company.is_active %}przycisk--ostrzezenie{% else %}przycisk--drugorzedny{% endif %} przycisk--maly"
-                          data-confirm="Czy na pewno chcesz {{ text }} firmę?">
-                    {{ 'Dezaktywuj' if company.is_active else 'Aktywuj' }}
+                          class="przycisk {{ w.aktywnosc.przycisk_cls }} przycisk--maly"
+                          data-confirm="Czy na pewno chcesz {{ w.aktywnosc.akcja }} firmę?">
+                    {{ w.aktywnosc.przycisk }}
                   </button>
                 </form>
                 <form class="u-csp-194" method="POST" action="{{ url_for('zarzadzanie.usun_firme', id=company.id) }}"

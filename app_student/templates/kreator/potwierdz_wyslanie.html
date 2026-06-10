@@ -38,7 +38,7 @@
         </button>
       </form>
 
-      {% if zapis.path_type.value == 'STANDARD' %}
+      {% if zapis.is_standard %}
       <a href="{{ url_for('internships.zapisz_krok2', id=zapis.id) }}"
          class="przycisk przycisk--drugorzedny u-flex--center u-csp-347">
         Wróć i popraw

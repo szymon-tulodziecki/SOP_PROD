@@ -107,8 +107,8 @@
   </div>
   <div class="karta__tresc">
     <div class="praktyki-usuwane__lista">
-      {% for p in do_usuniecia %}
-      {% set dni_pozostale = ((p.deleted_at.timestamp() + 7*86400 - now().timestamp()) / 86400) | int %}
+      {% for w in do_usuniecia %}
+      {% set p = w.praktyka %}
       <div class="praktyki-usuwane__wiersz">
         <div class="praktyki-usuwane__glowne">
           <div class="praktyki-usuwane__rok">{{ p.academic_year }}</div>
@@ -120,10 +120,10 @@
         </div>
         <div>
           <div class="u-etykieta">Usunięcie za</div>
-          {% if dni_pozostale <= 1 %}
+          {% if w.pilne %}
             <span class="status u-status-danger">dziś / jutro</span>
           {% else %}
-            <span class="status u-status-warning">{{ dni_pozostale }} dni</span>
+            <span class="status u-status-warning">{{ w.dni_pozostale }} dni</span>
           {% endif %}
         </div>
         <form class="u-csp-006" method="POST" action="{{ url_for('zarzadzanie.przywroc_praktyke', id=p.id) }}">
