@@ -1,16 +1,16 @@
 {% extends "layouts/base_panel.html" %}
 
-{% block tytul %}Pulpit{% endblock %}
-{% block naglowek %}Przegląd systemu{% endblock %}
+{% block tytul %}{{ t('Pulpit') }}{% endblock %}
+{% block naglowek %}{{ t('Przegląd systemu') }}{% endblock %}
 
 {% block naglowek_akcje %}
   {% if current_user.role.value == 'ADMIN' %}
   <div class="u-flex--gap-05">
     <a href="{{ url_for('zarzadzanie.nowy_student') }}" class="przycisk przycisk--glowny">
-      <span aria-hidden="true">+</span> Dodaj studenta
+      <span aria-hidden="true">+</span> {{ t('Dodaj studenta') }}
     </a>
     <a href="{{ url_for('zarzadzanie.nowy_pracownik') }}" class="przycisk przycisk--glowny">
-      <span aria-hidden="true">+</span> Dodaj pracownika
+      <span aria-hidden="true">+</span> {{ t('Dodaj pracownika') }}
     </a>
   </div>
   {% endif %}
@@ -30,18 +30,18 @@
     <div>
       <div class="u-fw-600">
         {% if item.przekroczony %}
-          Przekroczony termin oceny: {{ item.zapis.student.last_name }} {{ item.zapis.student.first_name }}
+          {{ t('Przekroczony termin oceny:') }} {{ item.zapis.student.last_name }} {{ item.zapis.student.first_name }}
         {% elif item.deadline_is_today %}
-          Dziś ostatni dzień oceny: {{ item.zapis.student.last_name }} {{ item.zapis.student.first_name }}
+          {{ t('Dziś ostatni dzień oceny:') }} {{ item.zapis.student.last_name }} {{ item.zapis.student.first_name }}
         {% else %}
-          Pilna ocena za {{ item.dni_do_deadline }} dni: {{ item.zapis.student.last_name }} {{ item.zapis.student.first_name }}
+          {{ t('Pilna ocena za {dni} dni:', dni=item.dni_do_deadline) }} {{ item.zapis.student.last_name }} {{ item.zapis.student.first_name }}
         {% endif %}
       </div>
       <div class="u-meta u-csp-002">
-        Deadline: {{ item.deadline.strftime('%d.%m.%Y') }}
+        {{ t('Deadline:') }} {{ item.deadline.strftime('%d.%m.%Y') }}
         <a class="u-csp-003" href="{{ url_for('evaluation.evaluate_internship', id=item.zapis.id) }}"
           >
-          Wystaw ocenę →
+          {{ t('Wystaw ocenę') }} →
         </a>
       </div>
     </div>
@@ -50,30 +50,30 @@
 </div>
 {% endif %}
 
-<section class="siatka-statystyk" aria-label="Kluczowe wskaźniki">
+<section class="siatka-statystyk" aria-label="{{ t('Kluczowe wskaźniki') }}">
 
   <div class="karta-stat">
     <span class="karta-stat__ikona" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
     <span class="karta-stat__liczba">{{ statystyki.praktyki_aktywne }}</span>
-    <span class="karta-stat__etykieta">W trakcie realizacji</span>
+    <span class="karta-stat__etykieta">{{ t('W trakcie realizacji') }}</span>
   </div>
 
   <div class="karta-stat">
     <span class="karta-stat__ikona" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>
     <span class="karta-stat__liczba">{{ statystyki.oczekujace_oceny }}</span>
-    <span class="karta-stat__etykieta">Czeka na ocenę</span>
+    <span class="karta-stat__etykieta">{{ t('Czeka na ocenę') }}</span>
   </div>
 
   <div class="karta-stat">
     <span class="karta-stat__ikona" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 2 4 4 6 4s6-2 6-4v-5"/></svg></span>
     <span class="karta-stat__liczba">{{ statystyki.zakonczone }}</span>
-    <span class="karta-stat__etykieta">Zakończone</span>
+    <span class="karta-stat__etykieta">{{ t('Zakończone') }}</span>
   </div>
 
   <div class="karta-stat">
     <span class="karta-stat__ikona" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
     <span class="karta-stat__liczba">{{ statystyki.liczba_studentow }}</span>
-    <span class="karta-stat__etykieta">Aktywnych studentów</span>
+    <span class="karta-stat__etykieta">{{ t('Aktywnych studentów') }}</span>
   </div>
 
 </section>
@@ -82,18 +82,18 @@
 
   <section class="karta" aria-labelledby="tytul-ostatnie">
     <header class="karta__naglowek">
-      <h2 id="tytul-ostatnie" class="karta__tytul">Ostatnie aktywności</h2>
-      <a href="{{ url_for('zarzadzanie.lista_praktyk') }}" class="przycisk przycisk--drugorzedny przycisk--maly">Wszystkie</a>
+      <h2 id="tytul-ostatnie" class="karta__tytul">{{ t('Ostatnie aktywności') }}</h2>
+      <a href="{{ url_for('zarzadzanie.lista_praktyk') }}" class="przycisk przycisk--drugorzedny przycisk--maly">{{ t('Wszystkie') }}</a>
     </header>
     <div class="karta__tresc">
       <div class="tabela-wrapper">
         <table class="tabela">
           <thead>
             <tr>
-              <th scope="col">Student</th>
-              <th scope="col">Praktyka</th>
-              <th scope="col">Status</th>
-              <th class="u-csp-005" scope="col">Akcje</th>
+              <th scope="col">{{ t('Student') }}</th>
+              <th scope="col">{{ t('Praktyka') }}</th>
+              <th scope="col">{{ t('Status') }}</th>
+              <th class="u-csp-005" scope="col">{{ t('Akcje') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -110,14 +110,14 @@
                 {% if z.is_pending %}
                 <form class="u-csp-006" method="POST" action="{{ url_for('zarzadzanie.potwierdz_zapis', id=z.id) }}">
                   {{ csrf_form.hidden_tag() }}
-                  <button type="submit" class="przycisk przycisk--drugorzedny przycisk--maly" data-confirm="Potwierdzić ten zapis?">Zatwierdź</button>
+                  <button type="submit" class="przycisk przycisk--drugorzedny przycisk--maly" data-confirm="{{ t('Potwierdzić ten zapis?') }}">{{ t('Zatwierdź') }}</button>
                 </form>
                 {% endif %}
               </td>
             </tr>
             {% else %}
             <tr>
-              <td colspan="3" class="tabela--pusta">Brak aktywnych zapisów.</td>
+              <td colspan="3" class="tabela--pusta">{{ t('Brak aktywnych zapisów.') }}</td>
             </tr>
             {% endfor %}
           </tbody>
@@ -128,7 +128,7 @@
 
   <section class="karta" aria-labelledby="tytul-oczekujace">
     <header class="karta__naglowek">
-      <h2 id="tytul-oczekujace" class="karta__tytul">Aktywne praktyki</h2>
+      <h2 id="tytul-oczekujace" class="karta__tytul">{{ t('Aktywne praktyki') }}</h2>
     </header>
     <div class="karta__tresc">
       <ul class="lista-prosta u-csp-007" role="list">
@@ -140,7 +140,7 @@
           </div>
         </li>
         {% else %}
-        <li class="u-stan-pusty--sm">Brak zapisów.</li>
+        <li class="u-stan-pusty--sm">{{ t('Brak zapisów.') }}</li>
         {% endfor %}
       </ul>
     </div>

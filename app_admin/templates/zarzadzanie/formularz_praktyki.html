@@ -1,9 +1,9 @@
-﻿{% extends "layouts/base_panel.html" %}
-{% block tytul %}Nowa praktyka{% endblock %}
-{% block naglowek %}Nowa praktyka{% endblock %}
+{% extends "layouts/base_panel.html" %}
+{% block tytul %}{{ t('Nowa praktyka') }}{% endblock %}
+{% block naglowek %}{{ t('Nowa praktyka') }}{% endblock %}
 
 {% block naglowek_akcje %}
-  <a href="{{ url_for('zarzadzanie.lista_praktyk') }}" class="przycisk przycisk--drugorzedny">Anuluj</a>
+  <a href="{{ url_for('zarzadzanie.lista_praktyk') }}" class="przycisk przycisk--drugorzedny">{{ t('Anuluj') }}</a>
 {% endblock %}
 
 {% block tresc %}
@@ -13,13 +13,13 @@
 
     <div class="karta">
       <div class="karta__naglowek">
-        <h2 class="karta__tytul">Dane praktyki</h2>
+        <h2 class="karta__tytul">{{ t('Dane praktyki') }}</h2>
       </div>
       <div class="karta__tresc u-csp-232">
 
         <div class="pole-formularza">
           {{ form.academic_year.label(class="pole-formularza__etykieta") }}
-          <input type="text" name="academic_year" class="pole-formularza__input u-csp-233" placeholder="np. 2024/2025" value="{{ form.academic_year.data or '' }}">
+          <input type="text" name="academic_year" class="pole-formularza__input u-csp-233" placeholder="{{ t('np. 2024/2025') }}" value="{{ form.academic_year.data or '' }}">
           {% for e in form.academic_year.errors %}
             <span class="pole-formularza__blad">{{ e }}</span>
           {% endfor %}
@@ -35,7 +35,7 @@
 
         <div class="pole-formularza">
           {{ form.required_hours.label(class="pole-formularza__etykieta") }}
-          {{ form.required_hours(class="pole-formularza__input", type="number", min="1", placeholder="np. 160") }}
+          {{ form.required_hours(class="pole-formularza__input", type="number", min="1", placeholder=t('np. 160')) }}
           {% for e in form.required_hours.errors %}
             <span class="pole-formularza__blad">{{ e }}</span>
           {% endfor %}
@@ -45,8 +45,8 @@
     </div>
 
     <div class="u-csp-234">
-      <a href="{{ url_for('zarzadzanie.lista_praktyk') }}" class="przycisk przycisk--drugorzedny">Anuluj</a>
-      <button type="submit" class="przycisk przycisk--glowny">Utwórz praktykę</button>
+      <a href="{{ url_for('zarzadzanie.lista_praktyk') }}" class="przycisk przycisk--drugorzedny">{{ t('Anuluj') }}</a>
+      <button type="submit" class="przycisk przycisk--glowny">{{ t('Utwórz praktykę') }}</button>
     </div>
 
   </form>

@@ -1,11 +1,11 @@
-﻿{% extends "layouts/base_panel.html" %}
+{% extends "layouts/base_panel.html" %}
 
-{% block tytul %}Decyzja Dyrektora Instytutu — {{ zapis.student.first_name }} {{ zapis.student.last_name }}{% endblock %}
-{% block naglowek %}Decyzja Dyrektora Instytutu{% endblock %}
+{% block tytul %}{{ t('Decyzja Dyrektora Instytutu') }} — {{ zapis.student.first_name }} {{ zapis.student.last_name }}{% endblock %}
+{% block naglowek %}{{ t('Decyzja Dyrektora Instytutu') }}{% endblock %}
 
 {% block naglowek_akcje %}
 <div class="u-flex--gap-05">
-  <a href="{{ url_for('zarzadzanie.dyrektor_lista') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
+  <a href="{{ url_for('zarzadzanie.dyrektor_lista') }}" class="przycisk przycisk--drugorzedny">← {{ t('Powrót') }}</a>
 </div>
 {% endblock %}
 
@@ -22,31 +22,31 @@
 
       <div class="u-csp-104">
         <div>
-          <div class="u-etykieta">Student</div>
+          <div class="u-etykieta">{{ t('Student') }}</div>
           <div class="u-csp-105">{{ zapis.student.first_name }} {{ zapis.student.last_name }}</div>
           <div class="u-meta u-csp-106">{{ zapis.student.email }}</div>
           {% if zapis.student.album_number %}
-          <div class="u-fs-xs u-tekst-trzeciorzed">nr alb. {{ zapis.student.album_number }}</div>
+          <div class="u-fs-xs u-tekst-trzeciorzed">{{ t('nr alb.') }} {{ zapis.student.album_number }}</div>
           {% endif %}
         </div>
         <div>
-          <div class="u-etykieta">Rok akademicki</div>
+          <div class="u-etykieta">{{ t('Rok akademicki') }}</div>
           <div class="u-wartosc">{{ zapis.internship.academic_year }}</div>
-          <div class="u-meta">Semestr {{ zapis.internship.semester_label }}</div>
+          <div class="u-meta">{{ t('Semestr') }} {{ zapis.internship.semester_label }}</div>
         </div>
         <div>
-          <div class="u-etykieta">Ścieżka</div>
+          <div class="u-etykieta">{{ t('Ścieżka') }}</div>
           <div class="u-wartosc">{{ sciezka_label }}</div>
         </div>
         <div>
-          <div class="u-etykieta">Data zgłoszenia</div>
+          <div class="u-etykieta">{{ t('Data zgłoszenia') }}</div>
           <div class="u-wartosc">{{ zapis.enrolled_at.strftime('%d.%m.%Y') if zapis.enrolled_at else '—' }}</div>
           <div class="u-meta">{{ zapis.enrolled_at.strftime('%H:%M') if zapis.enrolled_at else '' }}</div>
         </div>
       </div>
 
       <div class="u-ta-center u-csp-107">
-        <span class="status status--planned u-csp-108">Oczekuje na decyzję</span>
+        <span class="status status--planned u-csp-108">{{ t('Oczekuje na decyzję') }}</span>
         {% if zapis.supervisor %}
         <div class="u-fs-xs u-tekst-trzeciorzed u-ta-center u-csp-109">
           UOPZ: <strong class="u-tekst-drugor">{{ zapis.supervisor.first_name }} {{ zapis.supervisor.last_name }}</strong>
@@ -67,17 +67,17 @@
       {% if zapis.company_display_name %}
       <div class="karta">
         <div class="karta__naglowek">
-          <h3 class="karta__tytul">Dane pracodawcy / działalności</h3>
+          <h3 class="karta__tytul">{{ t('Dane pracodawcy / działalności') }}</h3>
         </div>
         <div class="karta__tresc">
           <div class="u-grid-2-lg">
             <div class="pole-info">
-              <div class="pole-info__etykieta">Nazwa firmy / działalności</div>
+              <div class="pole-info__etykieta">{{ t('Nazwa firmy / działalności') }}</div>
               <div class="pole-info__wartosc u-fw-600">{{ zapis.company_display_name }}</div>
             </div>
             {% if zapis.company_city %}
             <div class="pole-info">
-              <div class="pole-info__etykieta">Miasto</div>
+              <div class="pole-info__etykieta">{{ t('Miasto') }}</div>
               <div class="pole-info__wartosc">{{ zapis.company_city }}</div>
             </div>
             {% endif %}
@@ -89,7 +89,7 @@
             {% endif %}
             {% if zapis.workplace_mentor_position %}
             <div class="pole-info">
-              <div class="pole-info__etykieta">Stanowisko</div>
+              <div class="pole-info__etykieta">{{ t('Stanowisko') }}</div>
               <div class="pole-info__wartosc">{{ zapis.workplace_mentor_position }}</div>
             </div>
             {% endif %}
@@ -102,7 +102,7 @@
       {% if zapis.path_justification_text %}
       <div class="karta">
         <div class="karta__naglowek">
-          <h3 class="karta__tytul">Uzasadnienie wniosku</h3>
+          <h3 class="karta__tytul">{{ t('Uzasadnienie wniosku') }}</h3>
         </div>
         <div class="karta__tresc">
           <p class="u-csp-111">{{ zapis.path_justification_text }}</p>
@@ -115,15 +115,15 @@
       <div class="karta">
         <div class="karta__naglowek">
           <h3 class="karta__tytul">
-            Ocena efektów uczenia się
-            <span class="u-fs-xs u-fw-500 u-tekst-trzeciorzed">wg Komisji ds. Praktyk · Zał. 4a</span>
+            {{ t('Ocena efektów uczenia się') }}
+            <span class="u-fs-xs u-fw-500 u-tekst-trzeciorzed">{{ t('wg Komisji ds. Praktyk · Zał. 4a') }}</span>
           </h3>
           {# Podsumowanie statystyczne #}
           {% if oceny_komisji %}
           <div class="u-flex--gap-05">
-            <span class="status status--completed u-csp-059">{{ oceny_stats.uzyskal }} uzyskał/a</span>
-            <span class="status status--in-progress u-csp-059">{{ oceny_stats.czesciowo }} częściowo</span>
-            <span class="status status--odrzucona u-csp-059">{{ oceny_stats.nie }} nie uzyskał/a</span>
+            <span class="status status--completed u-csp-059">{{ oceny_stats.uzyskal }} {{ t('uzyskał/a') }}</span>
+            <span class="status status--in-progress u-csp-059">{{ oceny_stats.czesciowo }} {{ t('częściowo') }}</span>
+            <span class="status status--odrzucona u-csp-059">{{ oceny_stats.nie }} {{ t('nie uzyskał/a') }}</span>
           </div>
           {% endif %}
         </div>
@@ -132,9 +132,9 @@
           <table class="tabela-efektow">
             <thead>
               <tr>
-                <th class="u-csp-112">Nr</th>
-                <th>Efekt uczenia się</th>
-                <th class="u-csp-113">Wynik komisji</th>
+                <th class="u-csp-112">{{ t('Nr') }}</th>
+                <th>{{ t('Efekt uczenia się') }}</th>
+                <th class="u-csp-113">{{ t('Wynik komisji') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -160,7 +160,7 @@
           </table>
           {% else %}
           <div class="u-stan-pusty--sm">
-            Komisja nie wypełniła jeszcze tabeli efektów.
+            {{ t('Komisja nie wypełniła jeszcze tabeli efektów.') }}
           </div>
           {% endif %}
         </div>
@@ -171,8 +171,8 @@
       {% if dokumenty %}
       <div class="karta">
         <div class="karta__naglowek">
-          <h3 class="karta__tytul">Dokumenty studenta</h3>
-          <span class="u-fs-xs u-fw-500 u-tekst-trzeciorzed">{{ dokumenty|length }} plik{% if dokumenty|length != 1 %}i{% endif %}</span>
+          <h3 class="karta__tytul">{{ t('Dokumenty studenta') }}</h3>
+          <span class="u-fs-xs u-fw-500 u-tekst-trzeciorzed">{{ dokumenty|length }} {% if dokumenty|length == 1 %}{{ t('plik') }}{% else %}{{ t('pliki') }}{% endif %}</span>
         </div>
         <div class="karta__tresc u-flex--col-05">
           {% for dok in dokumenty %}
@@ -185,7 +185,7 @@
               </div>
             </div>
             <a href="{{ url_for('uploads.download_document', document_id=dok.id) }}"
-               class="przycisk przycisk--maly przycisk--drugorzedny u-csp-118" target="_blank">Pobierz</a>
+               class="przycisk przycisk--maly przycisk--drugorzedny u-csp-118" target="_blank">{{ t('Pobierz') }}</a>
           </div>
           {% endfor %}
         </div>
@@ -201,7 +201,7 @@
       {% if opinia_komisji %}
       <div class="karta {{ opinia_komisji.border }}">
         <div class="karta__naglowek">
-          <h3 class="karta__tytul">Opinia komisji</h3>
+          <h3 class="karta__tytul">{{ t('Opinia komisji') }}</h3>
           <span class="status {{ opinia_komisji.cls }} u-csp-059">{{ opinia_komisji.label_short }}</span>
         </div>
         <div class="karta__tresc">
@@ -217,7 +217,7 @@
       {# Formularz decyzji dyrektora #}
       <div class="karta">
         <div class="karta__naglowek">
-          <h3 class="karta__tytul">Decyzja Dyrektora Instytutu</h3>
+          <h3 class="karta__tytul">{{ t('Decyzja Dyrektora Instytutu') }}</h3>
         </div>
         <div class="karta__tresc">
           <form method="POST">
@@ -226,7 +226,7 @@
             <div class="u-csp-121">
               {{ form.comment.label(class="pole-formularza__etykieta u-csp-076") }}
               {{ form.comment(class="pole-formularza__textarea u-form-resize", rows="6",
-                 placeholder="Uzasadnienie decyzji widoczne dla studenta i w dokumentacji (opcjonalne)…") }}
+                 placeholder=t('Uzasadnienie decyzji widoczne dla studenta i w dokumentacji (opcjonalne)…')) }}
               {% for error in form.comment.errors %}
                 <span class="pole-formularza__blad">{{ error }}</span>
               {% endfor %}
@@ -235,14 +235,14 @@
             <div class="u-flex--col u-csp-122">
               <button type="submit" name="decision" value="APPROVED"
                       class="przycisk przycisk--glowny u-w-full u-flex--center">
-                Wyrażam zgodę — zatwierdź praktykę
+                {{ t('Wyrażam zgodę — zatwierdź praktykę') }}
               </button>
               <button type="submit" name="decision" value="REJECTED"
                       class="przycisk przycisk--niebezpieczny u-w-full u-flex--center">
-                Nie wyrażam zgody — odrzuć wniosek
+                {{ t('Nie wyrażam zgody — odrzuć wniosek') }}
               </button>
               <a href="{{ url_for('zarzadzanie.dyrektor_lista') }}"
-                 class="przycisk przycisk--drugorzedny u-w-full u-flex--center">Anuluj</a>
+                 class="przycisk przycisk--drugorzedny u-w-full u-flex--center">{{ t('Anuluj') }}</a>
             </div>
           </form>
         </div>

@@ -1,7 +1,7 @@
-﻿{% extends "layouts/base.html" %}
-{% block tytul %}Przypisz UOPZ{% endblock %}
+{% extends "layouts/base.html" %}
+{% block tytul %}{{ t('Przypisz UOPZ') }}{% endblock %}
 {% block tresc %}
-<h1>Przypisz opiekuna uczelnianego</h1>
+<h1>{{ t('Przypisz opiekuna uczelnianego') }}</h1>
 <div class="karta">
   <form method="post">
     {{ form.hidden_tag() }}
@@ -10,8 +10,8 @@
       {{ form.supervisor_id(class_='select') }}
     </div>
     <div class="u-csp-159">
-      <button type="submit" class="przycisk przycisk--glowny">Zapisz</button>
-      <a href="{{ url_for('zarzadzanie.lista_zgloszen') }}" class="przycisk przycisk--drugorzedny">Anuluj</a>
+      <button type="submit" class="przycisk przycisk--glowny">{{ t('Zapisz') }}</button>
+      <a href="{{ url_for('zarzadzanie.lista_zgloszen') }}" class="przycisk przycisk--drugorzedny">{{ t('Anuluj') }}</a>
     </div>
   </form>
 </div>

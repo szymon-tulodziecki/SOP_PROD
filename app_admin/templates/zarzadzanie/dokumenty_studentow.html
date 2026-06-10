@@ -1,15 +1,15 @@
-﻿{% extends "layouts/base_panel.html" %}
-{% block tytul %}Dokumenty studentów{% endblock %}
-{% block naglowek %}Dokumenty studentów{% endblock %}
+{% extends "layouts/base_panel.html" %}
+{% block tytul %}{{ t('Dokumenty studentów') }}{% endblock %}
+{% block naglowek %}{{ t('Dokumenty studentów') }}{% endblock %}
 
 {% block naglowek_akcje %}
-<a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
+<a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← {{ t('Powrót') }}</a>
 {% endblock %}
 
 {% block tresc %}
 <div class="karta">
   <div class="karta__naglowek">
-    <form method="GET" class="pasek-filtrow" role="search" aria-label="Filtruj studentów">
+    <form method="GET" class="pasek-filtrow" role="search" aria-label="{{ t('Filtruj studentów') }}">
       <div class="filtr-szukaj">
         <span class="filtr-szukaj__ikona" aria-hidden="true">
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
@@ -20,32 +20,32 @@
         </span>
         <input type="search" name="szukaj" id="szukaj" class="filtr-szukaj__input"
                value="{{ szukaj }}"
-               placeholder="Szukaj po imieniu, nazwisku lub nr albumu..."
-               aria-label="Szukaj studenta">
+               placeholder="{{ t('Szukaj po imieniu, nazwisku lub nr albumu...') }}"
+               aria-label="{{ t('Szukaj studenta') }}">
       </div>
-      <button type="submit" class="przycisk przycisk--drugorzedny">Szukaj</button>
+      <button type="submit" class="przycisk przycisk--drugorzedny">{{ t('Szukaj') }}</button>
       {% if szukaj %}
         <a href="{{ url_for('zarzadzanie.dokumenty_studentow') }}" class="przycisk przycisk--drugorzedny">
-          Wyczyść filtry
+          {{ t('Wyczyść filtry') }}
         </a>
       {% endif %}
     </form>
 
     <span class="u-csp-038">
-      {{ studenci.total }} studentów
+      {{ studenci.total }} {{ t('studentów') }}
     </span>
   </div>
 
   <div class="tabela-wrapper">
-    <table class="tabela" aria-label="Lista studentów — dokumenty">
+    <table class="tabela" aria-label="{{ t('Lista studentów — dokumenty') }}">
       <thead>
         <tr>
-          <th scope="col">Student</th>
-          <th scope="col">Nr albumu</th>
-          <th scope="col">Kierunek</th>
-          <th scope="col">Opiekun (UOPZ)</th>
-          <th scope="col">Aktywne praktyki</th>
-          <th scope="col"><span class="sr-only">Akcje</span></th>
+          <th scope="col">{{ t('Student') }}</th>
+          <th scope="col">{{ t('Nr albumu') }}</th>
+          <th scope="col">{{ t('Kierunek') }}</th>
+          <th scope="col">{{ t('Opiekun (UOPZ)') }}</th>
+          <th scope="col">{{ t('Aktywne praktyki') }}</th>
+          <th scope="col"><span class="sr-only">{{ t('Akcje') }}</span></th>
         </tr>
       </thead>
       <tbody>
@@ -61,7 +61,7 @@
           <td>{{ s.album_number or '—' }}</td>
           <td>
             <div class="u-csp-225">{{ s.field_of_study or '—' }}</div>
-            {% if s.study_mode %}<div class="u-csp-220">{{ {'full-time': 'Stacjonarne', 'part-time': 'Niestacjonarne'}.get(s.study_mode, s.study_mode) }}</div>{% endif %}
+            {% if s.study_mode %}<div class="u-csp-220">{{ t({'full-time': 'Stacjonarne', 'part-time': 'Niestacjonarne'}.get(s.study_mode, s.study_mode)) }}</div>{% endif %}
           </td>
           <td class="u-csp-225">
             {% if wpis.supervisor %}{{ wpis.supervisor.first_name }} {{ wpis.supervisor.last_name }}{% else %}<span class="u-csp-226">—</span>{% endif %}
@@ -76,7 +76,7 @@
           <td class="u-csp-193">
             <a href="{{ url_for('zarzadzanie.dokumenty_studenta', student_id=s.id) }}"
                class="przycisk przycisk--drugorzedny przycisk--maly">
-              Dokumenty
+              {{ t('Dokumenty') }}
             </a>
           </td>
         </tr>
@@ -84,9 +84,9 @@
         <tr>
           <td colspan="6" class="tabela--pusta">
             {% if szukaj %}
-              Nie znaleziono studentów pasujących do zapytania „{{ szukaj }}".
+              {{ t('Nie znaleziono studentów pasujących do zapytania') }} „{{ szukaj }}".
             {% else %}
-              Brak studentów w systemie.
+              {{ t('Brak studentów w systemie.') }}
             {% endif %}
           </td>
         </tr>
@@ -96,15 +96,14 @@
   </div>
 
   {% if studenci.pages > 1 %}
-  <nav class="paginacja" aria-label="Paginacja listy studentów">
+  <nav class="paginacja" aria-label="{{ t('Paginacja listy studentów') }}">
     <span class="paginacja__info">
-      Wyświetlanie {{ studenci.per_page * (studenci.page - 1) + 1 }}–{{ [studenci.per_page * studenci.page, studenci.total] | min }}
-      z {{ studenci.total }}
+      {{ t('Wyświetlanie {od}–{do} z {razem}', od=studenci.per_page * (studenci.page - 1) + 1, do=[studenci.per_page * studenci.page, studenci.total] | min, razem=studenci.total) }}
     </span>
     <div class="paginacja__przyciski" role="list">
       {% if studenci.has_prev %}
         <a href="{{ url_for('zarzadzanie.dokumenty_studentow', strona=studenci.prev_num, szukaj=szukaj) }}"
-           class="paginacja__przycisk" aria-label="Poprzednia strona">←</a>
+           class="paginacja__przycisk" aria-label="{{ t('Poprzednia strona') }}">←</a>
       {% endif %}
       {% for nr in studenci.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
         {% if nr %}
@@ -117,7 +116,7 @@
       {% endfor %}
       {% if studenci.has_next %}
         <a href="{{ url_for('zarzadzanie.dokumenty_studentow', strona=studenci.next_num, szukaj=szukaj) }}"
-           class="paginacja__przycisk" aria-label="Następna strona">→</a>
+           class="paginacja__przycisk" aria-label="{{ t('Następna strona') }}">→</a>
       {% endif %}
     </div>
   </nav>

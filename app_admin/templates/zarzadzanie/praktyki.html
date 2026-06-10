@@ -1,30 +1,30 @@
 {% extends "layouts/base_panel.html" %}
-{% block tytul %}Lista praktyk{% endblock %}
-{% block naglowek %}Praktyki{% endblock %}
+{% block tytul %}{{ t('Lista praktyk') }}{% endblock %}
+{% block naglowek %}{{ t('Praktyki') }}{% endblock %}
 
 {% block naglowek_akcje %}
 <div class="u-flex--gap-05">
   {% if current_user.role and current_user.role.value == 'ADMIN' %}
   <a href="{{ url_for('zarzadzanie.nowa_praktyka') }}" class="przycisk przycisk--glowny">
-    <span aria-hidden="true">+</span> Nowa praktyka
+    <span aria-hidden="true">+</span> {{ t('Nowa praktyka') }}
   </a>
   {% endif %}
-  <a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
+  <a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← {{ t('Powrót') }}</a>
 </div>
 {% endblock %}
 
 {% block tresc %}
 <div class="karta">
   <div class="tabela-wrapper">
-    <table class="tabela" aria-label="Lista praktyk">
+    <table class="tabela" aria-label="{{ t('Lista praktyk') }}">
       <thead>
         <tr>
-          <th scope="col">Rok uczelniany</th>
-          <th scope="col">Semestr</th>
-          <th scope="col">Wymiar godzin</th>
-          <th scope="col">Liczba zapisów</th>
-          <th scope="col">Status</th>
-          <th scope="col"><span class="sr-only">Akcje</span></th>
+          <th scope="col">{{ t('Rok uczelniany') }}</th>
+          <th scope="col">{{ t('Semestr') }}</th>
+          <th scope="col">{{ t('Wymiar godzin') }}</th>
+          <th scope="col">{{ t('Liczba zapisów') }}</th>
+          <th scope="col">{{ t('Status') }}</th>
+          <th scope="col"><span class="sr-only">{{ t('Akcje') }}</span></th>
         </tr>
       </thead>
       <tbody>
@@ -36,9 +36,9 @@
           <td>{{ p.zapisy | length }}</td>
           <td>
             {% if p.status.value == 'ACTIVE' %}
-              <span class="status status--zakonczona">Aktywna</span>
+              <span class="status status--zakonczona">{{ t('Aktywna') }}</span>
             {% else %}
-              <span class="status status--szkic">Nieaktywna</span>
+              <span class="status status--szkic">{{ t('Nieaktywna') }}</span>
             {% endif %}
           </td>
           <td class="u-nowrap">
@@ -50,8 +50,8 @@
                 {{ csrf_form.hidden_tag() }}
                 <button type="submit"
                         class="przycisk {% if p.status.value == 'ACTIVE' %}przycisk--ostrzezenie{% else %}przycisk--drugorzedny{% endif %} przycisk--maly"
-                        data-confirm="Zmienić status praktyki?">
-                  {{ 'Dezaktywuj' if p.status.value == 'ACTIVE' else 'Aktywuj' }}
+                        data-confirm="{{ t('Zmienić status praktyki?') }}">
+                  {{ t('Dezaktywuj') if p.status.value == 'ACTIVE' else t('Aktywuj') }}
                 </button>
               </form>
               <form class="u-csp-256" method="POST"
@@ -60,8 +60,8 @@
                 {{ csrf_form.hidden_tag() }}
                 <button type="submit"
                         class="przycisk przycisk--niebezpieczny przycisk--maly"
-                        data-confirm="UWAGA: Czy na pewno chcesz trwale usunąć praktykę {{ p.academic_year }} ({{ p.semester_label }})? Usuną się wszystkie zapisy studentów i dokumenty. Tej operacji nie można cofnąć!">
-                  Usuń
+                        data-confirm="{{ t('UWAGA: Czy na pewno chcesz trwale usunąć praktykę {rok} ({semestr})? Usuną się wszystkie zapisy studentów i dokumenty. Tej operacji nie można cofnąć!', rok=p.academic_year, semestr=p.semester_label) }}">
+                  {{ t('Usuń') }}
                 </button>
               </form>
             </div>
@@ -70,7 +70,7 @@
         </tr>
         {% else %}
         <tr>
-          <td colspan="6" class="tabela--pusta">Brak praktyk. Utwórz pierwszą.</td>
+          <td colspan="6" class="tabela--pusta">{{ t('Brak praktyk. Utwórz pierwszą.') }}</td>
         </tr>
         {% endfor %}
       </tbody>
@@ -78,9 +78,9 @@
   </div>
 
   {% if praktyki.pages > 1 %}
-  <nav class="paginacja" aria-label="Paginacja">
+  <nav class="paginacja" aria-label="{{ t('Paginacja') }}">
     <span class="paginacja__info">
-      Strona {{ praktyki.page }} z {{ praktyki.pages }}
+      {{ t('Strona {nr} z {liczba}', nr=praktyki.page, liczba=praktyki.pages) }}
     </span>
     <div class="paginacja__przyciski">
       {% for nr in praktyki.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
@@ -101,8 +101,8 @@
 <div class="karta u-mt-2 praktyki-usuwane">
   <div class="karta__naglowek praktyki-usuwane__naglowek">
     <div>
-      <h2 class="karta__tytul">Oczekujące na trwałe usunięcie</h2>
-      <p class="praktyki-usuwane__opis">Zostaną automatycznie usunięte po 7 dniach od dezaktywacji.</p>
+      <h2 class="karta__tytul">{{ t('Oczekujące na trwałe usunięcie') }}</h2>
+      <p class="praktyki-usuwane__opis">{{ t('Zostaną automatycznie usunięte po 7 dniach od dezaktywacji.') }}</p>
     </div>
   </div>
   <div class="karta__tresc">
@@ -115,20 +115,20 @@
           <div class="u-meta">{{ p.semester_label }}</div>
         </div>
         <div>
-          <div class="u-etykieta">Dezaktywowana</div>
+          <div class="u-etykieta">{{ t('Dezaktywowana') }}</div>
           <div class="praktyki-usuwane__data">{{ p.deleted_at.strftime('%d.%m.%Y %H:%M') }}</div>
         </div>
         <div>
-          <div class="u-etykieta">Usunięcie za</div>
+          <div class="u-etykieta">{{ t('Usunięcie za') }}</div>
           {% if w.pilne %}
-            <span class="status u-status-danger">dziś / jutro</span>
+            <span class="status u-status-danger">{{ t('dziś / jutro') }}</span>
           {% else %}
-            <span class="status u-status-warning">{{ w.dni_pozostale }} dni</span>
+            <span class="status u-status-warning">{{ w.dni_pozostale }} {{ t('dni') }}</span>
           {% endif %}
         </div>
         <form class="u-csp-006" method="POST" action="{{ url_for('zarzadzanie.przywroc_praktyke', id=p.id) }}">
           {{ csrf_form.hidden_tag() }}
-          <button type="submit" class="przycisk przycisk--drugorzedny przycisk--maly">Przywróć</button>
+          <button type="submit" class="przycisk przycisk--drugorzedny przycisk--maly">{{ t('Przywróć') }}</button>
         </form>
       </div>
       {% endfor %}

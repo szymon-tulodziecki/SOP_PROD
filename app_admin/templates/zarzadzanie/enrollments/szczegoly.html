@@ -1,11 +1,11 @@
-﻿{% extends "layouts/base_panel.html" %}
+{% extends "layouts/base_panel.html" %}
 
-{% block tytul %}Szczegóły zgłoszenia — {{ zapis.student.first_name }} {{ zapis.student.last_name }}{% endblock %}
-{% block naglowek %}Szczegóły zgłoszenia{% endblock %}
+{% block tytul %}{{ t('Szczegóły zgłoszenia') }} — {{ zapis.student.first_name }} {{ zapis.student.last_name }}{% endblock %}
+{% block naglowek %}{{ t('Szczegóły zgłoszenia') }}{% endblock %}
 
 {% block naglowek_akcje %}
 <div class="u-flex--gap-05">
-  <a href="{{ url_for('zarzadzanie.lista_zgloszen') }}" class="przycisk przycisk--drugorzedny">← Powrót do listy</a>
+  <a href="{{ url_for('zarzadzanie.lista_zgloszen') }}" class="przycisk przycisk--drugorzedny">← {{ t('Powrót do listy') }}</a>
 </div>
 {% endblock %}
 
@@ -24,24 +24,24 @@
       {# Dane studenta i praktyki #}
       <div class="u-csp-104">
         <div>
-          <div class="u-etykieta">Student</div>
+          <div class="u-etykieta">{{ t('Student') }}</div>
           <div class="u-csp-105">{{ zapis.student.first_name }} {{ zapis.student.last_name }}</div>
           <div class="u-meta u-csp-106">{{ zapis.student.email }}</div>
           {% if zapis.student.album_number %}
-          <div class="u-fs-xs u-tekst-trzeciorzed">nr alb. {{ zapis.student.album_number }}</div>
+          <div class="u-fs-xs u-tekst-trzeciorzed">{{ t('nr alb.') }} {{ zapis.student.album_number }}</div>
           {% endif %}
         </div>
         <div>
-          <div class="u-etykieta">Rok akademicki</div>
+          <div class="u-etykieta">{{ t('Rok akademicki') }}</div>
           <div class="u-wartosc">{{ zapis.internship.academic_year }}</div>
-          <div class="u-meta">Semestr {{ zapis.internship.semester_label }}</div>
+          <div class="u-meta">{{ t('Semestr') }} {{ zapis.internship.semester_label }}</div>
         </div>
         <div>
-          <div class="u-etykieta">Ścieżka</div>
+          <div class="u-etykieta">{{ t('Ścieżka') }}</div>
           <div class="u-wartosc">{{ sciezka_label }}</div>
         </div>
         <div>
-          <div class="u-etykieta">Data zgłoszenia</div>
+          <div class="u-etykieta">{{ t('Data zgłoszenia') }}</div>
           <div class="u-wartosc">{{ zapis.enrolled_at.strftime('%d.%m.%Y') if zapis.enrolled_at else '—' }}</div>
           <div class="u-meta">{{ zapis.enrolled_at.strftime('%H:%M') if zapis.enrolled_at else '' }}</div>
         </div>
@@ -70,39 +70,39 @@
       {# Dane podstawowe #}
       <div class="karta">
         <div class="karta__naglowek">
-          <h3 class="karta__tytul">Dane podstawowe</h3>
+          <h3 class="karta__tytul">{{ t('Dane podstawowe') }}</h3>
         </div>
         <div class="karta__tresc">
           <div class="u-grid-2-lg">
             <div class="pole-info">
-              <div class="pole-info__etykieta">Ścieżka praktyki</div>
+              <div class="pole-info__etykieta">{{ t('Ścieżka praktyki') }}</div>
               <div class="pole-info__wartosc">{{ sciezka_label }}</div>
             </div>
             <div class="pole-info">
-              <div class="pole-info__etykieta">Specjalność</div>
+              <div class="pole-info__etykieta">{{ t('Specjalność') }}</div>
               <div class="pole-info__wartosc">{{ zapis.specialization or '—' }}</div>
             </div>
             {% if zapis.is_standard %}
             <div class="pole-info">
-              <div class="pole-info__etykieta">Termin praktyki</div>
+              <div class="pole-info__etykieta">{{ t('Termin praktyki') }}</div>
               <div class="pole-info__wartosc">
-                {{ zapis.start_date.strftime('%d.%m.%Y') if zapis.start_date else 'Brak' }}
+                {{ zapis.start_date.strftime('%d.%m.%Y') if zapis.start_date else t('Brak') }}
                 <span class="u-tekst-trzeciorzed u-csp-161">→</span>
-                {{ zapis.end_date.strftime('%d.%m.%Y') if zapis.end_date else 'Brak' }}
+                {{ zapis.end_date.strftime('%d.%m.%Y') if zapis.end_date else t('Brak') }}
               </div>
             </div>
             <div class="pole-info">
-              <div class="pole-info__etykieta">Ubezpieczenie NW</div>
+              <div class="pole-info__etykieta">{{ t('Ubezpieczenie NW') }}</div>
               <div class="pole-info__wartosc">
                 {% if zapis.accident_insurance %}
                   <span class="u-tekst-sukces u-csp-162">
                     <span class="u-dot"></span>
-                    Potwierdzone
+                    {{ t('Potwierdzone') }}
                   </span>
                 {% else %}
                   <span class="u-csp-163">
                     <span class="u-dot"></span>
-                    Nie potwierdzone
+                    {{ t('Nie potwierdzone') }}
                   </span>
                 {% endif %}
               </div>
@@ -117,12 +117,12 @@
       {# Dane zakładu pracy #}
       <div class="karta">
         <div class="karta__naglowek">
-          <h3 class="karta__tytul">Zakład pracy</h3>
+          <h3 class="karta__tytul">{{ t('Zakład pracy') }}</h3>
         </div>
         <div class="karta__tresc">
           <div class="u-grid-2-lg">
             <div class="pole-info">
-              <div class="pole-info__etykieta">Nazwa firmy</div>
+              <div class="pole-info__etykieta">{{ t('Nazwa firmy') }}</div>
               <div class="pole-info__wartosc u-fw-600">{{ zapis.company_display_name or '—' }}</div>
             </div>
             <div class="pole-info">
@@ -130,15 +130,15 @@
               <div class="pole-info__wartosc">{{ zapis.company_display_tax_id or '—' }}</div>
             </div>
             <div class="pole-info">
-              <div class="pole-info__etykieta">Adres</div>
+              <div class="pole-info__etykieta">{{ t('Adres') }}</div>
               <div class="pole-info__wartosc">{{ zapis.company_display_address or '—' }}</div>
             </div>
             <div class="pole-info">
-              <div class="pole-info__etykieta">Miasto</div>
+              <div class="pole-info__etykieta">{{ t('Miasto') }}</div>
               <div class="pole-info__wartosc">{{ zapis.company_city or '—' }}</div>
             </div>
             <div class="pole-info u-csp-164">
-              <div class="pole-info__etykieta">Przedstawiciel firmy</div>
+              <div class="pole-info__etykieta">{{ t('Przedstawiciel firmy') }}</div>
               <div class="pole-info__wartosc">
                 {{ zapis.authorized_person or '—' }}
                 {% if zapis.authorized_person_position %}
@@ -153,20 +153,20 @@
       {# Opiekun zakładowy (ZOPZ) #}
       <div class="karta">
         <div class="karta__naglowek">
-          <h3 class="karta__tytul">Opiekun zakładowy (ZOPZ)</h3>
+          <h3 class="karta__tytul">{{ t('Opiekun zakładowy (ZOPZ)') }}</h3>
         </div>
         <div class="karta__tresc">
           <div class="u-grid-2-lg">
             <div class="pole-info">
-              <div class="pole-info__etykieta">Imię i nazwisko</div>
+              <div class="pole-info__etykieta">{{ t('Imię i nazwisko') }}</div>
               <div class="pole-info__wartosc u-fw-600">{{ zapis.workplace_mentor_name or '—' }}</div>
             </div>
             <div class="pole-info">
-              <div class="pole-info__etykieta">Stanowisko</div>
+              <div class="pole-info__etykieta">{{ t('Stanowisko') }}</div>
               <div class="pole-info__wartosc">{{ zapis.workplace_mentor_position or '—' }}</div>
             </div>
             <div class="pole-info">
-              <div class="pole-info__etykieta">Telefon</div>
+              <div class="pole-info__etykieta">{{ t('Telefon') }}</div>
               <div class="pole-info__wartosc">{{ zapis.workplace_mentor_phone or '—' }}</div>
             </div>
             <div class="pole-info">
@@ -180,9 +180,9 @@
       {# Harmonogram #}
       <div class="karta">
         <div class="karta__naglowek">
-          <h3 class="karta__tytul">Harmonogram praktyki</h3>
+          <h3 class="karta__tytul">{{ t('Harmonogram praktyki') }}</h3>
           <span class="status {{ harmonogram.badge_cls }}">
-            {{ harmonogram.suma }} / {{ harmonogram.limit }} dni
+            {{ harmonogram.suma }} / {{ harmonogram.limit }} {{ t('dni') }}
           </span>
         </div>
         <div class="karta__tresc u-p-0">
@@ -190,11 +190,11 @@
             <table class="tabela">
               <thead>
                 <tr>
-                  <th class="u-w-25 u-ta-center u-csp-165">Nr</th>
-                  <th class="u-csp-166">Efekt uczenia się</th>
-                  <th class="u-w-25">Dział / Jednostka</th>
-                  <th class="u-w-25">Przykładowe zadania</th>
-                  <th class="u-ta-center u-csp-167">Dni</th>
+                  <th class="u-w-25 u-ta-center u-csp-165">{{ t('Nr') }}</th>
+                  <th class="u-csp-166">{{ t('Efekt uczenia się') }}</th>
+                  <th class="u-w-25">{{ t('Dział / Jednostka') }}</th>
+                  <th class="u-w-25">{{ t('Przykładowe zadania') }}</th>
+                  <th class="u-ta-center u-csp-167">{{ t('Dni') }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -204,11 +204,11 @@
                   <td class="u-csp-168">{{ w.efekt.description }}</td>
                   <td class="u-fs-sm">
                     {% if w.dzial %}{{ w.dzial }}
-                    {% else %}<span class="u-tekst-trzeciorzed u-csp-169">Nie przypisano</span>{% endif %}
+                    {% else %}<span class="u-tekst-trzeciorzed u-csp-169">{{ t('Nie przypisano') }}</span>{% endif %}
                   </td>
                   <td class="u-fs-sm">
                     {% if w.zadania %}{{ w.zadania }}
-                    {% else %}<span class="u-tekst-trzeciorzed u-csp-169">Nie podano</span>{% endif %}
+                    {% else %}<span class="u-tekst-trzeciorzed u-csp-169">{{ t('Nie podano') }}</span>{% endif %}
                   </td>
                   <td class="u-ta-center u-fw-600 u-day-value {% if w.brak %}u-day-value--missing{% endif %}">
                     {{ w.dni }}
@@ -218,7 +218,7 @@
               </tbody>
               <tfoot>
                 <tr class="u-bg-tlo">
-                  <td colspan="4" class="u-fw-600 u-fs-sm u-tekst-drugor u-csp-170">Suma dni:</td>
+                  <td colspan="4" class="u-fw-600 u-fs-sm u-tekst-drugor u-csp-170">{{ t('Suma dni:') }}</td>
                   <td class="u-ta-center u-fw-600 u-day-total {{ harmonogram.total_cls }}">
                     {{ harmonogram.suma }}
                   </td>
@@ -228,11 +228,11 @@
           </div>
           {% if harmonogram.alert == 'za_duzo' %}
           <div class="u-csp-171">
-            <strong>Przekroczono limit 120 dni.</strong> Harmonogram wymaga korekty przed zatwierdzeniem.
+            <strong>{{ t('Przekroczono limit 120 dni.') }}</strong> {{ t('Harmonogram wymaga korekty przed zatwierdzeniem.') }}
           </div>
           {% elif harmonogram.alert == 'za_malo' %}
           <div class="u-csp-172">
-            <strong>Niewystarczająca liczba dni (min. 100).</strong> Harmonogram wymaga uzupełnienia.
+            <strong>{{ t('Niewystarczająca liczba dni (min. 100).') }}</strong> {{ t('Harmonogram wymaga uzupełnienia.') }}
           </div>
           {% endif %}
         </div>
@@ -242,20 +242,20 @@
       {# ── Ścieżka B/C ── #}
       <div class="karta">
         <div class="karta__naglowek">
-          <h3 class="karta__tytul">Dane pracodawcy / działalności</h3>
+          <h3 class="karta__tytul">{{ t('Dane pracodawcy / działalności') }}</h3>
         </div>
         <div class="karta__tresc">
           <div class="u-grid-2-lg">
             <div class="pole-info">
-              <div class="pole-info__etykieta">Nazwa firmy / działalności</div>
+              <div class="pole-info__etykieta">{{ t('Nazwa firmy / działalności') }}</div>
               <div class="pole-info__wartosc u-fw-600">{{ zapis.company_display_name or '—' }}</div>
             </div>
             <div class="pole-info">
-              <div class="pole-info__etykieta">Stanowisko / zakres obowiązków</div>
+              <div class="pole-info__etykieta">{{ t('Stanowisko / zakres obowiązków') }}</div>
               <div class="pole-info__wartosc">{{ zapis.workplace_mentor_position or '—' }}</div>
             </div>
             <div class="pole-info u-csp-164">
-              <div class="pole-info__etykieta">Adres</div>
+              <div class="pole-info__etykieta">{{ t('Adres') }}</div>
               <div class="pole-info__wartosc">{{ zapis.company_display_address or '—' }}{% if zapis.company_city %}, {{ zapis.company_city }}{% endif %}</div>
             </div>
           </div>
@@ -265,7 +265,7 @@
       {% if zapis.path_justification_text %}
       <div class="karta">
         <div class="karta__naglowek">
-          <h3 class="karta__tytul">Uzasadnienie wniosku</h3>
+          <h3 class="karta__tytul">{{ t('Uzasadnienie wniosku') }}</h3>
         </div>
         <div class="karta__tresc">
           <p class="u-csp-173">{{ zapis.path_justification_text }}</p>
@@ -276,7 +276,7 @@
       {% if decision_history_entries %}
       <div class="karta">
         <div class="karta__naglowek">
-          <h3 class="karta__tytul">Historia decyzji</h3>
+          <h3 class="karta__tytul">{{ t('Historia decyzji') }}</h3>
         </div>
         <div class="karta__tresc historia-decyzji">
           {% for entry in decision_history_entries %}
@@ -290,7 +290,7 @@
             </div>
             {% if entry.comment %}
             <div class="historia-decyzji__komentarz">
-              <div class="historia-decyzji__etykieta">Komentarz</div>
+              <div class="historia-decyzji__etykieta">{{ t('Komentarz') }}</div>
               <p>{{ entry.comment }}</p>
             </div>
             {% endif %}
@@ -305,8 +305,8 @@
       {% if uploaded_docs %}
       <div class="karta">
         <div class="karta__naglowek">
-          <h3 class="karta__tytul">Załączniki studenta</h3>
-          <span class="u-fs-xs u-fw-500 u-tekst-trzeciorzed">{{ uploaded_docs|length }} plik{% if uploaded_docs|length != 1 %}i{% endif %}</span>
+          <h3 class="karta__tytul">{{ t('Załączniki studenta') }}</h3>
+          <span class="u-fs-xs u-fw-500 u-tekst-trzeciorzed">{{ uploaded_docs|length }} {% if uploaded_docs|length == 1 %}{{ t('plik') }}{% else %}{{ t('pliki') }}{% endif %}</span>
         </div>
         <div class="karta__tresc u-flex--col-05">
           {% for dok in uploaded_docs %}
@@ -316,7 +316,7 @@
               <div class="u-fs-xs u-tekst-trzeciorzed u-csp-106">{{ dok.document_type }} · {{ dok.uploaded_at.strftime('%d.%m.%Y, %H:%M') }}</div>
             </div>
             <a href="{{ url_for('uploads.download_document', document_id=dok.id) }}"
-               class="przycisk przycisk--maly przycisk--drugorzedny u-csp-118">Pobierz</a>
+               class="przycisk przycisk--maly przycisk--drugorzedny u-csp-118">{{ t('Pobierz') }}</a>
           </div>
           {% endfor %}
         </div>
@@ -332,22 +332,22 @@
       {% if panel_decyzji == 'formularz' %}
       <div class="karta">
         <div class="karta__naglowek">
-          <h3 class="karta__tytul">Decyzja</h3>
+          <h3 class="karta__tytul">{{ t('Decyzja') }}</h3>
         </div>
         <div class="karta__tresc">
           <form method="POST">
             {{ form.hidden_tag() }}
 
             <div class="u-mb-1 u-csp-121">
-              <label class="pole-formularza__etykieta u-csp-176">Komentarz do studenta <span class="u-fw-500 u-tekst-trzeciorzed">(opcjonalny)</span></label>
-              {{ form.comment(class="pole-formularza__textarea u-form-full", rows="7", placeholder="Uwagi widoczne dla studenta w panelu praktyk…") }}
+              <label class="pole-formularza__etykieta u-csp-176">{{ t('Komentarz do studenta') }} <span class="u-fw-500 u-tekst-trzeciorzed">({{ t('opcjonalny') }})</span></label>
+              {{ form.comment(class="pole-formularza__textarea u-form-full", rows="7", placeholder=t('Uwagi widoczne dla studenta w panelu praktyk…')) }}
             </div>
 
             <div class="u-flex--col u-csp-122">
               {{ form.zatwierdz(class="przycisk przycisk--glowny u-w-full u-flex--center") }}
               {{ form.reject(class="przycisk przycisk--ostrzezenie u-w-full u-flex--center") }}
               <a href="{{ url_for('zarzadzanie.lista_zgloszen') }}"
-                 class="przycisk przycisk--drugorzedny u-w-full u-flex--center">Anuluj</a>
+                 class="przycisk przycisk--drugorzedny u-w-full u-flex--center">{{ t('Anuluj') }}</a>
             </div>
 
           </form>
@@ -360,8 +360,8 @@
       <div class="karta">
         <div class="karta__tresc u-stan-pusty--sm">
           <div class="u-csp-177">!</div>
-          <div class="u-fw-600 u-csp-178">Oczekiwanie na poprawki studenta</div>
-          <div class="u-tekst-drugor u-csp-179">Zgłoszenie zostało zwrócone do studenta. Po nadesłaniu poprawek pojawi się tu ponownie do zatwierdzenia.</div>
+          <div class="u-fw-600 u-csp-178">{{ t('Oczekiwanie na poprawki studenta') }}</div>
+          <div class="u-tekst-drugor u-csp-179">{{ t('Zgłoszenie zostało zwrócone do studenta. Po nadesłaniu poprawek pojawi się tu ponownie do zatwierdzenia.') }}</div>
         </div>
       </div>
 
@@ -371,8 +371,8 @@
       <div class="karta">
         <div class="karta__tresc u-stan-pusty--sm">
           <div class="u-csp-180">✓</div>
-          <div class="u-fw-600 u-tekst-sukces u-csp-181">Zgłoszenie zatwierdzone</div>
-          <div class="u-tekst-drugor u-csp-179">Praktyka jest w trakcie realizacji przez studenta.</div>
+          <div class="u-fw-600 u-tekst-sukces u-csp-181">{{ t('Zgłoszenie zatwierdzone') }}</div>
+          <div class="u-tekst-drugor u-csp-179">{{ t('Praktyka jest w trakcie realizacji przez studenta.') }}</div>
         </div>
       </div>
       {% endif %}
@@ -381,7 +381,7 @@
       {% if decision_history_entries %}
       <div class="karta">
         <div class="karta__naglowek">
-          <h3 class="karta__tytul">Historia decyzji</h3>
+          <h3 class="karta__tytul">{{ t('Historia decyzji') }}</h3>
         </div>
         <div class="karta__tresc historia-decyzji">
           {% for entry in decision_history_entries %}
@@ -395,7 +395,7 @@
             </div>
             {% if entry.comment %}
             <div class="historia-decyzji__komentarz">
-              <div class="historia-decyzji__etykieta">Komentarz</div>
+              <div class="historia-decyzji__etykieta">{{ t('Komentarz') }}</div>
               <p>{{ entry.comment }}</p>
             </div>
             {% endif %}

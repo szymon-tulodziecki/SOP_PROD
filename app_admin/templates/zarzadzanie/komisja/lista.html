@@ -1,10 +1,10 @@
-﻿{% extends "layouts/base_panel.html" %}
+{% extends "layouts/base_panel.html" %}
 
-{% block tytul %}Komisja weryfikująca{% endblock %}
-{% block naglowek %}Wnioski do weryfikacji przez komisję{% endblock %}
+{% block tytul %}{{ t('Komisja weryfikująca') }}{% endblock %}
+{% block naglowek %}{{ t('Wnioski do weryfikacji przez komisję') }}{% endblock %}
 
 {% block naglowek_akcje %}
-<a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
+<a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← {{ t('Powrót') }}</a>
 {% endblock %}
 
 {% block tresc %}
@@ -17,12 +17,12 @@
         <table class="tabela">
           <thead>
             <tr>
-              <th class="u-csp-127">Student</th>
-              <th class="u-csp-129">Ścieżka</th>
-              <th class="u-csp-127">Firma / działalność</th>
-              <th class="u-csp-130">Data zgłoszenia</th>
-              <th class="u-csp-125">Dokumenty</th>
-              <th class="u-csp-197">Akcje</th>
+              <th class="u-csp-127">{{ t('Student') }}</th>
+              <th class="u-csp-129">{{ t('Ścieżka') }}</th>
+              <th class="u-csp-127">{{ t('Firma / działalność') }}</th>
+              <th class="u-csp-130">{{ t('Data zgłoszenia') }}</th>
+              <th class="u-csp-125">{{ t('Dokumenty') }}</th>
+              <th class="u-csp-197">{{ t('Akcje') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -30,27 +30,27 @@
             <tr>
               <td>
                 <div class="u-csp-141">{{ wniosek.student.first_name }} {{ wniosek.student.last_name }}</div>
-                <div class="u-csp-146">{{ wniosek.student.email or 'Brak email' }}</div>
+                <div class="u-csp-146">{{ wniosek.student.email or t('Brak email') }}</div>
                 {% if wniosek.student.album_number %}
-                <div class="u-csp-146">Album: {{ wniosek.student.album_number }}</div>
+                <div class="u-csp-146">{{ t('Album:') }} {{ wniosek.student.album_number }}</div>
                 {% endif %}
               </td>
               <td>
                 <span class="status status--w-trakcie">
-                  B — Uznanie efektów
+                  {{ t('B — Uznanie efektów') }}
                 </span>
                 {% if wniosek.status.value == 'REVISION_REQUIRED' %}
-                <br><span class="status status--draft u-csp-198">Czeka na poprawki studenta</span>
+                <br><span class="status status--draft u-csp-198">{{ t('Czeka na poprawki studenta') }}</span>
                 {% endif %}
               </td>
               <td>
-                <div class="u-csp-141">{{ wniosek.company_display_name or 'Nie podano' }}</div>
+                <div class="u-csp-141">{{ wniosek.company_display_name or t('Nie podano') }}</div>
                 {% if wniosek.company_city %}
                 <div class="u-csp-146">{{ wniosek.company_city }}</div>
                 {% endif %}
                 {% if wniosek.path_type.value != 'STANDARD' %}
                 <div class="u-csp-148">
-                  B — Uznanie efektów
+                  {{ t('B — Uznanie efektów') }}
                 </div>
                 {% endif %}
               </td>
@@ -62,19 +62,19 @@
               </td>
               <td class="u-csp-152">
                 <span class="badge badge--neutral u-csp-199">
-                  {{ wniosek.uploaded_documents | length }} plików
+                  {{ wniosek.uploaded_documents | length }} {{ t('plików') }}
                 </span>
               </td>
               <td class="u-csp-152">
                 {% if wniosek.status.value == 'REVISION_REQUIRED' %}
                 <a href="{{ url_for('zarzadzanie.komisja_weryfikuj', id=wniosek.id) }}"
                    class="przycisk przycisk--maly przycisk--drugorzedny">
-                  Podgląd
+                  {{ t('Podgląd') }}
                 </a>
                 {% else %}
                 <a href="{{ url_for('zarzadzanie.komisja_weryfikuj', id=wniosek.id) }}"
                    class="przycisk przycisk--maly przycisk--glowny">
-                  Weryfikuj
+                  {{ t('Weryfikuj') }}
                 </a>
                 {% endif %}
               </td>
@@ -90,7 +90,7 @@
   {% if wnioski.pages > 1 %}
   <div class="paginacja">
     {% if wnioski.has_prev %}
-      <a href="{{ url_for('zarzadzanie.komisja_lista', page=wnioski.prev_num) }}" class="paginacja__link">← Poprzednia</a>
+      <a href="{{ url_for('zarzadzanie.komisja_lista', page=wnioski.prev_num) }}" class="paginacja__link">← {{ t('Poprzednia') }}</a>
     {% endif %}
 
     {% for page_num in wnioski.iter_pages() %}
@@ -106,7 +106,7 @@
     {% endfor %}
 
     {% if wnioski.has_next %}
-      <a href="{{ url_for('zarzadzanie.komisja_lista', page=wnioski.next_num) }}" class="paginacja__link">Następna →</a>
+      <a href="{{ url_for('zarzadzanie.komisja_lista', page=wnioski.next_num) }}" class="paginacja__link">{{ t('Następna') }} →</a>
     {% endif %}
   </div>
   {% endif %}
@@ -118,9 +118,9 @@
         <path d="M9 12l2 2 4-4"/>
         <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9c.83 0 1.63.11 2.38.32"/>
       </svg>
-      <h3 class="u-csp-045">Brak wniosków do weryfikacji</h3>
+      <h3 class="u-csp-045">{{ t('Brak wniosków do weryfikacji') }}</h3>
       <p class="u-csp-202">
-        Wszystkie wnioski zostały już przetworzone lub nie ma nowych zgłoszeń.
+        {{ t('Wszystkie wnioski zostały już przetworzone lub nie ma nowych zgłoszeń.') }}
       </p>
     </div>
   </div>

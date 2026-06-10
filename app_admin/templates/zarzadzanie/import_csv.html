@@ -1,25 +1,25 @@
 {% extends "layouts/base_panel.html" %}
-{% block tytul %}Import studentów{% endblock %}
-{% block naglowek %}Import studentów z CSV{% endblock %}
+{% block tytul %}{{ t('Import studentów') }}{% endblock %}
+{% block naglowek %}{{ t('Import studentów z CSV') }}{% endblock %}
 {% block naglowek_akcje %}
-  <a href="{{ url_for('zarzadzanie.lista_uzytkownikow') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
+  <a href="{{ url_for('zarzadzanie.lista_uzytkownikow') }}" class="przycisk przycisk--drugorzedny">← {{ t('Powrót') }}</a>
 {% endblock %}
 {% block tresc %}
 <div class="import-csv">
 
   <div class="karta">
-    <div class="karta__naglowek"><h2 class="karta__tytul">Wgraj plik CSV</h2></div>
+    <div class="karta__naglowek"><h2 class="karta__tytul">{{ t('Wgraj plik CSV') }}</h2></div>
     <div class="karta__tresc">
       <form method="POST" enctype="multipart/form-data" novalidate class="import-csv__form">
         {{ form.hidden_tag() }}
 
         <div class="pole-formularza">
           <label for="file" class="pole-formularza__etykieta">
-            Plik CSV <span class="pole-formularza__wymagane" aria-label="wymagane">*</span>
+            {{ t('Plik CSV') }} <span class="pole-formularza__wymagane" aria-label="{{ t('wymagane') }}">*</span>
           </label>
           <label class="import-csv__upload" for="file">
             <svg class="u-csp-241" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            <span class="u-csp-242" id="file-label">Wybierz plik CSV lub przeciągnij tutaj</span>
+            <span class="u-csp-242" id="file-label">{{ t('Wybierz plik CSV lub przeciągnij tutaj') }}</span>
           </label>
           <input class="u-csp-243" type="file" id="file" name="file" accept=".csv" required
 
@@ -31,7 +31,7 @@
 
         <div class="pole-formularza">
           <label for="supervisor_id" class="pole-formularza__etykieta">
-            Przypisz opiekuna (UOPZ) <span class="pole-formularza__wymagane" aria-label="wymagane">*</span>
+            {{ t('Przypisz opiekuna (UOPZ)') }} <span class="pole-formularza__wymagane" aria-label="{{ t('wymagane') }}">*</span>
           </label>
           <select id="supervisor_id" name="supervisor_id" class="pole-formularza__input" required>
             {% for val, label in form.supervisor_id.choices %}
@@ -46,14 +46,14 @@
         <div class="import-csv__akcje">
           <button type="submit" class="przycisk przycisk--glowny">
           <svg class="u-csp-245" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-          Importuj studentów
+          {{ t('Importuj studentów') }}
           </button>
         </div>
       </form>
 
       <div class="import-csv__format">
-        <div class="import-csv__format-tytul">Format pliku CSV</div>
-        <p>Pierwsza linia musi zawierać nagłówki. Kolumna <code>specjalizacja</code> jest opcjonalna — pozostałe są wymagane.</p>
+        <div class="import-csv__format-tytul">{{ t('Format pliku CSV') }}</div>
+        <p>{{ t('Pierwsza linia musi zawierać nagłówki. Kolumna') }} <code>specjalizacja</code> {{ t('jest opcjonalna — pozostałe są wymagane.') }}</p>
         <pre class="import-csv__przyklad"><code>imie,nazwisko,email,numer_albumu,plec,kierunek,specjalizacja,tryb_studiow
 Jan,Kowalski,54321@ans-elblag.pl,54321,M,Informatyka,PBDiOU,stacjonarne
 Anna,Nowak,67890@ans-elblag.pl,67890,K,Informatyka,PBDiOU,niestacjonarne</code></pre>
@@ -66,23 +66,23 @@ Anna,Nowak,67890@ans-elblag.pl,67890,K,Informatyka,PBDiOU,niestacjonarne</code><
 {% if results %}
 <div class="karta import-csv__wyniki">
   <div class="karta__naglowek">
-    <h2 class="karta__tytul">Wyniki importu</h2>
+    <h2 class="karta__tytul">{{ t('Wyniki importu') }}</h2>
   </div>
   <div class="karta__tresc">
     <div class="u-csp-250">
       <div class="u-csp-152">
         <p class="u-csp-251">{{ results.created }}</p>
-        <p class="u-csp-038">Kont utworzonych</p>
+        <p class="u-csp-038">{{ t('Kont utworzonych') }}</p>
       </div>
       <div class="u-csp-152">
         <p class="u-csp-252">{{ results.skipped }}</p>
-        <p class="u-csp-038">Pominiętych</p>
+        <p class="u-csp-038">{{ t('Pominiętych') }}</p>
       </div>
     </div>
     {% if results.errors %}
     <details>
       <summary class="u-csp-253">
-        Pokaż błędy ({{ results.errors|length }})
+        {{ t('Pokaż błędy') }} ({{ results.errors|length }})
       </summary>
       <ul class="u-csp-254">
         {% for error in results.errors %}

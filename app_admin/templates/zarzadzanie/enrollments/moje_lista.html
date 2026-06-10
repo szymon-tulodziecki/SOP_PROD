@@ -1,11 +1,11 @@
-﻿{% extends "layouts/base_panel.html" %}
+{% extends "layouts/base_panel.html" %}
 
-{% block tytul %}Moje zgłoszenia - UOPZ{% endblock %}
-{% block naglowek %}Zgłoszenia moich studentów{% endblock %}
+{% block tytul %}{{ t('Moje zgłoszenia') }} - UOPZ{% endblock %}
+{% block naglowek %}{{ t('Zgłoszenia moich studentów') }}{% endblock %}
 
 {% block naglowek_akcje %}
 <div class="u-csp-136">
-  <a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← Pulpit</a>
+  <a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← {{ t('Pulpit') }}</a>
 </div>
 {% endblock %}
 
@@ -16,10 +16,10 @@
   <div class="karta u-csp-138">
     <div class="karta__tresc">
       <div>
-        <div class="u-csp-139">Panel opiekuna uczelnianego (UOPZ)</div>
+        <div class="u-csp-139">{{ t('Panel opiekuna uczelnianego (UOPZ)') }}</div>
         <div class="u-csp-036">
-          Tutaj znajdziesz wszystkie zgłoszenia studentów, których masz pod opieką.
-          Możesz przeglądać szczegółowe dane wypełnione przez studentów i podejmować decyzje o zatwierdzeniu lub odrzuceniu zgłoszenia.
+          {{ t('Tutaj znajdziesz wszystkie zgłoszenia studentów, których masz pod opieką.') }}
+          {{ t('Możesz przeglądać szczegółowe dane wypełnione przez studentów i podejmować decyzje o zatwierdzeniu lub odrzuceniu zgłoszenia.') }}
         </div>
       </div>
     </div>
@@ -29,18 +29,18 @@
   <div class="karta u-csp-011">
     <div class="karta__tresc">
       <div class="u-csp-140">
-        <span class="u-csp-141">Filtruj według statusu:</span>
+        <span class="u-csp-141">{{ t('Filtruj według statusu:') }}</span>
         <a href="{{ url_for('zarzadzanie.moje_zgloszenia') }}"
            class="przycisk przycisk--{% if not request.args.get('status') %}glowny{% else %}drugorzedny{% endif %} przycisk--maly">
-          Wszystkie ({{ liczniki.wszystkie }})
+          {{ t('Wszystkie') }} ({{ liczniki.wszystkie }})
         </a>
         <a href="{{ url_for('zarzadzanie.moje_zgloszenia', status='AWAITING_APPROVAL') }}"
            class="przycisk przycisk--{% if request.args.get('status') == 'AWAITING_APPROVAL' %}glowny{% else %}drugorzedny{% endif %} przycisk--maly">
-          Do zatwierdzenia ({{ liczniki.oczekujace }})
+          {{ t('Do zatwierdzenia') }} ({{ liczniki.oczekujace }})
         </a>
         <a href="{{ url_for('zarzadzanie.moje_zgloszenia', status='IN_PROGRESS') }}"
            class="przycisk przycisk--{% if request.args.get('status') == 'IN_PROGRESS' %}glowny{% else %}drugorzedny{% endif %} przycisk--maly">
-          Zatwierdzone ({{ liczniki.zatwierdzone }})
+          {{ t('Zatwierdzone') }} ({{ liczniki.zatwierdzone }})
         </a>
       </div>
     </div>
@@ -50,7 +50,7 @@
   {% if pilne_oceny %}
   <div class="karta u-csp-142">
     <div class="karta__naglowek">
-      <h3 class="karta__tytul u-csp-143">Wymagają uwagi</h3>
+      <h3 class="karta__tytul u-csp-143">{{ t('Wymagają uwagi') }}</h3>
     </div>
     <div class="karta__tresc">
       {% for item in pilne_oceny %}
@@ -60,18 +60,18 @@
             <div class="u-csp-141">{{ item.zapis.student.first_name }} {{ item.zapis.student.last_name }}</div>
             <div class="u-csp-144">
               {% if item.przekroczony %}
-                Przekroczony termin oceny ({{ item.deadline.strftime('%d.%m.%Y') }})
+                {{ t('Przekroczony termin oceny') }} ({{ item.deadline.strftime('%d.%m.%Y') }})
               {% elif item.dni_do_deadline == 0 %}
-                Dziś ostatni dzień na ocenę
+                {{ t('Dziś ostatni dzień na ocenę') }}
               {% else %}
-                Pozostało {{ item.dni_do_deadline }} dni do deadline ({{ item.deadline.strftime('%d.%m.%Y') }})
+                {{ t('Pozostało {dni} dni do deadline', dni=item.dni_do_deadline) }} ({{ item.deadline.strftime('%d.%m.%Y') }})
               {% endif %}
             </div>
           </div>
           <div>
             <a href="{{ url_for('evaluation.evaluate_internship', id=item.zapis.id) }}"
                class="przycisk przycisk--glowny przycisk--maly">
-              Wystaw ocenę
+              {{ t('Wystaw ocenę') }}
             </a>
           </div>
         </div>
@@ -85,7 +85,7 @@
   <div class="karta">
     <div class="karta__naglowek">
       <h2 class="karta__tytul">
-        Moje zgłoszenia
+        {{ t('Moje zgłoszenia') }}
         {% if zgloszenia.total > 0 %}
         <span class="u-csp-145">({{ zgloszenia.total }})</span>
         {% endif %}
@@ -97,12 +97,12 @@
         <table class="tabela">
           <thead>
             <tr>
-              <th class="u-csp-127">Student</th>
-              <th class="u-csp-128">Praktyka</th>
-              <th class="u-csp-128">company</th>
-              <th class="u-csp-129">Status</th>
-              <th class="u-csp-130">Zgłoszono</th>
-              <th class="u-csp-131">Akcje</th>
+              <th class="u-csp-127">{{ t('Student') }}</th>
+              <th class="u-csp-128">{{ t('Praktyka') }}</th>
+              <th class="u-csp-128">{{ t('Firma') }}</th>
+              <th class="u-csp-129">{{ t('Status') }}</th>
+              <th class="u-csp-130">{{ t('Zgłoszono') }}</th>
+              <th class="u-csp-131">{{ t('Akcje') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -112,12 +112,12 @@
                 <div class="u-csp-141">{{ z.student.first_name }} {{ z.student.last_name }}</div>
                 <div class="u-csp-146">{{ z.student.email }}</div>
                 {% if z.student.album_number %}
-                <div class="u-csp-146">Album: {{ z.student.album_number }}</div>
+                <div class="u-csp-146">{{ t('Album:') }} {{ z.student.album_number }}</div>
                 {% endif %}
               </td>
               <td>
                 <div class="u-csp-141">{{ z.internship.academic_year }}</div>
-                <div class="u-csp-146">Semestr {{ z.internship.semester_label }}</div>
+                <div class="u-csp-146">{{ t('Semestr') }} {{ z.internship.semester_label }}</div>
                 {% if z.start_date and z.end_date %}
                 <div class="u-csp-147">
                   {{ z.start_date.strftime('%d.%m') }} - {{ z.end_date.strftime('%d.%m.%Y') }}
@@ -125,13 +125,13 @@
                 {% endif %}
               </td>
               <td>
-                <div class="u-csp-141">{{ z.company_display_name or 'Nie podano' }}</div>
+                <div class="u-csp-141">{{ z.company_display_name or t('Nie podano') }}</div>
                 {% if z.company_city %}
                 <div class="u-csp-146">{{ z.company_city }}</div>
                 {% endif %}
                 {% if z.path_type.value != 'STANDARD' %}
                 <div class="u-csp-148">
-                  Ścieżka B — Uznanie efektów
+                  {{ t('Ścieżka B — Uznanie efektów') }}
                 </div>
                 {% endif %}
               </td>
@@ -141,7 +141,7 @@
                 </span>
                 {% if z.admin_comments or z.supervisor_comments %}
                 <div class="u-csp-149">
-                  Są komentarze
+                  {{ t('Są komentarze') }}
                 </div>
                 {% endif %}
               </td>
@@ -156,14 +156,14 @@
                   <a href="{{ url_for('zarzadzanie.szczegoly_zgloszenia', id=z.id) }}"
                      class="przycisk przycisk--{% if z.status.value == 'AWAITING_APPROVAL' %}glowny{% else %}drugorzedny{% endif %} przycisk--maly u-csp-134"
                     >
-                    {% if z.status.value == 'AWAITING_APPROVAL' %}Oceń{% else %}Szczegóły{% endif %}
+                    {% if z.status.value == 'AWAITING_APPROVAL' %}{{ t('Oceń') }}{% else %}{{ t('Szczegóły') }}{% endif %}
                   </a>
 
                   {% if z.status.value == 'IN_PROGRESS' %}
                   <a href="{{ url_for('evaluation.evaluate_internship', id=z.id) }}"
                      class="przycisk przycisk--maly u-csp-134"
                     >
-                    Ocena UOPZ
+                    {{ t('Ocena UOPZ') }}
                   </a>
                   {% endif %}
                 </div>
@@ -179,7 +179,7 @@
       <div class="u-csp-154">
         {% if zgloszenia.has_prev %}
         <a href="{{ url_for('zarzadzanie.moje_zgloszenia', page=zgloszenia.prev_num, **request.args) }}"
-           class="przycisk przycisk--drugorzedny przycisk--maly">← Poprzednia</a>
+           class="przycisk przycisk--drugorzedny przycisk--maly">← {{ t('Poprzednia') }}</a>
         {% endif %}
 
         {% for page_num in zgloszenia.iter_pages() %}
@@ -197,7 +197,7 @@
 
         {% if zgloszenia.has_next %}
         <a href="{{ url_for('zarzadzanie.moje_zgloszenia', page=zgloszenia.next_num, **request.args) }}"
-           class="przycisk przycisk--drugorzedny przycisk--maly">Następna →</a>
+           class="przycisk przycisk--drugorzedny przycisk--maly">{{ t('Następna') }} →</a>
         {% endif %}
       </div>
       {% endif %}
@@ -207,19 +207,19 @@
       <div class="u-csp-155">
         <div class="u-csp-156">-</div>
         <div class="u-csp-157">
-          Brak zgłoszeń
+          {{ t('Brak zgłoszeń') }}
         </div>
         <div class="u-csp-036">
           {% if request.args.get('status') %}
-          Nie masz zgłoszeń o wybranym statusie.
+          {{ t('Nie masz zgłoszeń o wybranym statusie.') }}
           {% else %}
-          Nie zostały Ci jeszcze przypisani studenci do opieki.
+          {{ t('Nie zostały Ci jeszcze przypisani studenci do opieki.') }}
           {% endif %}
         </div>
         {% if request.args.get('status') %}
         <div class="u-csp-158">
           <a href="{{ url_for('zarzadzanie.moje_zgloszenia') }}" class="przycisk przycisk--drugorzedny">
-            Pokaż wszystkie zgłoszenia
+            {{ t('Pokaż wszystkie zgłoszenia') }}
           </a>
         </div>
         {% endif %}

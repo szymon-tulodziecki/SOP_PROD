@@ -1,10 +1,10 @@
 {% extends "layouts/base_panel.html" %}
 
-{% block tytul %}Egzamin praktyki{% endblock %}
-{% block naglowek %}Protokół egzaminacyjny{% endblock %}
+{% block tytul %}{{ t('Egzamin praktyki') }}{% endblock %}
+{% block naglowek %}{{ t('Protokół egzaminacyjny') }}{% endblock %}
 
 {% block naglowek_akcje %}
-<a href="{{ url_for('zarzadzanie.szczegoly_praktyki', id=internship.id) }}" class="przycisk przycisk--drugorzedny">Powrót</a>
+<a href="{{ url_for('zarzadzanie.szczegoly_praktyki', id=internship.id) }}" class="przycisk przycisk--drugorzedny">{{ t('Powrót') }}</a>
 {% endblock %}
 
 {% block tresc %}
@@ -16,7 +16,7 @@
       <div>
         <h2 class="u-csp-040">{{ internship.student.first_name }} {{ internship.student.last_name }}</h2>
         <p class="u-tekst-drugor u-csp-041">
-          Zakład: {{ internship.zaklad.nazwa }} | Godziny: {{ internship.lacznie_godzin }} / 160 h
+          {{ t('Zakład:') }} {{ internship.zaklad.nazwa }} | {{ t('Godziny:') }} {{ internship.lacznie_godzin }} / 160 h
         </p>
       </div>
       <span class="status status--{{ internship.status.value|lower|replace('_', '-') }}">{{ translate_status(internship.status.value) }}</span>
@@ -26,14 +26,14 @@
   <!-- Wzór -->
   <div class="karta u-mb-2">
     <div class="karta__naglowek">
-      <h3 class="karta__tytul">Wzór obliczania oceny końcowej (Zał. 8)</h3>
+      <h3 class="karta__tytul">{{ t('Wzór obliczania oceny końcowej (Zał. 8)') }}</h3>
     </div>
     <div class="karta__tresc u-ta-center u-csp-042">
       <div class="u-csp-043">
         K = 0,4 · E + 0,1 · S + 0,2 · U + 0,3 · Z
       </div>
       <div class="u-meta u-mt-1">
-        E — egzamin &nbsp;|&nbsp; S — sprawozdanie &nbsp;|&nbsp; U — opiekun uczelniany (UOPZ) &nbsp;|&nbsp; Z — opiekun zakładowy (ZOPZ)
+        {{ t('E — egzamin') }} &nbsp;|&nbsp; {{ t('S — sprawozdanie') }} &nbsp;|&nbsp; {{ t('U — opiekun uczelniany (UOPZ)') }} &nbsp;|&nbsp; {{ t('Z — opiekun zakładowy (ZOPZ)') }}
       </div>
     </div>
   </div>
@@ -42,15 +42,15 @@
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="karta u-mb-2">
       <div class="karta__naglowek">
-        <h3 class="karta__tytul">Oceny składowe</h3>
+        <h3 class="karta__tytul">{{ t('Oceny składowe') }}</h3>
       </div>
       <div class="karta__tresc">
         <div class="u-grid-2-lg">
 
           <div class="pole-formularza">
-            <label class="pole-formularza__etykieta">Ocena z egzaminu (E)</label>
+            <label class="pole-formularza__etykieta">{{ t('Ocena z egzaminu (E)') }}</label>
             <select name="ocena_egzamin" class="filtr-select u-w-full" required>
-              <option value="">Wybierz...</option>
+              <option value="">{{ t('Wybierz...') }}</option>
               {% for stopien in [2.0, 3.0, 3.5, 4.0, 4.5, 5.0] %}
               <option value="{{ stopien }}">{{ stopien }}</option>
               {% endfor %}
@@ -58,9 +58,9 @@
           </div>
 
           <div class="pole-formularza">
-            <label class="pole-formularza__etykieta">Ocena sprawozdania (S)</label>
+            <label class="pole-formularza__etykieta">{{ t('Ocena sprawozdania (S)') }}</label>
             <select name="ocena_sprawozdanie" class="filtr-select u-w-full" required>
-              <option value="">Wybierz...</option>
+              <option value="">{{ t('Wybierz...') }}</option>
               {% for stopien in [2.0, 3.0, 3.5, 4.0, 4.5, 5.0] %}
               <option value="{{ stopien }}" {% if internship.report_grade == stopien %}selected{% endif %}>{{ stopien }}</option>
               {% endfor %}
@@ -68,9 +68,9 @@
           </div>
 
           <div class="pole-formularza">
-            <label class="pole-formularza__etykieta">Ocena Opiekuna Uczelnianego (U)</label>
+            <label class="pole-formularza__etykieta">{{ t('Ocena Opiekuna Uczelnianego (U)') }}</label>
             <select name="supervisor_grade" class="filtr-select u-w-full" required>
-              <option value="">Wybierz...</option>
+              <option value="">{{ t('Wybierz...') }}</option>
               {% for stopien in [2.0, 3.0, 3.5, 4.0, 4.5, 5.0] %}
               <option value="{{ stopien }}" {% if internship.supervisor_grade == stopien %}selected{% endif %}>{{ stopien }}</option>
               {% endfor %}
@@ -78,9 +78,9 @@
           </div>
 
           <div class="pole-formularza">
-            <label class="pole-formularza__etykieta">Ocena Opiekuna Zakładowego (Z)</label>
+            <label class="pole-formularza__etykieta">{{ t('Ocena Opiekuna Zakładowego (Z)') }}</label>
             <select name="workplace_grade" class="filtr-select u-w-full" required>
-              <option value="">Wybierz...</option>
+              <option value="">{{ t('Wybierz...') }}</option>
               {% for stopien in [2.0, 3.0, 3.5, 4.0, 4.5, 5.0] %}
               <option value="{{ stopien }}" {% if internship.workplace_grade == stopien %}selected{% endif %}>{{ stopien }}</option>
               {% endfor %}
@@ -94,7 +94,7 @@
     <!-- Wyliczenie K (JS) -->
     <div class="karta u-mb-2">
       <div class="karta__tresc u-ta-center u-csp-044">
-        <div class="u-etykieta u-csp-045">Ocena końcowa K</div>
+        <div class="u-etykieta u-csp-045">{{ t('Ocena końcowa K') }}</div>
         <div class="u-csp-046" id="wynik-k">—</div>
       </div>
     </div>
@@ -102,9 +102,9 @@
     <div class="karta u-mb-2">
       <div class="karta__tresc">
         <div class="pole-formularza">
-          <label class="pole-formularza__etykieta">Członkowie komisji egzaminacyjnej (oddzieleni przecinkami)</label>
+          <label class="pole-formularza__etykieta">{{ t('Członkowie komisji egzaminacyjnej (oddzieleni przecinkami)') }}</label>
           <input type="text" name="czlonkowie_komisji" class="pole-formularza__input"
-                 placeholder="np. dr Jan Kowalski, mgr Anna Nowak"
+                 placeholder="{{ t('np. dr Jan Kowalski, mgr Anna Nowak') }}"
                  {% if internship.committee_members %}value="{{ internship.committee_members | join(', ') }}"{% endif %}>
         </div>
       </div>
@@ -112,7 +112,7 @@
 
     <div class="u-ta-center u-csp-047">
       <button type="submit" class="przycisk przycisk--glowny u-csp-048">
-        Zatwierdź egzamin i zakończ praktykę
+        {{ t('Zatwierdź egzamin i zakończ praktykę') }}
       </button>
     </div>
   </form>

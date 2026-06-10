@@ -1,15 +1,15 @@
 {% extends "layouts/base_panel.html" %}
 
-{% block tytul %}Dziennik praktyki{% endblock %}
-{% block naglowek %}Dziennik praktyki{% endblock %}
+{% block tytul %}{{ t('Dziennik praktyki') }}{% endblock %}
+{% block naglowek %}{{ t('Dziennik praktyki') }}{% endblock %}
 
 {% block naglowek_akcje %}
 <div class="u-flex--gap-05">
-  <a href="{{ url_for('journal.lista_dziennikow') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
+  <a href="{{ url_for('journal.lista_dziennikow') }}" class="przycisk przycisk--drugorzedny">← {{ t('Powrót') }}</a>
 
   <button id="btn-pdf" data-enrollment-id="{{ zapis.id }}" class="przycisk przycisk--glowny">
     <svg class="u-csp-083" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-    <span id="btn-pdf-label">Pobierz PDF</span>
+    <span id="btn-pdf-label">{{ t('Pobierz PDF') }}</span>
   </button>
 
   <span id="pdf-status" class="u-meta-sm u-csp-084"></span>
@@ -24,17 +24,17 @@
     <div class="karta__tresc">
       <div class="u-csp-085">
         <div>
-          <div class="u-etykieta">Student</div>
+          <div class="u-etykieta">{{ t('Student') }}</div>
           <div class="u-fw-600">{{ zapis.student.first_name }} {{ zapis.student.last_name }}</div>
-          <div class="u-meta">Album: {{ zapis.student.album_number or '-' }}</div>
+          <div class="u-meta">{{ t('Album:') }} {{ zapis.student.album_number or '-' }}</div>
         </div>
         <div>
-          <div class="u-etykieta">Praktyka</div>
+          <div class="u-etykieta">{{ t('Praktyka') }}</div>
           <div class="u-fw-600">{{ zapis.internship.academic_year }}</div>
-          <div class="u-meta">Semestr {{ zapis.internship.semester_label }}</div>
+          <div class="u-meta">{{ t('Semestr') }} {{ zapis.internship.semester_label }}</div>
         </div>
         <div>
-          <div class="u-etykieta">Postęp godzin</div>
+          <div class="u-etykieta">{{ t('Postęp godzin') }}</div>
           <div class="u-fw-600 u-csp-086">{{ total_hours }} / {{ zapis.internship.required_hours }} h</div>
           <div class="pasek-postep u-csp-292">
             <div class="pasek-postep__wypelnienie u-progress-{{ zapis.progress_percent|int }} {{ 'pasek-postep__wypelnienie--zakonczony' if zapis.progress_percent >= 100 else '' }}"></div>
@@ -54,7 +54,7 @@
         <line x1="12" y1="9" x2="12" y2="13"/>
         <line x1="12" y1="17" x2="12.01" y2="17"/>
       </svg>
-      <span>Przerwa <strong>{{ p.working_days }} dni roboczych</strong> między {{ p.date_from.strftime('%d.%m') }} a {{ p.date_to.strftime('%d.%m.%Y') }}</span>
+      <span>{{ t('Przerwa') }} <strong>{{ p.working_days }} {{ t('dni roboczych') }}</strong> {{ t('między') }} {{ p.date_from.strftime('%d.%m') }} {{ t('a') }} {{ p.date_to.strftime('%d.%m.%Y') }}</span>
     </div>
     {% endfor %}
   </div>
@@ -63,17 +63,17 @@
   <!-- Wpisy -->
   <div class="karta">
     <div class="karta__naglowek u-csp-077">
-      <h3 class="karta__tytul">Wpisy dziennika ({{ entries|length }}{% if data_od or data_do %} — filtr aktywny{% endif %})</h3>
+      <h3 class="karta__tytul">{{ t('Wpisy dziennika') }} ({{ entries|length }}{% if data_od or data_do %} — {{ t('filtr aktywny') }}{% endif %})</h3>
       <form method="GET" class="u-flex--gap-05 u-csp-088">
-        <label class="u-meta-sm">Od</label>
+        <label class="u-meta-sm">{{ t('Od') }}</label>
         <input type="date" name="od" class="pole-formularza__input u-csp-089"
                value="{{ data_od.isoformat() if data_od else '' }}">
-        <label class="u-meta-sm">Do</label>
+        <label class="u-meta-sm">{{ t('Do') }}</label>
         <input type="date" name="do" class="pole-formularza__input u-csp-089"
                value="{{ data_do.isoformat() if data_do else '' }}">
-        <button type="submit" class="przycisk przycisk--maly przycisk--drugorzedny">Filtruj</button>
+        <button type="submit" class="przycisk przycisk--maly przycisk--drugorzedny">{{ t('Filtruj') }}</button>
         {% if data_od or data_do %}
-        <a href="{{ url_for('journal.dziennik_zapisu', id=zapis.id) }}" class="przycisk przycisk--maly przycisk--drugorzedny">Wyczyść</a>
+        <a href="{{ url_for('journal.dziennik_zapisu', id=zapis.id) }}" class="przycisk przycisk--maly przycisk--drugorzedny">{{ t('Wyczyść') }}</a>
         {% endif %}
       </form>
     </div>
@@ -82,10 +82,10 @@
         <table class="tabela">
           <thead>
             <tr>
-              <th class="u-csp-090" scope="col">Data</th>
-              <th class="u-csp-091" scope="col">Godziny</th>
-              <th scope="col">Opis czynności</th>
-              <th class="u-csp-092" scope="col">Efekt</th>
+              <th class="u-csp-090" scope="col">{{ t('Data') }}</th>
+              <th class="u-csp-091" scope="col">{{ t('Godziny') }}</th>
+              <th scope="col">{{ t('Opis czynności') }}</th>
+              <th class="u-csp-092" scope="col">{{ t('Efekt') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -95,8 +95,8 @@
               <td class="u-ta-center">{{ w.duration_hours }} h</td>
               <td class="u-fs-sm u-lh-15 u-csp-093">
                 {% if w.description | length > 120 %}
-                  <span class="opis-skrot">{{ w.description[:120] }}&hellip; <button type="button" class="btn-rozwin">Rozwiń</button></span>
-                  <span class="opis-pelny u-csp-094">{{ w.description }} <button type="button" class="btn-rozwin">Zwiń</button></span>
+                  <span class="opis-skrot">{{ w.description[:120] }}&hellip; <button type="button" class="btn-rozwin">{{ t('Rozwiń') }}</button></span>
+                  <span class="opis-pelny u-csp-094">{{ w.description }} <button type="button" class="btn-rozwin">{{ t('Zwiń') }}</button></span>
                 {% else %}
                   {{ w.description }}
                 {% endif %}
@@ -111,7 +111,7 @@
             </tr>
             {% else %}
             <tr>
-              <td colspan="4" class="tabela--pusta">Student nie dodał jeszcze żadnych wpisów.</td>
+              <td colspan="4" class="tabela--pusta">{{ t('Student nie dodał jeszcze żadnych wpisów.') }}</td>
             </tr>
             {% endfor %}
           </tbody>

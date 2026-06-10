@@ -1,9 +1,9 @@
 {% extends "layouts/base_panel.html" %}
-{% block tytul %}Logi systemowe{% endblock %}
-{% block naglowek %}Logi systemowe{% endblock %}
+{% block tytul %}{{ t('Logi systemowe') }}{% endblock %}
+{% block naglowek %}{{ t('Logi systemowe') }}{% endblock %}
 
 {% block naglowek_akcje %}
-<a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
+<a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← {{ t('Powrót') }}</a>
 {% endblock %}
 
 {% block tresc %}
@@ -11,22 +11,22 @@
   <div class="karta__tresc">
     <form method="GET" class="u-flex--gap-05 u-csp-096">
       <div class="pole-formularza u-csp-097">
-        <label class="pole-formularza__etykieta" for="szukaj">Student</label>
-        <input id="szukaj" name="szukaj" class="pole-formularza__input" value="{{ search_query }}" placeholder="Imię lub nazwisko…">
+        <label class="pole-formularza__etykieta" for="szukaj">{{ t('Student') }}</label>
+        <input id="szukaj" name="szukaj" class="pole-formularza__input" value="{{ search_query }}" placeholder="{{ t('Imię lub nazwisko…') }}">
       </div>
       <div class="pole-formularza u-csp-098">
-        <label class="pole-formularza__etykieta" for="event_type">Typ zdarzenia</label>
+        <label class="pole-formularza__etykieta" for="event_type">{{ t('Typ zdarzenia') }}</label>
         <select id="event_type" name="event_type" class="pole-formularza__input">
-          <option value="">— wszystkie —</option>
-          {% for t in event_types %}
-          <option value="{{ t }}" {% if t == active_type %}selected{% endif %}>{{ labels.get(t, t) }}</option>
+          <option value="">{{ t('— wszystkie —') }}</option>
+          {% for typ in event_types %}
+          <option value="{{ typ }}" {% if typ == active_type %}selected{% endif %}>{{ t(labels.get(typ, typ)) }}</option>
           {% endfor %}
         </select>
       </div>
       <div class="u-flex--gap-05 u-csp-099">
-        <button type="submit" class="przycisk przycisk--drugorzedny">Filtruj</button>
+        <button type="submit" class="przycisk przycisk--drugorzedny">{{ t('Filtruj') }}</button>
         {% if search_query or active_type %}
-        <a href="{{ url_for('logi.lista_logow') }}" class="przycisk przycisk--drugorzedny">Wyczyść</a>
+        <a href="{{ url_for('logi.lista_logow') }}" class="przycisk przycisk--drugorzedny">{{ t('Wyczyść') }}</a>
         {% endif %}
       </div>
     </form>
@@ -35,15 +35,15 @@
 
 <div class="karta">
   <div class="tabela-wrapper">
-    <table class="tabela" aria-label="Logi systemowe">
+    <table class="tabela" aria-label="{{ t('Logi systemowe') }}">
       <thead>
         <tr>
-          <th>Data i czas</th>
-          <th>Typ zdarzenia</th>
-          <th>Student</th>
-          <th>Wykonał</th>
-          <th>Decyzja</th>
-          <th>Komentarz</th>
+          <th>{{ t('Data i czas') }}</th>
+          <th>{{ t('Typ zdarzenia') }}</th>
+          <th>{{ t('Student') }}</th>
+          <th>{{ t('Wykonał') }}</th>
+          <th>{{ t('Decyzja') }}</th>
+          <th>{{ t('Komentarz') }}</th>
           <th></th>
         </tr>
       </thead>
@@ -79,13 +79,13 @@
           <td>
             {% if z.enrollment_id %}
             <a href="{{ url_for('zarzadzanie.szczegoly_zgloszenia', id=z.enrollment_id) }}"
-               class="przycisk przycisk--maly przycisk--drugorzedny">Szczegóły</a>
+               class="przycisk przycisk--maly przycisk--drugorzedny">{{ t('Szczegóły') }}</a>
             {% endif %}
           </td>
         </tr>
         {% else %}
         <tr>
-          <td colspan="7" class="tabela--pusta">Brak zdarzeń spełniających kryteria.</td>
+          <td colspan="7" class="tabela--pusta">{{ t('Brak zdarzeń spełniających kryteria.') }}</td>
         </tr>
         {% endfor %}
       </tbody>
@@ -93,8 +93,8 @@
   </div>
 
   {% if events.pages > 1 %}
-  <nav class="paginacja" aria-label="Paginacja">
-    <span class="paginacja__info">Strona {{ events.page }} z {{ events.pages }}</span>
+  <nav class="paginacja" aria-label="{{ t('Paginacja') }}">
+    <span class="paginacja__info">{{ t('Strona {nr} z {liczba}', nr=events.page, liczba=events.pages) }}</span>
     <div class="paginacja__przyciski">
       {% for nr in events.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
         {% if nr %}

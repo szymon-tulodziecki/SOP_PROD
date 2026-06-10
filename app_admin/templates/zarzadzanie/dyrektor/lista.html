@@ -1,10 +1,10 @@
 {% extends "layouts/base_panel.html" %}
 
-{% block tytul %}Decyzje Dyrektora Instytutu{% endblock %}
-{% block naglowek %}Wnioski oczekujące na decyzję Dyrektora Instytutu{% endblock %}
+{% block tytul %}{{ t('Decyzje Dyrektora Instytutu') }}{% endblock %}
+{% block naglowek %}{{ t('Wnioski oczekujące na decyzję Dyrektora Instytutu') }}{% endblock %}
 
 {% block naglowek_akcje %}
-<a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
+<a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← {{ t('Powrót') }}</a>
 {% endblock %}
 
 {% block tresc %}
@@ -17,12 +17,12 @@
         <table class="tabela">
           <thead>
             <tr>
-              <th class="u-w-25">Student</th>
-              <th class="u-w-15">Ścieżka</th>
-              <th class="u-csp-123">Firma / działalność</th>
-              <th class="u-csp-124">Decyzja komisji</th>
-              <th class="u-csp-125">Data komisji</th>
-              <th class="u-ta-center u-csp-125">Akcje</th>
+              <th class="u-w-25">{{ t('Student') }}</th>
+              <th class="u-w-15">{{ t('Ścieżka') }}</th>
+              <th class="u-csp-123">{{ t('Firma / działalność') }}</th>
+              <th class="u-csp-124">{{ t('Decyzja komisji') }}</th>
+              <th class="u-csp-125">{{ t('Data komisji') }}</th>
+              <th class="u-ta-center u-csp-125">{{ t('Akcje') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -30,24 +30,24 @@
             <tr>
               <td>
                 <div class="u-fw-600">{{ wniosek.student.first_name }} {{ wniosek.student.last_name }}</div>
-                <div class="u-meta">{{ wniosek.student.email or 'Brak email' }}</div>
+                <div class="u-meta">{{ wniosek.student.email or t('Brak email') }}</div>
                 {% if wniosek.student.album_number %}
-                <div class="u-meta">Album: {{ wniosek.student.album_number }}</div>
+                <div class="u-meta">{{ t('Album:') }} {{ wniosek.student.album_number }}</div>
                 {% endif %}
               </td>
               <td>
                 <span class="status status--w-trakcie">
-                  B — Uznanie efektów
+                  {{ t('B — Uznanie efektów') }}
                 </span>
               </td>
               <td>
-                <div class="u-fw-600">{{ wniosek.company_display_name or 'Nie podano' }}</div>
+                <div class="u-fw-600">{{ wniosek.company_display_name or t('Nie podano') }}</div>
                 {% if wniosek.company_city %}
                 <div class="u-meta">{{ wniosek.company_city }}</div>
                 {% endif %}
               </td>
               <td>
-                <span class="status status--completed">Zatwierdzone przez komisję</span>
+                <span class="status status--completed">{{ t('Zatwierdzone przez komisję') }}</span>
                 {% if wniosek.committee_comment %}
                 <div class="u-tekst-drugor u-mt-05 u-csp-126">
                   {{ wniosek.committee_comment[:60] }}{% if wniosek.committee_comment|length > 60 %}…{% endif %}
@@ -65,7 +65,7 @@
               <td class="u-ta-center">
                 <a href="{{ url_for('zarzadzanie.dyrektor_decyzja', id=wniosek.id) }}"
                    class="przycisk przycisk--maly przycisk--glowny">
-                  Podejmij decyzję
+                  {{ t('Podejmij decyzję') }}
                 </a>
               </td>
             </tr>
@@ -79,7 +79,7 @@
   {% if wnioski.pages > 1 %}
   <div class="paginacja">
     {% if wnioski.has_prev %}
-      <a href="{{ url_for('zarzadzanie.dyrektor_lista', page=wnioski.prev_num) }}" class="paginacja__link">← Poprzednia</a>
+      <a href="{{ url_for('zarzadzanie.dyrektor_lista', page=wnioski.prev_num) }}" class="paginacja__link">← {{ t('Poprzednia') }}</a>
     {% endif %}
     {% for page_num in wnioski.iter_pages() %}
       {% if page_num %}
@@ -93,7 +93,7 @@
       {% endif %}
     {% endfor %}
     {% if wnioski.has_next %}
-      <a href="{{ url_for('zarzadzanie.dyrektor_lista', page=wnioski.next_num) }}" class="paginacja__link">Następna →</a>
+      <a href="{{ url_for('zarzadzanie.dyrektor_lista', page=wnioski.next_num) }}" class="paginacja__link">{{ t('Następna') }} →</a>
     {% endif %}
   </div>
   {% endif %}
@@ -105,9 +105,9 @@
         <path d="M9 12l2 2 4-4"/>
         <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9c.83 0 1.63.11 2.38.32"/>
       </svg>
-      <h3 class="u-mb-05">Brak wniosków oczekujących na decyzję</h3>
+      <h3 class="u-mb-05">{{ t('Brak wniosków oczekujących na decyzję') }}</h3>
       <p class="u-tekst-drugor u-p-0">
-        Wszystkie wnioski zostały już przetworzone lub nie ma nowych zgłoszeń zatwierdzonych przez komisję.
+        {{ t('Wszystkie wnioski zostały już przetworzone lub nie ma nowych zgłoszeń zatwierdzonych przez komisję.') }}
       </p>
     </div>
   </div>

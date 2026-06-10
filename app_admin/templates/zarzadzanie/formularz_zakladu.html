@@ -1,10 +1,10 @@
 {% extends "layouts/base_panel.html" %}
 
-{% block tytul %}{{ 'Edytuj zakład' if zaklad else 'Nowy zakład pracy' }}{% endblock %}
-{% block naglowek %}{{ 'Edytuj zakład' if zaklad else 'Nowy zakład pracy' }}{% endblock %}
+{% block tytul %}{{ t('Edytuj zakład') if zaklad else t('Nowy zakład pracy') }}{% endblock %}
+{% block naglowek %}{{ t('Edytuj zakład') if zaklad else t('Nowy zakład pracy') }}{% endblock %}
 
 {% block naglowek_akcje %}
-<a href="{{ url_for('zarzadzanie.lista_zakladow') }}" class="przycisk przycisk--drugorzedny">Anuluj</a>
+<a href="{{ url_for('zarzadzanie.lista_zakladow') }}" class="przycisk przycisk--drugorzedny">{{ t('Anuluj') }}</a>
 {% endblock %}
 
 {% block tresc %}
@@ -14,27 +14,27 @@
       {{ form.hidden_tag() }}
 
       <div class="pole-formularza {% if form.nazwa.errors %}pole-formularza--blad{% endif %}">
-        <label for="nazwa" class="pole-formularza__etykieta">Pełna nazwa zakładu</label>
-        {{ form.nazwa(class="pole-formularza__input", placeholder="np. Software House Sp. z o.o.") }}
+        <label for="nazwa" class="pole-formularza__etykieta">{{ t('Pełna nazwa zakładu') }}</label>
+        {{ form.nazwa(class="pole-formularza__input", placeholder=t('np. Software House Sp. z o.o.')) }}
         {% for error in form.nazwa.errors %}<span class="pole-formularza__blad">{{ error }}</span>{% endfor %}
       </div>
 
       <div class="pole-formularza {% if form.adres.errors %}pole-formularza--blad{% endif %}">
-        <label for="adres" class="pole-formularza__etykieta">Adres (ulica i number)</label>
-        {{ form.adres(class="pole-formularza__input", placeholder="np. ul. Grunwaldzka 137") }}
+        <label for="adres" class="pole-formularza__etykieta">{{ t('Adres (ulica i numer)') }}</label>
+        {{ form.adres(class="pole-formularza__input", placeholder=t('np. ul. Grunwaldzka 137')) }}
         {% for error in form.adres.errors %}<span class="pole-formularza__blad">{{ error }}</span>{% endfor %}
       </div>
 
       <div class="formularz-panel__siatka">
         <div class="pole-formularza {% if form.kod_pocztowy.errors %}pole-formularza--blad{% endif %}">
-          <label for="kod_pocztowy" class="pole-formularza__etykieta">Kod pocztowy</label>
-          {{ form.kod_pocztowy(class="pole-formularza__input", placeholder="np. 82-300") }}
+          <label for="kod_pocztowy" class="pole-formularza__etykieta">{{ t('Kod pocztowy') }}</label>
+          {{ form.kod_pocztowy(class="pole-formularza__input", placeholder=t('np. 82-300')) }}
           {% for error in form.kod_pocztowy.errors %}<span class="pole-formularza__blad">{{ error }}</span>{% endfor %}
         </div>
 
         <div class="pole-formularza {% if form.miasto.errors %}pole-formularza--blad{% endif %}">
-          <label for="miasto" class="pole-formularza__etykieta">Miasto</label>
-          {{ form.miasto(class="pole-formularza__input", placeholder="np. Elbląg") }}
+          <label for="miasto" class="pole-formularza__etykieta">{{ t('Miasto') }}</label>
+          {{ form.miasto(class="pole-formularza__input", placeholder=t('np. Elbląg')) }}
           {% for error in form.miasto.errors %}<span class="pole-formularza__blad">{{ error }}</span>{% endfor %}
         </div>
       </div>
@@ -42,20 +42,20 @@
       <div class="formularz-panel__siatka">
         <div class="pole-formularza {% if form.nip_krs.errors %}pole-formularza--blad{% endif %}">
           <label for="nip_krs" class="pole-formularza__etykieta">NIP / KRS</label>
-          {{ form.nip_krs(class="pole-formularza__input", placeholder="NIP lub numer rejestrowy") }}
+          {{ form.nip_krs(class="pole-formularza__input", placeholder=t('NIP lub numer rejestrowy')) }}
           {% for error in form.nip_krs.errors %}<span class="pole-formularza__blad">{{ error }}</span>{% endfor %}
         </div>
 
         <div class="pole-formularza {% if form.przedstawiciel_prawny.errors %}pole-formularza--blad{% endif %}">
-          <label for="przedstawiciel_prawny" class="pole-formularza__etykieta">Przedstawiciel prawny</label>
-          {{ form.przedstawiciel_prawny(class="pole-formularza__input", placeholder="Imię i nazwisko (np. Prezes Zarządu)") }}
+          <label for="przedstawiciel_prawny" class="pole-formularza__etykieta">{{ t('Przedstawiciel prawny') }}</label>
+          {{ form.przedstawiciel_prawny(class="pole-formularza__input", placeholder=t('Imię i nazwisko (np. Prezes Zarządu)')) }}
           {% for error in form.przedstawiciel_prawny.errors %}<span class="pole-formularza__blad">{{ error }}</span>{% endfor %}
         </div>
       </div>
 
       <div class="formularz-panel__akcje u-csp-238">
         <button type="submit" class="przycisk przycisk--glowny">
-          {{ 'Zapisz zmiany' if zaklad else 'Dodaj zakład pracy' }}
+          {{ t('Zapisz zmiany') if zaklad else t('Dodaj zakład pracy') }}
         </button>
       </div>
     </form>

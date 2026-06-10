@@ -1,10 +1,10 @@
 {% extends "layouts/base_panel.html" %}
 
-{% block tytul %}Ocena efektów uczenia się{% endblock %}
-{% block naglowek %}Karta oceny efektów uczenia się (Zał. 4 / 4a){% endblock %}
+{% block tytul %}{{ t('Ocena efektów uczenia się') }}{% endblock %}
+{% block naglowek %}{{ t('Karta oceny efektów uczenia się (Zał. 4 / 4a)') }}{% endblock %}
 
 {% block naglowek_akcje %}
-<a href="{{ url_for('evaluation.lista_ocen') }}" class="przycisk przycisk--drugorzedny">Powrót do listy</a>
+<a href="{{ url_for('evaluation.lista_ocen') }}" class="przycisk przycisk--drugorzedny">{{ t('Powrót do listy') }}</a>
 {% endblock %}
 
 {% block tresc %}
@@ -17,9 +17,9 @@
       <div>
         <h2 class="u-csp-040">{{ zapis.student.last_name }} {{ zapis.student.first_name }}</h2>
         <p class="u-tekst-drugor u-csp-041">
-          Firma: {{ zapis.company_display_name or '—' }}
+          {{ t('Firma:') }} {{ zapis.company_display_name or '—' }}
           &nbsp;·&nbsp;
-          Ścieżka: {{ sciezka_label }}
+          {{ t('Ścieżka:') }} {{ sciezka_label }}
         </p>
       </div>
       <span class="status status--{{ zapis.status.value|lower|replace('_', '-') }}">{{ translate_status(zapis.status.value) }}</span>
@@ -29,9 +29,9 @@
   {% if is_bc %}
   <div class="karta u-mb-15 u-csp-051">
     <div class="karta__tresc">
-      <strong>Ścieżka B — trzystopniowa skala oceny efektów.</strong><br>
+      <strong>{{ t('Ścieżka B — trzystopniowa skala oceny efektów.') }}</strong><br>
       <span class="u-meta-sm">
-        Dla każdego efektu możesz wybrać: <em>Uzyskał/a</em>, <em>Uzyskał/a częściowo</em> (wymaga uwag) lub <em>Nie uzyskał/a</em>.
+        {{ t('Dla każdego efektu możesz wybrać:') }} <em>{{ t('Uzyskał/a') }}</em>, <em>{{ t('Uzyskał/a częściowo') }}</em> ({{ t('wymaga uwag') }}) {{ t('lub') }} <em>{{ t('Nie uzyskał/a') }}</em>.
       </span>
     </div>
   </div>
@@ -42,16 +42,16 @@
 
     <section class="karta u-mb-2">
       <header class="karta__naglowek">
-        <h3 class="karta__tytul">Ocena 13 efektów uczenia się</h3>
+        <h3 class="karta__tytul">{{ t('Ocena 13 efektów uczenia się') }}</h3>
       </header>
       <div class="karta__tresc u-p-0">
         <div class="tabela-wrapper">
           <table class="tabela">
             <thead>
               <tr>
-                <th class="u-csp-052">Kod</th>
-                <th>Opis efektu</th>
-                <th class="{% if is_bc %}u-th-result-wide{% else %}u-th-result-standard{% endif %}">Wynik</th>
+                <th class="u-csp-052">{{ t('Kod') }}</th>
+                <th>{{ t('Opis efektu') }}</th>
+                <th class="{% if is_bc %}u-th-result-wide{% else %}u-th-result-standard{% endif %}">{{ t('Wynik') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -66,28 +66,28 @@
                     <label class="radio-ocena">
                       <input type="radio" name="wynik_{{ learning_outcome.id }}" value="ACHIEVED"
                              {% if ocena and ocena.result.name == 'ACHIEVED' %}checked{% endif %} required>
-                      <span>Uzyskał/a</span>
+                      <span>{{ t('Uzyskał/a') }}</span>
                     </label>
 
                     {% if is_bc %}
                     <label class="radio-ocena radio-ocena--czesc">
                       <input type="radio" name="wynik_{{ learning_outcome.id }}" value="PARTIALLY_ACHIEVED"
                              {% if ocena and ocena.result.name == 'PARTIALLY_ACHIEVED' %}checked{% endif %}>
-                      <span>Częściowo</span>
+                      <span>{{ t('Częściowo') }}</span>
                     </label>
                     {% endif %}
 
                     <label class="radio-ocena radio-ocena--nie">
                       <input type="radio" name="wynik_{{ learning_outcome.id }}" value="NOT_ACHIEVED"
                              {% if ocena and ocena.result.name == 'NOT_ACHIEVED' %}checked{% endif %}>
-                      <span>Nie uzyskał/a</span>
+                      <span>{{ t('Nie uzyskał/a') }}</span>
                     </label>
                   </div>
 
                   {% if is_bc %}
                   <input class="u-csp-055" type="text" name="uwagi_{{ learning_outcome.id }}"
                          value="{{ ocena.notes if ocena else '' }}"
-                         placeholder="Uwagi (wymagane przy częściowym)"
+                         placeholder="{{ t('Uwagi (wymagane przy częściowym)') }}"
                         >
                   {% endif %}
                 </td>
@@ -101,7 +101,7 @@
 
     <div class="u-ta-center u-csp-056">
       <button type="submit" class="przycisk przycisk--glowny u-csp-057">
-        Zapisz arkusz oceny
+        {{ t('Zapisz arkusz oceny') }}
       </button>
     </div>
   </form>

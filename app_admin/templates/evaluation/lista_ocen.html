@@ -1,10 +1,10 @@
 {% extends "layouts/base_panel.html" %}
 
-{% block tytul %}Oceny i efekty{% endblock %}
-{% block naglowek %}Studenci — oceny i efekty{% endblock %}
+{% block tytul %}{{ t('Oceny i efekty') }}{% endblock %}
+{% block naglowek %}{{ t('Studenci — oceny i efekty') }}{% endblock %}
 
 {% block naglowek_akcje %}
-<a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
+<a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← {{ t('Powrót') }}</a>
 {% endblock %}
 
 {% block tresc %}
@@ -12,19 +12,19 @@
 
 <div class="karta">
   <div class="karta__naglowek u-csp-077">
-    <h2 class="karta__tytul">Zakończone praktyki <span class="u-meta u-csp-078">({{ widoczne|length }}{% if filtr %} filtr aktywny{% endif %})</span></h2>
+    <h2 class="karta__tytul">{{ t('Zakończone praktyki') }} <span class="u-meta u-csp-078">({{ widoczne|length }}{% if filtr %} {{ t('filtr aktywny') }}{% endif %})</span></h2>
     <div class="u-flex--gap-05 u-csp-079">
       <a href="{{ url_for('evaluation.lista_ocen') }}"
          class="przycisk przycisk--maly {% if not filtr %}przycisk--glowny{% else %}przycisk--drugorzedny{% endif %}">
-        Wszystkie ({{ zakonczone|length }})
+        {{ t('Wszystkie') }} ({{ zakonczone|length }})
       </a>
       <a href="{{ url_for('evaluation.lista_ocen', filtr='nieocenione') }}"
          class="przycisk przycisk--maly {% if filtr == 'nieocenione' %}przycisk--glowny{% else %}przycisk--drugorzedny{% endif %}">
-        Nieocenione ({{ liczba_nieocenione }})
+        {{ t('Nieocenione') }} ({{ liczba_nieocenione }})
       </a>
       <a href="{{ url_for('evaluation.lista_ocen', filtr='ocenione') }}"
          class="przycisk przycisk--maly {% if filtr == 'ocenione' %}przycisk--glowny{% else %}przycisk--drugorzedny{% endif %}">
-        Ocenione ({{ liczba_ocenione }})
+        {{ t('Ocenione') }} ({{ liczba_ocenione }})
       </a>
     </div>
   </div>
@@ -32,14 +32,14 @@
     <table class="tabela">
       <thead>
         <tr>
-          <th>Student</th>
-          <th>Zakład pracy</th>
-          <th class="u-ta-center" title="Ocena sprawozdania">Spr.</th>
-          <th class="u-ta-center" title="Ocena UOPZ">UOPZ</th>
-          <th class="u-ta-center" title="Ocena ZOPZ (z karty papierowej)">ZOPZ</th>
-          <th class="u-ta-center" title="Średnia z egzaminu komisyjnego">Egz.</th>
-          <th class="u-ta-center" title="Ocena końcowa: K = 0.4·E + 0.1·S + 0.2·U + 0.3·Z">Ocena K</th>
-          <th class="u-ta-center">Akcje</th>
+          <th>{{ t('Student') }}</th>
+          <th>{{ t('Zakład pracy') }}</th>
+          <th class="u-ta-center" title="{{ t('Ocena sprawozdania') }}">{{ t('Spr.') }}</th>
+          <th class="u-ta-center" title="{{ t('Ocena UOPZ') }}">UOPZ</th>
+          <th class="u-ta-center" title="{{ t('Ocena ZOPZ (z karty papierowej)') }}">ZOPZ</th>
+          <th class="u-ta-center" title="{{ t('Średnia z egzaminu komisyjnego') }}">{{ t('Egz.') }}</th>
+          <th class="u-ta-center" title="{{ t('Ocena końcowa: K = 0.4·E + 0.1·S + 0.2·U + 0.3·Z') }}">{{ t('Ocena K') }}</th>
+          <th class="u-ta-center">{{ t('Akcje') }}</th>
         </tr>
       </thead>
       <tbody>
@@ -48,7 +48,7 @@
         <tr class="{% if item.przekroczony %}u-row-alert{% endif %}">
           <td>
             <div class="u-fw-600">{{ p.student.last_name }} {{ p.student.first_name }}</div>
-            <div class="u-meta">Nr alb.: {{ p.student.album_number or '-' }}
+            <div class="u-meta">{{ t('Nr alb.:') }} {{ p.student.album_number or '-' }}
               <span class="status {{ item.sciezka_badge.cls }} u-csp-080">{{ item.sciezka_badge.label }}</span>
             </div>
           </td>
@@ -72,7 +72,7 @@
           </td>
         </tr>
         {% else %}
-        <tr><td colspan="8" class="tabela--pusta">Brak studentów.</td></tr>
+        <tr><td colspan="8" class="tabela--pusta">{{ t('Brak studentów.') }}</td></tr>
         {% endfor %}
       </tbody>
     </table>

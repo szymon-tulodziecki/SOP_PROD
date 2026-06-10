@@ -1,10 +1,10 @@
 {% extends "layouts/base_panel.html" %}
-{% block tytul %}Dokumenty — {{ student.first_name }} {{ student.last_name }}{% endblock %}
-{% block naglowek %}Dokumenty studenta{% endblock %}
+{% block tytul %}{{ t('Dokumenty') }} — {{ student.first_name }} {{ student.last_name }}{% endblock %}
+{% block naglowek %}{{ t('Dokumenty studenta') }}{% endblock %}
 
 {% block naglowek_akcje %}
 <a href="{{ url_for('zarzadzanie.dokumenty_studentow') }}" class="przycisk przycisk--drugorzedny">
-  ← Powrót
+  ← {{ t('Powrót') }}
 </a>
 {% endblock %}
 
@@ -21,10 +21,10 @@
         <div>
           <div class="u-csp-211">{{ student.first_name }} {{ student.last_name }}</div>
           <div class="u-csp-212">
-            Nr albumu: <strong>{{ student.album_number or '—' }}</strong>
+            {{ t('Nr albumu:') }} <strong>{{ student.album_number or '—' }}</strong>
             {% if student.field_of_study %} · {{ student.field_of_study }}{% endif %}
             {% if tryb_studiow %} ({{ tryb_studiow }}){% endif %}
-            {% if supervisor %} · Opiekun: {{ supervisor.first_name }} {{ supervisor.last_name }}{% endif %}
+            {% if supervisor %} · {{ t('Opiekun:') }} {{ supervisor.first_name }} {{ supervisor.last_name }}{% endif %}
           </div>
         </div>
       </div>
@@ -39,8 +39,8 @@
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
         <polyline points="14 2 14 8 20 8"/>
       </svg>
-      <div class="u-csp-214">Brak dostępnych dokumentów</div>
-      <div class="u-csp-036">Student nie ma aktywnych ani zakończonych praktyk.</div>
+      <div class="u-csp-214">{{ t('Brak dostępnych dokumentów') }}</div>
+      <div class="u-csp-036">{{ t('Student nie ma aktywnych ani zakończonych praktyk.') }}</div>
     </div>
   </div>
   {% endif %}
@@ -53,17 +53,17 @@
       <div>
         <div class="u-csp-141">
           {{ zapis.internship.academic_year if zapis.internship else '—' }}
-          {% if zapis.internship %} · Semestr {{ zapis.internship.semester_label }}{% endif %}
+          {% if zapis.internship %} · {{ t('Semestr') }} {{ zapis.internship.semester_label }}{% endif %}
         </div>
         <div class="u-csp-215">
           {% if wpis.firma_nazwa %}{{ wpis.firma_nazwa }}{% endif %}
-          · Ścieżka: {{ wpis.sciezka_label }}
+          · {{ t('Ścieżka:') }} {{ wpis.sciezka_label }}
         </div>
       </div>
       <div class="u-flex--gap-05">
         {% if wpis.path == 'STANDARD' %}
         <a href="{{ url_for('journal.dziennik_zapisu', id=zapis.id) }}"
-           class="przycisk przycisk--drugorzedny przycisk--maly">Dziennik</a>
+           class="przycisk przycisk--drugorzedny przycisk--maly">{{ t('Dziennik') }}</a>
         {% endif %}
         <span class="status {{ wpis.status_odznaka.cls }}">{{ wpis.status_odznaka.label }}</span>
       </div>
@@ -95,13 +95,13 @@
           {% if doc.dostepny %}
             {% if doc.staly is defined and doc.staly %}
             <a href="{{ url_for('zarzadzanie.dokumenty_pobierz_staly', klucz=doc.klucz_staly) }}"
-               class="przycisk przycisk--drugorzedny przycisk--maly">Pobierz PDF</a>
+               class="przycisk przycisk--drugorzedny przycisk--maly">{{ t('Pobierz PDF') }}</a>
             {% elif doc.dynamiczny is defined and doc.dynamiczny %}
             <a href="{{ url_for('zarzadzanie.dokumenty_pobierz', enrollment_id=doc.enrollment_id, event_type=doc.event_type) }}"
-               class="przycisk przycisk--drugorzedny przycisk--maly">Pobierz PDF</a>
+               class="przycisk przycisk--drugorzedny przycisk--maly">{{ t('Pobierz PDF') }}</a>
             {% endif %}
           {% else %}
-          <span class="u-csp-222">Niedostępny</span>
+          <span class="u-csp-222">{{ t('Niedostępny') }}</span>
           {% endif %}
         </div>
         {% endif %}

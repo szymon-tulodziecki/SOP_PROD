@@ -1,10 +1,10 @@
 {% extends "layouts/base_panel.html" %}
 
-{% block tytul %}Dzienniki praktyk{% endblock %}
-{% block naglowek %}Monitor dzienników{% endblock %}
+{% block tytul %}{{ t('Dzienniki praktyk') }}{% endblock %}
+{% block naglowek %}{{ t('Monitor dzienników') }}{% endblock %}
 
 {% block naglowek_akcje %}
-<a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
+<a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← {{ t('Powrót') }}</a>
 {% endblock %}
 
 {% block tresc %}
@@ -13,9 +13,9 @@
     <form class="pasek-filtrow" method="GET" action="{{ url_for('journal.lista_dziennikow') }}">
       <div class="filtr-szukaj">
         <span class="filtr-szukaj__ikona" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
-        <input type="text" name="szukaj" value="{{ request.args.get('szukaj', '') }}" class="filtr-szukaj__input" placeholder="Szukaj po nazwisku studenta..." aria-label="Wyszukaj dziennik">
+        <input type="text" name="szukaj" value="{{ request.args.get('szukaj', '') }}" class="filtr-szukaj__input" placeholder="{{ t('Szukaj po nazwisku studenta...') }}" aria-label="{{ t('Wyszukaj dziennik') }}">
       </div>
-      <button type="submit" class="przycisk przycisk--drugorzedny">Szukaj</button>
+      <button type="submit" class="przycisk przycisk--drugorzedny">{{ t('Szukaj') }}</button>
     </form>
   </div>
   <div class="karta__tresc">
@@ -23,13 +23,13 @@
       <table class="tabela">
         <thead>
           <tr>
-            <th scope="col">Student</th>
-            <th scope="col">Praktyka</th>
-            <th scope="col">Godziny</th>
-            <th scope="col">Wpisy</th>
-            <th scope="col">Ostatni wpis</th>
-            <th scope="col">Status</th>
-            <th scope="col">Akcje</th>
+            <th scope="col">{{ t('Student') }}</th>
+            <th scope="col">{{ t('Praktyka') }}</th>
+            <th scope="col">{{ t('Godziny') }}</th>
+            <th scope="col">{{ t('Wpisy') }}</th>
+            <th scope="col">{{ t('Ostatni wpis') }}</th>
+            <th scope="col">{{ t('Status') }}</th>
+            <th scope="col">{{ t('Akcje') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -37,7 +37,7 @@
           <tr class="{% if d.alert %}u-row-soft-danger{% endif %}">
             <td>
               <div class="u-fw-600">{{ d.zapis.student.last_name }} {{ d.zapis.student.first_name }}</div>
-              <div class="u-meta">Album: {{ d.zapis.student.album_number or '-' }}</div>
+              <div class="u-meta">{{ t('Album:') }} {{ d.zapis.student.album_number or '-' }}</div>
             </td>
             <td>
               <div>{{ d.zapis.internship.academic_year }}</div>
@@ -55,25 +55,25 @@
               {% if d.ostatni_wpis %}
                 {{ d.ostatni_wpis.strftime('%d.%m.%Y') }}
               {% else %}
-                <span class="u-tekst-trzeciorzed">Brak wpisów</span>
+                <span class="u-tekst-trzeciorzed">{{ t('Brak wpisów') }}</span>
               {% endif %}
             </td>
             <td>
               {% if d.alert %}
                 <span class="status u-csp-095">
-                  ⚠ Przerwa &gt;3 dni
+                  ⚠ {{ t('Przerwa >3 dni') }}
                 </span>
               {% else %}
                 <span class="status status--in-progress">OK</span>
               {% endif %}
             </td>
             <td>
-              <a href="{{ url_for('journal.dziennik_zapisu', id=d.zapis.id) }}" class="przycisk przycisk--drugorzedny przycisk--maly">Podgląd</a>
+              <a href="{{ url_for('journal.dziennik_zapisu', id=d.zapis.id) }}" class="przycisk przycisk--drugorzedny przycisk--maly">{{ t('Podgląd') }}</a>
             </td>
           </tr>
           {% else %}
           <tr>
-            <td colspan="7" class="tabela--pusta">Brak aktywnych dzienników.</td>
+            <td colspan="7" class="tabela--pusta">{{ t('Brak aktywnych dzienników.') }}</td>
           </tr>
           {% endfor %}
         </tbody>
@@ -81,8 +81,8 @@
     </div>
 
     {% if paginated_enrollments.pages > 1 %}
-    <nav class="paginacja" aria-label="Nawigacja po stronach">
-      <span class="paginacja__info">Strona {{ paginated_enrollments.page }} z {{ paginated_enrollments.pages }}</span>
+    <nav class="paginacja" aria-label="{{ t('Nawigacja po stronach') }}">
+      <span class="paginacja__info">{{ t('Strona {nr} z {liczba}', nr=paginated_enrollments.page, liczba=paginated_enrollments.pages) }}</span>
       <div class="paginacja__przyciski">
         {% for strona in paginated_enrollments.iter_pages() %}
           {% if strona %}

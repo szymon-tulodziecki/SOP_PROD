@@ -1,15 +1,15 @@
-﻿{% extends "layouts/base_panel.html" %}
+{% extends "layouts/base_panel.html" %}
 
-{% block tytul %}Zarządzanie firmami{% endblock %}
-{% block naglowek %}Firmy w systemie{% endblock %}
+{% block tytul %}{{ t('Zarządzanie firmami') }}{% endblock %}
+{% block naglowek %}{{ t('Firmy w systemie') }}{% endblock %}
 
 {% block naglowek_akcje %}
 <div class="u-csp-136">
   <a href="{{ url_for('zarzadzanie.dodaj_firme') }}" class="przycisk przycisk--glowny">
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-    Dodaj firmę
+    {{ t('Dodaj firmę') }}
   </a>
-  <a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
+  <a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← {{ t('Powrót') }}</a>
 </div>
 {% endblock %}
 
@@ -19,7 +19,7 @@
   <!-- Lista firm -->
   <div class="karta">
     <div class="karta__naglowek">
-      <form method="GET" class="pasek-filtrow" role="search" aria-label="Filtruj firmy">
+      <form method="GET" class="pasek-filtrow" role="search" aria-label="{{ t('Filtruj firmy') }}">
         <div class="filtr-szukaj">
           <span class="filtr-szukaj__ikona" aria-hidden="true">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -33,26 +33,26 @@
             id="szukaj"
             class="filtr-szukaj__input"
             value="{{ request.args.get('szukaj', '') }}"
-            placeholder="Szukaj po nazwie, adresie, NIP/KRS..."
-            aria-label="Szukaj firmy"
+            placeholder="{{ t('Szukaj po nazwie, adresie, NIP/KRS...') }}"
+            aria-label="{{ t('Szukaj firmy') }}"
           >
         </div>
-        <label for="status" class="sr-only">Filtruj po statusie</label>
+        <label for="status" class="sr-only">{{ t('Filtruj po statusie') }}</label>
         <select name="status" id="status" class="filtr-select" data-autosubmit>
-          <option value="wszystkie" {% if request.args.get('status', 'wszystkie') == 'wszystkie' %}selected{% endif %}>Wszystkie</option>
-          <option value="aktywne" {% if request.args.get('status') == 'aktywne' %}selected{% endif %}>Tylko aktywne</option>
-          <option value="nieaktywne" {% if request.args.get('status') == 'nieaktywne' %}selected{% endif %}>Tylko nieaktywne</option>
+          <option value="wszystkie" {% if request.args.get('status', 'wszystkie') == 'wszystkie' %}selected{% endif %}>{{ t('Wszystkie') }}</option>
+          <option value="aktywne" {% if request.args.get('status') == 'aktywne' %}selected{% endif %}>{{ t('Tylko aktywne') }}</option>
+          <option value="nieaktywne" {% if request.args.get('status') == 'nieaktywne' %}selected{% endif %}>{{ t('Tylko nieaktywne') }}</option>
         </select>
-        <button type="submit" class="przycisk przycisk--drugorzedny">Szukaj</button>
+        <button type="submit" class="przycisk przycisk--drugorzedny">{{ t('Szukaj') }}</button>
         {% if request.args.get('szukaj') or request.args.get('status', 'aktywne') != 'aktywne' %}
           <a href="{{ url_for('zarzadzanie.lista_firm') }}" class="przycisk przycisk--drugorzedny">
-            Wyczyść filtry
+            {{ t('Wyczyść filtry') }}
           </a>
         {% endif %}
       </form>
 
       <span class="u-csp-038">
-        {{ firmy.total }} firm
+        {{ firmy.total }} {{ t('firm') }}
       </span>
     </div>
     <div class="karta__tresc">
@@ -61,11 +61,11 @@
         <table class="tabela">
           <thead>
             <tr>
-              <th>Nazwa firmy</th>
-              <th>Adres</th>
+              <th>{{ t('Nazwa firmy') }}</th>
+              <th>{{ t('Adres') }}</th>
               <th>NIP/KRS</th>
-              <th>Status</th>
-              <th>Akcje</th>
+              <th>{{ t('Status') }}</th>
+              <th>{{ t('Akcje') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -81,7 +81,7 @@
                   {{ company.address }}
                   {% if company.city %}<br>{{ company.city }}{% endif %}
                   {% else %}
-                  Brak adresu
+                  {{ t('Brak adresu') }}
                   {% endif %}
                 </div>
               </td>
@@ -94,14 +94,14 @@
               <td class="u-csp-193">
                 <a href="{{ url_for('zarzadzanie.edytuj_firme', id=company.id) }}"
                    class="przycisk przycisk--maly przycisk--drugorzedny">
-                  Edytuj
+                  {{ t('Edytuj') }}
                 </a>
                 <form class="u-csp-194" method="POST" action="{{ url_for('zarzadzanie.przelacz_aktywnosc_firmy', id=company.id) }}"
                      >
                   {{ csrf_form.hidden_tag() }}
                   <button type="submit"
                           class="przycisk {{ w.aktywnosc.przycisk_cls }} przycisk--maly"
-                          data-confirm="Czy na pewno chcesz {{ w.aktywnosc.akcja }} firmę?">
+                          data-confirm="{{ t('Czy na pewno chcesz {akcja} firmę?', akcja=w.aktywnosc.akcja) }}">
                     {{ w.aktywnosc.przycisk }}
                   </button>
                 </form>
@@ -110,8 +110,8 @@
                   {{ csrf_form.hidden_tag() }}
                   <button type="submit"
                           class="przycisk przycisk--niebezpieczny przycisk--maly"
-                          data-confirm="Czy na pewno chcesz trwale usunąć firmę {{ company.name }}? Tej operacji nie można cofnąć.">
-                    Usuń
+                          data-confirm="{{ t('Czy na pewno chcesz trwale usunąć firmę {nazwa}? Tej operacji nie można cofnąć.', nazwa=company.name) }}">
+                    {{ t('Usuń') }}
                   </button>
                 </form>
               </td>
@@ -126,7 +126,7 @@
       <div class="u-csp-154">
         {% if firmy.has_prev %}
         <a href="{{ url_for('zarzadzanie.lista_firm', page=firmy.prev_num, **request.args) }}"
-           class="przycisk przycisk--drugorzedny przycisk--maly">← Poprzednia</a>
+           class="przycisk przycisk--drugorzedny przycisk--maly">← {{ t('Poprzednia') }}</a>
         {% endif %}
 
         {% for page_num in firmy.iter_pages() %}
@@ -144,7 +144,7 @@
 
         {% if firmy.has_next %}
         <a href="{{ url_for('zarzadzanie.lista_firm', page=firmy.next_num, **request.args) }}"
-           class="przycisk przycisk--drugorzedny przycisk--maly">Następna →</a>
+           class="przycisk przycisk--drugorzedny przycisk--maly">{{ t('Następna') }} →</a>
         {% endif %}
       </div>
       {% endif %}
@@ -165,13 +165,13 @@
           </svg>
         </div>
         <div class="u-csp-157">
-          Brak firm w systemie
+          {{ t('Brak firm w systemie') }}
         </div>
         <div class="u-csp-196">
-          Dodaj pierwszą firmę do systemu praktyk.
+          {{ t('Dodaj pierwszą firmę do systemu praktyk.') }}
         </div>
         <a href="{{ url_for('zarzadzanie.dodaj_firme') }}" class="przycisk przycisk--glowny">
-          + Dodaj firmę
+          + {{ t('Dodaj firmę') }}
         </a>
       </div>
       {% endif %}

@@ -1,13 +1,13 @@
 {% extends "layouts/base_panel.html" %}
 
-{% block tytul %}Zakłady pracy{% endblock %}
-{% block naglowek %}Zakłady pracy{% endblock %}
+{% block tytul %}{{ t('Zakłady pracy') }}{% endblock %}
+{% block naglowek %}{{ t('Zakłady pracy') }}{% endblock %}
 
 {% block naglowek_akcje %}
 <div class="u-csp-028">
   {% if current_user.role.value in ['ADMIN', 'UOPZ'] %}
   <a href="{{ url_for('zarzadzanie.nowy_zaklad') }}" class="przycisk przycisk--glowny">
-    <span aria-hidden="true">+</span> Dodaj zakład
+    <span aria-hidden="true">+</span> {{ t('Dodaj zakład') }}
   </a>
   {% endif %}
 </div>
@@ -19,9 +19,9 @@
     <form class="pasek-filtrow" method="GET" action="{{ url_for('zarzadzanie.lista_zakladow') }}">
       <div class="filtr-szukaj">
         <span class="filtr-szukaj__ikona" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
-        <input type="text" name="szukaj" value="{{ request.args.get('szukaj', '') }}" class="filtr-szukaj__input" placeholder="Nazwa zakładu lub miasto..." aria-label="Wyszukaj zakład">
+        <input type="text" name="szukaj" value="{{ request.args.get('szukaj', '') }}" class="filtr-szukaj__input" placeholder="{{ t('Nazwa zakładu lub miasto...') }}" aria-label="{{ t('Wyszukaj zakład') }}">
       </div>
-      <button type="submit" class="przycisk przycisk--drugorzedny">Szukaj</button>
+      <button type="submit" class="przycisk przycisk--drugorzedny">{{ t('Szukaj') }}</button>
     </form>
   </div>
 
@@ -30,10 +30,10 @@
       <table class="tabela">
         <thead>
           <tr>
-            <th scope="col">Nazwa zakładu</th>
-            <th scope="col">Miasto</th>
+            <th scope="col">{{ t('Nazwa zakładu') }}</th>
+            <th scope="col">{{ t('Miasto') }}</th>
             <th scope="col">NIP / KRS</th>
-            <th scope="col">Akcje</th>
+            <th scope="col">{{ t('Akcje') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -47,13 +47,13 @@
             <td>{{ z.nip_krs or '-' }}</td>
             <td>
               <div class="akcje-tabeli">
-                <a href="{{ url_for('zarzadzanie.edytuj_zaklad', id=z.id) }}" class="przycisk przycisk--drugorzedny przycisk--maly">Edytuj</a>
+                <a href="{{ url_for('zarzadzanie.edytuj_zaklad', id=z.id) }}" class="przycisk przycisk--drugorzedny przycisk--maly">{{ t('Edytuj') }}</a>
               </div>
             </td>
           </tr>
           {% else %}
           <tr>
-            <td colspan="4" class="tabela--pusta">Brak zarejestrowanych zakładów pracy.</td>
+            <td colspan="4" class="tabela--pusta">{{ t('Brak zarejestrowanych zakładów pracy.') }}</td>
           </tr>
           {% endfor %}
         </tbody>
@@ -61,8 +61,8 @@
     </div>
 
     {% if zaklady.pages > 1 %}
-    <nav class="paginacja" aria-label="Nawigacja po stronach">
-      <span class="paginacja__info">Strona {{ zaklady.page }} z {{ zaklady.pages }}</span>
+    <nav class="paginacja" aria-label="{{ t('Nawigacja po stronach') }}">
+      <span class="paginacja__info">{{ t('Strona {nr} z {liczba}', nr=zaklady.page, liczba=zaklady.pages) }}</span>
       <div class="paginacja__przyciski">
         {% for strona in zaklady.iter_pages() %}
           {% if strona %}
