@@ -1,12 +1,12 @@
 {% extends "layouts/base_auth.html" %}
 
-{% block tytul %}Logowanie{% endblock %}
+{% block tytul %}{{ t('Logowanie') }}{% endblock %}
 {% block body_class %}strona-logowania{% endblock %}
 
 {% block body %}
 <div class="panel-logowania" role="main">
 
-  <aside class="panel-logowania__branding" aria-label="Informacje o instytucji">
+  <aside class="panel-logowania__branding" aria-label="{{ t('Informacje o instytucji') }}">
     <div class="branding__tresc">
       <div class="branding__logo-kontener">
         <img
@@ -18,8 +18,8 @@
         >
       </div>
       <div class="branding__separator" aria-hidden="true"></div>
-      <p class="branding__nazwa-systemu">System zarządzania<br>praktykami zawodowymi</p>
-      <p class="branding__podtytul">Kierunek Informatyka</p>
+      <p class="branding__nazwa-systemu">{{ t('System zarządzania') }}<br>{{ t('praktykami zawodowymi') }}</p>
+      <p class="branding__podtytul">{{ t('Kierunek Informatyka') }}</p>
       <div class="branding__dekoracja" aria-hidden="true">
         <span></span><span></span><span></span>
       </div>
@@ -29,10 +29,18 @@
   <main class="panel-logowania__formularz" id="main-content">
     <div class="formularz__kontener">
 
+      <div class="przelacznik-jezyka" aria-label="{{ t('Wybór języka') }}">
+        {% for j in dostepne_jezyki %}
+        <a href="{{ url_for('zmien_jezyk', lang=j) }}"
+           class="przelacznik-jezyka__link {% if j == aktualny_jezyk %}przelacznik-jezyka__link--aktywny{% endif %}"
+           {% if j == aktualny_jezyk %}aria-current="true"{% endif %}>{{ j|upper }}</a>
+        {% endfor %}
+      </div>
+
       <div class="formularz__naglowek">
-        <h1 class="formularz__tytul">Panel administracyjny</h1>
+        <h1 class="formularz__tytul">{{ t('Panel administracyjny') }}</h1>
         <p class="formularz__opis">
-          Zaloguj się kontem Microsoft przypisanym do uczelni.
+          {{ t('Zaloguj się kontem Microsoft przypisanym do uczelni.') }}
         </p>
       </div>
 
@@ -55,7 +63,7 @@
         <a
           href="{{ url_for('auth.ms_login', next=request.args.get('next', '')) }}"
           class="przycisk-microsoft"
-          aria-label="Zaloguj się przez konto Microsoft"
+          aria-label="{{ t('Zaloguj się przez konto Microsoft') }}"
         >
           <svg class="przycisk-microsoft__logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 21 21" aria-hidden="true">
             <rect x="1"  y="1"  width="9" height="9" fill="#f25022"/>
@@ -63,18 +71,18 @@
             <rect x="1"  y="11" width="9" height="9" fill="#00a4ef"/>
             <rect x="11" y="11" width="9" height="9" fill="#ffb900"/>
           </svg>
-          <span>Zaloguj się przez Microsoft</span>
+          <span>{{ t('Zaloguj się przez Microsoft') }}</span>
         </a>
       </div>
 
       <footer class="formularz__stopka">
         <p class="formularz__stopka-tekst">
-          Dostęp wyłącznie dla upoważnionych pracowników Instytutu.
+          {{ t('Dostęp wyłącznie dla upoważnionych pracowników Instytutu.') }}
         </p>
         <p class="formularz__stopka-tekst">
-          Problemy z logowaniem?
+          {{ t('Problemy z logowaniem?') }}
           <a href="mailto:admin@ans.elblag.edu.pl" class="formularz__link">
-            Skontaktuj się z administratorem
+            {{ t('Skontaktuj się z administratorem') }}
           </a>
         </p>
       </footer>

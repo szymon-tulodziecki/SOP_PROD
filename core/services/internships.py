@@ -327,9 +327,10 @@ class InternshipService:
         border_alert   = zwrocone or jest_odrzucone
 
         # Ścieżki B/C w statusie IN_PROGRESS student widzi jako "W rozpatrzeniu"
+        from core.i18n import t
         status_label = zapis.status_label
         if zapis.status == EnrollmentStatus.IN_PROGRESS and path != 'STANDARD':
-            status_label = 'W rozpatrzeniu'
+            status_label = t('W rozpatrzeniu')
 
         return {
             'id':                   str(zapis.id),

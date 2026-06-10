@@ -291,21 +291,22 @@ class AssessmentService(EvaluationService):
         completed_list = [z for z in enriched
                           if z['zakonczona'] or (z['w_trakcie'] and z['is_path_b'])]
 
+        from core.i18n import t
         from core.presenters import employment_path_label
 
         for z in completed_list:
             z['oceniony'] = _ma_oceny(z['zapis'])
             if z['przekroczony']:
-                z['akcja'] = {'cls': 'przycisk--niebezpieczny', 'label': 'PILNE'}
+                z['akcja'] = {'cls': 'przycisk--niebezpieczny', 'label': t('PILNE')}
             elif not z['oceniony']:
-                z['akcja'] = {'cls': 'przycisk--glowny', 'label': 'Wystaw ocenę'}
+                z['akcja'] = {'cls': 'przycisk--glowny', 'label': t('Wystaw ocenę')}
             else:
-                z['akcja'] = {'cls': 'przycisk--drugorzedny', 'label': 'Edytuj'}
+                z['akcja'] = {'cls': 'przycisk--drugorzedny', 'label': t('Edytuj')}
             if z['is_path_b']:
                 z['sciezka_badge'] = {'cls': 'status--in-progress',
                                       'label': employment_path_label(z['zapis'].path_type)}
             else:
-                z['sciezka_badge'] = {'cls': 'status--completed', 'label': 'Praktyka'}
+                z['sciezka_badge'] = {'cls': 'status--completed', 'label': t('Praktyka')}
 
         completed_list.sort(key=lambda z: z['oceniony'])
 

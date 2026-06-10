@@ -1,8 +1,8 @@
-﻿{% extends "layouts/base_auth.html" %}
-{% block tytul %}Logowanie{% endblock %}
+{% extends "layouts/base_auth.html" %}
+{% block tytul %}{{ t('Logowanie') }}{% endblock %}
 
 {% block body %}
-<a href="#logowanie" class="skip-link">Przejdź do logowania</a>
+<a href="#logowanie" class="skip-link">{{ t('Przejdź do logowania') }}</a>
 
 <main class="panel-logowania">
 
@@ -13,8 +13,8 @@
              alt="ANS Elbląg" class="branding__logo" width="200" height="35">
       </div>
       <div class="branding__separator"></div>
-      <p class="branding__nazwa-systemu">System Praktyk Zawodowych</p>
-      <p class="branding__podtytul">Panel studenta</p>
+      <p class="branding__nazwa-systemu">{{ t('System Praktyk Zawodowych') }}</p>
+      <p class="branding__podtytul">{{ t('Panel studenta') }}</p>
       <div class="branding__dekoracja">
         <span></span><span></span><span></span>
       </div>
@@ -24,9 +24,17 @@
   <div class="panel-logowania__formularz">
     <div class="formularz__kontener" id="logowanie">
 
+      <div class="przelacznik-jezyka" aria-label="{{ t('Wybór języka') }}">
+        {% for j in dostepne_jezyki %}
+        <a href="{{ url_for('zmien_jezyk', lang=j) }}"
+           class="przelacznik-jezyka__link {% if j == aktualny_jezyk %}przelacznik-jezyka__link--aktywny{% endif %}"
+           {% if j == aktualny_jezyk %}aria-current="true"{% endif %}>{{ j|upper }}</a>
+        {% endfor %}
+      </div>
+
       <div class="formularz__naglowek">
-        <h1 class="formularz__tytul">Zaloguj się</h1>
-        <p class="formularz__opis">Użyj studenckiego konta Microsoft.</p>
+        <h1 class="formularz__tytul">{{ t('Zaloguj się') }}</h1>
+        <p class="formularz__opis">{{ t('Użyj studenckiego konta Microsoft.') }}</p>
       </div>
 
       {% with messages = get_flashed_messages(with_categories=true) %}
@@ -48,7 +56,7 @@
         <a
           href="{{ url_for('auth.ms_login', next=request.args.get('next', '')) }}"
           class="przycisk-microsoft"
-          aria-label="Zaloguj się przez konto Microsoft"
+          aria-label="{{ t('Zaloguj się przez konto Microsoft') }}"
         >
           <svg class="przycisk-microsoft__logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 21 21" aria-hidden="true">
             <rect x="1"  y="1"  width="9" height="9" fill="#f25022"/>
@@ -56,13 +64,13 @@
             <rect x="1"  y="11" width="9" height="9" fill="#00a4ef"/>
             <rect x="11" y="11" width="9" height="9" fill="#ffb900"/>
           </svg>
-          <span>Zaloguj się przez Microsoft</span>
+          <span>{{ t('Zaloguj się przez Microsoft') }}</span>
         </a>
       </div>
 
       <div class="formularz__stopka">
         <p class="formularz__stopka-tekst">
-          Zaloguj się kontem w domenie<br>
+          {{ t('Zaloguj się kontem w domenie') }}<br>
           <strong>ans-elblag.pl</strong>
         </p>
       </div>

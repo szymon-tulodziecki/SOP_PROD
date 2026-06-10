@@ -1,15 +1,15 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="{{ aktualny_jezyk }}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block tytul %}Autoryzacja{% endblock %} — ANS Elbląg</title>
-  <link rel="preload" href="{{ url_for('core_static.static', filename='css/autoryzacja.css', v='20260430-1') }}" as="style">
-  <link rel="stylesheet" href="{{ url_for('core_static.static', filename='css/autoryzacja.css', v='20260430-1') }}">
+  <title>{% block tytul %}{{ t('Autoryzacja') }}{% endblock %} — ANS Elbląg</title>
+  <link rel="preload" href="{{ url_for('core_static.static', filename='css/autoryzacja.css', v='20260610-1') }}" as="style">
+  <link rel="stylesheet" href="{{ url_for('core_static.static', filename='css/autoryzacja.css', v='20260610-1') }}">
   {% block head_extra %}{% endblock %}
 </head>
 <body class="strona-logowania">
-  <a href="#main-content" class="skip-link">Przejdź do treści głównej</a>
+  <a href="#main-content" class="skip-link">{{ t('Przejdź do treści głównej') }}</a>
   <main id="main-content" class="auth-main">
     {% block body %}{% endblock %}
   </main>

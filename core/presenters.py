@@ -5,6 +5,7 @@ a szablony jedynie je wyświetlają — bez mapowań i obliczeń w HTML.
 """
 from __future__ import annotations
 
+from core.i18n import t
 from core.translations import LOG_EVENT_LABELS
 
 
@@ -12,7 +13,7 @@ from core.translations import LOG_EVENT_LABELS
 
 def path_label(path_value: str | None) -> str:
     """Etykieta ścieżki w panelu admina (A/B)."""
-    return 'A — Standardowa' if path_value == 'STANDARD' else 'B — Uznanie efektów'
+    return t('A — Standardowa') if path_value == 'STANDARD' else t('B — Uznanie efektów')
 
 
 STUDENT_PATH_LABELS = {
@@ -22,13 +23,13 @@ STUDENT_PATH_LABELS = {
 
 
 def student_path_label(path_value: str | None) -> str:
-    return STUDENT_PATH_LABELS.get(path_value, 'Działalność gospodarcza')
+    return t(STUDENT_PATH_LABELS.get(path_value, 'Działalność gospodarcza'))
 
 
 def employment_path_label(path_type) -> str:
     """Etykieta podścieżki B na karcie ocen."""
     value = path_type.value if path_type is not None else None
-    return 'Staż/zatrudnienie' if value == 'EMPLOYMENT' else 'Dział. gospod.'
+    return t('Staż/zatrudnienie') if value == 'EMPLOYMENT' else t('Dział. gospod.')
 
 
 # ── Statusy zgłoszeń ──────────────────────────────────────────────────────────
@@ -67,7 +68,7 @@ def _status_badge(mapa: dict, status_value: str) -> dict:
     cls, label = mapa.get(status_value, ('status--draft', status_value))
     return {
         'cls':   cls,
-        'label': label,
+        'label': t(label),
         'hero':  'u-enrollment-hero--' + _HERO_MODIFIERS.get(status_value, 'default'),
     }
 
@@ -96,7 +97,7 @@ DOCUMENT_STATUS_BADGES = {
 
 def document_status_badge(status_value: str) -> dict:
     cls, label = DOCUMENT_STATUS_BADGES.get(status_value, ('status--oczekuje', status_value))
-    return {'cls': cls, 'label': label}
+    return {'cls': cls, 'label': t(label)}
 
 
 # ── Decyzje komisji / dyrektora ───────────────────────────────────────────────
@@ -112,29 +113,29 @@ def committee_decision_badge(decision: str | None) -> dict | None:
     if not decision:
         return None
     cls, label, label_short, border = _COMMITTEE_DECISION_BADGES.get(decision, _COMMITTEE_DECISION_DEFAULT)
-    return {'cls': cls, 'label': label, 'label_short': label_short, 'border': border}
+    return {'cls': cls, 'label': t(label), 'label_short': t(label_short), 'border': border}
 
 
 def dean_decision_badge(decision: str | None) -> dict | None:
     if not decision:
         return None
     if decision == 'APPROVED':
-        return {'cls': 'status--completed', 'label': 'Zatwierdzone'}
-    return {'cls': 'status--odrzucona', 'label': 'Odrzucone'}
+        return {'cls': 'status--completed', 'label': t('Zatwierdzone')}
+    return {'cls': 'status--odrzucona', 'label': t('Odrzucone')}
 
 
 # ── Logi systemowe ────────────────────────────────────────────────────────────
 
 def log_event_badge(event_type_value: str, actor_role_value: str | None) -> dict:
     if event_type_value == 'DYREKTOR_DECYZJA':
-        return {'label': 'Decyzja Dyrektora', 'cls': 'status--zakonczona'}
+        return {'label': t('Decyzja Dyrektora'), 'cls': 'status--zakonczona'}
     if event_type_value == 'KOMISJA_DECYZJA':
         if actor_role_value == 'KOMISJA':
-            return {'label': 'Decyzja Komisji', 'cls': 'status--w-trakcie'}
+            return {'label': t('Decyzja Komisji'), 'cls': 'status--w-trakcie'}
         if actor_role_value == 'UOPZ':
-            return {'label': 'Decyzja UOPZ', 'cls': 'status--w-trakcie'}
-        return {'label': 'Decyzja Admina', 'cls': 'status--szkic'}
-    return {'label': LOG_EVENT_LABELS.get(event_type_value, event_type_value), 'cls': 'status--szkic'}
+            return {'label': t('Decyzja UOPZ'), 'cls': 'status--w-trakcie'}
+        return {'label': t('Decyzja Admina'), 'cls': 'status--szkic'}
+    return {'label': t(LOG_EVENT_LABELS.get(event_type_value, event_type_value)), 'cls': 'status--szkic'}
 
 
 _LOG_DECISION_BADGES = {
@@ -148,7 +149,7 @@ def log_decision_badge(decision: str | None) -> dict | None:
     if decision not in _LOG_DECISION_BADGES:
         return None
     label, cls = _LOG_DECISION_BADGES[decision]
-    return {'label': label, 'cls': cls}
+    return {'label': t(label), 'cls': cls}
 
 
 # ── Role użytkowników ─────────────────────────────────────────────────────────
@@ -179,7 +180,8 @@ def role_badges(user) -> list[dict]:
 def sidebar_role_label(user) -> str:
     if not getattr(user, 'role', None):
         return ''
-    return SIDEBAR_ROLE_LABELS.get(user.role.value, '')
+    label = SIDEBAR_ROLE_LABELS.get(user.role.value, '')
+    return t(label) if label else ''
 
 
 def active_toggle(is_active: bool, feminine: bool = False) -> dict:
@@ -190,9 +192,9 @@ def active_toggle(is_active: bool, feminine: bool = False) -> dict:
         status_label = 'Aktywny' if is_active else 'Nieaktywny'
     return {
         'status_cls':   'status--zakonczona' if is_active else 'status--szkic',
-        'status_label': status_label,
-        'akcja':        'dezaktywować' if is_active else 'aktywować',
-        'przycisk':     'Dezaktywuj' if is_active else 'Aktywuj',
+        'status_label': t(status_label),
+        'akcja':        t('dezaktywować') if is_active else t('aktywować'),
+        'przycisk':     t('Dezaktywuj') if is_active else t('Aktywuj'),
         'przycisk_cls': 'przycisk--ostrzezenie' if is_active else 'przycisk--drugorzedny',
     }
 
@@ -258,7 +260,7 @@ _OUTCOME_RESULT_BADGES = {
 
 def outcome_result_badge(result_value: str) -> dict:
     label, cls, row_cls = _OUTCOME_RESULT_BADGES.get(result_value, (result_value, 'status--draft', ''))
-    return {'label': label, 'cls': cls, 'row_cls': row_cls}
+    return {'label': t(label), 'cls': cls, 'row_cls': row_cls}
 
 
 def outcome_result_counts(oceny: dict) -> dict:
@@ -290,7 +292,7 @@ STUDY_MODE_LABELS = {
 def study_mode_label(mode: str | None) -> str | None:
     if not mode:
         return None
-    return STUDY_MODE_LABELS.get(mode, mode)
+    return t(STUDY_MODE_LABELS.get(mode, mode))
 
 
 def flash_icon(category: str) -> str:

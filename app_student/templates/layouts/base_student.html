@@ -1,27 +1,27 @@
 ﻿<!DOCTYPE html>
-<html lang="pl">
+<html lang="{{ aktualny_jezyk }}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
   {% set _csrf_token = csrf_token() %}
   <meta name="csrf-token" content="{{ _csrf_token }}">
-  <title>{% block tytul %}Panel studenta{% endblock %} — ANS Elbląg</title>
-  <link rel="preload" href="{{ url_for('student_css_bundle', v='20260430-24') }}" as="style">
-  <link rel="stylesheet" href="{{ url_for('student_css_bundle', v='20260430-24') }}">
+  <title>{% block tytul %}{{ t('Panel studenta') }}{% endblock %} — ANS Elbląg</title>
+  <link rel="preload" href="{{ url_for('student_css_bundle', v='20260610-25') }}" as="style">
+  <link rel="stylesheet" href="{{ url_for('student_css_bundle', v='20260610-25') }}">
 </head>
 <body class="panel-body">
 
-  <a href="#main-content" class="skip-link">Przejdź do głównej treści</a>
+  <a href="#main-content" class="skip-link">{{ t('Przejdź do głównej treści') }}</a>
 
-  <nav class="sidebar" aria-label="Nawigacja główna panelu">
+  <nav class="sidebar" aria-label="{{ t('Nawigacja główna panelu') }}">
     <div class="sidebar__naglowek">
       <div class="sidebar__logo-kontener">
         <img src="{{ url_for('static', filename='img/logo.png') }}" alt="ANS Elbląg" class="sidebar__logo" width="150" height="27">
       </div>
-      <span class="sidebar__system-label">Panel studenta</span>
+      <span class="sidebar__system-label">{{ t('Panel studenta') }}</span>
     </div>
 
-    <div class="sidebar__uzytkownik" aria-label="Zalogowany użytkownik">
+    <div class="sidebar__uzytkownik" aria-label="{{ t('Zalogowany użytkownik') }}">
       <div class="sidebar__uzytkownik-avatar" aria-hidden="true">
         {% if current_user.is_authenticated and current_user.first_name and current_user.last_name %}
           {{ current_user.first_name[0] }}{{ current_user.last_name[0] }}
@@ -32,9 +32,9 @@
       <div class="sidebar__uzytkownik-info">
         {% if current_user.is_authenticated %}
           <span class="sidebar__uzytkownik-imie">{{ current_user.first_name }} {{ current_user.last_name }}</span>
-          <span class="sidebar__uzytkownik-rola">Nr alb. {{ current_user.album_number or '—' }}</span>
+          <span class="sidebar__uzytkownik-rola">{{ t('Nr alb.') }} {{ current_user.album_number or '—' }}</span>
         {% else %}
-          <span class="sidebar__uzytkownik-imie">Gość</span>
+          <span class="sidebar__uzytkownik-imie">{{ t('Gość') }}</span>
           <span class="sidebar__uzytkownik-rola">—</span>
         {% endif %}
       </div>
@@ -43,42 +43,49 @@
     <ul class="sidebar__menu" role="list">
       <li class="sidebar__menu-pozycja">
         <a href="{{ url_for('dashboard.index') }}" class="sidebar__link {% if request.endpoint == 'dashboard.index' %}sidebar__link--aktywny{% endif %}" {% if request.endpoint == 'dashboard.index' %}aria-current="page"{% endif %}>
-          <span class="sidebar__ikona" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg></span> Pulpit
+          <span class="sidebar__ikona" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg></span> {{ t('Pulpit') }}
         </a>
       </li>
-      <li class="sidebar__menu-sekcja" aria-hidden="true">Praktyki</li>
+      <li class="sidebar__menu-sekcja" aria-hidden="true">{{ t('Praktyki') }}</li>
       <li class="sidebar__menu-pozycja">
         <a href="{{ url_for('internships.lista') }}" class="sidebar__link {% if request.blueprint == 'internships' %}sidebar__link--aktywny{% endif %}" {% if request.blueprint == 'internships' %}aria-current="page"{% endif %}>
-          <span class="sidebar__ikona" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span> Dostępne praktyki{% if nav_requires_attention %} <span class="u-csp-348">!</span>{% endif %}
+          <span class="sidebar__ikona" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span> {{ t('Dostępne praktyki') }}{% if nav_requires_attention %} <span class="u-csp-348">!</span>{% endif %}
         </a>
       </li>
       {% if active_enrollment_info.is_active and active_enrollment_info.path_type == 'STANDARD' and active_enrollment_info.status in ('IN_PROGRESS', 'COMPLETED') %}
       <li class="sidebar__menu-pozycja">
         <a href="{{ url_for('logbook.index') }}" class="sidebar__link {% if request.blueprint == 'logbook' %}sidebar__link--aktywny{% endif %}" {% if request.blueprint == 'logbook' %}aria-current="page"{% endif %}>
-          <span class="sidebar__ikona" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></span> Dziennik praktyki
+          <span class="sidebar__ikona" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></span> {{ t('Dziennik praktyki') }}
         </a>
       </li>
       {% endif %}
       {% if active_enrollment_info.is_active and active_enrollment_info.status in ('IN_PROGRESS', 'COMPLETED') %}
       <li class="sidebar__menu-pozycja">
         <a href="{{ url_for('reports.index') }}" class="sidebar__link {% if request.blueprint == 'reports' %}sidebar__link--aktywny{% endif %}" {% if request.blueprint == 'reports' %}aria-current="page"{% endif %}>
-          <span class="sidebar__ikona" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span> Sprawozdanie
+          <span class="sidebar__ikona" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span> {{ t('Sprawozdanie') }}
         </a>
       </li>
       {% endif %}
       <li class="sidebar__menu-pozycja">
         <a href="{{ url_for('documents.my_documents') }}" class="sidebar__link {% if request.endpoint == 'documents.my_documents' %}sidebar__link--aktywny{% endif %}" {% if request.endpoint == 'documents.my_documents' %}aria-current="page"{% endif %}>
-          <span class="sidebar__ikona" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></span> Moje Dokumenty
+          <span class="sidebar__ikona" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></span> {{ t('Moje Dokumenty') }}
         </a>
       </li>
     </ul>
 
     <div class="sidebar__stopka">
+      <div class="przelacznik-jezyka" aria-label="{{ t('Wybór języka') }}">
+        {% for j in dostepne_jezyki %}
+        <a href="{{ url_for('zmien_jezyk', lang=j) }}"
+           class="przelacznik-jezyka__link {% if j == aktualny_jezyk %}przelacznik-jezyka__link--aktywny{% endif %}"
+           {% if j == aktualny_jezyk %}aria-current="true"{% endif %}>{{ j|upper }}</a>
+        {% endfor %}
+      </div>
       <form id="logout-form" method="POST" action="{{ url_for('auth.wylogowanie') }}">
           <input type="hidden" name="csrf_token" value="{{ _csrf_token }}">
       </form>
       <button type="button" class="sidebar__wylogowanie" data-submit-form="logout-form">
-        <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> Wyloguj się
+        <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> {{ t('Wyloguj się') }}
       </button>
     </div>
   </nav>
@@ -104,7 +111,7 @@
               {{ ikona_komunikatu(kategoria) }}
             </span>
             <span class="komunikat__tekst">{{ wiadomosc }}</span>
-            <button type="button" class="komunikat__zamknij" aria-label="Zamknij powiadomienie" data-dismiss-flash>×</button>
+            <button type="button" class="komunikat__zamknij" aria-label="{{ t('Zamknij powiadomienie') }}" data-dismiss-flash>×</button>
           </div>
         {% endfor %}
       </div>

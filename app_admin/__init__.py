@@ -58,6 +58,8 @@ def create_app():
     register_error_handlers(app)
     from core.security import configure_security_headers
     configure_security_headers(app)
+    from core.i18n import register_i18n
+    register_i18n(app)
 
     login_manager.login_view = 'auth.logowanie'
     login_manager.login_message = 'Zaloguj się, aby uzyskać dostęp do tej strony.'

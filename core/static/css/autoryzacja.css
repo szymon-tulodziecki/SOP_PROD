@@ -184,3 +184,9 @@ body {
 .strona-bledu__kod { font-size: 6rem; font-weight: 700; color: var(--kolor-ramka); line-height: 1; }
 .strona-bledu__tytul { font-size: 1.5rem; font-weight: 600; color: var(--kolor-tekst); margin: 0.75rem 0 0.5rem; }
 .strona-bledu__opis { color: var(--kolor-tekst-drugor); margin: 0; }
+
+/* ── Przełącznik języka ─────────────────────────────────────── */
+.przelacznik-jezyka { display: flex; gap: 0.25rem; justify-content: flex-end; margin-bottom: 1rem; }
+.przelacznik-jezyka__link { padding: 0.2rem 0.5rem; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em; text-decoration: none; color: var(--kolor-tekst-drugor, #5a6a7a); opacity: 0.8; border-radius: 4px; border: 1px solid transparent; }
+.przelacznik-jezyka__link:hover { opacity: 1; }
+.przelacznik-jezyka__link--aktywny { opacity: 1; border-color: currentColor; color: var(--kolor-glowny, #1a3a5c); }

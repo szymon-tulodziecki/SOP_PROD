@@ -88,6 +88,8 @@ def create_app():
     register_error_handlers(app)
     from core.security import configure_security_headers
     configure_security_headers(app)
+    from core.i18n import register_i18n
+    register_i18n(app)
 
     @app.route('/assets/student.css', endpoint='student_css_bundle', methods=['GET'])
     def student_css_bundle():

@@ -25,7 +25,8 @@ ROLE_TRANSLATIONS = {
 
 
 def translate_role(val: str) -> str:
-    return ROLE_TRANSLATIONS.get(val, val)
+    from core.i18n import t
+    return t(ROLE_TRANSLATIONS.get(val, val))
 
 
 STATUS_TRANSLATIONS = {
@@ -43,7 +44,8 @@ STATUS_TRANSLATIONS = {
 
 
 def translate_status(val: str) -> str:
-    return STATUS_TRANSLATIONS.get(val, val)
+    from core.i18n import t
+    return t(STATUS_TRANSLATIONS.get(val, val))
 
 
 LOG_EVENT_LABELS = {

@@ -18,3 +18,9 @@
 .filtr-szukaj__ikona { color: var(--kolor-tekst-trzeciorzed); font-size: 0.85rem; flex-shrink: 0; }
 .filtr-szukaj__input { flex: 1; border: none; background: transparent; padding: 0.5rem 0; font-family: var(--font-glowny); font-size: 0.85rem; color: var(--kolor-tekst); outline: none; }
 .filtr-select { padding: 0.5rem 0.75rem; font-family: var(--font-glowny); font-size: 0.85rem; color: var(--kolor-tekst); background: var(--kolor-tlo); border: 1px solid var(--kolor-ramka-mocna); border-radius: var(--promien); cursor: pointer; }
+
+/* ── Przełącznik języka ─────────────────────────────────────── */
+.przelacznik-jezyka { display: flex; gap: 0.25rem; justify-content: center; margin-bottom: 0.75rem; }
+.przelacznik-jezyka__link { padding: 0.2rem 0.5rem; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em; text-decoration: none; color: inherit; opacity: 0.65; border-radius: 4px; border: 1px solid transparent; }
+.przelacznik-jezyka__link:hover { opacity: 1; }
+.przelacznik-jezyka__link--aktywny { opacity: 1; border-color: currentColor; }
