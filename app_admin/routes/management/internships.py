@@ -15,6 +15,7 @@ from werkzeug.security import generate_password_hash
 from core.models import (User, Student, Internship, InternshipEnrollment, InternshipSchedule, LearningOutcome,
                     UserRole, InternshipStatus, EnrollmentStatus, InternshipPath, UploadedDocument, Company, EventType)
 from core.extensions import db, limiter
+from core.i18n import t, lazy_t
 from core.services.internships import InternshipService
 _serwis_praktyk = InternshipService()
 from core.auth import roles_required
@@ -53,24 +54,24 @@ _ADMIN_STATUS_LABELS = {
 
 def _actor_info(event) -> tuple[str, str, object]:
     if not event.executed_by:
-        return 'Nieznany użytkownik', '', None
+        return t('Nieznany użytkownik'), '', None
     u = event.executed_by
     return f'{u.first_name} {u.last_name}'.strip(), u.email, u.role
 
 
 def _stage_info(event, actor_role) -> tuple[str, str, str]:
     if event.event_type == EventType.DIRECTOR_DECISION:
-        status = 'Zatwierdzone' if event.decision == 'APPROVED' else 'Odrzucone'
-        return 'Decyzja dyrektora', 'Dyrektor IIS', status
+        status = t('Zatwierdzone') if event.decision == 'APPROVED' else t('Odrzucone')
+        return t('Decyzja dyrektora'), t('Dyrektor IIS'), status
 
     if event.event_type == EventType.COMMITTEE_DECISION and actor_role not in (UserRole.ADMIN, UserRole.UOPZ):
-        status = _COMMITTEE_STATUS_LABELS.get(event.decision, 'Opinia negatywna')
-        return 'Opinia komisji', 'Komisja ds. praktyk', status
+        status = t(_COMMITTEE_STATUS_LABELS.get(event.decision, 'Opinia negatywna'))
+        return t('Opinia komisji'), t('Komisja ds. praktyk'), status
 
     is_uopz = actor_role == UserRole.UOPZ
-    role_label  = 'UOPZ' if is_uopz else 'Administrator'
-    stage_label = 'Weryfikacja UOPZ' if is_uopz else 'Weryfikacja administracyjna'
-    status = _ADMIN_STATUS_LABELS.get(event.decision, 'Odrzucone')
+    role_label  = 'UOPZ' if is_uopz else t('Administrator')
+    stage_label = t('Weryfikacja UOPZ') if is_uopz else t('Weryfikacja administracyjna')
+    status = t(_ADMIN_STATUS_LABELS.get(event.decision, 'Odrzucone'))
     return stage_label, role_label, status
 
 
@@ -83,7 +84,7 @@ def _decision_history_entries(enrollment):
         actor_name, actor_email, actor_role = _actor_info(event)
         stage_label, role_label, status_label = _stage_info(event, actor_role)
         status_class = _DECISION_STATUS_CLASS.get(event.decision, 'status--odrzucona')
-        executed_at = event.executed_at.strftime('%d.%m.%Y, %H:%M') if event.executed_at else 'Brak daty'
+        executed_at = event.executed_at.strftime('%d.%m.%Y, %H:%M') if event.executed_at else t('Brak daty')
 
         entries.append({
             'stage_label':  stage_label,
@@ -123,7 +124,7 @@ def nowa_praktyka():
         try:
             required_hours = int(form.required_hours.data)
         except (TypeError, ValueError):
-            flash('Wymiar godzin musi być liczbą całkowitą.', 'danger')
+            flash(t('Wymiar godzin musi być liczbą całkowitą.'), 'danger')
             return render_template('zarzadzanie/formularz_praktyki.html', form=form)
         p = Internship(
             id             = uuid.uuid4(),
@@ -134,7 +135,7 @@ def nowa_praktyka():
         )
         _repo_praktyk.zapisz(p)
         db.session.commit()
-        flash('Praktyka została utworzona.', 'success')
+        flash(t('Praktyka została utworzona.'), 'success')
         return redirect(url_for(_ROUTE_LISTA_PRAKTYK))
     return render_template('zarzadzanie/formularz_praktyki.html', form=form)
 
@@ -145,15 +146,15 @@ def przelacz_aktywnosc_praktyki(id):
     p = _repo_praktyk.znajdz_po_id(id) or abort(404)
     p.status = InternshipStatus.INACTIVE if p.status == InternshipStatus.ACTIVE else InternshipStatus.ACTIVE
     db.session.commit()
-    stan = 'aktywowana' if p.status == InternshipStatus.ACTIVE else 'dezaktywowana'
-    flash(f'Praktyka {p.academic_year} ({p.semester}) została {stan}.', 'success')
+    stan = t('aktywowana') if p.status == InternshipStatus.ACTIVE else t('dezaktywowana')
+    flash(t('Praktyka {rok} ({semestr}) została {stan}.', rok=p.academic_year, semestr=p.semester, stan=stan), 'success')
     return redirect(url_for(_ROUTE_LISTA_PRAKTYK))
 
 
 # ── Zgłoszenia studentów ──────────────────────────────────────────────────────
 
 class FormularzPrzypiszUOPZ(FlaskForm):
-    supervisor_id = SelectField('Opiekun uczelniany (UOPZ)', choices=[], validators=[Optional()])
+    supervisor_id = SelectField(lazy_t('Opiekun uczelniany (UOPZ)'), choices=[], validators=[Optional()])
 
 
 @zarzadzanie_bp.route('/zgloszenia', methods=['GET'])
@@ -166,7 +167,7 @@ def lista_zgloszen():
     try:
         applications = _repo_zapisow.lista_zgloszen_strona(status_filter=status_filter, strona=page, supervisor_id=supervisor_id)
     except ValueError:
-        flash(f'Nieznany status: {status_filter}', 'warning')
+        flash(t('Nieznany status: {status}', status=status_filter), 'warning')
         applications = _repo_zapisow.lista_zgloszen_strona(strona=page, supervisor_id=supervisor_id)
     csrf_form = FlaskForm()
     return render_template('zarzadzanie/enrollments/list.html', zgloszenia=applications, csrf_form=csrf_form)
@@ -178,17 +179,17 @@ def przypisz_uopz(id):
     enrollment = _repo_zapisow.znajdz_po_id(id) or abort(404)
     form       = FormularzPrzypiszUOPZ()
     uopz_list  = user_repository.active_uopz()
-    form.supervisor_id.choices = [('', '--- brak ---')] + [(str(u.id), f"{u.first_name} {u.last_name}") for u in uopz_list]
+    form.supervisor_id.choices = [('', t('--- brak ---'))] + [(str(u.id), f"{u.first_name} {u.last_name}") for u in uopz_list]
 
     if form.validate_on_submit():
         if form.supervisor_id.data:
             try:
                 _serwis_praktyk.submit_for_approval_with_supervisor(id, form.supervisor_id.data)
-                flash('Opiekun UOPZ przypisany, zgłoszenie przekazane do zatwierdzenia.', 'success')
+                flash(t('Opiekun UOPZ przypisany, zgłoszenie przekazane do zatwierdzenia.'), 'success')
             except IllegalTransitionError as e:
-                flash(str(e), 'danger')
+                flash(t(str(e)), 'danger')
         else:
-            flash('Nie wybrano opiekuna.', 'warning')
+            flash(t('Nie wybrano opiekuna.'), 'warning')
         return redirect(url_for(_ROUTE_LISTA_ZGLOSZEN))
 
     if request.method == 'GET':
@@ -211,9 +212,9 @@ def szczegoly_zgloszenia(id):
     outcomes      = _repo_efektow.wszystkie()
 
     class CommentForm(FlaskForm):
-        comment    = TextAreaField('Komentarz do studenta')
-        zatwierdz  = SubmitField('Zatwierdź zgłoszenie')
-        reject     = SubmitField('Wymagane poprawki')
+        comment    = TextAreaField(lazy_t('Komentarz do studenta'))
+        zatwierdz  = SubmitField(lazy_t('Zatwierdź zgłoszenie'))
+        reject     = SubmitField(lazy_t('Wymagane poprawki'))
 
     form = CommentForm()
 
@@ -222,12 +223,12 @@ def szczegoly_zgloszenia(id):
         try:
             if form.zatwierdz.data:
                 _serwis_praktyk.approve_by_supervisor(id, actor_id=current_user.id, comment=comment)
-                flash('Zgłoszenie zostało zatwierdzone!', 'success')
+                flash(t('Zgłoszenie zostało zatwierdzone!'), 'success')
             elif form.reject.data:
                 _serwis_praktyk.request_revision(id, actor_id=current_user.id, comment=comment)
-                flash('Wysłano prośbę o poprawki do studenta.', 'info')
+                flash(t('Wysłano prośbę o poprawki do studenta.'), 'info')
         except IllegalTransitionError as e:
-            flash(str(e), 'danger')
+            flash(t(str(e)), 'danger')
         return redirect(url_for(_ROUTE_LISTA_ZGLOSZEN))
 
     uploaded_docs = _repo_docs.dla_zapisu_studenta(id, enrollment.student_id)
@@ -255,9 +256,9 @@ def szczegoly_zgloszenia(id):
 def zatwierdz_zaklad(id):
     try:
         _serwis_praktyk.approve_by_supervisor(id, actor_id=current_user.id)
-        flash('Zakład zatwierdzony. Praktyka rozpoczęła się.', 'success')
+        flash(t('Zakład zatwierdzony. Praktyka rozpoczęła się.'), 'success')
     except IllegalTransitionError as e:
-        flash(str(e), 'danger')
+        flash(t(str(e)), 'danger')
     return redirect(url_for(_ROUTE_LISTA_ZGLOSZEN))
 
 
@@ -267,9 +268,9 @@ def potwierdz_zapis(id):
     supervisor_id = current_user.id if current_user.role == UserRole.UOPZ else None
     try:
         _serwis_praktyk.approve_by_supervisor(id, actor_id=current_user.id, supervisor_id=supervisor_id)
-        flash('Zapis studenta na praktykę został potwierdzony. Zostałeś/aś przypisany/a jako opiekun.', 'success')
+        flash(t('Zapis studenta na praktykę został potwierdzony. Zostałeś/aś przypisany/a jako opiekun.'), 'success')
     except IllegalTransitionError as e:
-        flash(str(e), 'danger')
+        flash(t(str(e)), 'danger')
     return redirect(request.referrer or url_for('dashboard.index'))
 
 
@@ -285,7 +286,7 @@ def moje_zgloszenia():
             current_user.id, status_filter=status_filter, strona=page
         )
     except ValueError:
-        flash(f'Nieznany status: {status_filter}', 'warning')
+        flash(t('Nieznany status: {status}', status=status_filter), 'warning')
         applications = _repo_zapisow.dla_uopz_strona(current_user.id, strona=page)
 
     csrf_form     = FlaskForm()
@@ -309,11 +310,11 @@ def usun_praktyke(id):
     if p.enrollments:
         p.deleted_at = datetime.now(timezone.utc)
         db.session.commit()
-        flash(f'Praktyka {opis} została dezaktywowana i zostanie trwale usunięta po 7 dniach. Możesz ją przywrócić.', 'warning')
+        flash(t('Praktyka {opis} została dezaktywowana i zostanie trwale usunięta po 7 dniach. Możesz ją przywrócić.', opis=opis), 'warning')
     else:
         _repo_praktyk.usun(p)
         db.session.commit()
-        flash(f'Praktyka {opis} została trwale usunięta (brak zapisanych studentów).', 'success')
+        flash(t('Praktyka {opis} została trwale usunięta (brak zapisanych studentów).', opis=opis), 'success')
     return redirect(url_for(_ROUTE_LISTA_PRAKTYK))
 
 
@@ -324,5 +325,5 @@ def przywroc_praktyke(id):
     opis = f'{p.academic_year} ({p.semester})'
     p.deleted_at = None
     db.session.commit()
-    flash(f'Praktyka {opis} została przywrócona.', 'success')
+    flash(t('Praktyka {opis} została przywrócona.', opis=opis), 'success')
     return redirect(url_for(_ROUTE_LISTA_PRAKTYK))

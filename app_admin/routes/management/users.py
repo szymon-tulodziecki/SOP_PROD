@@ -6,6 +6,7 @@ from flask_wtf import FlaskForm
 
 from core.auth import roles_required
 from core.extensions import db, limiter
+from core.i18n import t
 from core.models import User, UserRole
 from core.presenters import active_toggle, role_badges
 from core.repositories import UserRepository
@@ -63,8 +64,9 @@ def nowy_student():
             require_password_change=False,
         )
         flash(
-            f'Konto studenta {student.first_name} {student.last_name} (nr alb. {student.album_number}) '
-            f'zostało utworzone. Student może się teraz zalogować przez Microsoft ({student.email}).',
+            t('Konto studenta {imie} {nazwisko} (nr alb. {album}) zostało utworzone. Student może się teraz zalogować przez Microsoft ({email}).',
+              imie=student.first_name, nazwisko=student.last_name,
+              album=student.album_number, email=student.email),
             'success',
         )
         return redirect(url_for(USER_LIST_ENDPOINT))
@@ -100,10 +102,10 @@ def edytuj_studenta(id):
         if form.supervisor_id.data:
             student.supervisor_id = uuid.UUID(form.supervisor_id.data)
         db.session.commit()
-        flash('Dane studenta zostały zaktualizowane.', 'success')
+        flash(t('Dane studenta zostały zaktualizowane.'), 'success')
         return redirect(url_for(USER_LIST_ENDPOINT))
     if request.method == 'POST':
-        flash('Formularz zawiera błędy — zmiany nie zostały zapisane.', 'danger')
+        flash(t('Formularz zawiera błędy — zmiany nie zostały zapisane.'), 'danger')
 
     return render_template('zarzadzanie/formularz_studenta.html', form=form, uzytkownik=student)
 
@@ -122,12 +124,13 @@ def nowy_pracownik():
                 roles=[UserRole[name] for name in form.roles.data],
             )
         except ValueError as exc:
-            flash(str(exc), 'danger')
+            flash(t(str(exc)), 'danger')
             return render_template('zarzadzanie/formularz_pracownika.html', form=form, uzytkownik=None)
 
         flash(
-            f'Konto {user.first_name} {user.last_name} [{user.role_label}] utworzone. '
-            f'Użytkownik może się zalogować przez Microsoft ({user.email}).',
+            t('Konto {imie} {nazwisko} [{rola}] utworzone. Użytkownik może się zalogować przez Microsoft ({email}).',
+              imie=user.first_name, nazwisko=user.last_name,
+              rola=user.role_label, email=user.email),
             'success',
         )
         return redirect(url_for(USER_LIST_ENDPOINT))
@@ -167,10 +170,11 @@ def edytuj_pracownika(id):
             user.roles.add(r)
 
         db.session.commit()
-        flash(f'Dane pracownika {user.first_name} {user.last_name} zostały zaktualizowane.', 'success')
+        flash(t('Dane pracownika {imie} {nazwisko} zostały zaktualizowane.',
+                imie=user.first_name, nazwisko=user.last_name), 'success')
         return redirect(url_for(USER_LIST_ENDPOINT))
     if request.method == 'POST':
-        flash('Formularz zawiera błędy — zmiany nie zostały zapisane.', 'danger')
+        flash(t('Formularz zawiera błędy — zmiany nie zostały zapisane.'), 'danger')
 
     return render_template('zarzadzanie/formularz_pracownika.html', form=form, uzytkownik=user)
 
@@ -181,7 +185,7 @@ def edytuj_pracownika(id):
 def import_csv():
     form = CsvImportForm()
     supervisors = user_repository.active_uopz()
-    form.supervisor_id.choices = [('', '— wybierz —')] + [
+    form.supervisor_id.choices = [('', t('— wybierz —'))] + [
         (str(user.id), f"{user.first_name} {user.last_name}") for user in supervisors
     ]
     results = None
@@ -191,7 +195,7 @@ def import_csv():
         supervisor_id = form.supervisor_id.data or None
         results = user_service.import_from_csv(content, supervisor_id)
         if results['created']:
-            flash(f'Import zakończony: {results["created"]} kont utworzonych.', 'success')
+            flash(t('Import zakończony: {liczba} kont utworzonych.', liczba=results["created"]), 'success')
 
     return render_template('zarzadzanie/import_csv.html', form=form, results=results)
 
@@ -201,13 +205,14 @@ def import_csv():
 def przelacz_aktywnosc(id):
     user = user_repository.find_by_id(id) or abort(404)
     if str(user.id) == str(current_user.id):
-        flash('Nie możesz dezaktywować własnego konta.', 'danger')
+        flash(t('Nie możesz dezaktywować własnego konta.'), 'danger')
         return redirect(url_for(USER_LIST_ENDPOINT))
 
     user.is_active = not user.is_active
     db.session.commit()
-    status_label = 'aktywowane' if user.is_active else 'dezaktywowane'
-    flash(f'Konto {user.first_name} {user.last_name} zostało {status_label}.', 'success')
+    status_label = t('aktywowane') if user.is_active else t('dezaktywowane')
+    flash(t('Konto {imie} {nazwisko} zostało {stan}.',
+            imie=user.first_name, nazwisko=user.last_name, stan=status_label), 'success')
     return redirect(url_for(USER_LIST_ENDPOINT))
 
 
@@ -217,11 +222,11 @@ def przelacz_aktywnosc(id):
 def usun_uzytkownika(id):
     user = user_repository.find_by_id(id) or abort(404)
     if str(user.id) == str(current_user.id):
-        flash('Nie możesz usunąć własnego konta.', 'danger')
+        flash(t('Nie możesz usunąć własnego konta.'), 'danger')
         return redirect(url_for(USER_LIST_ENDPOINT))
 
     full_name = f'{user.first_name} {user.last_name}'
     user_repository.delete(user)
     db.session.commit()
-    flash(f'Konto {full_name} zostało trwale usunięte.', 'success')
+    flash(t('Konto {nazwa} zostało trwale usunięte.', nazwa=full_name), 'success')
     return redirect(url_for(USER_LIST_ENDPOINT))

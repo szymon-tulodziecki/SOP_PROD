@@ -1,12 +1,14 @@
 """Server-Sent Events generator for Celery PDF generation status."""
 from __future__ import annotations
 
+from core.i18n import t
+
 
 def _pdf_status_payload(task, download_url: str) -> tuple[dict, bool]:
     if task.state == 'SUCCESS':
         res = task.result
         if isinstance(res, dict) and res.get('status') == 'error':
-            return {'status': 'FAILURE', 'error': res.get('message', 'Nieznany błąd')}, True
+            return {'status': 'FAILURE', 'error': t(res.get('message', 'Nieznany błąd'))}, True
         return {'status': 'SUCCESS', 'download_url': download_url}, True
     if task.state == 'FAILURE':
         return {'status': 'FAILURE', 'error': str(task.info)}, True

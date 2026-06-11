@@ -1,13 +1,13 @@
-﻿{% extends "layouts/base_student.html" %}
-{% block tytul %}Dziennik praktyki{% endblock %}
-{% block naglowek %}Dziennik praktyki{% endblock %}
+{% extends "layouts/base_student.html" %}
+{% block tytul %}{{ t('Dziennik praktyki') }}{% endblock %}
+{% block naglowek %}{{ t('Dziennik praktyki') }}{% endblock %}
 
 {% block naglowek_akcje %}
 <div class="u-csp-028">
   {% if zapis %}
-  <a href="{{ url_for('logbook.nowy_wpis') }}" class="przycisk przycisk--glowny">Nowy wpis</a>
+  <a href="{{ url_for('logbook.nowy_wpis') }}" class="przycisk przycisk--glowny">{{ t('Nowy wpis') }}</a>
   {% endif %}
-  <a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
+  <a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← {{ t('Powrót') }}</a>
 </div>
 {% endblock %}
 
@@ -17,10 +17,10 @@
   <div class="u-csp-268">
     <div class="karta u-csp-286">
       {% if jakikolwiek %}
-        <p class="u-csp-036">Twój zapis oczekuje na aktywację przez opiekuna.</p>
+        <p class="u-csp-036">{{ t('Twój zapis oczekuje na aktywację przez opiekuna.') }}</p>
       {% else %}
-        <p class="u-csp-036">Najpierw zapisz się na praktykę.</p>
-        <a href="{{ url_for('internships.lista') }}" class="przycisk przycisk--glowny u-csp-287">Zobacz praktyki</a>
+        <p class="u-csp-036">{{ t('Najpierw zapisz się na praktykę.') }}</p>
+        <a href="{{ url_for('internships.lista') }}" class="przycisk przycisk--glowny u-csp-287">{{ t('Zobacz praktyki') }}</a>
       {% endif %}
     </div>
   </div>
@@ -32,26 +32,26 @@
     <div class="karta__tresc">
       <div class="u-csp-085 dziennik-panel__metryki">
         <div>
-          <div class="u-csp-289">Praktyka</div>
+          <div class="u-csp-289">{{ t('Praktyka') }}</div>
           <div class="u-csp-141">{{ zapis.internship.academic_year }}</div>
-          <div class="u-csp-146">Semestr {{ zapis.internship.semester_label }}</div>
+          <div class="u-csp-146">{{ t('Semestr') }} {{ zapis.internship.semester_label }}</div>
         </div>
         <div>
-          <div class="u-csp-289">Wpisy</div>
+          <div class="u-csp-289">{{ t('Wpisy') }}</div>
           <div class="u-csp-290">{{ liczba_wpisow_ogolem }}</div>
           {% if data_od or data_do %}
-          <div class="u-csp-146">Widoczne: {{ wpisy | length }}</div>
+          <div class="u-csp-146">{{ t('Widoczne:') }} {{ wpisy | length }}</div>
           {% endif %}
         </div>
         <div>
-          <div class="u-csp-289">Godziny</div>
+          <div class="u-csp-289">{{ t('Godziny') }}</div>
           <div class="u-csp-291">{{ godziny_ogolem }} / {{ zapis.internship.required_hours }} h</div>
           <div class="pasek-postep u-csp-292">
             <div class="pasek-postep__wypelnienie{% if zapis.progress_percent >= 100 %} pasek-postep__wypelnienie--zakonczony{% endif %} u-progress-{{ zapis.progress_percent|int }}"></div>
           </div>
-          
-          <div class="u-csp-289">Dni</div>
-          <div class="u-csp-291">{{ liczba_wpisow_ogolem }} / 120 dni</div>
+
+          <div class="u-csp-289">{{ t('Dni') }}</div>
+          <div class="u-csp-291">{{ liczba_wpisow_ogolem }} / 120 {{ t('dni') }}</div>
           <div class="pasek-postep u-csp-002">
             <div class="pasek-postep__wypelnienie{% if entries_progress_percent >= 100 %} pasek-postep__wypelnienie--zakonczony{% endif %} u-progress-{{ entries_progress_percent|int }}"></div>
           </div>
@@ -63,31 +63,31 @@
   {% if zapis.can_download_printouts %}
   <div class="karta u-csp-293 dziennik-panel__final">
     <div class="karta__naglowek u-csp-294">
-      <h2 class="karta__tytul">⚠ Dokumenty końcowe praktyki</h2>
+      <h2 class="karta__tytul">⚠ {{ t('Dokumenty końcowe praktyki') }}</h2>
     </div>
     <div class="karta__tresc u-csp-295">
       <p class="u-csp-296">
-        Zalecamy przygotowanie dokumentów <strong>przed</strong> kliknięciem „Zakończ praktykę". Komplet należy złożyć u UOPZ <strong>w ciągu 7 dni</strong> od zakończenia.
+        {{ t('Zalecamy przygotowanie dokumentów <strong>przed</strong> kliknięciem „Zakończ praktykę". Komplet należy złożyć u UOPZ <strong>w ciągu 7 dni</strong> od zakończenia.') | safe }}
       </p>
       <ul class="u-csp-297">
-        <li><strong>Zał. 3b</strong> — Karta zakładowa (BHP, zaświadczenie i ocena ZOPZ — wypełniana w firmie przez 6 miesięcy)</li>
-        <li><strong>Zał. 3c</strong> — Ocena uczelniana (generowana po wystawieniu assessments przez UOPZ)</li>
-        <li><strong>Zał. 4</strong> — Potwierdzenie uzyskania learning_outcomeów uczenia się (podpisuje ZOPZ + UOPZ)</li>
-        <li><strong>Zał. 6</strong> — Dziennik praktyki (eksport z systemu)</li>
-        <li><strong>Zał. 7</strong> — Sprawozdanie z przebiegu praktyki (podpisane przez studenta)</li>
-        <li><strong>Zał. 5</strong> — Kwestionariusz ankiety (wypełniony przez studenta)</li>
+        <li><strong>{{ t('Zał.') }} 3b</strong> — {{ t('Karta zakładowa (BHP, zaświadczenie i ocena ZOPZ — wypełniana w firmie przez 6 miesięcy)') }}</li>
+        <li><strong>{{ t('Zał.') }} 3c</strong> — {{ t('Ocena uczelniana (generowana po wystawieniu ocen przez UOPZ)') }}</li>
+        <li><strong>{{ t('Zał.') }} 4</strong> — {{ t('Potwierdzenie uzyskania efektów uczenia się (podpisuje ZOPZ + UOPZ)') }}</li>
+        <li><strong>{{ t('Zał.') }} 6</strong> — {{ t('Dziennik praktyki (eksport z systemu)') }}</li>
+        <li><strong>{{ t('Zał.') }} 7</strong> — {{ t('Sprawozdanie z przebiegu praktyki (podpisane przez studenta)') }}</li>
+        <li><strong>{{ t('Zał.') }} 5</strong> — {{ t('Kwestionariusz ankiety (wypełniony przez studenta)') }}</li>
       </ul>
       <p class="u-csp-298">
-        Komplet dokumentów stanowi podstawę dopuszczenia do egzaminu komisyjnego, po którym student otrzymuje <strong>Zał. 8 — Protokół zaliczenia</strong>.
+        {{ t('Komplet dokumentów stanowi podstawę dopuszczenia do egzaminu komisyjnego, po którym student otrzymuje <strong>Zał. 8 — Protokół zaliczenia</strong>.') | safe }}
       </p>
       <div class="u-csp-299">
-        <a href="{{ url_for('documents.my_documents') }}" class="przycisk przycisk--drugorzedny">Generuj dokumenty →</a>
+        <a href="{{ url_for('documents.my_documents') }}" class="przycisk przycisk--drugorzedny">{{ t('Generuj dokumenty') }} →</a>
         {% if zapis.is_in_progress %}
         <form class="u-csp-006" method="POST" action="{{ url_for('internships.zakoncz_praktyke', id=zapis.id) }}">
           {{ csrf_form.hidden_tag() }}
           <button type="submit" class="przycisk przycisk--glowny"
-                  data-confirm="Czy na pewno chcesz oznaczyć praktykę jako zakończoną? Po zakończeniu zostaną udostępnione dokumenty końcowe.">
-            Zakończ praktykę
+                  data-confirm="{{ t('Czy na pewno chcesz oznaczyć praktykę jako zakończoną? Po zakończeniu zostaną udostępnione dokumenty końcowe.') }}">
+            {{ t('Zakończ praktykę') }}
           </button>
         </form>
         {% endif %}
@@ -98,17 +98,17 @@
 
   <div class="karta dziennik-panel__wpisy">
     <div class="karta__naglowek u-csp-077">
-      <h2 class="karta__tytul">Wpisy dziennika ({{ wpisy|length }}{% if data_od or data_do %} — filtr aktywny{% endif %})</h2>
+      <h2 class="karta__tytul">{{ t('Wpisy dziennika') }} ({{ wpisy|length }}{% if data_od or data_do %} — {{ t('filtr aktywny') }}{% endif %})</h2>
       <form class="u-csp-300" method="GET">
-        <label class="u-csp-247">Od</label>
+        <label class="u-csp-247">{{ t('Od') }}</label>
         <input type="date" name="od" class="form-field__input u-csp-089"
                value="{{ data_od.isoformat() if data_od else '' }}">
-        <label class="u-csp-247">Do</label>
+        <label class="u-csp-247">{{ t('Do') }}</label>
         <input type="date" name="do" class="form-field__input u-csp-089"
                value="{{ data_do.isoformat() if data_do else '' }}">
-        <button type="submit" class="przycisk przycisk--maly przycisk--drugorzedny">Filtruj</button>
+        <button type="submit" class="przycisk przycisk--maly przycisk--drugorzedny">{{ t('Filtruj') }}</button>
         {% if data_od or data_do %}
-        <a href="{{ url_for('logbook.index') }}" class="przycisk przycisk--maly przycisk--drugorzedny">Wyczyść</a>
+        <a href="{{ url_for('logbook.index') }}" class="przycisk przycisk--maly przycisk--drugorzedny">{{ t('Wyczyść') }}</a>
         {% endif %}
       </form>
     </div>
@@ -116,10 +116,10 @@
       <table class="tabela">
         <thead>
           <tr>
-            <th>Data</th>
-            <th>Godz.</th>
-            <th>Opis czynności</th>
-            <th>Efekty</th>
+            <th>{{ t('Data') }}</th>
+            <th>{{ t('Godz.') }}</th>
+            <th>{{ t('Opis czynności') }}</th>
+            <th>{{ t('Efekty') }}</th>
             <th></th>
           </tr>
         </thead>
@@ -130,8 +130,8 @@
             <td class="u-csp-193">{{ entry.hours_count }} h</td>
             <td class="u-csp-301">
               {% if entry.description | length > 120 %}
-                <span class="opis-skrot">{{ entry.description[:120] }}&hellip; <button type="button" class="btn-rozwin">Rozwiń</button></span>
-                <span class="opis-pelny u-csp-094">{{ entry.description }} <button type="button" class="btn-rozwin">Zwiń</button></span>
+                <span class="opis-skrot">{{ entry.description[:120] }}&hellip; <button type="button" class="btn-rozwin">{{ t('Rozwiń') }}</button></span>
+                <span class="opis-pelny u-csp-094">{{ entry.description }} <button type="button" class="btn-rozwin">{{ t('Zwiń') }}</button></span>
               {% else %}
                 {{ entry.description }}
               {% endif %}
@@ -144,16 +144,16 @@
               {% else %}—{% endif %}
             </td>
             <td class="u-csp-193">
-              <a href="{{ url_for('logbook.edytuj_wpis', wpis_id=entry.id) }}" class="przycisk przycisk--maly przycisk--drugorzedny">Edytuj</a>
+              <a href="{{ url_for('logbook.edytuj_wpis', wpis_id=entry.id) }}" class="przycisk przycisk--maly przycisk--drugorzedny">{{ t('Edytuj') }}</a>
               <form class="u-csp-006" method="POST" action="{{ url_for('logbook.usun_wpis', wpis_id=entry.id) }}">
                 {{ csrf_form.hidden_tag() }}
                 <button type="submit" class="przycisk przycisk--maly przycisk--niebezpieczny"
-                        data-confirm="Usunąć ten wpis?">Usuń</button>
+                        data-confirm="{{ t('Usunąć ten wpis?') }}">{{ t('Usuń') }}</button>
               </form>
             </td>
           </tr>
           {% else %}
-          <tr><td colspan="5" class="tabela--pusta">Brak wpisów. Dodaj pierwszy wpis.</td></tr>
+          <tr><td colspan="5" class="tabela--pusta">{{ t('Brak wpisów. Dodaj pierwszy wpis.') }}</td></tr>
           {% endfor %}
         </tbody>
       </table>

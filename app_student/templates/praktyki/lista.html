@@ -1,9 +1,9 @@
-﻿{% extends "layouts/base_student.html" %}
-{% block tytul %}Dostępne praktyki{% endblock %}
-{% block naglowek %}Dostępne praktyki{% endblock %}
+{% extends "layouts/base_student.html" %}
+{% block tytul %}{{ t('Dostępne praktyki') }}{% endblock %}
+{% block naglowek %}{{ t('Dostępne praktyki') }}{% endblock %}
 
 {% block naglowek_akcje %}
-<a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
+<a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← {{ t('Powrót') }}</a>
 {% endblock %}
 
 {% block tresc %}
@@ -11,7 +11,7 @@
 
   {% if not dostepne %}
   <div class="karta u-csp-200">
-    <p class="u-csp-036">Brak aktywnych praktyk. Skontaktuj się z opiekunem uczelni.</p>
+    <p class="u-csp-036">{{ t('Brak aktywnych praktyk. Skontaktuj się z opiekunem uczelni.') }}</p>
   </div>
 
   {% else %}
@@ -28,53 +28,53 @@
         <div class="u-csp-349">
           <div>
             <div class="u-csp-350">{{ p.academic_year }}</div>
-            <div class="u-csp-351">Semestr {{ p.semester_label }} · {{ p.required_hours }} h</div>
+            <div class="u-csp-351">{{ t('Semestr') }} {{ p.semester_label }} · {{ p.required_hours }} h</div>
           </div>
 
           {% if zapis_info %}
           <div class="u-csp-352">
             {% if jest_odrzucone %}
               <span class="u-csp-353">
-                ! Wniosek odrzucony
+                ! {{ t('Wniosek odrzucony') }}
               </span>
-              <a href="{{ url_for('internships.kreator_sciezka', id=p.id) }}" class="przycisk przycisk--maly przycisk--glowny">Złóż nowe zgłoszenie</a>
+              <a href="{{ url_for('internships.kreator_sciezka', id=p.id) }}" class="przycisk przycisk--maly przycisk--glowny">{{ t('Złóż nowe zgłoszenie') }}</a>
             {% elif jest_zwrocone %}
               <span class="u-csp-353">
-                ! Wymaga poprawek
+                ! {{ t('Wymaga poprawek') }}
               </span>
-              <a href="{{ zapis_info.kreator_url }}" class="przycisk przycisk--maly przycisk--glowny">Edytuj zgłoszenie</a>
-              <a href="{{ url_for('internships.szczegoly_zgloszenia', id=zapis_info.id) }}" class="przycisk przycisk--maly przycisk--drugorzedny">Szczegóły</a>
+              <a href="{{ zapis_info.kreator_url }}" class="przycisk przycisk--maly przycisk--glowny">{{ t('Edytuj zgłoszenie') }}</a>
+              <a href="{{ url_for('internships.szczegoly_zgloszenia', id=zapis_info.id) }}" class="przycisk przycisk--maly przycisk--drugorzedny">{{ t('Szczegóły') }}</a>
             {% elif zapis_info.status == 'PENDING' %}
-              <span class="status status--draft">Nieukończone</span>
-              <a href="{{ zapis_info.kreator_url }}" class="przycisk przycisk--maly przycisk--glowny">Kontynuuj zgłoszenie</a>
+              <span class="status status--draft">{{ t('Nieukończone') }}</span>
+              <a href="{{ zapis_info.kreator_url }}" class="przycisk przycisk--maly przycisk--glowny">{{ t('Kontynuuj zgłoszenie') }}</a>
             {% elif zapis_info.wymaga_uwagi %}
               <span class="u-csp-354">
-                ! Wymaga uzupełnienia
+                ! {{ t('Wymaga uzupełnienia') }}
               </span>
-              <a href="{{ url_for('internships.szczegoly_zgloszenia', id=zapis_info.id) }}" class="przycisk przycisk--maly przycisk--drugorzedny">Szczegóły</a>
+              <a href="{{ url_for('internships.szczegoly_zgloszenia', id=zapis_info.id) }}" class="przycisk przycisk--maly przycisk--drugorzedny">{{ t('Szczegóły') }}</a>
             {% else %}
               <span class="status status--{{ zapis_info.status_css_class }}">{{ zapis_info.status_label }}</span>
-              <a href="{{ url_for('internships.szczegoly_zgloszenia', id=zapis_info.id) }}" class="przycisk przycisk--maly przycisk--drugorzedny">Szczegóły</a>
+              <a href="{{ url_for('internships.szczegoly_zgloszenia', id=zapis_info.id) }}" class="przycisk przycisk--maly przycisk--drugorzedny">{{ t('Szczegóły') }}</a>
               {% if zapis_info.status == 'IN_PROGRESS' and zapis_info.is_standard %}
               <form class="u-csp-006" method="POST" action="{{ url_for('internships.zakoncz_praktyke', id=zapis_info.id) }}">
                 {{ csrf_form.hidden_tag() }}
                 <button type="submit" class="przycisk przycisk--maly przycisk--glowny"
-                        data-confirm="Czy na pewno chcesz oznaczyć praktykę jako zakończoną? Po zakończeniu zostaną udostępnione dokumenty końcowe.">
-                  Zakończ praktykę
+                        data-confirm="{{ t('Czy na pewno chcesz oznaczyć praktykę jako zakończoną? Po zakończeniu zostaną udostępnione dokumenty końcowe.') }}">
+                  {{ t('Zakończ praktykę') }}
                 </button>
               </form>
               {% endif %}
             {% endif %}
           </div>
           {% else %}
-          <a href="{{ url_for('internships.kreator_sciezka', id=p.id) }}" class="przycisk przycisk--glowny u-csp-355">Zapisz się</a>
+          <a href="{{ url_for('internships.kreator_sciezka', id=p.id) }}" class="przycisk przycisk--glowny u-csp-355">{{ t('Zapisz się') }}</a>
           {% endif %}
         </div>
 
         {# Komentarz odrzucenia #}
         {% if jest_odrzucone and zapis_info.komentarz_odrzucenia %}
         <div class="u-csp-356">
-          <div class="u-csp-357">Powód odrzucenia</div>
+          <div class="u-csp-357">{{ t('Powód odrzucenia') }}</div>
           <div class="u-csp-358">{{ zapis_info.komentarz_odrzucenia }}</div>
         </div>
         {% endif %}
@@ -82,7 +82,7 @@
         {# Wiadomość zwrotna od admina/UOPZ #}
         {% if jest_zwrocone and zapis_info.komentarz_zwrotny %}
         <div class="u-csp-356">
-          <div class="u-csp-357">Uwagi do poprawek</div>
+          <div class="u-csp-357">{{ t('Uwagi do poprawek') }}</div>
           <div class="u-csp-358">{{ zapis_info.komentarz_zwrotny }}</div>
         </div>
         {% endif %}

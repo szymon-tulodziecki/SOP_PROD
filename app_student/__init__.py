@@ -141,7 +141,9 @@ def create_app():
         return response
 
     login_manager.login_view = 'auth.logowanie'
+    from core.i18n import t
     login_manager.login_message = 'Zaloguj się, aby uzyskać dostęp.'
+    login_manager.localize_callback = t
 
     with app.app_context():
         from core.auth  import create_auth_blueprint

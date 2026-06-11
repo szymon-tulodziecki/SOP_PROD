@@ -1,9 +1,9 @@
-﻿{% extends "layouts/base_student.html" %}
-{% block tytul %}Moje Dokumenty{% endblock %}
-{% block naglowek %}Moje Dokumenty{% endblock %}
+{% extends "layouts/base_student.html" %}
+{% block tytul %}{{ t('Moje Dokumenty') }}{% endblock %}
+{% block naglowek %}{{ t('Moje Dokumenty') }}{% endblock %}
 
 {% block naglowek_akcje %}
-<a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
+<a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← {{ t('Powrót') }}</a>
 {% endblock %}
 
 {% block tresc %}
@@ -18,8 +18,8 @@
           <polyline points="14 2 14 8 20 8"/>
         </svg>
       </div>
-      <div class="u-csp-214">Brak dostępnych dokumentów</div>
-      <div class="u-csp-036">Dokumenty pojawią się tutaj po zatwierdzeniu praktyki przez opiekuna.</div>
+      <div class="u-csp-214">{{ t('Brak dostępnych dokumentów') }}</div>
+      <div class="u-csp-036">{{ t('Dokumenty pojawią się tutaj po zatwierdzeniu praktyki przez opiekuna.') }}</div>
     </div>
   </div>
   {% endif %}
@@ -28,10 +28,10 @@
   <div class="karta u-csp-208">
     <div class="karta__naglowek">
       <div>
-        <div class="u-csp-141">{{ item.enrollment.internship.academic_year }} · Semestr {{ item.enrollment.internship.semester_label }}</div>
+        <div class="u-csp-141">{{ item.enrollment.internship.academic_year }} · {{ t('Semestr') }} {{ item.enrollment.internship.semester_label }}</div>
         <div class="u-csp-283">
           {% if item.firma_nazwa %}{{ item.firma_nazwa }}{% endif %}
-          · Ścieżka: {{ item.sciezka_label }}
+          · {{ t('Ścieżka:') }} {{ item.sciezka_label }}
         </div>
       </div>
       <span class="status status--{{ item.enrollment.status_css_class }}">{{ item.enrollment.status_label }}</span>
@@ -64,13 +64,13 @@
           {% if doc.dostepny %}
             {% if doc.staly is defined and doc.staly %}
             <a href="{{ url_for('documents.pobierz_staly', doc_key=doc.klucz_staly) }}"
-               class="przycisk przycisk--drugorzedny przycisk--maly">Pobierz PDF</a>
+               class="przycisk przycisk--drugorzedny przycisk--maly">{{ t('Pobierz PDF') }}</a>
             {% elif doc.dynamiczny is defined and doc.dynamiczny %}
             <a href="{{ url_for('documents.download_dynamic', enrollment_id=doc.enrollment_id, doc_type=doc.event_type) }}"
-               class="przycisk przycisk--drugorzedny przycisk--maly">Pobierz PDF</a>
+               class="przycisk przycisk--drugorzedny przycisk--maly">{{ t('Pobierz PDF') }}</a>
             {% endif %}
           {% else %}
-          <span class="u-csp-222">Niedostępny</span>
+          <span class="u-csp-222">{{ t('Niedostępny') }}</span>
           {% endif %}
         </div>
         {% endif %}

@@ -1,6 +1,6 @@
-﻿{% extends "layouts/base_student.html" %}
-{% block tytul %}Potwierdzenie wysłania zgłoszenia{% endblock %}
-{% block naglowek %}Rejestracja praktyki zawodowej{% endblock %}
+{% extends "layouts/base_student.html" %}
+{% block tytul %}{{ t('Potwierdzenie wysłania zgłoszenia') }}{% endblock %}
+{% block naglowek %}{{ t('Rejestracja praktyki zawodowej') }}{% endblock %}
 
 {% block tresc %}
 <div class="u-csp-343">
@@ -16,16 +16,16 @@
       </svg>
     </div>
     {% if zapis.status.value == 'REVISION_REQUIRED' %}
-    <h2 class="u-fw-600 u-mb-05 u-csp-345">Poprawki gotowe do wysłania</h2>
+    <h2 class="u-fw-600 u-mb-05 u-csp-345">{{ t('Poprawki gotowe do wysłania') }}</h2>
     <p class="u-tekst-drugor u-mb-2 u-csp-041">
-      Czy chcesz teraz odesłać poprawione zgłoszenie?<br>
-      Po wysłaniu trafi ono ponownie do weryfikacji.
+      {{ t('Czy chcesz teraz odesłać poprawione zgłoszenie?') }}<br>
+      {{ t('Po wysłaniu trafi ono ponownie do weryfikacji.') }}
     </p>
     {% else %}
-    <h2 class="u-fw-600 u-mb-05 u-csp-345">Zgłoszenie gotowe do wysłania</h2>
+    <h2 class="u-fw-600 u-mb-05 u-csp-345">{{ t('Zgłoszenie gotowe do wysłania') }}</h2>
     <p class="u-tekst-drugor u-mb-2 u-csp-041">
-      Czy chcesz teraz przesłać zgłoszenie do zatwierdzenia?<br>
-      Po wysłaniu nie będzie można edytować danych bez kontaktu z opiekunem.
+      {{ t('Czy chcesz teraz przesłać zgłoszenie do zatwierdzenia?') }}<br>
+      {{ t('Po wysłaniu nie będzie można edytować danych bez kontaktu z opiekunem.') }}
     </p>
     {% endif %}
 
@@ -34,19 +34,19 @@
       <form method="POST" action="{{ url_for('internships.wyslij_do_zatwierdzenia', id=zapis.id) }}">
         {{ csrf_form.hidden_tag() }}
         <button type="submit" class="przycisk przycisk--glowny u-flex--center u-csp-347">
-          Tak, prześlij zgłoszenie
+          {{ t('Tak, prześlij zgłoszenie') }}
         </button>
       </form>
 
       {% if zapis.is_standard %}
       <a href="{{ url_for('internships.zapisz_krok2', id=zapis.id) }}"
          class="przycisk przycisk--drugorzedny u-flex--center u-csp-347">
-        Wróć i popraw
+        {{ t('Wróć i popraw') }}
       </a>
       {% else %}
       <a href="{{ url_for('internships.kreator_wniosek', enrollment_id=zapis.id) }}"
          class="przycisk przycisk--drugorzedny u-flex--center u-csp-347">
-        Wróć i popraw
+        {{ t('Wróć i popraw') }}
       </a>
       {% endif %}
 

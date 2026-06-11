@@ -12,6 +12,7 @@ from flask import (Blueprint, abort, send_file, jsonify, request,
 from flask_login import login_required, current_user
 
 from core.extensions import limiter
+from core.i18n import t
 from core.models import EnrollmentStatus
 from core.presenters import student_path_label
 from core.services.documents import (
@@ -79,10 +80,10 @@ def pobierz_staly(doc_key):
             pdf_response.headers['Content-Type'] = _MIME_PDF
             pdf_response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
             return pdf_response
-        flash('Błąd generowania dokumentu.', 'error')
+        flash(t('Błąd generowania dokumentu.'), 'error')
     except httpx.HTTPError as exc:
         logger.error("tex-service unreachable for static doc %s: %s", doc_key, exc)
-        flash('Błąd połączenia z serwisem PDF. Spróbuj ponownie później.', 'error')
+        flash(t('Błąd połączenia z serwisem PDF. Spróbuj ponownie później.'), 'error')
     return redirect(url_for('documents.my_documents'))
 
 
@@ -127,10 +128,10 @@ def download_dynamic(enrollment_id, doc_type):
             )
             return pdf_response
         logger.warning("tex-service returned %s for doc %s", response.status_code, doc_type)
-        flash('Błąd generowania dokumentu. Spróbuj ponownie później.', 'error')
+        flash(t('Błąd generowania dokumentu. Spróbuj ponownie później.'), 'error')
     except httpx.HTTPError as exc:
         logger.error("tex-service unreachable for doc %s: %s", doc_type, exc)
-        flash('Błąd połączenia z serwisem PDF. Spróbuj ponownie później.', 'error')
+        flash(t('Błąd połączenia z serwisem PDF. Spróbuj ponownie później.'), 'error')
     return redirect(url_for('documents.my_documents'))
 
 
@@ -150,7 +151,7 @@ def generuj(doc_type: str):
     )
 
     if not enrollment:
-        return jsonify({'error': 'Nie znaleziono zapisu na praktykę.'}), 404
+        return jsonify({'error': t('Nie znaleziono zapisu na praktykę.')}), 404
 
     warnings = validate_completeness(enrollment, doc_type)
 
@@ -158,7 +159,7 @@ def generuj(doc_type: str):
         return jsonify({
             'requires_confirmation': True,
             'warnings': warnings,
-            'message': 'Niektóre dane są puste. Dokument będzie niekompletny.',
+            'message': t('Niektóre dane są puste. Dokument będzie niekompletny.'),
         }), 200
 
     template_name, filename = DOC_CONFIG[doc_type]
@@ -171,7 +172,7 @@ def generuj(doc_type: str):
         )
         if resp.status_code != 200:
             err = resp.json() if 'application/json' in resp.headers.get('content-type', '') else {}
-            return jsonify({'error': err.get('error', 'Błąd serwisu PDF')}), 500
+            return jsonify({'error': t(err.get('error', 'Błąd serwisu PDF'))}), 500
 
         return send_file(
             io.BytesIO(resp.content),
@@ -181,7 +182,7 @@ def generuj(doc_type: str):
         )
     except httpx.HTTPError as exc:
         logger.error("tex-service unreachable for %s: %s", doc_type, exc)
-        return jsonify({'error': 'Serwis PDF jest niedostępny.'}), 502
+        return jsonify({'error': t('Serwis PDF jest niedostępny.')}), 502
     except Exception:
         logger.exception("Nieoczekiwany błąd generowania %s", doc_type)
-        return jsonify({'error': 'Wewnętrzny błąd serwera.'}), 500
+        return jsonify({'error': t('Wewnętrzny błąd serwera.')}), 500

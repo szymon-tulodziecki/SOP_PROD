@@ -9,6 +9,7 @@ from typing import Optional
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from core.extensions import db
+from core.i18n import t
 from core.models.users import (
     Administrator,
     DyrektorUser,
@@ -52,7 +53,7 @@ class UserService:
         **student_data,
     ) -> Student:
         if self._repo.email_exists(email):
-            raise ValueError(f'Konto z adresem {email} już istnieje.')
+            raise ValueError(t('Konto z adresem {email} już istnieje.', email=email))
         student = Student(
             email=email,
             password_hash=generate_password_hash(password),
@@ -70,7 +71,7 @@ class UserService:
 
     def create_administrator(self, email: str, password: str, first_name: str, last_name: str) -> Administrator:
         if self._repo.email_exists(email):
-            raise ValueError(f'Konto z adresem {email} już istnieje.')
+            raise ValueError(t('Konto z adresem {email} już istnieje.', email=email))
         admin = Administrator(
             email=email,
             password_hash=generate_password_hash(password),
@@ -101,13 +102,13 @@ class UserService:
         """Tworzy konto pracownika z 1+ rolami. ADMIN i STUDENT są wyłączne;
         UOPZ/KOMISJA/DYREKTOR mogą się łączyć dowolnie."""
         if not roles:
-            raise ValueError('Musisz wybrać co najmniej jedną rolę.')
+            raise ValueError(t('Musisz wybrać co najmniej jedną rolę.'))
         if UserRole.STUDENT in roles:
-            raise ValueError('Rola STUDENT nie jest dostępna w formularzu pracownika.')
+            raise ValueError(t('Rola STUDENT nie jest dostępna w formularzu pracownika.'))
         if UserRole.ADMIN in roles and len(roles) > 1:
-            raise ValueError('Rola ADMIN nie może być łączona z innymi rolami.')
+            raise ValueError(t('Rola ADMIN nie może być łączona z innymi rolami.'))
         if self._repo.email_exists(email):
-            raise ValueError(f'Konto z adresem {email} już istnieje.')
+            raise ValueError(t('Konto z adresem {email} już istnieje.', email=email))
 
         primary = next(r for r in self._STAFF_ROLE_PRIORITY if r in roles)
         cls = self._STAFF_JTI_CLASS[primary]
@@ -128,7 +129,7 @@ class UserService:
 
     def create_mentor(self, email: str, password: str, first_name: str, last_name: str) -> UniversityMentor:
         if self._repo.email_exists(email):
-            raise ValueError(f'Konto z adresem {email} już istnieje.')
+            raise ValueError(t('Konto z adresem {email} już istnieje.', email=email))
         mentor = UniversityMentor(
             email=email,
             password_hash=generate_password_hash(password),
@@ -180,9 +181,10 @@ class UserService:
         study_mode = {'stacjonarne': 'full-time', 'niestacjonarne': 'part-time'}.get(_study_mode_raw, _study_mode_raw) or None
 
         if not all([first_name, last_name, email, album_number, gender, field_of_study, study_mode]):
-            return None, (
-                f'Wiersz {row_number}: brakujące dane '
-                f'(wymagane: imie, nazwisko, email, numer_albumu, plec, kierunek, tryb_studiow)'
+            return None, t(
+                'Wiersz {numer}: brakujące dane '
+                '(wymagane: imie, nazwisko, email, numer_albumu, plec, kierunek, tryb_studiow)',
+                numer=row_number,
             )
         return {
             'row_number': row_number,
@@ -205,9 +207,10 @@ class UserService:
     ) -> str | None:
         """Creates one student from parsed row. Returns error string or None on success."""
         if parsed_row['email'] in existing_emails or parsed_row['album_number'] in existing_albums:
-            return (
-                f"Wiersz {parsed_row['row_number']}: {parsed_row['email']} "
-                f"lub nr {parsed_row['album_number']} już istnieje"
+            return t(
+                'Wiersz {numer}: {email} lub nr {album} już istnieje',
+                numer=parsed_row['row_number'], email=parsed_row['email'],
+                album=parsed_row['album_number'],
             )
         try:
             self.create_student(
@@ -228,7 +231,7 @@ class UserService:
             existing_albums.add(parsed_row['album_number'])
             return None
         except Exception as exc:
-            return f"Wiersz {parsed_row['row_number']}: {exc}"
+            return t('Wiersz {numer}: {blad}', numer=parsed_row['row_number'], blad=exc)
 
     _REQUIRED_CSV_COLUMNS = (
         ('imie', 'Imię'),
@@ -257,7 +260,7 @@ class UserService:
             return {
                 'created': 0,
                 'skipped': 0,
-                'errors': [f'Brakujące kolumny w nagłówku CSV: {", ".join(missing)}'],
+                'errors': [t('Brakujące kolumny w nagłówku CSV: {kolumny}', kolumny=', '.join(missing))],
             }
 
         for row_number, row in enumerate(reader, start=2):

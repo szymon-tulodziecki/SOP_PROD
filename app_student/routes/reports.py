@@ -7,6 +7,7 @@ from wtforms import TextAreaField
 from wtforms.validators import DataRequired, Optional
 
 from core.extensions import db
+from core.i18n import t, lazy_t
 from core.models import InternshipReport, EnrollmentStatus
 from core.repositories import EnrollmentRepository
 
@@ -16,17 +17,17 @@ reports_bp = Blueprint('reports', __name__)
 
 
 class StandardReportForm(FlaskForm):
-    """Zał. 7, ścieżka A: standardowa internship."""
+    """Zał. 7, ścieżka A: standardowa praktyka."""
     workplace_characteristics = TextAreaField(
-        'I. Charakterystyka miejsca odbywania praktyki',
+        lazy_t('I. Charakterystyka miejsca odbywania praktyki'),
         validators=[DataRequired()],
     )
     work_description = TextAreaField(
-        'II. Opis i analiza wykonywanych prac',
+        lazy_t('II. Opis i analiza wykonywanych prac'),
         validators=[DataRequired()],
     )
     acquired_knowledge = TextAreaField(
-        'III. Wiedza i umiejętności uzyskane w trakcie praktyki',
+        lazy_t('III. Wiedza i umiejętności uzyskane w trakcie praktyki'),
         validators=[Optional()],
     )
 
@@ -41,15 +42,15 @@ class StandardReportForm(FlaskForm):
 class EmploymentReportForm(FlaskForm):
     """Zał. 7a, ścieżki B/C: praca zawodowa lub działalność gospodarcza."""
     workplace_characteristics = TextAreaField(
-        'I. Charakterystyka miejsca pracy / działalności',
+        lazy_t('I. Charakterystyka miejsca pracy / działalności'),
         validators=[DataRequired()],
     )
     work_analysis = TextAreaField(
-        'II. Opis i analiza wykonywanych prac / działalności',
+        lazy_t('II. Opis i analiza wykonywanych prac / działalności'),
         validators=[DataRequired()],
     )
     acquired_knowledge = TextAreaField(
-        'III. Wiedza i umiejętności uzyskane w trakcie pracy zawodowej lub działalności',
+        lazy_t('III. Wiedza i umiejętności uzyskane w trakcie pracy zawodowej lub działalności'),
         validators=[Optional()],
     )
 
@@ -94,7 +95,7 @@ def index():
             zapis = _repo_zapisow.znajdz_po_id(zapis.id)
         form.populate_to_model(zapis.report)
         db.session.commit()
-        flash('Sprawozdanie zostało zapisane.', 'success')
+        flash(t('Sprawozdanie zostało zapisane.'), 'success')
         return redirect(url_for('reports.index'))
 
     report = zapis.report

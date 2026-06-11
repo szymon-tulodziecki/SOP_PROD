@@ -5,6 +5,7 @@ from flask_wtf import FlaskForm
 
 from core.auth import roles_required
 from core.extensions import db
+from core.i18n import t
 from core.models import Company, EnrollmentStatus, UserRole
 from core.presenters import active_toggle
 from core.repositories import CompanyRepository
@@ -28,13 +29,13 @@ ACTIVE_ENROLLMENT_STATUSES = [
 def _check_company_uniqueness(form, exclude_id=None) -> str | None:
     company_name = form.name.data.strip()
     if company_repository.find_active_by_name(company_name, exclude_id=exclude_id):
-        return 'Firma o tej nazwie już istnieje w systemie.'
+        return t('Firma o tej nazwie już istnieje w systemie.')
 
     tax_id = form.vat_number.data.strip() if form.vat_number.data else ''
     if tax_id:
         existing_company = company_repository.find_active_by_tax_id(tax_id, exclude_id=exclude_id)
         if existing_company:
-            return f'Firma z NIP/KRS "{tax_id}" już istnieje ({existing_company.name}).'
+            return t('Firma z NIP/KRS "{nip}" już istnieje ({nazwa}).', nip=tax_id, nazwa=existing_company.name)
     return None
 
 
@@ -74,7 +75,7 @@ def dodaj_firme():
         )
         company_repository.save(company)
         db.session.commit()
-        flash('Firma została dodana do systemu.', 'success')
+        flash(t('Firma została dodana do systemu.'), 'success')
         return redirect(url_for(COMPANY_LIST_ROUTE))
 
     return render_template(COMPANY_FORM_TEMPLATE, form=form, tryb='dodaj')
@@ -97,7 +98,7 @@ def edytuj_firme(id):
         company.city = form.city.data.strip() if form.city.data else None
         company.tax_id = form.vat_number.data.strip() if form.vat_number.data else None
         db.session.commit()
-        flash('Dane firmy zostały zaktualizowane.', 'success')
+        flash(t('Dane firmy zostały zaktualizowane.'), 'success')
         return redirect(url_for(COMPANY_LIST_ROUTE))
 
     return render_template(COMPANY_FORM_TEMPLATE, form=form, tryb='edytuj', company=company)
@@ -109,13 +110,13 @@ def usun_firme(id):
     company = company_repository.find_by_id(id) or abort(404)
     internship_count = company_repository.count_internships(company.id)
     if internship_count > 0:
-        flash(f'Nie można usunąć firmy - ma {internship_count} praktyk w historii.', 'error')
+        flash(t('Nie można usunąć firmy - ma {liczba} praktyk w historii.', liczba=internship_count), 'error')
         return redirect(url_for(COMPANY_LIST_ROUTE))
 
     company_name = company.name
     company_repository.delete(company)
     db.session.commit()
-    flash(f'Firma "{company_name}" została trwale usunięta z systemu.', 'success')
+    flash(t('Firma "{nazwa}" została trwale usunięta z systemu.', nazwa=company_name), 'success')
     return redirect(url_for(COMPANY_LIST_ROUTE))
 
 
@@ -130,13 +131,13 @@ def przelacz_aktywnosc_firmy(id):
             ACTIVE_ENROLLMENT_STATUSES,
         )
         if active_internships > 0:
-            flash(f'Nie można dezaktywować firmy - ma {active_internships} aktywnych praktyk.', 'error')
+            flash(t('Nie można dezaktywować firmy - ma {liczba} aktywnych praktyk.', liczba=active_internships), 'error')
             return redirect(url_for(COMPANY_LIST_ROUTE))
         company.is_active = False
-        flash('Firma została dezaktywowana.', 'success')
+        flash(t('Firma została dezaktywowana.'), 'success')
     else:
         company.is_active = True
-        flash('Firma została aktywowana.', 'success')
+        flash(t('Firma została aktywowana.'), 'success')
 
     db.session.commit()
     return redirect(url_for(COMPANY_LIST_ROUTE))

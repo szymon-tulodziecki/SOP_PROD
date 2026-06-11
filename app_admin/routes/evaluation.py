@@ -9,6 +9,7 @@ from flask_wtf import FlaskForm
 
 from core.auth import roles_required
 from core.extensions import db, limiter
+from core.i18n import t
 from core.models import UserRole
 from core.presenters import employment_path_label, path_label, split_outcome_description
 from core.repositories import AssessmentRepository, EnrollmentRepository, OutcomeRepository, UserRepository
@@ -98,12 +99,12 @@ def evaluate_internship(id):
                 finalize=bool(request.form.get('complete')),
             )
         except ValueError as exc:
-            flash(str(exc), 'danger')
+            flash(t(str(exc)), 'danger')
             return redirect(url_for(GRADE_FORM_ENDPOINT, id=enrollment.id)), 400
 
         result = GradingService.save_grades(enrollment, grade_data)
         if not result.success:
-            flash(result.error_message, 'danger')
+            flash(t(result.error_message), 'danger')
             return redirect(url_for(GRADE_FORM_ENDPOINT, id=enrollment.id))
 
         outcome_error = EvaluationService.validate_outcome_grades(
@@ -111,7 +112,7 @@ def evaluate_internship(id):
         )
         if outcome_error:
             db.session.rollback()
-            flash(outcome_error, 'danger')
+            flash(t(outcome_error), 'danger')
             return redirect(url_for(GRADE_FORM_ENDPOINT, id=enrollment.id))
 
         for outcome in outcomes:
@@ -126,9 +127,9 @@ def evaluate_internship(id):
 
         db.session.commit()
         if grade_data.finalize:
-            flash('Oceny zostały zatwierdzone.', 'success')
+            flash(t('Oceny zostały zatwierdzone.'), 'success')
             return redirect(url_for('evaluation.lista_ocen'))
-        flash('Oceny zostały zapisane.', 'success')
+        flash(t('Oceny zostały zapisane.'), 'success')
         return redirect(url_for(GRADE_FORM_ENDPOINT, id=enrollment.id))
 
     staff = user_repository.active_university_mentors()
@@ -178,7 +179,7 @@ def ocen_zapis(id):
                 enrollment.id,
             )
         db.session.commit()
-        flash('Oceny zostały zapisane.', 'success')
+        flash(t('Oceny zostały zapisane.'), 'success')
         return redirect(url_for('evaluation.ocen_zapis', id=id))
 
     efekty_wiersze = [
@@ -203,7 +204,8 @@ def zakoncz_zapis(id):
     EnrollmentStateMachine(enrollment).complete()
     db.session.commit()
     flash(
-        f'Praktyka studenta {enrollment.student.first_name} {enrollment.student.last_name} została zakończona.',
+        t('Praktyka studenta {imie} {nazwisko} została zakończona.',
+          imie=enrollment.student.first_name, nazwisko=enrollment.student.last_name),
         'success',
     )
     return redirect(url_for('evaluation.lista_ocen'))
@@ -217,7 +219,7 @@ def generuj_protokol(id):
     if not _can_grade(enrollment):
         abort(403)
     if not (enrollment.final_grades and enrollment.final_grades.supervisor_grade):
-        flash('Protokół dostępny dopiero po wystawieniu oceny UOPZ.', 'warning')
+        flash(t('Protokół dostępny dopiero po wystawieniu oceny UOPZ.'), 'warning')
         return redirect(url_for(GRADE_FORM_ENDPOINT, id=id))
 
     context = build_context(enrollment, 'ZAL_8')
@@ -244,8 +246,8 @@ def generuj_protokol(id):
             )
             return pdf_response
         current_app.logger.warning("tex-service returned %s for protokol %s", response.status_code, id)
-        flash('Błąd generowania protokołu. Spróbuj ponownie później.', 'danger')
+        flash(t('Błąd generowania protokołu. Spróbuj ponownie później.'), 'danger')
     except httpx.HTTPError as exc:
         current_app.logger.error("tex-service unreachable for protokol %s: %s", id, exc)
-        flash('Błąd połączenia z serwisem PDF. Spróbuj ponownie później.', 'danger')
+        flash(t('Błąd połączenia z serwisem PDF. Spróbuj ponownie później.'), 'danger')
     return redirect(url_for(GRADE_FORM_ENDPOINT, id=id))

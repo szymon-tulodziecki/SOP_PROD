@@ -43,10 +43,10 @@ from core.models.internships import EnrollmentStatus as S
 class IllegalTransitionError(ValueError):
     """Próba nielegalnego przejścia między stanami."""
     def __init__(self, current: S, attempted: S, reason: str = ''):
-        msg = (
-            f"Niedozwolone przejście: {current.value} → {attempted.value}"
-            + (f" ({reason})" if reason else "")
-        )
+        from core.i18n import t
+        msg = t('Niedozwolone przejście: {obecny} → {cel}', obecny=current.value, cel=attempted.value)
+        if reason:
+            msg += f" ({t(reason)})"
         super().__init__(msg)
         self.current  = current
         self.attempted = attempted

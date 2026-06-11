@@ -1,9 +1,9 @@
-﻿{% extends "layouts/base_student.html" %}
-{% block tytul %}{% if edycja %}Edytuj wpis{% else %}Nowy wpis{% endif %}{% endblock %}
-{% block naglowek %}{% if edycja %}Edytuj wpis z {{ wpis.entry_date.strftime('%d.%m.%Y') }}{% else %}Nowy wpis do dziennika{% endif %}{% endblock %}
+{% extends "layouts/base_student.html" %}
+{% block tytul %}{% if edycja %}{{ t('Edytuj wpis') }}{% else %}{{ t('Nowy wpis') }}{% endif %}{% endblock %}
+{% block naglowek %}{% if edycja %}{{ t('Edytuj wpis z') }} {{ wpis.entry_date.strftime('%d.%m.%Y') }}{% else %}{{ t('Nowy wpis do dziennika') }}{% endif %}{% endblock %}
 
 {% block naglowek_akcje %}
-<a href="{{ url_for('logbook.index') }}" class="przycisk przycisk--drugorzedny">Anuluj</a>
+<a href="{{ url_for('logbook.index') }}" class="przycisk przycisk--drugorzedny">{{ t('Anuluj') }}</a>
 {% endblock %}
 
 {% block tresc %}
@@ -21,7 +21,7 @@
 
   <div class="karta">
     <div class="karta__naglowek">
-      <h2 class="karta__tytul">Dane wpisu</h2>
+      <h2 class="karta__tytul">{{ t('Dane wpisu') }}</h2>
     </div>
     <div class="karta__tresc">
       <form method="POST" action="{% if edycja %}{{ url_for('logbook.edytuj_wpis', wpis_id=wpis.id) }}{% else %}{{ url_for('logbook.nowy_wpis') }}{% endif %}" novalidate>
@@ -64,9 +64,9 @@
 
         <div class="form-field {% if form.description.errors %}form-field--error{% endif %} u-csp-208">
           {{ form.description.label(class="form-field__label") }}
-          {{ form.description(class="form-field__input", rows="5", placeholder="Opisz szczegółowo wykonane czynności...") }}
+          {{ form.description(class="form-field__input", rows="5", placeholder=t('Opisz szczegółowo wykonane czynności...')) }}
           <span class="u-csp-220">
-            Opis powinien być szczegółowy — będzie widoczny w Dzienniku Praktyki (Załącznik 6).
+            {{ t('Opis powinien być szczegółowy — będzie widoczny w Dzienniku Praktyki (Załącznik 6).') }}
           </span>
           {% for e in form.description.errors %}
             <span class="form-field__error">{{ e }}</span>
@@ -74,8 +74,8 @@
         </div>
 
         <div class="u-csp-307">
-          <button type="submit" class="przycisk przycisk--glowny">{% if edycja %}Zapisz zmiany{% else %}Dodaj wpis{% endif %}</button>
-          <a href="{{ url_for('logbook.index') }}" class="przycisk przycisk--drugorzedny">Anuluj</a>
+          <button type="submit" class="przycisk przycisk--glowny">{% if edycja %}{{ t('Zapisz zmiany') }}{% else %}{{ t('Dodaj wpis') }}{% endif %}</button>
+          <a href="{{ url_for('logbook.index') }}" class="przycisk przycisk--drugorzedny">{{ t('Anuluj') }}</a>
         </div>
 
       </form>

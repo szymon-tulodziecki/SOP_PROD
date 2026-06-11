@@ -12,6 +12,7 @@ from datetime import date, timedelta
 from typing import Optional
 
 from core.extensions import db
+from core.i18n import t
 from core.models import (
     AssessmentResult,
     EnrollmentStatus,
@@ -55,7 +56,7 @@ class GradeResult:
     @property
     def error_message(self) -> str | None:
         if not self.success and self.missing_fields:
-            return f"Nie można zakończyć — brakuje: {', '.join(self.missing_fields)}."
+            return t('Nie można zakończyć — brakuje: {pola}.', pola=', '.join(self.missing_fields))
         return None
 
 
@@ -67,11 +68,11 @@ class EvaluationService:
         try:
             grade = float(value.strip().replace(',', '.'))
         except (ValueError, AttributeError):
-            raise ValueError(f'Nieprawidłowa wartość oceny: {value!r}')
+            raise ValueError(t('Nieprawidłowa wartość oceny: {wartosc}', wartosc=repr(value)))
         if grade < 2 or grade > 5:
-            raise ValueError('Ocena musi być z zakresu 2.0-5.0.')
+            raise ValueError(t('Ocena musi być z zakresu 2.0-5.0.'))
         if abs(grade * 2 - round(grade * 2)) > 0.001:
-            raise ValueError('Ocena musi być podana co 0.5, np. 3.0, 3.5 albo 4.0.')
+            raise ValueError(t('Ocena musi być podana co 0.5, np. 3.0, 3.5 albo 4.0.'))
         return grade
 
     @staticmethod
@@ -80,13 +81,12 @@ class EvaluationService:
         if not is_path_b:
             for outcome in outcomes:
                 if form_data.get(f'outcome_{outcome.id}') == 'PARTIALLY_ACHIEVED':
-                    return (
-                        f'Efekt {outcome.code}: w ścieżce A wybierz tylko "uzyskał/a" albo "nie uzyskał/a".'
-                    )
+                    return t('Efekt {kod}: w ścieżce A wybierz tylko "uzyskał/a" albo "nie uzyskał/a".',
+                             kod=outcome.code)
         if finalize and not is_path_b:
             missing = [o.code for o in outcomes if not form_data.get(f'outcome_{o.id}')]
             if missing:
-                return f'Nie można zakończyć - uzupełnij efekty uczenia się: {", ".join(missing)}.'
+                return t('Nie można zakończyć - uzupełnij efekty uczenia się: {kody}.', kody=', '.join(missing))
         return None
 
     @staticmethod

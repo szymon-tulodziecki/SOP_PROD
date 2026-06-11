@@ -1,6 +1,6 @@
-﻿{% extends "layouts/base_student.html" %}
-{% block tytul %}Pulpit{% endblock %}
-{% block naglowek %}Witaj, {{ current_user.first_name }}{% endblock %}
+{% extends "layouts/base_student.html" %}
+{% block tytul %}{{ t('Pulpit') }}{% endblock %}
+{% block naglowek %}{{ t('Witaj,') }} {{ current_user.first_name }}{% endblock %}
 
 {% block tresc %}
 
@@ -13,23 +13,23 @@
           <path d="M14 3v5h5M16 13H8M16 17H8M10 9H8"/>
         </svg>
       </div>
-      <h2 class="u-csp-271">Nie jesteś jeszcze zapisany na praktykę</h2>
-      <p class="u-csp-272">Zapisz się do aktywnej praktyki żeby zacząć prowadzić dziennik.</p>
-      <a href="{{ url_for('internships.lista') }}" class="przycisk przycisk--glowny">Zobacz dostępne praktyki</a>
+      <h2 class="u-csp-271">{{ t('Nie jesteś jeszcze zapisany na praktykę') }}</h2>
+      <p class="u-csp-272">{{ t('Zapisz się do aktywnej praktyki żeby zacząć prowadzić dziennik.') }}</p>
+      <a href="{{ url_for('internships.lista') }}" class="przycisk przycisk--glowny">{{ t('Zobacz dostępne praktyki') }}</a>
     </div>
   </div>
 {% else %}
-  <section class="siatka-statystyk" aria-label="Twój postęp">
-    <div class="karta-stat"><span class="karta-stat__liczba">{{ enrollment.total_hours_logged }}</span><span class="karta-stat__etykieta">Zalogowanych godzin</span></div>
-    <div class="karta-stat"><span class="karta-stat__liczba">{{ enrollment.internship.required_hours }}</span><span class="karta-stat__etykieta">Wymaganych godzin</span></div>
-    <div class="karta-stat"><span class="karta-stat__liczba">{{ enrollment.journal_entries | length }}</span><span class="karta-stat__etykieta">Wpisów w dzienniku</span></div>
-    <div class="karta-stat"><span class="karta-stat__liczba">{{ enrollment.progress_percent }}%</span><span class="karta-stat__etykieta">Ukończono</span></div>
+  <section class="siatka-statystyk" aria-label="{{ t('Twój postęp') }}">
+    <div class="karta-stat"><span class="karta-stat__liczba">{{ enrollment.total_hours_logged }}</span><span class="karta-stat__etykieta">{{ t('Zalogowanych godzin') }}</span></div>
+    <div class="karta-stat"><span class="karta-stat__liczba">{{ enrollment.internship.required_hours }}</span><span class="karta-stat__etykieta">{{ t('Wymaganych godzin') }}</span></div>
+    <div class="karta-stat"><span class="karta-stat__liczba">{{ enrollment.journal_entries | length }}</span><span class="karta-stat__etykieta">{{ t('Wpisów w dzienniku') }}</span></div>
+    <div class="karta-stat"><span class="karta-stat__liczba">{{ enrollment.progress_percent }}%</span><span class="karta-stat__etykieta">{{ t('Ukończono') }}</span></div>
   </section>
 
   <div class="karta u-csp-273">
     <div class="karta__tresc">
       <div class="u-csp-274">
-        <span class="u-csp-275">Postęp praktyki — {{ enrollment.internship.academic_year }} ({{ enrollment.internship.semester_label }})</span>
+        <span class="u-csp-275">{{ t('Postęp praktyki —') }} {{ enrollment.internship.academic_year }} ({{ enrollment.internship.semester_label }})</span>
         <div class="u-csp-276">
           <span class="status status--{{ enrollment.status_css_class }}">{{ enrollment.status_label }}</span>
           <span class="u-csp-247">{{ enrollment.total_hours_logged }} / {{ enrollment.internship.required_hours }} h</span>
@@ -40,14 +40,14 @@
       </div>
       {% if enrollment.is_revision_required %}
       <div class="u-csp-278">
-        <div class="u-csp-279">Zgłoszenie wymaga uzupełnienia</div>
+        <div class="u-csp-279">{{ t('Zgłoszenie wymaga uzupełnienia') }}</div>
         {% if feedback_comment %}
         <div class="u-csp-280">{{ feedback_comment }}</div>
         {% endif %}
         {% if enrollment.is_standard %}
-        <a href="{{ url_for('internships.kreator_firma', enrollment_id=enrollment.id) }}" class="przycisk przycisk--maly przycisk--glowny">Popraw zgłoszenie →</a>
+        <a href="{{ url_for('internships.kreator_firma', enrollment_id=enrollment.id) }}" class="przycisk przycisk--maly przycisk--glowny">{{ t('Popraw zgłoszenie') }} →</a>
         {% else %}
-        <a href="{{ url_for('internships.kreator_wniosek', enrollment_id=enrollment.id) }}" class="przycisk przycisk--maly przycisk--glowny">Popraw zgłoszenie →</a>
+        <a href="{{ url_for('internships.kreator_wniosek', enrollment_id=enrollment.id) }}" class="przycisk przycisk--maly przycisk--glowny">{{ t('Popraw zgłoszenie') }} →</a>
         {% endif %}
       </div>
       {% endif %}
@@ -55,8 +55,8 @@
   </div>
 
   <div class="u-csp-281">
-    <a href="{{ url_for('logbook.nowy_wpis') }}" class="przycisk przycisk--glowny">Dodaj wpis do dziennika</a>
-    <a href="{{ url_for('logbook.index') }}" class="przycisk przycisk--drugorzedny">Przeglądaj dziennik</a>
+    <a href="{{ url_for('logbook.nowy_wpis') }}" class="przycisk przycisk--glowny">{{ t('Dodaj wpis do dziennika') }}</a>
+    <a href="{{ url_for('logbook.index') }}" class="przycisk przycisk--drugorzedny">{{ t('Przeglądaj dziennik') }}</a>
   </div>
 
 {% endif %}

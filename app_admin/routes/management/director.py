@@ -6,6 +6,7 @@ from wtforms.validators import Optional
 
 from core.models import (InternshipEnrollment, UserRole, EnrollmentStatus)
 from core.extensions import db, limiter
+from core.i18n import t, lazy_t
 from core.services.internships import InternshipService
 _serwis_praktyk = InternshipService()
 from core.auth import roles_required
@@ -42,28 +43,28 @@ def dyrektor_decyzja(id):
     enrollment = _repo_zapisow.znajdz_po_id(id) or abort(404)
 
     if enrollment.status != EnrollmentStatus.DIRECTOR_APPROVAL:
-        flash('Wniosek nie wymaga decyzji Dyrektora Instytutu.', 'warning')
+        flash(t('Wniosek nie wymaga decyzji Dyrektora Instytutu.'), 'warning')
         return redirect(url_for(_ROUTE_DYREKTOR_LISTA))
 
     class DirectorForm(FlaskForm):
-        comment = TextAreaField('Komentarz dyrektora', validators=[Optional()])
+        comment = TextAreaField(lazy_t('Komentarz dyrektora'), validators=[Optional()])
 
     form = DirectorForm()
 
     if form.validate_on_submit():
         decision = request.form.get('decision')
         if decision not in ('APPROVED', 'REJECTED'):
-            flash('Wybierz decyzję (jeden z dwóch przycisków).', 'warning')
+            flash(t('Wybierz decyzję (jeden z dwóch przycisków).'), 'warning')
         else:
             comment = form.comment.data or ''
             try:
                 _serwis_praktyk.apply_director_decision(id, decision, current_user.id, comment)
                 if decision == 'APPROVED':
-                    flash('Wniosek zatwierdzony przez Dyrektora Instytutu. Student może kontynuować praktykę.', 'success')
+                    flash(t('Wniosek zatwierdzony przez Dyrektora Instytutu. Student może kontynuować praktykę.'), 'success')
                 else:
-                    flash('Wniosek odrzucony przez Dyrektora Instytutu.', 'warning')
+                    flash(t('Wniosek odrzucony przez Dyrektora Instytutu.'), 'warning')
             except IllegalTransitionError as e:
-                flash(str(e), 'danger')
+                flash(t(str(e)), 'danger')
             return redirect(url_for(_ROUTE_DYREKTOR_LISTA))
 
     documents             = _repo_docs.dokumenty_zapisu(id)

@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from core.extensions import db
+from core.i18n import t
 from core.models.internships import (
     Internship,
     InternshipStatus,
@@ -74,7 +75,7 @@ class InternshipService:
         path: InternshipPath = InternshipPath.STANDARD,
     ) -> InternshipEnrollment:
         if self._zapisy.student_ma_aktywny_zapis(student_id, internship_id):
-            raise ValueError('Student ma już aktywne zgłoszenie do tej edycji praktyk.')
+            raise ValueError(t('Student ma już aktywne zgłoszenie do tej edycji praktyk.'))
         zapis = InternshipEnrollment(
             student_id=student_id,
             internship_id=internship_id,
@@ -105,7 +106,7 @@ class InternshipService:
         }
         method = _dispatch.get(nowy_status)
         if method is None:
-            raise ValueError(f'Nieobsługiwany status docelowy: {nowy_status!r}')
+            raise ValueError(t('Nieobsługiwany status docelowy: {status}', status=repr(nowy_status)))
         method()
 
         if comment is not None:
@@ -286,11 +287,12 @@ class InternshipService:
         liczba_wpisow = len(zapis.journal_entries)
 
         if liczba_wpisow == 0:
-            return False, 'Nie można zakończyć praktyki bez wpisów w dzienniku.'
+            return False, t('Nie można zakończyć praktyki bez wpisów w dzienniku.')
         if zalogowane < wymagane:
             return (
                 False,
-                f'Nie można zakończyć praktyki — zalogowano {zalogowane} z wymaganych {wymagane} godzin.',
+                t('Nie można zakończyć praktyki — zalogowano {zalogowane} z wymaganych {wymagane} godzin.',
+                  zalogowane=zalogowane, wymagane=wymagane),
             )
         return True, ''
 
@@ -327,7 +329,6 @@ class InternshipService:
         border_alert   = zwrocone or jest_odrzucone
 
         # Ścieżki B/C w statusie IN_PROGRESS student widzi jako "W rozpatrzeniu"
-        from core.i18n import t
         status_label = zapis.status_label
         if zapis.status == EnrollmentStatus.IN_PROGRESS and path != 'STANDARD':
             status_label = t('W rozpatrzeniu')

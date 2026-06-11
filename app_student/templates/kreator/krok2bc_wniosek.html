@@ -1,34 +1,31 @@
-﻿{% extends "layouts/base_student.html" %}
-{% block tytul %}Kreator praktyki — Wniosek{% endblock %}
-{% block naglowek %}Rejestracja praktyki{% endblock %}
+{% extends "layouts/base_student.html" %}
+{% block tytul %}{{ t('Kreator praktyki — Wniosek') }}{% endblock %}
+{% block naglowek %}{{ t('Rejestracja praktyki') }}{% endblock %}
 
 {% block tresc %}
 <div class="u-csp-327">
 
   <!-- Pasek postępu -->
   <div class="kreator-pasek">
-    <div class="kreator-krok u-csp-318">Ścieżka B</div>
+    <div class="kreator-krok u-csp-318">{{ t('Ścieżka') }} B</div>
     <div class="kreator-krok--separator">›</div>
-    <div class="kreator-krok kreator-krok--aktywny">2. Wniosek</div>
+    <div class="kreator-krok kreator-krok--aktywny">2. {{ t('Wniosek') }}</div>
     <div class="kreator-krok--separator">›</div>
-    <div class="kreator-krok kreator-krok--nieaktywny">3. Komisja</div>
+    <div class="kreator-krok kreator-krok--nieaktywny">3. {{ t('Komisja') }}</div>
     <div class="kreator-krok--separator">›</div>
-    <div class="kreator-krok kreator-krok--nieaktywny">4. Dyrektor</div>
+    <div class="kreator-krok kreator-krok--nieaktywny">4. {{ t('Dyrektor') }}</div>
   </div>
 
   <div class="karta">
     <div class="karta__naglowek">
-      <h2 class="karta__tytul">Krok 2: Wniosek o uznanie learning_outcomeów z pracy zawodowej</h2>
+      <h2 class="karta__tytul">{{ t('Krok 2: Wniosek o uznanie efektów z pracy zawodowej') }}</h2>
     </div>
     <div class="karta__tresc">
 
       <!-- Procedura ogólna -->
       <div class="u-info-box--szary">
-        <div class="u-fw-600 u-mb-025 u-csp-314">Procedura — Ścieżka B: Uznanie learning_outcomeów uczenia się</div>
-        Niezależnie od rodzaju zatrudnienia student ubiega się o zaliczenie tych samych
-        <strong>trzynastu learning_outcomeów uczenia się</strong> (zał. 4a + zał. 4b).
-        Różnica polega wyłącznie na rodzaju dokumentów potwierdzających zakres realizowanych czynności zawodowych.
-        Komisja ds. praktyk wydaje opinię, a Dyrektor Instytutu podejmuje ostateczną decyzję.
+        <div class="u-fw-600 u-mb-025 u-csp-314">{{ t('Procedura — Ścieżka B: Uznanie efektów uczenia się') }}</div>
+        {{ t('Niezależnie od rodzaju zatrudnienia student ubiega się o zaliczenie tych samych <strong>trzynastu efektów uczenia się</strong> (zał. 4a + zał. 4b). Różnica polega wyłącznie na rodzaju dokumentów potwierdzających zakres realizowanych czynności zawodowych. Komisja ds. praktyk wydaje opinię, a Dyrektor Instytutu podejmuje ostateczną decyzję.') | safe }}
       </div>
 
       {% set subtype = zapis.path_justification.employment_subtype if zapis.path_justification else None %}
@@ -36,26 +33,26 @@
       <!-- Info o wymaganych załącznikach -->
       {% if subtype == 'INTERNSHIP' %}
       <div class="u-info-box">
-        <div class="u-info-box__tytul">B.1 — Staż: wymagane dokumenty do wniosku (zał. 4b)</div>
+        <div class="u-info-box__tytul">{{ t('B.1 — Staż: wymagane dokumenty do wniosku (zał. 4b)') }}</div>
         <ul class="u-info-box__lista">
-          <li>Zaświadczenie o odbyciu stażu (PDF)</li>
-          <li>Zakres obowiązków realizowanych w ramach stażu (PDF)</li>
+          <li>{{ t('Zaświadczenie o odbyciu stażu (PDF)') }}</li>
+          <li>{{ t('Zakres obowiązków realizowanych w ramach stażu (PDF)') }}</li>
         </ul>
       </div>
       {% elif subtype == 'WORK' %}
       <div class="u-info-box">
-        <div class="u-info-box__tytul">B.2 — Praca zawodowa: wymagane dokumenty do wniosku (zał. 4b)</div>
+        <div class="u-info-box__tytul">{{ t('B.2 — Praca zawodowa: wymagane dokumenty do wniosku (zał. 4b)') }}</div>
         <ul class="u-info-box__lista">
-          <li>Umowa o pracę / umowa zlecenie (PDF)</li>
-          <li>Opis stanowiska pracy / karta stanowiskowa (PDF)</li>
+          <li>{{ t('Umowa o pracę / umowa zlecenie (PDF)') }}</li>
+          <li>{{ t('Opis stanowiska pracy / karta stanowiskowa (PDF)') }}</li>
         </ul>
       </div>
       {% else %}
       <div class="u-info-box">
-        <div class="u-info-box__tytul">Wymagane dokumenty do wniosku (zał. 4b)</div>
+        <div class="u-info-box__tytul">{{ t('Wymagane dokumenty do wniosku (zał. 4b)') }}</div>
         <ul class="u-info-box__lista">
-          <li><strong>Staż:</strong> zaświadczenie o odbyciu stażu + zakres obowiązków</li>
-          <li><strong>Praca zawodowa:</strong> umowa o pracę / zlecenie + opis stanowiska / karta stanowiskowa</li>
+          <li><strong>{{ t('Staż:') }}</strong> {{ t('zaświadczenie o odbyciu stażu + zakres obowiązków') }}</li>
+          <li><strong>{{ t('Praca zawodowa:') }}</strong> {{ t('umowa o pracę / zlecenie + opis stanowiska / karta stanowiskowa') }}</li>
         </ul>
       </div>
       {% endif %}
@@ -66,34 +63,34 @@
            data-upload-url="{{ url_for('uploads.upload_document', enrollment_id=zapis.id) }}"
            data-list-url="{{ url_for('uploads.list_documents', enrollment_id=zapis.id) }}"
            data-delete-url-template="{{ url_for('uploads.delete_document', document_id='00000000-0000-0000-0000-000000000000') }}">
-        <div class="u-fw-600 u-mb-05 u-csp-321">Dodaj załączniki (PDF, maks. 10 MB)</div>
+        <div class="u-fw-600 u-mb-05 u-csp-321">{{ t('Dodaj załączniki (PDF, maks. 10 MB)') }}</div>
 
         <label for="upload-file" class="upload-label">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22" class="u-tekst-drugor u-csp-328"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-          <span id="upload-file-label" class="u-tekst-drugor u-csp-329">Wybierz plik PDF lub przeciągnij tutaj</span>
+          <span id="upload-file-label" class="u-tekst-drugor u-csp-329">{{ t('Wybierz plik PDF lub przeciągnij tutaj') }}</span>
         </label>
         <input class="u-csp-094" type="file" id="upload-file" accept=".pdf,.jpg,.jpeg,.png">
 
         <select id="upload-type" class="form-field__input u-mb-05">
           {% if subtype == 'INTERNSHIP' %}
-          <option value="zaswiadczenie_staz">Zaświadczenie o odbyciu stażu</option>
-          <option value="zakres_obowiazkow_staz">Zakres obowiązków (staż)</option>
-          <option value="inne">Inne</option>
+          <option value="zaswiadczenie_staz">{{ t('Zaświadczenie o odbyciu stażu') }}</option>
+          <option value="zakres_obowiazkow_staz">{{ t('Zakres obowiązków (staż)') }}</option>
+          <option value="inne">{{ t('Inne') }}</option>
           {% elif subtype == 'WORK' %}
-          <option value="umowa_pracy">Umowa o pracę / zlecenie</option>
-          <option value="karta_stanowiskowa">Opis stanowiska / karta stanowiskowa</option>
-          <option value="inne">Inne</option>
+          <option value="umowa_pracy">{{ t('Umowa o pracę / zlecenie') }}</option>
+          <option value="karta_stanowiskowa">{{ t('Opis stanowiska / karta stanowiskowa') }}</option>
+          <option value="inne">{{ t('Inne') }}</option>
           {% else %}
-          <option value="umowa_pracy">Umowa o pracę / zlecenie</option>
-          <option value="karta_stanowiskowa">Opis stanowiska / karta stanowiskowa</option>
-          <option value="zaswiadczenie_staz">Zaświadczenie o odbyciu stażu</option>
-          <option value="zakres_obowiazkow_staz">Zakres obowiązków (staż)</option>
-          <option value="inne">Inne</option>
+          <option value="umowa_pracy">{{ t('Umowa o pracę / zlecenie') }}</option>
+          <option value="karta_stanowiskowa">{{ t('Opis stanowiska / karta stanowiskowa') }}</option>
+          <option value="zaswiadczenie_staz">{{ t('Zaświadczenie o odbyciu stażu') }}</option>
+          <option value="zakres_obowiazkow_staz">{{ t('Zakres obowiązków (staż)') }}</option>
+          <option value="inne">{{ t('Inne') }}</option>
           {% endif %}
         </select>
         <button type="button" id="upload-submit" class="przycisk przycisk--drugorzedny przycisk--maly">
           <svg class="u-csp-330" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-          Dodaj plik
+          {{ t('Dodaj plik') }}
         </button>
         <div id="upload-status" class="u-meta u-mt-05"></div>
         <div id="upload-lista" class="u-mt-05"></div>
@@ -129,16 +126,16 @@
 
         <div class="form-field {% if form.justification.errors %}form-field--error{% endif %} u-mb-15">
           {{ form.justification.label(class="form-field__label") }}
-          {{ form.justification(class="form-field__input u-textarea-auto", rows=8, placeholder="Opisz zakres obowiązków/działalności i dlaczego spełniają wymagania praktyki zawodowej...", id="uzasadnienie_input", maxlength=2000) }}
+          {{ form.justification(class="form-field__input u-textarea-auto", rows=8, placeholder=t('Opisz zakres obowiązków/działalności i dlaczego spełniają wymagania praktyki zawodowej...'), id="uzasadnienie_input", maxlength=2000) }}
           <div class="u-flex--between u-csp-331">
             <div>{% for e in form.justification.errors %}<span class="form-field__error">{{ e }}</span>{% endfor %}</div>
-            <span id="uzasadnienie_licznik" class="u-meta u-csp-332">0 / min. 500 znaków</span>
+            <span id="uzasadnienie_licznik" class="u-meta u-csp-332">{{ t('0 / min. 500 znaków') }}</span>
           </div>
         </div>
 
         <div class="u-csp-333">
-          <a href="{{ url_for('internships.kreator_sciezka', id=zapis.internship_id) }}" class="przycisk przycisk--drugorzedny">← Wróć</a>
-          <button type="submit" class="przycisk przycisk--glowny">Złóż wniosek →</button>
+          <a href="{{ url_for('internships.kreator_sciezka', id=zapis.internship_id) }}" class="przycisk przycisk--drugorzedny">← {{ t('Wróć') }}</a>
+          <button type="submit" class="przycisk przycisk--glowny">{{ t('Złóż wniosek') }} →</button>
         </div>
       </form>
     </div>

@@ -1,15 +1,15 @@
-﻿{% extends "layouts/base_student.html" %}
-{% block tytul %}Kreator praktyki - Krok 1{% endblock %}
-{% block naglowek %}Rejestracja praktyki zawodowej{% endblock %}
+{% extends "layouts/base_student.html" %}
+{% block tytul %}{{ t('Kreator praktyki - Krok 1') }}{% endblock %}
+{% block naglowek %}{{ t('Rejestracja praktyki zawodowej') }}{% endblock %}
 {% block naglowek_akcje %}
-  <a href="{{ url_for('internships.lista') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
+  <a href="{{ url_for('internships.lista') }}" class="przycisk przycisk--drugorzedny">← {{ t('Powrót') }}</a>
 {% endblock %}
 
 {% block tresc %}
 <div class="u-kontener-wazki">
 
   <div id="pasek-krokow" class="kreator-pasek">
-    <div class="kreator-krok kreator-krok--aktywny">1. Ścieżka</div>
+    <div class="kreator-krok kreator-krok--aktywny">1. {{ t('Ścieżka') }}</div>
     <div class="kreator-krok--separator">›</div>
     <div class="kreator-krok kreator-krok--nieaktywny">2. -</div>
     <div class="kreator-krok--separator">›</div>
@@ -20,7 +20,7 @@
 
   <div class="karta">
     <div class="karta__naglowek">
-      <h2 class="karta__tytul">Krok 1 - Wybierz ścieżkę praktyki</h2>
+      <h2 class="karta__tytul">{{ t('Krok 1 - Wybierz ścieżkę praktyki') }}</h2>
     </div>
     <div class="karta__tresc">
       <form method="POST" id="internship-path-form">
@@ -30,50 +30,50 @@
 
         <div class="u-grid-2-mb u-csp-208">
           <div class="path-tile {% if form.track_type.data == 'STANDARD' %}path-tile--selected{% endif %}" data-value="STANDARD" role="button" tabindex="0">
-            <div class="u-fw-600 u-csp-308">[A] Standardowa praktyka</div>
+            <div class="u-fw-600 u-csp-308">[A] {{ t('Standardowa praktyka') }}</div>
             <div class="u-meta u-csp-309">
-              Odbędę praktykę w firmie lub instytucji na podstawie porozumienia z uczelnią.
+              {{ t('Odbędę praktykę w firmie lub instytucji na podstawie porozumienia z uczelnią.') }}
             </div>
             <div class="u-csp-310">
-              Porozumienie + dziennik + sprawozdanie
+              {{ t('Porozumienie + dziennik + sprawozdanie') }}
             </div>
           </div>
 
           <div class="path-tile {% if form.track_type.data in ('EMPLOYMENT', 'OWN_BUSINESS') %}path-tile--selected{% endif %}" data-value="EMPLOYMENT" role="button" tabindex="0">
-            <div class="u-fw-600 u-csp-308">[B] Uznanie efektów uczenia się z pracy zawodowej</div>
+            <div class="u-fw-600 u-csp-308">[B] {{ t('Uznanie efektów uczenia się z pracy zawodowej') }}</div>
             <div class="u-meta u-csp-309">
-              Pracuję lub pracowałem/am w branży IT (etat, staż) i chcę zaliczyć to jako praktykę.
+              {{ t('Pracuję lub pracowałem/am w branży IT (etat, staż) i chcę zaliczyć to jako praktykę.') }}
             </div>
             <div class="u-csp-310">
-              Wniosek → Komisja → Dyrektor Instytutu
+              {{ t('Wniosek → Komisja → Dyrektor Instytutu') }}
             </div>
           </div>
         </div>
 
         <div class="u-csp-311" id="path-subtype-section">
-          <div class="u-fw-600 u-mb-05 u-csp-312">Wybierz rodzaj zatrudnienia:</div>
+          <div class="u-fw-600 u-mb-05 u-csp-312">{{ t('Wybierz rodzaj zatrudnienia:') }}</div>
           <div class="u-grid-2 u-csp-313">
             <div class="kafelek-sub" data-sub="INTERNSHIP" role="button" tabindex="0">
-              <div class="u-fw-600 u-mb-025 u-csp-314">B.1 - Staż</div>
+              <div class="u-fw-600 u-mb-025 u-csp-314">B.1 - {{ t('Staż') }}</div>
               <div class="u-meta u-mb-05 u-csp-309">
-                Odbyłem/am staż w firmie z branży IT.
+                {{ t('Odbyłem/am staż w firmie z branży IT.') }}
               </div>
               <div class="u-csp-315">
-                <strong>Wymagane dokumenty:</strong><br>
-                • Zaświadczenie o odbyciu stażu<br>
-                • Zakres obowiązków realizowanych w ramach stażu
+                <strong>{{ t('Wymagane dokumenty:') }}</strong><br>
+                • {{ t('Zaświadczenie o odbyciu stażu') }}<br>
+                • {{ t('Zakres obowiązków realizowanych w ramach stażu') }}
               </div>
             </div>
 
             <div class="kafelek-sub" data-sub="WORK" role="button" tabindex="0">
-              <div class="u-fw-600 u-mb-025 u-csp-314">B.2 - Praca zawodowa</div>
+              <div class="u-fw-600 u-mb-025 u-csp-314">B.2 - {{ t('Praca zawodowa') }}</div>
               <div class="u-meta u-mb-05 u-csp-309">
-                Jestem lub byłem/am zatrudniony/a w firmie z branży IT.
+                {{ t('Jestem lub byłem/am zatrudniony/a w firmie z branży IT.') }}
               </div>
               <div class="u-csp-315">
-                <strong>Wymagane dokumenty:</strong><br>
-                • Umowa o pracę / umowa zlecenie<br>
-                • Opis stanowiska pracy / karta stanowiskowa
+                <strong>{{ t('Wymagane dokumenty:') }}</strong><br>
+                • {{ t('Umowa o pracę / umowa zlecenie') }}<br>
+                • {{ t('Opis stanowiska pracy / karta stanowiskowa') }}
               </div>
             </div>
           </div>
@@ -82,12 +82,12 @@
         <div id="path-preview" class="kreator-podglad u-csp-094"></div>
 
         {% if form.track_type.errors %}
-        <div class="u-tekst-blad u-fs-sm u-mb-1">Wybierz ścieżkę praktyki.</div>
+        <div class="u-tekst-blad u-fs-sm u-mb-1">{{ t('Wybierz ścieżkę praktyki.') }}</div>
         {% endif %}
 
         <div class="u-csp-316">
           <button type="submit" class="przycisk przycisk--glowny u-csp-317" id="btn-dalej" {% if not form.track_type.data %}disabled{% endif %}>
-            Dalej →
+            {{ t('Dalej') }} →
           </button>
         </div>
       </form>
@@ -95,7 +95,7 @@
   </div>
 
   <div class="u-mt-1 u-meta u-ta-center">
-    Praktyka: <strong>{{ internship.academic_year }}</strong> · Semestr {{ internship.semester_label }} · {{ internship.required_hours }} h
+    {{ t('Praktyka:') }} <strong>{{ internship.academic_year }}</strong> · {{ t('Semestr') }} {{ internship.semester_label }} · {{ internship.required_hours }} h
   </div>
 </div>
 

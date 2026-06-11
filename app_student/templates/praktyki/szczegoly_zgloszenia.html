@@ -1,9 +1,9 @@
-﻿{% extends "layouts/base_student.html" %}
-{% block tytul %}Szczegóły zgłoszenia{% endblock %}
-{% block naglowek %}Rejestracja praktyki zawodowej{% endblock %}
+{% extends "layouts/base_student.html" %}
+{% block tytul %}{{ t('Szczegóły zgłoszenia') }}{% endblock %}
+{% block naglowek %}{{ t('Rejestracja praktyki zawodowej') }}{% endblock %}
 
 {% block naglowek_akcje %}
-<a href="{{ url_for('internships.lista') }}" class="przycisk przycisk--drugorzedny">← Powrót</a>
+<a href="{{ url_for('internships.lista') }}" class="przycisk przycisk--drugorzedny">← {{ t('Powrót') }}</a>
 {% endblock %}
 
 {% block tresc %}
@@ -16,76 +16,76 @@
 
   <!-- === SEKCJA 1: Terminy === -->
   <div class="karta u-mb-1">
-    <div class="karta__naglowek"><h2 class="karta__tytul">Terminy i opiekun uczelniany</h2></div>
+    <div class="karta__naglowek"><h2 class="karta__tytul">{{ t('Terminy i opiekun uczelniany') }}</h2></div>
     <div class="karta__tresc">
       <div class="u-grid-2-mb">
         <div class="form-field">
-          <label class="form-field__label">Data rozpoczęcia</label>
+          <label class="form-field__label">{{ t('Data rozpoczęcia') }}</label>
           <input class="form-field__input" type="text" readonly value="{{ zapis.start_date.strftime('%d.%m.%Y') if zapis.start_date else '—' }}">
         </div>
         <div class="form-field">
-          <label class="form-field__label">Data zakończenia</label>
+          <label class="form-field__label">{{ t('Data zakończenia') }}</label>
           <input class="form-field__input" type="text" readonly value="{{ zapis.end_date.strftime('%d.%m.%Y') if zapis.end_date else '—' }}">
         </div>
       </div>
       <div class="u-csp-319">
         <label class="u-flex--gap-05 u-csp-359">
           <input class="u-csp-360" type="checkbox" disabled {% if zapis.accident_insurance %}checked{% endif %}>
-          <span class="u-fw-500 u-csp-321">Posiadam ubezpieczenie NW na czas trwania praktyki</span>
+          <span class="u-fw-500 u-csp-321">{{ t('Posiadam ubezpieczenie NW na czas trwania praktyki') }}</span>
         </label>
-        <div class="u-meta u-csp-361">Wymagane przed rozpoczęciem praktyki (art. 304 KP)</div>
+        <div class="u-meta u-csp-361">{{ t('Wymagane przed rozpoczęciem praktyki (art. 304 KP)') }}</div>
       </div>
     </div>
   </div>
 
   <!-- === SEKCJA 2: Zakład pracy === -->
   <div class="karta u-mb-1">
-    <div class="karta__naglowek"><h2 class="karta__tytul">Zakład pracy</h2></div>
+    <div class="karta__naglowek"><h2 class="karta__tytul">{{ t('Zakład pracy') }}</h2></div>
     <div class="karta__tresc">
       {% if not zapis.is_custom_company and zapis.company %}
       <div class="form-field u-mb-1">
-        <label class="form-field__label">Jak znalazłeś/-aś miejsce praktyki?</label>
-        <input class="form-field__input" type="text" readonly value="Uczelnia kieruje do zakładu (company ma umowę z ANS)">
+        <label class="form-field__label">{{ t('Jak znalazłeś/-aś miejsce praktyki?') }}</label>
+        <input class="form-field__input" type="text" readonly value="{{ t('Uczelnia kieruje do zakładu (firma ma umowę z ANS)') }}">
       </div>
       <div class="form-field">
-        <label class="form-field__label">Wybrana company</label>
+        <label class="form-field__label">{{ t('Wybrana firma') }}</label>
         <input class="form-field__input" type="text" readonly value="{{ zapis.company.name }}">
       </div>
       {% elif dm %}
       <div class="form-field u-mb-1">
-        <label class="form-field__label">Jak znalazłeś/-aś miejsce praktyki?</label>
-        <input class="form-field__input" type="text" readonly value="Sam/a znalazłem/-am miejsce (wymaga Zał. 9 i Zał. 1)">
+        <label class="form-field__label">{{ t('Jak znalazłeś/-aś miejsce praktyki?') }}</label>
+        <input class="form-field__input" type="text" readonly value="{{ t('Sam/a znalazłem/-am miejsce (wymaga Zał. 9 i Zał. 1)') }}">
       </div>
       <div class="form-field u-mb-1">
-        <label class="form-field__label">Nazwa zakładu pracy</label>
+        <label class="form-field__label">{{ t('Nazwa zakładu pracy') }}</label>
         <input class="form-field__input" type="text" readonly value="{{ dm.company_name or '' }}">
       </div>
       <div class="form-field u-mb-1">
-        <label class="form-field__label">Adres (ulica, nr)</label>
+        <label class="form-field__label">{{ t('Adres (ulica, nr)') }}</label>
         <input class="form-field__input" type="text" readonly value="{{ dm.company_address or '' }}">
       </div>
       <div class="u-csp-362">
         <div class="form-field">
-          <label class="form-field__label">Kod pocztowy</label>
+          <label class="form-field__label">{{ t('Kod pocztowy') }}</label>
           <input class="form-field__input" type="text" readonly value="{{ dm.company_zip or '' }}">
         </div>
         <div class="form-field">
-          <label class="form-field__label">Miasto</label>
+          <label class="form-field__label">{{ t('Miasto') }}</label>
           <input class="form-field__input" type="text" readonly value="{{ dm.company_city or '' }}">
         </div>
       </div>
       <div class="u-grid-2">
         <div class="form-field">
-          <label class="form-field__label">NIP / KRS</label>
+          <label class="form-field__label">{{ t('NIP / KRS') }}</label>
           <input class="form-field__input" type="text" readonly value="{{ dm.company_tax_id or '' }}">
         </div>
         <div class="form-field">
-          <label class="form-field__label">Osoba upoważniona do podpisania porozumienia</label>
+          <label class="form-field__label">{{ t('Osoba upoważniona do podpisania porozumienia') }}</label>
           <input class="form-field__input" type="text" readonly value="{{ dm.authorized_person or '' }}">
         </div>
       </div>
       <div class="form-field u-mt-1">
-        <label class="form-field__label">Stanowisko osoby upoważnionej</label>
+        <label class="form-field__label">{{ t('Stanowisko osoby upoważnionej') }}</label>
         <input class="form-field__input" type="text" readonly value="{{ dm.authorized_person_position or '' }}">
       </div>
       {% endif %}
@@ -94,25 +94,25 @@
 
   <!-- === SEKCJA 3: ZOPZ === -->
   <div class="karta u-mb-1">
-    <div class="karta__naglowek"><h2 class="karta__tytul">Opiekun zakładowy (ZOPZ)</h2></div>
+    <div class="karta__naglowek"><h2 class="karta__tytul">{{ t('Opiekun zakładowy (ZOPZ)') }}</h2></div>
     <div class="karta__tresc">
       <div class="u-grid-2-mb">
         <div class="form-field">
-          <label class="form-field__label">Opiekun zakładowy (ZOPZ) — imię i nazwisko</label>
+          <label class="form-field__label">{{ t('Opiekun zakładowy (ZOPZ) — imię i nazwisko') }}</label>
           <input class="form-field__input" type="text" readonly value="{{ dm.workplace_mentor_name if dm else '' }}">
         </div>
         <div class="form-field">
-          <label class="form-field__label">Stanowisko ZOPZ</label>
+          <label class="form-field__label">{{ t('Stanowisko ZOPZ') }}</label>
           <input class="form-field__input" type="text" readonly value="{{ dm.workplace_mentor_position if dm else '' }}">
         </div>
       </div>
       <div class="u-grid-2">
         <div class="form-field">
-          <label class="form-field__label">Telefon ZOPZ</label>
+          <label class="form-field__label">{{ t('Telefon ZOPZ') }}</label>
           <input class="form-field__input" type="text" readonly value="{{ dm.workplace_mentor_phone if dm else '' }}">
         </div>
         <div class="form-field">
-          <label class="form-field__label">E-mail ZOPZ</label>
+          <label class="form-field__label">{{ t('E-mail ZOPZ') }}</label>
           <input class="form-field__input" type="text" readonly value="{{ dm.workplace_mentor_email if dm else '' }}">
         </div>
       </div>
@@ -122,9 +122,9 @@
   <!-- === SEKCJA 4: Harmonogram === -->
   {% if harmonogram_dict %}
   <div class="karta u-mb-1">
-    <div class="karta__naglowek"><h2 class="karta__tytul">Harmonogram praktyki — efekty uczenia się</h2></div>
+    <div class="karta__naglowek"><h2 class="karta__tytul">{{ t('Harmonogram praktyki — efekty uczenia się') }}</h2></div>
     <div class="u-csp-337">
-      Dla każdego efektu: dział zakładu pracy, przykładowe czynności i liczba dni.
+      {{ t('Dla każdego efektu: dział zakładu pracy, przykładowe czynności i liczba dni.') }}
     </div>
     {% for e in efekty %}
     {% set h = harmonogram_dict.get(e.id|string) %}
@@ -136,7 +136,7 @@
         <input type="text" readonly class="form-field__input u-csp-364" value="{{ h.example_tasks }}">
         <div class="u-flex--gap-05 u-csp-365">
           <input type="text" readonly class="form-field__input u-csp-342" value="{{ h.days_count }}">
-          <span class="u-meta u-nowrap">dni</span>
+          <span class="u-meta u-nowrap">{{ t('dni') }}</span>
         </div>
       </div>
     </div>
@@ -148,15 +148,15 @@
   <!-- === SEKCJA 5: UOPZ === -->
   {% if zapis.supervisor %}
   <div class="karta u-mb-1">
-    <div class="karta__naglowek"><h2 class="karta__tytul">Opiekun uczelniany (UOPZ)</h2></div>
+    <div class="karta__naglowek"><h2 class="karta__tytul">{{ t('Opiekun uczelniany (UOPZ)') }}</h2></div>
     <div class="karta__tresc">
       <div class="u-grid-2">
         <div class="form-field">
-          <label class="form-field__label">Imię i nazwisko</label>
+          <label class="form-field__label">{{ t('Imię i nazwisko') }}</label>
           <input class="form-field__input" type="text" readonly value="{{ zapis.supervisor.first_name }} {{ zapis.supervisor.last_name }}">
         </div>
         <div class="form-field">
-          <label class="form-field__label">E-mail</label>
+          <label class="form-field__label">{{ t('E-mail') }}</label>
           <input class="form-field__input" type="text" readonly value="{{ zapis.supervisor.email or '' }}">
         </div>
       </div>
@@ -168,10 +168,10 @@
   <div class="karta">
     <div class="karta__tresc u-flex--between u-csp-366">
       <div>
-        <div class="u-fw-600 u-mb-025">Dokumenty praktyki</div>
-        <div class="u-meta-sm">Porozumienie, program, karta skierowania — dostępne w Moich Dokumentach.</div>
+        <div class="u-fw-600 u-mb-025">{{ t('Dokumenty praktyki') }}</div>
+        <div class="u-meta-sm">{{ t('Porozumienie, program, karta skierowania — dostępne w Moich Dokumentach.') }}</div>
       </div>
-      <a href="{{ url_for('documents.my_documents') }}" class="przycisk przycisk--glowny">Moje Dokumenty →</a>
+      <a href="{{ url_for('documents.my_documents') }}" class="przycisk przycisk--glowny">{{ t('Moje Dokumenty') }} →</a>
     </div>
   </div>
   {% endif %}
@@ -183,24 +183,24 @@
 
   <div class="karta">
     <div class="karta__naglowek">
-      <h2 class="karta__tytul">Krok 2: Wniosek o uznanie learning_outcomeów z pracy zawodowej</h2>
+      <h2 class="karta__tytul">{{ t('Krok 2: Wniosek o uznanie efektów z pracy zawodowej') }}</h2>
     </div>
     <div class="karta__tresc">
 
       {% if uz and uz.employment_subtype %}
       <div class="u-info-box u-mb-1">
         <div class="u-info-box__tytul">
-          {% if uz.employment_subtype == 'INTERNSHIP' %}B.1 — Staż{% else %}B.2 — Praca zawodowa (umowa o pracę / umowa zlecenie){% endif %}
+          {% if uz.employment_subtype == 'INTERNSHIP' %}B.1 — {{ t('Staż') }}{% else %}B.2 — {{ t('Praca zawodowa (umowa o pracę / umowa zlecenie)') }}{% endif %}
         </div>
         {% if uz.employment_subtype == 'INTERNSHIP' %}
         <ul class="u-info-box__lista">
-          <li>Zaświadczenie o odbyciu stażu (PDF)</li>
-          <li>Zakres obowiązków realizowanych w ramach stażu (PDF)</li>
+          <li>{{ t('Zaświadczenie o odbyciu stażu (PDF)') }}</li>
+          <li>{{ t('Zakres obowiązków realizowanych w ramach stażu (PDF)') }}</li>
         </ul>
         {% else %}
         <ul class="u-info-box__lista">
-          <li>Umowa o pracę / umowa zlecenie (PDF)</li>
-          <li>Opis stanowiska pracy / karta stanowiskowa (PDF)</li>
+          <li>{{ t('Umowa o pracę / umowa zlecenie (PDF)') }}</li>
+          <li>{{ t('Opis stanowiska pracy / karta stanowiskowa (PDF)') }}</li>
         </ul>
         {% endif %}
       </div>
@@ -208,12 +208,12 @@
 
       {% if uploaded_docs %}
       <div class="u-mb-15">
-        <div class="u-fw-600 u-mb-05 u-csp-321">Załączniki ({{ uploaded_docs|length }})</div>
+        <div class="u-fw-600 u-mb-05 u-csp-321">{{ t('Załączniki') }} ({{ uploaded_docs|length }})</div>
         <div class="u-flex--col-05">
           {% for dok in uploaded_docs %}
           <div class="upload-plik">
             <span class="u-csp-334">✓ {{ dok.original_filename }} <span class="u-tekst-trzeciorzed">({{ dok.document_type }})</span></span>
-            <a href="{{ url_for('uploads.download_document', document_id=dok.id) }}" class="przycisk przycisk--maly przycisk--drugorzedny">Pobierz</a>
+            <a href="{{ url_for('uploads.download_document', document_id=dok.id) }}" class="przycisk przycisk--maly przycisk--drugorzedny">{{ t('Pobierz') }}</a>
           </div>
           {% endfor %}
         </div>
@@ -222,28 +222,28 @@
 
       <div class="u-grid-2-mb">
         <div class="form-field">
-          <label class="form-field__label">Nazwa pracodawcy / firmy</label>
+          <label class="form-field__label">{{ t('Nazwa pracodawcy / firmy') }}</label>
           <input class="form-field__input" type="text" readonly value="{{ dm.company_name if dm else '' }}">
         </div>
         <div class="form-field">
-          <label class="form-field__label">Stanowisko / zakres działalności</label>
+          <label class="form-field__label">{{ t('Stanowisko / zakres działalności') }}</label>
           <input class="form-field__input" type="text" readonly value="{{ dm.workplace_mentor_position if dm else '' }}">
         </div>
       </div>
 
       <div class="u-grid-2-mb">
         <div class="form-field">
-          <label class="form-field__label">Adres</label>
+          <label class="form-field__label">{{ t('Adres') }}</label>
           <input class="form-field__input" type="text" readonly value="{{ dm.company_address if dm else '' }}">
         </div>
         <div class="form-field">
-          <label class="form-field__label">Miasto</label>
+          <label class="form-field__label">{{ t('Miasto') }}</label>
           <input class="form-field__input" type="text" readonly value="{{ dm.company_city if dm else '' }}">
         </div>
       </div>
 
       <div class="form-field">
-        <label class="form-field__label">Uzasadnienie wniosku</label>
+        <label class="form-field__label">{{ t('Uzasadnienie wniosku') }}</label>
         <textarea class="form-field__input u-csp-367" readonly rows="5">{{ uz.justification if uz else '' }}</textarea>
       </div>
 
@@ -252,15 +252,15 @@
 
   {% if zapis.supervisor %}
   <div class="karta u-mt-1">
-    <div class="karta__naglowek"><h2 class="karta__tytul">Opiekun uczelniany (UOPZ)</h2></div>
+    <div class="karta__naglowek"><h2 class="karta__tytul">{{ t('Opiekun uczelniany (UOPZ)') }}</h2></div>
     <div class="karta__tresc">
       <div class="u-grid-2">
         <div class="form-field">
-          <label class="form-field__label">Imię i nazwisko</label>
+          <label class="form-field__label">{{ t('Imię i nazwisko') }}</label>
           <input class="form-field__input" type="text" readonly value="{{ zapis.supervisor.first_name }} {{ zapis.supervisor.last_name }}">
         </div>
         <div class="form-field">
-          <label class="form-field__label">E-mail</label>
+          <label class="form-field__label">{{ t('E-mail') }}</label>
           <input class="form-field__input" type="text" readonly value="{{ zapis.supervisor.email or '' }}">
         </div>
       </div>

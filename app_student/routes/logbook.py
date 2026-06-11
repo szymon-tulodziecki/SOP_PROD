@@ -12,6 +12,7 @@ from sqlalchemy.exc import IntegrityError
 
 from core.models import JournalEntry, EnrollmentStatus
 from core.extensions import db
+from core.i18n import t, lazy_t
 from core.repositories import EnrollmentRepository, OutcomeRepository, JournalRepository
 from app_student.services import LogbookEntryDTO
 
@@ -26,12 +27,12 @@ _TPL_NOWY_WPIS = 'dziennik/nowy_wpis.html'
 
 
 class JournalEntryForm(FlaskForm):
-    entry_date    = StringField('Data', validators=[DataRequired()])
-    hours_count = StringField('Liczba godzin (1–8)', validators=[DataRequired()])
-    description          = TextAreaField('Opis wykonanych prac', validators=[DataRequired()])
+    entry_date    = StringField(lazy_t('Data'), validators=[DataRequired()])
+    hours_count = StringField(lazy_t('Liczba godzin (1–8)'), validators=[DataRequired()])
+    description          = TextAreaField(lazy_t('Opis wykonanych prac'), validators=[DataRequired()])
     outcome_ids    = SelectMultipleField(
-        'Efekty uczenia się',
-        validators=[DataRequired(message='Wybierz co najmniej jeden learning_outcome uczenia się.')],
+        lazy_t('Efekty uczenia się'),
+        validators=[DataRequired(message=lazy_t('Wybierz co najmniej jeden efekt uczenia się.'))],
         widget=ListWidget(prefix_label=False),
         option_widget=CheckboxInput(),
     )
@@ -40,15 +41,15 @@ class JournalEntryForm(FlaskForm):
         try:
             val = int(pole.data)
         except (ValueError, TypeError):
-            raise ValidationError('Podaj liczbę całkowitą.')
+            raise ValidationError(t('Podaj liczbę całkowitą.'))
         if val < 1 or val > 8:
-            raise ValidationError('Maksymalnie 8 godzin dziennie (regulamin ANS).')
+            raise ValidationError(t('Maksymalnie 8 godzin dziennie (regulamin ANS).'))
 
     def validate_entry_date(self, pole):
         try:
             date.fromisoformat(pole.data)
         except ValueError:
-            raise ValidationError('Nieprawidłowy format daty.')
+            raise ValidationError(t('Nieprawidłowy format daty.'))
 
     def populate_to_model(self, model_instance):
         model_instance.entry_date = date.fromisoformat(self.entry_date.data)
@@ -106,7 +107,7 @@ def index():
 def nowy_wpis():
     zapis = _aktywny_zapis()
     if not zapis:
-        flash('Nie masz aktywnej praktyki. Skontaktuj się z opiekunem.', 'danger')
+        flash(t('Nie masz aktywnej praktyki. Skontaktuj się z opiekunem.'), 'danger')
         return redirect(url_for(_ROUTE_INDEX))
 
     efekty = _repo_efektow.wszystkie()
@@ -121,7 +122,7 @@ def nowy_wpis():
         data = date.fromisoformat(form.entry_date.data)
         duplikat = _repo_wpisow.znajdz_duplikat(zapis.id, data)
         if duplikat:
-            flash('Wpis na ten dzień już istnieje. Możesz go edytować.', 'danger')
+            flash(t('Wpis na ten dzień już istnieje. Możesz go edytować.'), 'danger')
             return render_template(_TPL_NOWY_WPIS, form=form, zapis=zapis, efekty_opisy=efekty_opisy)
 
         godziny = int(form.hours_count.data)
@@ -130,9 +131,9 @@ def nowy_wpis():
         if zalogowane + godziny > wymagane:
             pozostalo = wymagane - zalogowane
             if pozostalo <= 0:
-                flash(f'Osiągnięto wymagany limit {wymagane} h. Nie można dodać więcej wpisów.', 'danger')
+                flash(t('Osiągnięto wymagany limit {wymagane} h. Nie można dodać więcej wpisów.', wymagane=wymagane), 'danger')
             else:
-                flash(f'Możesz dodać maksymalnie {pozostalo} h (limit: {wymagane} h). Zmniejsz liczbę godzin.', 'danger')
+                flash(t('Możesz dodać maksymalnie {pozostalo} h (limit: {wymagane} h). Zmniejsz liczbę godzin.', pozostalo=pozostalo, wymagane=wymagane), 'danger')
             return render_template(_TPL_NOWY_WPIS, form=form, zapis=zapis, efekty_opisy=efekty_opisy)
         wpis = JournalEntry(
             id               = uuid.uuid4(),
@@ -145,9 +146,9 @@ def nowy_wpis():
         except IntegrityError:
             # Race: another tab/request inserted the same date between our check and insert.
             db.session.rollback()
-            flash('Wpis na ten dzień już istnieje. Możesz go edytować.', 'danger')
+            flash(t('Wpis na ten dzień już istnieje. Możesz go edytować.'), 'danger')
             return render_template(_TPL_NOWY_WPIS, form=form, zapis=zapis, efekty_opisy=efekty_opisy)
-        flash(f'Wpis z dnia {data.strftime("%d.%m.%Y")} został dodany ({godziny} h).', 'success')
+        flash(t('Wpis z dnia {data} został dodany ({godziny} h).', data=data.strftime("%d.%m.%Y"), godziny=godziny), 'success')
         return redirect(url_for(_ROUTE_INDEX))
 
     if request.method == 'GET':
@@ -178,7 +179,7 @@ def edytuj_wpis(wpis_id):
     if form.validate_on_submit():
         form.populate_to_model(wpis)
         db.session.commit()
-        flash('Wpis został zaktualizowany.', 'success')
+        flash(t('Wpis został zaktualizowany.'), 'success')
         return redirect(url_for(_ROUTE_INDEX))
 
     if request.method == 'GET':
@@ -201,5 +202,5 @@ def usun_wpis(wpis_id):
         abort(403)
     _repo_wpisow.usun(wpis)
     db.session.commit()
-    flash('Wpis został usunięty.', 'success')
+    flash(t('Wpis został usunięty.'), 'success')
     return redirect(url_for(_ROUTE_INDEX))

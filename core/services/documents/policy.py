@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 from typing import Callable
 
 from core.extensions import db
+from core.i18n import t
 
 
 # ── Konfiguracja szablonów ────────────────────────────────────────────────────
@@ -64,7 +65,7 @@ class DocumentEntry:
 
 
 def _sep(name: str) -> dict:
-    return {'separator': True, 'name': name}
+    return {'separator': True, 'name': t(name)}
 
 
 # ── Zasady dostępności ────────────────────────────────────────────────────────
@@ -106,27 +107,27 @@ def _po_egzaminie(ctx: dict) -> bool:
 
 
 def _powod_harmonogram(_ctx: dict) -> str:
-    return 'Wymaga wypełnionego harmonogramu'
+    return t('Wymaga wypełnionego harmonogramu')
 
 
 def _powod_w_trakcie(_ctx: dict) -> str:
-    return 'Dostępny po zatwierdzeniu praktyki'
+    return t('Dostępny po zatwierdzeniu praktyki')
 
 
 def _powod_zakonczona(_ctx: dict) -> str:
-    return 'Dostępny po zakończeniu praktyki'
+    return t('Dostępny po zakończeniu praktyki')
 
 
 def _powod_oceniona(_ctx: dict) -> str:
-    return 'Dostępny po wystawieniu oceny przez UOPZ'
+    return t('Dostępny po wystawieniu oceny przez UOPZ')
 
 
 def _powod_egzamin(_ctx: dict) -> str:
-    return 'Dostępny po egzaminie komisyjnym'
+    return t('Dostępny po egzaminie komisyjnym')
 
 
 def _powod_dyrektor(_ctx: dict) -> str:
-    return 'Dostępny po decyzji dyrektora'
+    return t('Dostępny po decyzji dyrektora')
 
 
 # ─── Listy dokumentów dla ścieżek ───────────────────────────────────────────────────
@@ -135,45 +136,45 @@ def _docs_standard() -> list:
     return [
         _sep('Dokumenty startowe'),
         DocumentEntry('Zał. 9 — Oświadczenie instytucji', 'ZAL_9',
-                      'Do wypełnienia przez zakład pracy',
+                      t('Do wypełnienia przez zakład pracy'),
                       available_when=_firma_custom),
         DocumentEntry('Zał. 1 — Porozumienie uczelnia ↔ zakład', 'ZAL_1',
-                      'Dla firm bez stałej umowy z ANS',
+                      t('Dla firm bez stałej umowy z ANS'),
                       available_when=_firma_bez_umowy),
         DocumentEntry('Zał. 2 — Program praktyki', 'ZAL_2',
-                      'Z danymi studenta i firmy'),
+                      t('Z danymi studenta i firmy')),
         DocumentEntry('Zał. 2a — Indywidualny Program Praktyk', 'ZAL_2A',
-                      'Harmonogram efektów uczenia się — student + UOPZ + ZOPZ',
+                      t('Harmonogram efektów uczenia się — student + UOPZ + ZOPZ'),
                       available_when=_ma_harmonogram,
                       unavailable_reason=_powod_harmonogram),
         _sep('Załącznik nr 3 — Karta Praktyki Zawodowej'),
         DocumentEntry('Zał. 3a — Skierowanie na praktykę', 'ZAL_3A',
-                      'Przepustka do firmy — drukujesz i przynosisz pierwszego dnia'),
+                      t('Przepustka do firmy — drukujesz i przynosisz pierwszego dnia')),
         _sep('W trakcie praktyki'),
         DocumentEntry('Zał. 3b — Karta zakładowa (druk do wypełnienia)', 'ZAL_3B',
-                      'Zakład pracy wypełnia i podpisuje przez 6 miesięcy'),
+                      t('Zakład pracy wypełnia i podpisuje przez 6 miesięcy')),
         DocumentEntry('Zał. 6 — Dziennik praktyki', 'ZAL_6',
-                      'Generowany z wpisów dziennika',
+                      t('Generowany z wpisów dziennika'),
                       available_when=_w_trakcie_lub_zakonczona,
                       unavailable_reason=_powod_w_trakcie),
         _sep('Dostępne po zakończeniu praktyki'),
         DocumentEntry('Zał. 4 — Potwierdzenie efektów uczenia się', 'ZAL_4',
-                      'Podpisuje ZOPZ + UOPZ',
+                      t('Podpisuje ZOPZ + UOPZ'),
                       available_when=_oceniona,
                       unavailable_reason=_powod_oceniona),
         DocumentEntry('Zał. 7 — Sprawozdanie końcowe', 'ZAL_7',
-                      'Podpisuje student',
+                      t('Podpisuje student'),
                       available_when=_zakonczona,
                       unavailable_reason=_powod_zakonczona),
         _sep('Rozliczenie na uczelni'),
         DocumentEntry('Zał. 5 — Ankieta oceny praktyki', static_key='ankieta',
-                      description='Formularz anonimowej ankiety'),
+                      description=t('Formularz anonimowej ankiety')),
         DocumentEntry('Zał. 3c — Ocena uczelniana (UOPZ)', 'ZAL_3C',
-                      'Ocena UOPZ + ocena sprawozdania',
+                      t('Ocena UOPZ + ocena sprawozdania'),
                       available_when=_oceniona,
                       unavailable_reason=_powod_oceniona),
         DocumentEntry('Zał. 8 — Protokół egzaminu komisji', 'ZAL_8',
-                      'Sporządzany przez Komisję po ustnym egzaminie z praktyki',
+                      t('Sporządzany przez Komisję po ustnym egzaminie z praktyki'),
                       available_when=_po_egzaminie,
                       unavailable_reason=_powod_egzamin),
     ]
@@ -182,13 +183,13 @@ def _docs_standard() -> list:
 def _docs_employment_own_business() -> list:
     return [
         DocumentEntry('Zał. 4b — Wniosek o zaliczenie', 'ZAL_4B',
-                      'Praca etatowa / własna działalność'),
+                      t('Praca etatowa / własna działalność')),
         DocumentEntry('Zał. 7a — Sprawozdanie z pracy/działalności', 'ZAL_7A',
-                      'Zatwierdza przełożony/UOPZ',
+                      t('Zatwierdza przełożony/UOPZ'),
                       available_when=_w_trakcie_lub_zakonczona,
                       unavailable_reason=_powod_w_trakcie),
         DocumentEntry('Zał. 4a — Potwierdzenie efektów uczenia się (komisja)', 'ZAL_4A',
-                      '13 efektów: uzyskał / częściowo / nie',
+                      t('13 efektów: uzyskał / częściowo / nie'),
                       available_when=_dyrektor_lub_zakonczona,
                       unavailable_reason=_powod_dyrektor),
         _sep('Po egzaminie komisji'),

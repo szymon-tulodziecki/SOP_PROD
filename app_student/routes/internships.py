@@ -7,6 +7,7 @@ from wtforms.validators import DataRequired, Optional, Length, Email, Validation
 import re
 from flask_login import login_required, current_user
 from core.extensions import db
+from core.i18n import t, lazy_t
 import httpx
 from core.models import (Internship, InternshipEnrollment, InternshipStatus, EnrollmentStatus,
                          InternshipPath, InternshipSchedule,
@@ -37,62 +38,62 @@ _TPL_KR2A           = 'kreator/krok2a_firma.html'
 
 class FormularzSciezka(FlaskForm):
     """Krok 1: Tylko wybór ścieżki."""
-    track_type = SelectField('Ścieżka praktyki', choices=[
-        ('STANDARD',   'A — Standardowa praktyka zawodowa'),
-        ('EMPLOYMENT', 'B — Uznanie efektów uczenia się z pracy zawodowej'),
-    ], validators=[DataRequired(message='Wybierz ścieżkę.')])
+    track_type = SelectField(lazy_t('Ścieżka praktyki'), choices=[
+        ('STANDARD',   lazy_t('A — Standardowa praktyka zawodowa')),
+        ('EMPLOYMENT', lazy_t('B — Uznanie efektów uczenia się z pracy zawodowej')),
+    ], validators=[DataRequired(message=lazy_t('Wybierz ścieżkę.'))])
 
 
 class CompanyDataForm(FlaskForm):
     """Krok 2A: Dane zakładu pracy + ZOPZ + terminy (tylko ścieżka A)."""
     # Terminy i dane podstawowe
-    termin_od        = DateField('Data rozpoczęcia', validators=[DataRequired(message='Podaj datę.')])
-    termin_do        = DateField('Data zakończenia', validators=[DataRequired(message='Podaj datę.')])
-    ubezpieczenie_nw = BooleanField('Posiadam ubezpieczenie NW na czas trwania praktyki')
+    termin_od        = DateField(lazy_t('Data rozpoczęcia'), validators=[DataRequired(message=lazy_t('Podaj datę.'))])
+    termin_do        = DateField(lazy_t('Data zakończenia'), validators=[DataRequired(message=lazy_t('Podaj datę.'))])
+    ubezpieczenie_nw = BooleanField(lazy_t('Posiadam ubezpieczenie NW na czas trwania praktyki'))
 
     # Tryb znalezienia miejsca
-    firma_typ  = SelectField('Jak znalazłeś/-aś miejsce praktyki?', choices=[
-        ('database', 'Uczelnia kieruje do zakładu (company ma umowę z ANS)'),
-        ('custom',   'Sam/a znalazłem/-am miejsce (wymaga Zał. 9 i Zał. 1)'),
+    firma_typ  = SelectField(lazy_t('Jak znalazłeś/-aś miejsce praktyki?'), choices=[
+        ('database', lazy_t('Uczelnia kieruje do zakładu (firma ma umowę z ANS)')),
+        ('custom',   lazy_t('Sam/a znalazłem/-am miejsce (wymaga Zał. 9 i Zał. 1)')),
     ], validators=[DataRequired()])
-    company_id   = SelectField('Wybierz firmę z listy', choices=[], validators=[Optional()])
+    company_id   = SelectField(lazy_t('Wybierz firmę z listy'), choices=[], validators=[Optional()])
 
-    company_name                  = StringField('Nazwa zakładu pracy', validators=[Optional(), Length(max=255)])
-    company_address                  = StringField('Adres (ulica, nr)', validators=[Optional(), Length(max=255)])
-    company_zip           = StringField('Kod pocztowy', validators=[Optional(), Length(max=10)])
-    company_city                 = StringField('Miasto', validators=[Optional(), Length(max=100)])
+    company_name                  = StringField(lazy_t('Nazwa zakładu pracy'), validators=[Optional(), Length(max=255)])
+    company_address                  = StringField(lazy_t('Adres (ulica, nr)'), validators=[Optional(), Length(max=255)])
+    company_zip           = StringField(lazy_t('Kod pocztowy'), validators=[Optional(), Length(max=10)])
+    company_city                 = StringField(lazy_t('Miasto'), validators=[Optional(), Length(max=100)])
     tax_id                = StringField('NIP / KRS', validators=[Optional(), Length(max=50)])
-    authorized_person      = StringField('Osoba upoważniona do podpisania porozumienia', validators=[Optional(), Length(max=255)])
-    authorized_person_position = StringField('Stanowisko osoby upoważnionej', validators=[Optional(), Length(max=255)])
+    authorized_person      = StringField(lazy_t('Osoba upoważniona do podpisania porozumienia'), validators=[Optional(), Length(max=255)])
+    authorized_person_position = StringField(lazy_t('Stanowisko osoby upoważnionej'), validators=[Optional(), Length(max=255)])
 
-    workplace_mentor_name = StringField('Opiekun zakładowy (ZOPZ) — imię i nazwisko', validators=[Optional(), Length(max=255)])
-    workplace_mentor_position    = StringField('Stanowisko ZOPZ', validators=[Optional(), Length(max=255)])
-    workplace_mentor_phone       = StringField('Telefon ZOPZ', validators=[Optional(), Length(max=50)])
-    workplace_mentor_email         = StringField('E-mail ZOPZ', validators=[Optional(), Email(message='Nieprawidłowy email.')])
+    workplace_mentor_name = StringField(lazy_t('Opiekun zakładowy (ZOPZ) — imię i nazwisko'), validators=[Optional(), Length(max=255)])
+    workplace_mentor_position    = StringField(lazy_t('Stanowisko ZOPZ'), validators=[Optional(), Length(max=255)])
+    workplace_mentor_phone       = StringField(lazy_t('Telefon ZOPZ'), validators=[Optional(), Length(max=50)])
+    workplace_mentor_email         = StringField('E-mail ZOPZ', validators=[Optional(), Email(message=lazy_t('Nieprawidłowy email.'))])
 
     def validate_company_zip(self, field):
         if not field.data:
             return
         if not re.fullmatch(r'\d{2}-\d{3}', field.data.strip()):
-            raise ValidationError('Podaj kod pocztowy w formacie XX-XXX (np. 82-300).')
+            raise ValidationError(t('Podaj kod pocztowy w formacie XX-XXX (np. 82-300).'))
 
     def validate_workplace_mentor_name(self, field):
         if not field.data:
             return
         parts = field.data.strip().split()
         if len(parts) < 2:
-            raise ValidationError('Podaj imię i nazwisko (co najmniej dwa wyrazy).')
+            raise ValidationError(t('Podaj imię i nazwisko (co najmniej dwa wyrazy).'))
         if any(char.isdigit() for char in field.data):
-            raise ValidationError('Imię i nazwisko nie może zawierać cyfr.')
+            raise ValidationError(t('Imię i nazwisko nie może zawierać cyfr.'))
 
     def validate_authorized_person(self, field):
         if not field.data:
             return
         parts = field.data.strip().split()
         if len(parts) < 2:
-            raise ValidationError('Podaj imię i nazwisko osoby upoważnionej (co najmniej dwa wyrazy).')
+            raise ValidationError(t('Podaj imię i nazwisko osoby upoważnionej (co najmniej dwa wyrazy).'))
         if any(char.isdigit() for char in field.data):
-            raise ValidationError('Imię i nazwisko nie może zawierać cyfr.')
+            raise ValidationError(t('Imię i nazwisko nie może zawierać cyfr.'))
 
     def populate_to_model(self, model_instance):
         model_instance.company_name = self.company_name.data
@@ -111,15 +112,15 @@ class CompanyDataForm(FlaskForm):
 
 class FormularzWniosek(FlaskForm):
     """Krok 2B/C: Wniosek dla ścieżek B i C."""
-    employment_subtype  = SelectField('Rodzaj zatrudnienia', choices=[
-        ('WORK',        'B.2 — Praca zawodowa (umowa o pracę / umowa zlecenie)'),
-        ('INTERNSHIP',  'B.1 — Staż'),
+    employment_subtype  = SelectField(lazy_t('Rodzaj zatrudnienia'), choices=[
+        ('WORK',        lazy_t('B.2 — Praca zawodowa (umowa o pracę / umowa zlecenie)')),
+        ('INTERNSHIP',  lazy_t('B.1 — Staż')),
     ], validators=[Optional()])
-    pracodawca_nazwa    = StringField('Nazwa pracodawcy / firmy', validators=[DataRequired(message='Podaj nazwę.'), Length(max=255)])
-    pracodawca_adres    = StringField('Adres', validators=[Optional(), Length(max=255)])
-    pracodawca_miasto   = StringField('Miasto', validators=[Optional(), Length(max=100)])
-    stanowisko          = StringField('Stanowisko / zakres działalności', validators=[DataRequired(message='Podaj stanowisko.'), Length(max=255)])
-    justification        = TextAreaField('Uzasadnienie wniosku', validators=[DataRequired(message='Napisz uzasadnienie.'), Length(min=500, max=2000, message='Uzasadnienie musi mieć od 500 do 2000 znaków.')])
+    pracodawca_nazwa    = StringField(lazy_t('Nazwa pracodawcy / firmy'), validators=[DataRequired(message=lazy_t('Podaj nazwę.')), Length(max=255)])
+    pracodawca_adres    = StringField(lazy_t('Adres'), validators=[Optional(), Length(max=255)])
+    pracodawca_miasto   = StringField(lazy_t('Miasto'), validators=[Optional(), Length(max=100)])
+    stanowisko          = StringField(lazy_t('Stanowisko / zakres działalności'), validators=[DataRequired(message=lazy_t('Podaj stanowisko.')), Length(max=255)])
+    justification        = TextAreaField(lazy_t('Uzasadnienie wniosku'), validators=[DataRequired(message=lazy_t('Napisz uzasadnienie.')), Length(min=500, max=2000, message=lazy_t('Uzasadnienie musi mieć od 500 do 2000 znaków.'))])
 
 
 # ═══════════════════════════════════════════════════════════
@@ -158,7 +159,7 @@ def kreator_sciezka(id):
     """Krok 1: Wybór ścieżki."""
     internship = _repo_praktyk.znajdz_po_id(id)
     if not internship:
-        flash('Praktyka niedostępna.', 'danger')
+        flash(t('Praktyka niedostępna.'), 'danger')
         return redirect(url_for(_ROUTE_LISTA))
 
     istniejacy = _repo_zapisow.pending_dla_studenta_i_praktyki(current_user.id, id)
@@ -256,7 +257,7 @@ def kreator_firma(enrollment_id):
     form = CompanyDataForm()
     firmy_list = company_repository.active()
     companies_data = _serialize_companies(firmy_list)
-    form.company_id.choices = [('', '--- Wybierz firmę ---')] + [(str(f.id), f.name) for f in firmy_list]
+    form.company_id.choices = [('', t('--- Wybierz firmę ---'))] + [(str(f.id), f.name) for f in firmy_list]
 
     if form.validate_on_submit():
         zapis.start_date         = form.termin_od.data
@@ -270,7 +271,7 @@ def kreator_firma(enrollment_id):
 
         err = _save_company_from_form(form, zapis, dm)
         if err:
-            flash(err, 'danger')
+            flash(t(err), 'danger')
             return render_template(
                 _TPL_KR2A,
                 form=form,
@@ -284,7 +285,7 @@ def kreator_firma(enrollment_id):
         if byl_status == EnrollmentStatus.AWAITING_APPROVAL:
             EnrollmentStateMachine(zapis).submit_to_committee()
             db.session.commit()
-            flash('Dane zaktualizowane i zgłoszenie odesłane do komisji.', 'success')
+            flash(t('Dane zaktualizowane i zgłoszenie odesłane do komisji.'), 'success')
             return redirect(url_for(_ROUTE_SZCZEGOLY, id=zapis.id))
         return redirect(url_for('internships.zapisz_krok2', id=zapis.id))
 
@@ -382,19 +383,19 @@ def zakoncz_praktyke(id):
     if not zapis or zapis.student_id != current_user.id:
         abort(404)
     if zapis.status != EnrollmentStatus.IN_PROGRESS:
-        flash('Praktykę można zakończyć tylko gdy jest w trakcie realizacji.', 'warning')
+        flash(t('Praktykę można zakończyć tylko gdy jest w trakcie realizacji.'), 'warning')
         return redirect(url_for(_ROUTE_LISTA))
 
     path_val = zapis.path_type.value if hasattr(zapis.path_type, 'value') else str(zapis.path_type)
     if path_val == 'STANDARD':
         ok, msg = InternshipService.validate_completion_allowed(zapis)
         if not ok:
-            flash(msg, 'danger')
+            flash(t(msg), 'danger')
             return redirect(url_for(_ROUTE_LISTA))
 
     EnrollmentStateMachine(zapis).complete()
     db.session.commit()
-    flash('Praktyka została zakończona. Dokumenty końcowe są dostępne w zakładce Moje Dokumenty.', 'success')
+    flash(t('Praktyka została zakończona. Dokumenty końcowe są dostępne w zakładce Moje Dokumenty.'), 'success')
     return redirect(url_for(_ROUTE_LISTA))
 
 
@@ -483,7 +484,7 @@ def wyslij_do_zatwierdzenia(id):
     if not zapis or zapis.student_id != current_user.id:
         abort(404)
     if zapis.status not in (EnrollmentStatus.PENDING, EnrollmentStatus.REVISION_REQUIRED):
-        flash('Zgłoszenie zostało już wysłane.', 'info')
+        flash(t('Zgłoszenie zostało już wysłane.'), 'info')
         return redirect(url_for(_ROUTE_SZCZEGOLY, id=id))
     from core.services.workflow import EnrollmentStateMachine
     fsm = EnrollmentStateMachine(zapis)
@@ -492,7 +493,7 @@ def wyslij_do_zatwierdzenia(id):
     else:
         fsm.submit_for_approval()
     db.session.commit()
-    flash('Zgłoszenie zostało przesłane.', 'success')
+    flash(t('Zgłoszenie zostało przesłane.'), 'success')
     return redirect(url_for(_ROUTE_LISTA))
 
 
@@ -542,7 +543,7 @@ def resubmit_zgloszenia(id):
     if not zapis or zapis.student_id != current_user.id:
         abort(404)
     if zapis.status not in (EnrollmentStatus.AWAITING_APPROVAL, EnrollmentStatus.REVISION_REQUIRED):
-        flash('Zgłoszenie nie może być ponownie wysłane w tym statusie.', 'warning')
+        flash(t('Zgłoszenie nie może być ponownie wysłane w tym statusie.'), 'warning')
         return redirect(url_for(_ROUTE_SZCZEGOLY, id=id))
     try:
         with EnrollmentStateMachine.lock(id) as fsm:
@@ -552,7 +553,7 @@ def resubmit_zgloszenia(id):
                 fsm.submit_to_committee()
             db.session.commit()
     except IllegalTransitionError as e:
-        flash(str(e), 'danger')
+        flash(t(str(e)), 'danger')
         return redirect(url_for(_ROUTE_SZCZEGOLY, id=id))
-    flash('Zgłoszenie zostało ponownie wysłane do weryfikacji komisji.', 'success')
+    flash(t('Zgłoszenie zostało ponownie wysłane do weryfikacji komisji.'), 'success')
     return redirect(url_for(_ROUTE_SZCZEGOLY, id=id))

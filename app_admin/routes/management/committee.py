@@ -6,6 +6,7 @@ from wtforms.validators import Optional
 
 from core.auth import roles_required
 from core.extensions import db, limiter
+from core.i18n import t, lazy_t
 from core.models import AssessmentResult, EnrollmentStatus, UserRole
 from core.presenters import (committee_decision_badge, committee_status_badge,
                              dean_decision_badge, path_label)
@@ -44,7 +45,7 @@ _COMMITTEE_DECISIONS = tuple(_COMMITTEE_DECISION_LABELS)
 
 
 class CommitteeForm(FlaskForm):
-    comment = TextAreaField('Komentarz ogólny komisji', validators=[Optional()])
+    comment = TextAreaField(lazy_t('Komentarz ogólny komisji'), validators=[Optional()])
 
 
 @zarzadzanie_bp.route('/komisja', methods=['GET'])
@@ -88,7 +89,7 @@ def _zapisz_oceny_komisji(enrollment_id, evaluations):
 def _przekaz_do_dyrektora(enrollment_id, committee_opinion, comment, evaluations):
     with EnrollmentStateMachine.lock(enrollment_id) as fsm:
         if fsm.zapis.status not in _ACTIVE_COMMITTEE_STATUSES:
-            flash('Wniosek zmienił status podczas przetwarzania - spróbuj ponownie.', 'warning')
+            flash(t('Wniosek zmienił status podczas przetwarzania - spróbuj ponownie.'), 'warning')
             return False
         _zapisz_oceny_komisji(enrollment_id, evaluations)
         fsm.send_to_director(decision=committee_opinion, actor_id=current_user.id, comment=comment)
@@ -103,7 +104,7 @@ def komisja_weryfikuj(id):
     enrollment = _repo_zapisow.znajdz_po_id(id) or abort(404)
 
     if enrollment.status not in _REVIEWABLE_COMMITTEE_STATUSES:
-        flash('Wniosek nie wymaga weryfikacji komisji.', 'warning')
+        flash(t('Wniosek nie wymaga weryfikacji komisji.'), 'warning')
         return redirect(url_for(_ROUTE_KOMISJA_LISTA))
 
     form = CommitteeForm()
@@ -113,24 +114,24 @@ def komisja_weryfikuj(id):
         return _render_weryfikuj_komisji(form, enrollment, outcomes, id)
 
     if enrollment.status not in _ACTIVE_COMMITTEE_STATUSES:
-        flash('Wniosek nie jest w stanie umożliwiającym decyzję komisji.', 'warning')
+        flash(t('Wniosek nie jest w stanie umożliwiającym decyzję komisji.'), 'warning')
         return redirect(url_for(_ROUTE_KOMISJA_LISTA))
 
     committee_opinion = request.form.get('opinia')
     if committee_opinion not in _COMMITTEE_DECISIONS:
-        flash('Wybierz opinię komisji (jeden z trzech przycisków).', 'warning')
+        flash(t('Wybierz opinię komisji (jeden z trzech przycisków).'), 'warning')
         return _render_weryfikuj_komisji(form, enrollment, outcomes, id)
 
     errors, evaluations = CommitteeService.validate_outcome_grades(outcomes, request.form)
     if errors:
         for err in errors:
-            flash(err, 'danger')
+            flash(t(err), 'danger')
         return _render_weryfikuj_komisji(form, enrollment, outcomes, id)
 
     try:
         if _przekaz_do_dyrektora(id, committee_opinion, form.comment.data or '', evaluations):
             label = _COMMITTEE_DECISION_LABELS[committee_opinion]
-            flash(f'{label} - wniosek przekazany do Dyrektora Instytutu.', 'success')
+            flash(t('{etykieta} - wniosek przekazany do Dyrektora Instytutu.', etykieta=t(label)), 'success')
     except IllegalTransitionError as e:
-        flash(str(e), 'danger')
+        flash(t(str(e)), 'danger')
     return redirect(url_for(_ROUTE_KOMISJA_LISTA))

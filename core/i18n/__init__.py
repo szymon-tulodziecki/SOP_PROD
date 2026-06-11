@@ -32,6 +32,8 @@ def get_lang() -> str:
 
 def t(text: str, **kwargs) -> str:
     """Tłumaczy polski tekst na aktualny język; kwargs podstawiane przez str.format."""
+    if isinstance(text, lazy_t):
+        text = text._text
     lang = get_lang()
     if lang != DEFAULT_LANG:
         text = TRANSLATIONS[lang].get(text, text)

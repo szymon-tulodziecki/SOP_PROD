@@ -1,19 +1,19 @@
-﻿{% extends "layouts/base_student.html" %}
-{% block tytul %}Kreator — Krok 3: Harmonogram{% endblock %}
-{% block naglowek %}Rejestracja praktyki zawodowej{% endblock %}
+{% extends "layouts/base_student.html" %}
+{% block tytul %}{{ t('Kreator — Krok 3: Harmonogram') }}{% endblock %}
+{% block naglowek %}{{ t('Rejestracja praktyki zawodowej') }}{% endblock %}
 
 {% block tresc %}
 <div class="u-csp-058">
 
   <!-- Pasek kroków -->
   <div class="kreator-pasek">
-    <div class="kreator-krok u-csp-318">Ścieżka A</div>
+    <div class="kreator-krok u-csp-318">{{ t('Ścieżka') }} A</div>
     <div class="kreator-krok--separator u-krok-separator--srodek">›</div>
-    <div class="kreator-krok u-csp-318">2. Miejsce praktyki</div>
+    <div class="kreator-krok u-csp-318">2. {{ t('Miejsce praktyki') }}</div>
     <div class="kreator-krok--separator u-krok-separator--srodek">›</div>
-    <div class="kreator-krok kreator-krok--aktywny">3. Harmonogram</div>
+    <div class="kreator-krok kreator-krok--aktywny">3. {{ t('Harmonogram') }}</div>
     <div class="kreator-krok--separator u-krok-separator--srodek">›</div>
-    <div class="kreator-krok kreator-krok--nieaktywny">4. Wysłanie</div>
+    <div class="kreator-krok kreator-krok--nieaktywny">4. {{ t('Wysłanie') }}</div>
   </div>
 
   <form method="POST" novalidate>
@@ -21,10 +21,10 @@
 
     <div class="karta u-mb-15">
       <div class="karta__naglowek">
-        <h2 class="karta__tytul">Harmonogram praktyki — efekty uczenia się</h2>
+        <h2 class="karta__tytul">{{ t('Harmonogram praktyki — efekty uczenia się') }}</h2>
       </div>
       <div class="u-csp-337">
-        Dla każdego efektu podaj dział zakładu pracy, przykładowe czynności i planowaną liczbę dni. Wiersze bez działu lub czynności zostaną pominięte.
+        {{ t('Dla każdego efektu podaj dział zakładu pracy, przykładowe czynności i planowaną liczbę dni. Wiersze bez działu lub czynności zostaną pominięte.') }}
       </div>
 
       {% for e in efekty %}
@@ -33,13 +33,13 @@
         <div class="u-meta u-mb-035">{{ e.description }}</div>
         <div class="u-csp-339">
           <textarea name="dzial_{{ e.id }}" rows="1"
-                 class="form-field__input u-csp-340 schedule-text-field" placeholder="Dział zakładu pracy">{{ h.get('dzial', '') }}</textarea>
+                 class="form-field__input u-csp-340 schedule-text-field" placeholder="{{ t('Dział zakładu pracy') }}">{{ h.get('dzial', '') }}</textarea>
           <textarea name="prace_{{ e.id }}" rows="1"
-                 class="form-field__input u-csp-340 schedule-text-field" placeholder="Przykładowe czynności">{{ h.get('prace', '') }}</textarea>
+                 class="form-field__input u-csp-340 schedule-text-field" placeholder="{{ t('Przykładowe czynności') }}">{{ h.get('prace', '') }}</textarea>
           <div class="u-flex--gap-05 u-csp-341 schedule-days-wrapper">
             <input type="number" name="dni_{{ e.id }}" value="{{ h.get('dni', '') }}"
                    class="form-field__input u-csp-342 schedule-days-field" min="0" max="60" placeholder="0">
-            <span class="u-meta u-nowrap">dni</span>
+            <span class="u-meta u-nowrap">{{ t('dni') }}</span>
           </div>
         </div>
       </div>
@@ -47,8 +47,8 @@
     </div>
 
     <div class="u-csp-326">
-      <a href="{{ url_for('internships.kreator_firma', enrollment_id=zapis.id) }}" class="przycisk przycisk--drugorzedny">← Wróć</a>
-      <button type="submit" class="przycisk przycisk--glowny">Zapisz schedule →</button>
+      <a href="{{ url_for('internships.kreator_firma', enrollment_id=zapis.id) }}" class="przycisk przycisk--drugorzedny">← {{ t('Wróć') }}</a>
+      <button type="submit" class="przycisk przycisk--glowny">{{ t('Zapisz harmonogram') }} →</button>
     </div>
   </form>
 

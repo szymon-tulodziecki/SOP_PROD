@@ -62,7 +62,9 @@ def create_app():
     register_i18n(app)
 
     login_manager.login_view = 'auth.logowanie'
+    from core.i18n import t
     login_manager.login_message = 'Zaloguj się, aby uzyskać dostęp do tej strony.'
+    login_manager.localize_callback = t
     login_manager.login_message_category = 'warning'
     with app.app_context():
         from core.auth  import create_auth_blueprint
