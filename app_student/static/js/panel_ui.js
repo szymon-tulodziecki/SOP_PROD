@@ -54,7 +54,7 @@
     if (labelId) {
       const label = document.getElementById(labelId);
       if (label) {
-        label.textContent = event.target.files?.[0]?.name || 'Wybierz plik CSV';
+        label.textContent = event.target.files?.[0]?.name || (window.jsT || ((s) => s))('Wybierz plik CSV');
       }
     }
   });

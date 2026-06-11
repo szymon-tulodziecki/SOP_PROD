@@ -1,16 +1,18 @@
 ﻿(function () {
+  const T = window.jsT || ((s) => s);
+
   const stepLabels = {
-    STANDARD: ['2. Miejsce praktyki', '3. Harmonogram', '4. Wysłanie'],
-    EMPLOYMENT: ['2. Wniosek', '3. Komisja', '4. Dyrektor'],
+    STANDARD: [T('2. Miejsce praktyki'), T('3. Harmonogram'), T('4. Wysłanie')],
+    EMPLOYMENT: [T('2. Wniosek'), T('3. Komisja'), T('4. Dyrektor')],
   };
 
   const previews = {
-    STANDARD: 'Ścieżka A: Odbędziesz praktykę w zakładzie pracy na podstawie porozumienia z uczelnią. Wymagane: Porozumienie (zał. 1), Program (zał. 2), Indywidualny Program (zał. 2a). Po zakończeniu: Dziennik praktyki (zał. 6), Sprawozdanie (zał. 7), Potwierdzenie efektów uczenia się (zał. 4).',
-    EMPLOYMENT: 'Ścieżka B: Złożysz wniosek (zał. 4b) o uznanie trzynastu efektów uczenia się na podstawie doświadczenia zawodowego. Komisja ds. praktyk wyda opinię (zał. 4a), a Dyrektor Instytutu podejmie ostateczną decyzję. Wybierz poniżej rodzaj zatrudnienia - od tego zależy, jakie dokumenty musisz dołączyć.',
+    STANDARD: T('Ścieżka A: Odbędziesz praktykę w zakładzie pracy na podstawie porozumienia z uczelnią. Wymagane: Porozumienie (zał. 1), Program (zał. 2), Indywidualny Program (zał. 2a). Po zakończeniu: Dziennik praktyki (zał. 6), Sprawozdanie (zał. 7), Potwierdzenie efektów uczenia się (zał. 4).'),
+    EMPLOYMENT: T('Ścieżka B: Złożysz wniosek (zał. 4b) o uznanie trzynastu efektów uczenia się na podstawie doświadczenia zawodowego. Komisja ds. praktyk wyda opinię (zał. 4a), a Dyrektor Instytutu podejmie ostateczną decyzję. Wybierz poniżej rodzaj zatrudnienia - od tego zależy, jakie dokumenty musisz dołączyć.'),
   };
 
   function updateStepBar(value) {
-    const labels = stepLabels[value] || ['2. Dane', '3. Harmonogram', '4. Wysłanie'];
+    const labels = stepLabels[value] || [T('2. Dane'), T('3. Harmonogram'), T('4. Wysłanie')];
     const stepBar = document.getElementById('pasek-krokow');
     if (!stepBar) return;
 

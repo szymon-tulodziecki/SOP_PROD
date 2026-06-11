@@ -91,8 +91,12 @@ def create_app():
     from core.i18n import register_i18n
     register_i18n(app)
 
-    @app.route('/assets/student.css', endpoint='student_css_bundle', methods=['GET'])
-    def student_css_bundle():
+    app.config['CSS_BUNDLE_V'] = '20260611-1'
+    _css_bundle_cache = {}
+
+    def _build_css_bundle():
+        """Skleja bundle raz na proces — kolejne żądania idą z pamięci."""
+        import gzip as _gzip
         css_root = _Path(__file__).parent.parent / 'core' / 'static' / 'css' / 'modul'
         local_css = _Path(__file__).parent / 'static' / 'css' / 'student.css'
         modules = [
@@ -109,20 +113,24 @@ def create_app():
             'dashboard.css',
             'utils.css',
         ]
-        parts = []
-        for module_name in modules:
-            parts.append((css_root / module_name).read_text(encoding='utf-8'))
+        parts = [(css_root / m).read_text(encoding='utf-8') for m in modules]
         parts.append(local_css.read_text(encoding='utf-8'))
+        raw = '\n'.join(parts).encode('utf-8')
+        _css_bundle_cache['raw'] = raw
+        _css_bundle_cache['gz'] = _gzip.compress(raw, compresslevel=9)
+
+    @app.route('/assets/student.css', endpoint='student_css_bundle', methods=['GET'])
+    def student_css_bundle():
+        if 'raw' not in _css_bundle_cache:
+            _build_css_bundle()
 
         from flask import request as _req
-        import gzip as _gzip
-        raw = '\n'.join(parts).encode('utf-8')
         if 'gzip' in _req.headers.get('Accept-Encoding', ''):
-            body = _gzip.compress(raw, compresslevel=6)
-            response = Response(body, mimetype='text/css')
+            response = Response(_css_bundle_cache['gz'], mimetype='text/css')
             response.headers['Content-Encoding'] = 'gzip'
         else:
-            response = Response(raw, mimetype='text/css')
+            response = Response(_css_bundle_cache['raw'], mimetype='text/css')
+        response.headers['Vary'] = 'Accept-Encoding'
         response.cache_control.public = True
         response.cache_control.max_age = 31536000
         response.cache_control.immutable = True

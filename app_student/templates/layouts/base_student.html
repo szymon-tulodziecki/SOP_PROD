@@ -6,8 +6,7 @@
   {% set _csrf_token = csrf_token() %}
   <meta name="csrf-token" content="{{ _csrf_token }}">
   <title>{% block tytul %}{{ t('Panel studenta') }}{% endblock %} — ANS Elbląg</title>
-  <link rel="preload" href="{{ url_for('student_css_bundle', v='20260610-25') }}" as="style">
-  <link rel="stylesheet" href="{{ url_for('student_css_bundle', v='20260610-25') }}">
+  <link rel="stylesheet" href="{{ url_for('student_css_bundle', v=config.CSS_BUNDLE_V) }}">
 </head>
 <body class="panel-body">
 
@@ -117,8 +116,10 @@
       </div>
     {% endif %}
   {% endwith %}
-  <script src="{{ url_for('static', filename='js/panel_ui.js', v='20260430-3') }}"></script>
-  <script src="{{ url_for('static', filename='js/pdf_generator.js') }}"></script>
+  <script type="application/json" id="js-i18n">{{ js_i18n | tojson }}</script>
+  <script src="{{ url_for('static', filename='js/i18n.js', v='20260611-1') }}"></script>
+  <script src="{{ url_for('static', filename='js/panel_ui.js', v='20260611-1') }}"></script>
+  <script src="{{ url_for('static', filename='js/pdf_generator.js', v='20260611-1') }}"></script>
   {% block scripts_extra %}{% endblock %}
 </body>
 </html>

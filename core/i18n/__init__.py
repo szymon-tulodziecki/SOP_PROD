@@ -73,6 +73,32 @@ class lazy_t:
         return str(self) % args
 
 
+# Teksty używane w plikach static/js — wstrzykiwane do szablonów jako JSON
+# (tag <script type="application/json" id="js-i18n">), czytane przez js/i18n.js.
+JS_STRINGS = (
+    # kreator: krok 1 (pasek kroków + opisy ścieżek)
+    '2. Miejsce praktyki', '3. Harmonogram', '4. Wysłanie',
+    '2. Wniosek', '3. Komisja', '4. Dyrektor', '2. Dane',
+    'Ścieżka A: Odbędziesz praktykę w zakładzie pracy na podstawie porozumienia z uczelnią. Wymagane: Porozumienie (zał. 1), Program (zał. 2), Indywidualny Program (zał. 2a). Po zakończeniu: Dziennik praktyki (zał. 6), Sprawozdanie (zał. 7), Potwierdzenie efektów uczenia się (zał. 4).',
+    'Ścieżka B: Złożysz wniosek (zał. 4b) o uznanie trzynastu efektów uczenia się na podstawie doświadczenia zawodowego. Komisja ds. praktyk wyda opinię (zał. 4a), a Dyrektor Instytutu podejmie ostateczną decyzję. Wybierz poniżej rodzaj zatrudnienia - od tego zależy, jakie dokumenty musisz dołączyć.',
+    # kreator: krok 2B/C (upload + licznik)
+    'min. 500 znaków', 'Usuń plik', 'Nie udało się pobrać listy załączników.',
+    'Wybierz plik.', 'Wysyłanie...', 'Błąd', 'Nie udało się przesłać.',
+    'Wybierz plik PDF lub przeciągnij tutaj', 'Wybierz plik PDF',
+    'Plik dodany pomyślnie.', 'Błąd połączenia.',
+    'Nie udało się usunąć pliku.', 'Plik usunięty.',
+    # generator PDF (student)
+    'Generowanie...', 'Generowanie wymuszone...', 'Lista brakujących pól:',
+    'Czy mimo to wygenerować dokument?', 'Błąd serwera', 'Błąd generowania PDF',
+    # dziennik PDF (admin)
+    'Pobierz PDF', 'Gotowe!', 'Błąd kompilacji', 'sprawdź logi workera',
+    'Kompilacja...', 'Zlecam generowanie PDF...', 'Kompilacja w toku...',
+    'Błąd zlecenia', 'nieznany', 'Błąd połączenia z serwerem.',
+    # panel_ui (obie apki)
+    'Wybierz plik CSV',
+)
+
+
 def register_i18n(app) -> None:
     """Rejestruje route zmiany języka i wstrzykuje helpery do szablonów."""
 
@@ -88,4 +114,5 @@ def register_i18n(app) -> None:
             't': t,
             'aktualny_jezyk': get_lang(),
             'dostepne_jezyki': SUPPORTED_LANGS,
+            'js_i18n': {s: t(s) for s in JS_STRINGS},
         }

@@ -2,8 +2,7 @@
  * Generuje dokument PDF. Obsługuje bezpośrednie pobieranie lub ostrzeżenia o brakach danych.
  */
 async function generujDokument(btnElement, urlGeneruj, isForced = false) {
-    const messages = window.studentI18n?.pdf || {};
-    const msg = (key, fallback) => messages[key] || fallback;
+    const T = window.jsT || ((s) => s);
     const label = btnElement.querySelector('[data-pdf-label]');
     const spinner = btnElement.querySelector('[data-pdf-spinner]');
 
@@ -13,8 +12,8 @@ async function generujDokument(btnElement, urlGeneruj, isForced = false) {
     if (spinner) {
         spinner.style.display = 'inline';
         spinner.textContent = isForced
-            ? msg('forcedGenerating', 'Generowanie wymuszone...')
-            : msg('generating', 'Generowanie...');
+            ? T('Generowanie wymuszone...')
+            : T('Generowanie...');
     }
 
     try {
@@ -41,7 +40,7 @@ async function generujDokument(btnElement, urlGeneruj, isForced = false) {
             if (data.requires_confirmation) {
                 const listaBrakow = data.warnings.map(w => `• ${w}`).join('\n');
                 const userConfirmed = confirm(
-                    `${data.message}\n\n${msg('missingFields', 'Lista brakujących pól:')}\n${listaBrakow}\n\n${msg('confirmIncomplete', 'Czy mimo to wygenerować dokument?')}`
+                    `${data.message}\n\n${T('Lista brakujących pól:')}\n${listaBrakow}\n\n${T('Czy mimo to wygenerować dokument?')}`
                 );
 
                 if (userConfirmed) {
@@ -58,7 +57,7 @@ async function generujDokument(btnElement, urlGeneruj, isForced = false) {
         }
 
         // SCENARIUSZ B: Serwer zwraca plik PDF (Blob)
-        if (!resp.ok) throw new Error(`${msg('serverError', 'Błąd serwera')}: ${resp.status}`);
+        if (!resp.ok) throw new Error(`${T('Błąd serwera')}: ${resp.status}`);
 
         const blob = await resp.blob();
         const url = URL.createObjectURL(blob);
@@ -81,7 +80,7 @@ async function generujDokument(btnElement, urlGeneruj, isForced = false) {
         }, 100);
 
     } catch (err) {
-        alert(`${msg('pdfError', 'Błąd generowania PDF')}: ${err.message}`);
+        alert(`${T('Błąd generowania PDF')}: ${err.message}`);
     } finally {
         // Resetujemy przycisk tylko jeśli nie jesteśmy w trakcie rekurencyjnego wywołania "force"
         if (!isForced || !btnElement.disabled) {

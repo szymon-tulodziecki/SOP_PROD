@@ -1,6 +1,12 @@
 {% extends "layouts/base_auth.html" %}
 {% block tytul %}{{ t('Logowanie') }}{% endblock %}
 
+{# Rozgrzewamy cache przeglądarki bundlem CSS panelu — bez tego pierwsze wejście
+   po zalogowaniu renderuje się chwilę bez stylów (FOUC). #}
+{% block head_extra %}
+<link rel="prefetch" href="{{ url_for('student_css_bundle', v=config.CSS_BUNDLE_V) }}" as="style">
+{% endblock %}
+
 {% block body %}
 <a href="#logowanie" class="skip-link">{{ t('Przejdź do logowania') }}</a>
 

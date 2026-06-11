@@ -2,6 +2,8 @@
   const btn = document.getElementById('btn-pdf');
   if (!btn) return;
 
+  const T = window.jsT || ((s) => s);
+
   const eid = btn.dataset.enrollmentId;
   const URL_ZLEC    = `/dzienniki/zapis/${eid}/pdf`;
   const URL_STATUS  = (id) => `/dzienniki/zapis/${eid}/pdf/status/${id}`;
@@ -18,7 +20,7 @@
   function blad(msg) {
     clearInterval(pollInterval);
     btn.disabled = false;
-    btnLabel.textContent = 'Pobierz PDF';
+    btnLabel.textContent = T('Pobierz PDF');
     statusEl.textContent = msg;
     statusEl.style.color = 'var(--kolor-blad)';
   }
@@ -29,15 +31,15 @@
       .then((data) => {
         if (data.status === 'SUCCESS') {
           clearInterval(pollInterval);
-          statusEl.textContent = 'Gotowe!';
-          btnLabel.textContent = 'Pobierz PDF';
+          statusEl.textContent = T('Gotowe!');
+          btnLabel.textContent = T('Pobierz PDF');
           btn.disabled = false;
           window.location.href = URL_POBIERZ(taskId);
         } else if (data.status === 'FAILURE') {
           clearInterval(pollInterval);
-          blad('Błąd kompilacji: ' + (data.error || 'sprawdź logi workera'));
+          blad(T('Błąd kompilacji') + ': ' + (data.error || T('sprawdź logi workera')));
         } else {
-          statusEl.textContent = `Kompilacja... ${data.progress || 0}%`;
+          statusEl.textContent = `${T('Kompilacja...')} ${data.progress || 0}%`;
         }
       })
       .catch(() => {});
@@ -45,9 +47,9 @@
 
   function zlecPDF() {
     btn.disabled = true;
-    btnLabel.textContent = 'Generowanie...';
+    btnLabel.textContent = T('Generowanie...');
     statusEl.style.display = 'inline';
-    statusEl.textContent = 'Zlecam generowanie PDF...';
+    statusEl.textContent = T('Zlecam generowanie PDF...');
 
     fetch(URL_ZLEC, {
       method: 'POST',
@@ -56,13 +58,13 @@
       .then((r) => r.json())
       .then((data) => {
         if (data.task_id) {
-          statusEl.textContent = 'Kompilacja w toku...';
+          statusEl.textContent = T('Kompilacja w toku...');
           pollInterval = setInterval(() => sprawdzStatus(data.task_id), 2000);
         } else {
-          blad('Błąd zlecenia: ' + (data.error || 'nieznany'));
+          blad(T('Błąd zlecenia') + ': ' + (data.error || T('nieznany')));
         }
       })
-      .catch(() => blad('Błąd połączenia z serwerem.'));
+      .catch(() => blad(T('Błąd połączenia z serwerem.')));
   }
 
   btn.addEventListener('click', zlecPDF);

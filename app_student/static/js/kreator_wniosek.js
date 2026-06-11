@@ -1,4 +1,6 @@
 (function () {
+  var T = window.jsT || function (s) { return s; };
+
   function csrfToken() {
     var meta = document.querySelector('meta[name="csrf-token"]');
     return meta ? meta.getAttribute('content') : '';
@@ -16,7 +18,7 @@
     var counter = document.getElementById('uzasadnienie_licznik');
     if (!textarea || !counter) return;
     var count = textarea.value.length;
-    counter.textContent = count + ' / min. 500 znakow';
+    counter.textContent = count + ' / ' + T('min. 500 znaków');
     counter.style.color = count < 500 ? '#dc2626' : 'var(--kolor-tekst-trzeciorzed)';
   }
 
@@ -43,8 +45,8 @@
       var button = document.createElement('button');
       button.className = 'u-csp-336';
       button.type = 'button';
-      button.title = 'Usun plik';
-      button.setAttribute('aria-label', 'Usun plik');
+      button.title = T('Usuń plik');
+      button.setAttribute('aria-label', T('Usuń plik'));
       button.textContent = 'x';
       button.addEventListener('click', function () {
         removeFile(file.id, files, uploadRoot);
@@ -72,7 +74,7 @@
       });
       renderFiles(files, uploadRoot);
     } catch (error) {
-      setStatus('Nie udalo sie pobrac listy zalacznikow.', '#dc2626');
+      setStatus(T('Nie udało się pobrać listy załączników.'), '#dc2626');
     }
   }
 
@@ -82,7 +84,7 @@
     if (!fileInput || !typeSelect) return;
 
     if (!fileInput.files.length) {
-      setStatus('Wybierz plik.', '#dc2626');
+      setStatus(T('Wybierz plik.'), '#dc2626');
       return;
     }
 
@@ -91,7 +93,7 @@
     formData.append('document_type', typeSelect.value);
     formData.append('csrf_token', csrfToken());
 
-    setStatus('Wysylanie...', '#6b7280');
+    setStatus(T('Wysyłanie...'), '#6b7280');
 
     try {
       var response = await fetch(uploadRoot.dataset.uploadUrl, {
@@ -102,7 +104,7 @@
       var data = await response.json();
 
       if (!response.ok) {
-        setStatus('Blad: ' + (data.error || 'Nie udalo sie przeslac.'), '#dc2626');
+        setStatus(T('Błąd') + ': ' + (data.error || T('Nie udało się przesłać.')), '#dc2626');
         return;
       }
 
@@ -114,10 +116,10 @@
       renderFiles(files, uploadRoot);
       fileInput.value = '';
       var fileLabel = document.getElementById('upload-file-label');
-      if (fileLabel) fileLabel.textContent = 'Wybierz plik PDF lub przeciagnij tutaj';
-      setStatus('Plik dodany pomyslnie.', '#059669');
+      if (fileLabel) fileLabel.textContent = T('Wybierz plik PDF lub przeciągnij tutaj');
+      setStatus(T('Plik dodany pomyślnie.'), '#059669');
     } catch (error) {
-      setStatus('Blad polaczenia.', '#dc2626');
+      setStatus(T('Błąd połączenia.'), '#dc2626');
     }
   }
 
@@ -132,15 +134,15 @@
         body: formData
       });
       if (!response.ok) {
-        setStatus('Nie udalo sie usunac pliku.', '#dc2626');
+        setStatus(T('Nie udało się usunąć pliku.'), '#dc2626');
         return;
       }
       var index = files.findIndex(function (file) { return file.id === documentId; });
       if (index >= 0) files.splice(index, 1);
       renderFiles(files, uploadRoot);
-      setStatus('Plik usuniety.', '#059669');
+      setStatus(T('Plik usunięty.'), '#059669');
     } catch (error) {
-      setStatus('Blad polaczenia.', '#dc2626');
+      setStatus(T('Błąd połączenia.'), '#dc2626');
     }
   }
 
@@ -160,7 +162,7 @@
     }
     if (fileInput && fileLabel) {
       fileInput.addEventListener('change', function () {
-        fileLabel.textContent = fileInput.files[0] ? fileInput.files[0].name : 'Wybierz plik PDF';
+        fileLabel.textContent = fileInput.files[0] ? fileInput.files[0].name : T('Wybierz plik PDF');
       });
     }
     if (uploadButton) {
