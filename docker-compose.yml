@@ -1,3 +1,11 @@
+# Globalny limit rozmiaru logów kontenerów (json-file driver).
+# Każdy kontener: max 10 MB × 3 pliki = ~30 MB.
+x-default-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 secrets:
   secret_key:
     file: ./secrets/secret_key.txt
@@ -19,6 +27,7 @@ services:
     image: postgres:16-alpine
     container_name: sop_db
     restart: unless-stopped
+    logging: *default-logging
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-ans_admin}
       POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
@@ -29,6 +38,7 @@ services:
       - internal
     volumes:
       - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./database/seed_admins.sql:/docker-entrypoint-initdb.d/zz_seed_admins.sql:ro
       - pgdata:/var/lib/postgresql/data
     deploy:
       resources:
@@ -40,6 +50,7 @@ services:
     image: redis:7-alpine
     container_name: sop_redis
     restart: unless-stopped
+    logging: *default-logging
     networks:
       - internal
     volumes:
@@ -56,6 +67,7 @@ services:
       dockerfile: app_admin/Dockerfile
     container_name: sop_admin
     restart: unless-stopped
+    logging: *default-logging
     environment:
       - FLASK_ENV=${FLASK_ENV:-production}
       - POSTGRES_USER=${POSTGRES_USER:-ans_admin}
@@ -92,10 +104,10 @@ services:
       - pdf_data:/app/pdf_output
       - ./app_admin:/app/app_admin:ro
       - ./core:/app/core:ro
+      - admin_logs:/app/app_admin/logs
     read_only: true
     tmpfs:
       - /tmp
-      - /app/app_admin/logs
     security_opt:
       - no-new-privileges:true
     cap_drop:
@@ -120,6 +132,7 @@ services:
       dockerfile: app_student/Dockerfile
     container_name: sop_student
     restart: unless-stopped
+    logging: *default-logging
     environment:
       - FLASK_ENV=${FLASK_ENV:-production}
       - POSTGRES_USER=${POSTGRES_USER:-ans_admin}
@@ -156,6 +169,7 @@ services:
       - pdf_data:/app/pdf_output
       - ./app_student:/app/app_student:ro
       - ./core:/app/core:ro
+      - student_logs:/app/app_student/logs
     read_only: true
     tmpfs:
       - /tmp
@@ -183,6 +197,7 @@ services:
       dockerfile: celery_worker/Dockerfile
     container_name: sop_celery_worker
     restart: unless-stopped
+    logging: *default-logging
     environment:
       - FLASK_ENV=${FLASK_ENV:-production}
       - POSTGRES_USER=${POSTGRES_USER:-ans_admin}
@@ -229,6 +244,7 @@ services:
       dockerfile: celery_worker/Dockerfile
     container_name: sop_celery_beat
     restart: unless-stopped
+    logging: *default-logging
     environment:
       - FLASK_ENV=${FLASK_ENV:-production}
       - POSTGRES_USER=${POSTGRES_USER:-ans_admin}
@@ -271,6 +287,7 @@ services:
       dockerfile: Dockerfile
     container_name: sop_fileserver
     restart: unless-stopped
+    logging: *default-logging
     secrets:
       - fileserver_api_key
     networks:
@@ -297,6 +314,7 @@ services:
       dockerfile: Dockerfile
     container_name: sop_tex_service
     restart: unless-stopped
+    logging: *default-logging
     environment:
       - TZ=Europe/Warsaw
       - TEXMFVAR=/tmp/texmf-var
@@ -343,3 +361,5 @@ volumes:
   pdf_data:
   fileserver_data:
   redis_data:
+  admin_logs:
+  student_logs:

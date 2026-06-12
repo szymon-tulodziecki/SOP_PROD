@@ -21,6 +21,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+RUN mkdir -p /app/app_admin/logs
+
 # Bezpieczeństwo: dedykowany nieuprzywilejowany użytkownik (nie root)
 RUN addgroup --system appgroup \
     && adduser --system --ingroup appgroup --no-create-home appuser \
