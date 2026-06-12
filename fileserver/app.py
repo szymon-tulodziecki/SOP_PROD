@@ -9,6 +9,7 @@ API (chronione X-API-Key):
   GET    /files/<filename>   — pobierz plik
   DELETE /files/<filename>   — usuń plik
 """
+import hmac
 import os
 from pathlib import Path
 from flask import Flask, request, Response, jsonify, abort
@@ -41,7 +42,8 @@ if not API_KEY:
 
 
 def _auth():
-    if request.headers.get('X-API-Key') != API_KEY:
+    provided = request.headers.get('X-API-Key', '')
+    if not hmac.compare_digest(provided, API_KEY):
         abort(403)
 
 

@@ -208,14 +208,16 @@ def _handle_upload(enrollment_id, access_checker):
         return jsonify({'error': 'Weryfikacja formatu pliku chwilowo niedostępna.'}), 503
     except ValueError as exc:
         return jsonify({'error': str(exc)}), 400
-    except Exception as exc:
-        return jsonify({'error': f'Błąd podczas zapisywania: {str(exc)}'}), 500
+    except Exception:
+        logger.exception("Upload failed for enrollment %s", enrollment_id)
+        return jsonify({'error': 'Błąd podczas zapisywania pliku.'}), 500
     try:
         _repo_docs.zapisz(doc)
         db.session.commit()
-    except Exception as exc:
+    except Exception:
         db.session.rollback()
-        return jsonify({'error': f'Błąd podczas zapisywania: {str(exc)}'}), 500
+        logger.exception("Upload DB save failed for enrollment %s", enrollment_id)
+        return jsonify({'error': 'Błąd podczas zapisywania pliku.'}), 500
     return jsonify({'success': True, 'document_id': str(doc.id),
                     'filename': doc.original_filename, 'size': doc.file_size})
 
@@ -250,9 +252,10 @@ def _handle_delete(document_id, access_checker):
         doc.is_deleted = True
         db.session.commit()
         return jsonify({'success': True})
-    except Exception as e:
+    except Exception:
         db.session.rollback()
-        return jsonify({'error': str(e)}), 500
+        logger.exception("Delete failed for document %s", document_id)
+        return jsonify({'error': 'Błąd podczas usuwania pliku.'}), 500
 
 
 def _handle_list(enrollment_id, access_checker):

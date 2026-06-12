@@ -41,6 +41,11 @@ _MS_SCOPES = ['User.Read']
 _OAUTH_COOKIE_MAX_AGE = 600
 
 
+def _is_safe_next(next_page: str) -> bool:
+    """Tylko ścieżki względne w obrębie aplikacji — '//host' to URL do innej domeny (open redirect)."""
+    return bool(next_page) and next_page.startswith('/') and not next_page.startswith('//')
+
+
 def _oauth_serializer() -> URLSafeTimedSerializer:
     return URLSafeTimedSerializer(current_app.secret_key, salt='oauth-state')
 
@@ -203,7 +208,7 @@ def _ms_callback_handler(allowed_roles):
     session.clear()
     login_user(user, remember=False)
     current_app.logger.info('Microsoft login succeeded: %s (role: %s)', ms_email, user.role)
-    target = next_page if next_page and next_page.startswith('/') else url_for(_ROUTE_DASHBOARD)
+    target = next_page if _is_safe_next(next_page) else url_for(_ROUTE_DASHBOARD)
     return _redirect_clearing_oauth(target)
 
 
@@ -229,7 +234,7 @@ def create_auth_blueprint(
         state = secrets.token_urlsafe(32)
         session['oauth_state'] = state
         next_page = request.args.get('next', '')
-        if next_page.startswith('/'):
+        if _is_safe_next(next_page):
             session['oauth_next'] = next_page
 
         try:
@@ -245,7 +250,7 @@ def create_auth_blueprint(
 
         response = make_response(redirect(auth_url))
         _set_oauth_cookie(response, 'state', state)
-        if next_page.startswith('/'):
+        if _is_safe_next(next_page):
             _set_oauth_cookie(response, 'next', next_page)
         return response
 
