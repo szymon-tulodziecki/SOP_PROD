@@ -1,6 +1,7 @@
 ﻿import os
 
 from flask import Flask
+from werkzeug.middleware.proxy_fix import ProxyFix
 from jinja2 import select_autoescape
 from core.extensions import db, login_manager, csrf, limiter
 from core.error_handlers import register_error_handlers
@@ -12,6 +13,8 @@ def create_app():
     from pathlib import Path as _Path
     from flask import Blueprint as _Blueprint
     app = Flask(__name__)
+    # Za nginxem z prefiksem (/praktyki-admin/) — bez ProxyFix url_for buduje złe linki
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
     # ── Core static assets (CSS design system + templates) ──────
     core_bp = _Blueprint(

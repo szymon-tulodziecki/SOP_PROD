@@ -1,4 +1,4 @@
-﻿\documentclass[11pt,a4paper]{article}
+\documentclass[11pt,a4paper]{article}
 \usepackage{fontspec}
 \usepackage{polyglossia}
 \setmainlanguage{polish}
@@ -13,12 +13,12 @@
 \begin{document}
 
 \begin{flushright}
-ZaĹ‚Ä…cznik nr 8
+Załącznik nr 8
 \end{flushright}
 
 \vspace{-1em}
 
-\noindent \textbf{Akademia Nauk Stosowanych w ElblÄ…gu} \\
+\noindent \textbf{Akademia Nauk Stosowanych w Elblągu} \\
 \textbf{Instytut Informatyki Stosowanej im. Krzysztofa Brzeskiego}
 
 \vspace{1em}
@@ -28,7 +28,7 @@ ZaĹ‚Ä…cznik nr 8
 \vspace{1em}
 
 \begin{center}
-\textbf{\large PROTOKĂ“Ĺ ZALICZENIA PRAKTYKI ZAWODOWEJ}
+\textbf{\large PROTOKÓŁ ZALICZENIA PRAKTYKI ZAWODOWEJ}
 \end{center}
 
 \noindent\textbf{Miejsce i okres realizacji:} \\
@@ -39,34 +39,34 @@ ZaĹ‚Ä…cznik nr 8
 
 \vspace{1em}
 
+<<% if zapis.path == 'STANDARD' %>>
 \begin{tabular}{|p{9cm}|p{7cm}|}
 \hline
-Ocena za report S =
-<<% if zapis.report_grade %>>
-\textbf{<< zapis.report_grade >>}
-<<% else %>>
-\dotfill
-<<% endif %>>
+Ocena za sprawozdanie S =
+<<% if zapis.report_grade %>>\textbf{<< zapis.report_grade >>}<<% else %>>\dotfill<<% endif %>>
 &
 Ocena U (opiekun uczelniany) =
-<<% if zapis.supervisor_grade %>>
-\textbf{<< zapis.supervisor_grade >>}
-<<% else %>>
-\dotfill
-<<% endif %>>
+<<% if zapis.supervisor_grade %>>\textbf{<< zapis.supervisor_grade >>}<<% else %>>\dotfill<<% endif %>>
 \\ \hline
-Ocena Z (opiekun zakĹ‚adowy) =
-<<% if zapis.workplace_grade %>>
-\textbf{<< zapis.workplace_grade >>}
+Ocena Z (opiekun zakładowy) =
+<<% if zapis.workplace_grade %>>\textbf{<< zapis.workplace_grade >>}<<% else %>>\dotfill<<% endif %>>
+& Data zaliczenia: \dotfill \\ \hline
+\end{tabular}
 <<% else %>>
-\dotfill
-<<% endif %>>
+\begin{tabular}{|p{9cm}|p{7cm}|}
+\hline
+Ocena za sprawozdanie S =
+<<% if zapis.report_grade %>>\textbf{<< zapis.report_grade >>}<<% else %>>\dotfill<<% endif %>>
 & Data zaliczenia: \dotfill \\ \hline
 \end{tabular}
 
+\vspace{0.5em}
+\noindent\textit{\small Ścieżka uznania efektów uczenia się --- bez oceny opiekuna uczelnianego (U) i zakładowego (Z).}
+<<% endif %>>
+
 \vspace{1em}
 
-\noindent\textbf{Pytania egzaminacyjne i assessments:}
+\noindent\textbf{Pytania egzaminacyjne i oceny:}
 
 \begin{tabular}{|p{0.5cm}|p{10cm}|p{3cm}|}
 \hline
@@ -74,31 +74,38 @@ Ocena Z (opiekun zakĹ‚adowy) =
 1 & <<% if zapis.exam_question_1 %>><< zapis.exam_question_1|s >><<% endif %>> & <<% if zapis.exam_grade_1 %>>\textbf{<< zapis.exam_grade_1 >>}<<% endif %>> \\ \hline
 2 & <<% if zapis.exam_question_2 %>><< zapis.exam_question_2|s >><<% endif %>> & <<% if zapis.exam_grade_2 %>>\textbf{<< zapis.exam_grade_2 >>}<<% endif %>> \\ \hline
 3 & <<% if zapis.exam_question_3 %>><< zapis.exam_question_3|s >><<% endif %>> & <<% if zapis.exam_grade_3 %>>\textbf{<< zapis.exam_grade_3 >>}<<% endif %>> \\ \hline
-\multicolumn{2}{|r|}{\textbf{Ĺšrednia E}} &
+\multicolumn{2}{|r|}{\textbf{Średnia E}} &
 <<% if zapis.exam_grade_1 and zapis.exam_grade_2 and zapis.exam_grade_3 %>>
 \textbf{<< "%.2f"|format((zapis.exam_grade_1 + zapis.exam_grade_2 + zapis.exam_grade_3) / 3.0) >>}
 <<% else %>>\dotfill<<% endif %>> \\ \hline
-\multicolumn{2}{|r|}{\textbf{Ocena koĹ„cowa K = 0,4E + 0,1S + 0,2U + 0,3Z}} &
+<<% if zapis.path == 'STANDARD' %>>
+\multicolumn{2}{|r|}{\textbf{Ocena końcowa K = 0,4E + 0,1S + 0,2U + 0,3Z}} &
 <<% if zapis.exam_grade_1 and zapis.exam_grade_2 and zapis.exam_grade_3 and zapis.report_grade and zapis.supervisor_grade and zapis.workplace_grade %>>
 \textbf{<< "%.2f"|format(0.4 * ((zapis.exam_grade_1 + zapis.exam_grade_2 + zapis.exam_grade_3) / 3.0) + 0.1 * zapis.report_grade + 0.2 * zapis.supervisor_grade + 0.3 * zapis.workplace_grade) >>}
 <<% else %>>\dotfill<<% endif %>> \\ \hline
+<<% else %>>
+\multicolumn{2}{|r|}{\textbf{Ocena końcowa K = 0,7E + 0,3S}} &
+<<% if zapis.exam_grade_1 and zapis.exam_grade_2 and zapis.exam_grade_3 and zapis.report_grade %>>
+\textbf{<< "%.2f"|format(0.7 * ((zapis.exam_grade_1 + zapis.exam_grade_2 + zapis.exam_grade_3) / 3.0) + 0.3 * zapis.report_grade) >>}
+<<% else %>>\dotfill<<% endif %>> \\ \hline
+<<% endif %>>
 \end{tabular}
 
 \vspace{1.5em}
 
-\noindent\textbf{SkĹ‚ad Komisji:}
+\noindent\textbf{Skład Komisji:}
 
 \vspace{0.5em}
 
-\noindent 1. <<% if zapis.komisja_przewodniczacy %>>\textbf{<< zapis.komisja_przewodniczacy|s >>}<<% else %>>\dotfill<<% endif %>> \quad --- PrzewodniczÄ…cy Komisji
+\noindent 1. <<% if zapis.komisja_przewodniczacy %>>\textbf{<< zapis.komisja_przewodniczacy|s >>}<<% else %>>\dotfill<<% endif %>> \quad --- Przewodniczący Komisji
 
-\noindent 2. <<% if zapis.komisja_czlonek_2 %>>\textbf{<< zapis.komisja_czlonek_2|s >>}<<% elif zapis.supervisor %>>\textbf{<< zapis.supervisor.first_name|s >> << zapis.supervisor.last_name|s >>}<<% else %>>\dotfill<<% endif %>> \quad --- Uczelniany opiekun praktyki
+\noindent 2. <<% if zapis.komisja_czlonek_2 %>>\textbf{<< zapis.komisja_czlonek_2|s >>}<<% elif zapis.path == 'STANDARD' and zapis.supervisor %>>\textbf{<< zapis.supervisor.first_name|s >> << zapis.supervisor.last_name|s >>}<<% else %>>\dotfill<<% endif %>> \quad --- <<% if zapis.path == 'STANDARD' %>>Uczelniany opiekun praktyki<<% else %>>Członek Komisji<<% endif %>>
 
 \noindent 3. <<% if zapis.komisja_czlonek_3 %>>\textbf{<< zapis.komisja_czlonek_3|s >>}<<% else %>>\dotfill<<% endif %>>
 
 \vspace{2em}
 
-\noindent Zaliczam praktykÄ™ zawodowÄ… na ocenÄ™ (K): \dotfill
+\noindent Zaliczam praktykę zawodową na ocenę (K): \dotfill
 
 \vspace{2em}
 
@@ -106,13 +113,13 @@ Ocena Z (opiekun zakĹ‚adowy) =
 \begin{minipage}[t]{0.45\textwidth}
 \centering
 \dotfill \\
-{\small Podpis PrzewodniczÄ…cego Komisji}
+{\small Podpis Przewodniczącego Komisji}
 \end{minipage}
 \hfill
 \begin{minipage}[t]{0.45\textwidth}
 \centering
 \dotfill \\
-{\small Podpis opiekuna uczelnianego}
+{\small <<% if zapis.path == 'STANDARD' %>>Podpis opiekuna uczelnianego<<% else %>>Podpis członka Komisji<<% endif %>>}
 \end{minipage}
 
 \end{document}

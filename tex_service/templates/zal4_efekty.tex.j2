@@ -1,4 +1,4 @@
-﻿\documentclass[11pt,a4paper]{article}
+\documentclass[11pt,a4paper]{article}
 \usepackage{fontspec}
 \usepackage{polyglossia}
 \setmainlanguage{polish}
@@ -12,13 +12,13 @@
 \begin{document}
 
 \begin{flushright}
-ZaĹ‚. nr 4
+Zał. nr 4
 \end{flushright}
 
 \vspace{-1em}
 \begin{center}
 \textbf{\large POTWIERDZENIE UZYSKANIA} \\[0.5em]
-\textbf{\large EFEKTĂ“W UCZENIA SIÄ W RAMACH} \\[0.5em]
+\textbf{\large EFEKTÓW UCZENIA SIĘ W RAMACH} \\[0.5em]
 \textbf{\large PRAKTYKI ZAWODOWEJ}
 \end{center}
 
@@ -27,32 +27,32 @@ ZaĹ‚. nr 4
 <<% set jest_kobieta = (student.plec == 'F') %>>
 <<% set wyniki = assessments | selectattr('wynik') | map(attribute='wynik') | list %>>
 <<% if wyniki and 'NOT_ACHIEVED' not in wyniki and 'PARTIALLY_ACHIEVED' not in wyniki %>>
-<<% set wynik_ogolny = 'uzyskaĹ‚a' if jest_kobieta else 'uzyskaĹ‚' %>>
+<<% set wynik_ogolny = 'uzyskała' if jest_kobieta else 'uzyskał' %>>
 <<% elif wyniki and wyniki | select('eq', 'NOT_ACHIEVED') | list | length == wyniki | length %>>
-<<% set wynik_ogolny = 'nie uzyskaĹ‚a' if jest_kobieta else 'nie uzyskaĹ‚' %>>
+<<% set wynik_ogolny = 'nie uzyskała' if jest_kobieta else 'nie uzyskał' %>>
 <<% elif wyniki %>>
-<<% set wynik_ogolny = 'uzyskaĹ‚a czÄ™Ĺ›ciowo' if jest_kobieta else 'uzyskaĹ‚ czÄ™Ĺ›ciowo' %>>
+<<% set wynik_ogolny = 'uzyskała częściowo' if jest_kobieta else 'uzyskał częściowo' %>>
 <<% else %>>
-<<% set wynik_ogolny = ('uzyskaĹ‚a / nie uzyskaĹ‚a *' if jest_kobieta else 'uzyskaĹ‚ / nie uzyskaĹ‚ *') %>>
+<<% set wynik_ogolny = ('uzyskała / nie uzyskała *' if jest_kobieta else 'uzyskał / nie uzyskał *') %>>
 <<% endif %>>
 
 \noindent <<% if jest_kobieta %>>Studentka<<% else %>>Student<<% endif %>>: \textbf{<< student.nazwisko | s >>, << student.imie | s >>} \\
 Nr albumu: \textbf{<< student.numer_albumu | s >>} \\
-Kierunek studiĂłw: \textbf{<< student.kierunek | s >>} \hfill SpecjalnoĹ›Ä‡: \textbf{<< specialization | s >>} \\
+Kierunek studiów: \textbf{<< student.kierunek | s >>} \hfill Specjalność: \textbf{<< specialization | s >>} \\
 
 \vspace{1em}
 \noindent W ramach praktyki zawodowej zrealizowanej w wymiarze
 \textbf{<< lacznie_godzin | num >>} godzin
-\textbf{<< wynik_ogolny | s >>} zakĹ‚adane efekty uczenia siÄ™:
+\textbf{<< wynik_ogolny | s >>} zakładane efekty uczenia się:
 
 \vspace{1em}
 
 \begin{longtable}{|>{\centering\arraybackslash}p{1.1cm}|p{10.3cm}|>{\centering\arraybackslash}p{3.2cm}|}
 \hline
-\textbf{Lp.} & \textbf{Efekty uczenia siÄ™} & \textbf{Potwierdzenie uzyskania learning_outcomeĂłw} \\ \hline
+\textbf{Lp.} & \textbf{Efekty uczenia się} & \textbf{Potwierdzenie uzyskania efektów} \\ \hline
 \endfirsthead
 \hline
-\textbf{Lp.} & \textbf{Efekty uczenia siÄ™} & \textbf{Potwierdzenie uzyskania learning_outcomeĂłw} \\ \hline
+\textbf{Lp.} & \textbf{Efekty uczenia się} & \textbf{Potwierdzenie uzyskania efektów} \\ \hline
 \endhead
 \hline \endfoot
 \hline \endlastfoot
@@ -60,14 +60,14 @@ Kierunek studiĂłw: \textbf{<< student.kierunek | s >>} \hfill SpecjalnoĹ›Ä
 <<% for ocena in assessments %>>
 \textbf{<< "%02d"|format(ocena.learning_outcome.id) >>} &
 << ocena.learning_outcome.description | s >> &
-<<% if ocena.result == 'ACHIEVED' %>>
-\textbf{<<% if jest_kobieta %>>uzyskaĹ‚a<<% else %>>uzyskaĹ‚<<% endif %>>}
-<<% elif ocena.result == 'PARTIALLY_ACHIEVED' %>>
-\textbf{<<% if jest_kobieta %>>uzyskaĹ‚a czÄ™Ĺ›ciowo<<% else %>>uzyskaĹ‚ czÄ™Ĺ›ciowo<<% endif %>>}
-<<% elif ocena.result == 'NOT_ACHIEVED' %>>
-\textbf{<<% if jest_kobieta %>>nie uzyskaĹ‚a<<% else %>>nie uzyskaĹ‚<<% endif %>>}
+<<% if ocena.wynik == 'ACHIEVED' %>>
+\textbf{<<% if jest_kobieta %>>uzyskała<<% else %>>uzyskał<<% endif %>>}
+<<% elif ocena.wynik == 'PARTIALLY_ACHIEVED' %>>
+\textbf{<<% if jest_kobieta %>>uzyskała częściowo<<% else %>>uzyskał częściowo<<% endif %>>}
+<<% elif ocena.wynik == 'NOT_ACHIEVED' %>>
+\textbf{<<% if jest_kobieta %>>nie uzyskała<<% else %>>nie uzyskał<<% endif %>>}
 <<% else %>>
-<<% if jest_kobieta %>>uzyskaĹ‚a / nie uzyskaĹ‚a *<<% else %>>uzyskaĹ‚ / nie uzyskaĹ‚ *<<% endif %>>
+<<% if jest_kobieta %>>uzyskała / nie uzyskała *<<% else %>>uzyskał / nie uzyskał *<<% endif %>>
 <<% endif %>>
 \\ \hline
 <<% endfor %>>
@@ -86,7 +86,7 @@ Kierunek studiĂłw: \textbf{<< student.kierunek | s >>} \hfill SpecjalnoĹ›Ä
 \begin{minipage}[t]{0.45\textwidth}
 \centering
 \dotfill \\
-{\small Data, podpis i pieczÄ™Ä‡ zakĹ‚adu pracy}
+{\small Data, podpis i pieczęć zakładu pracy}
 \end{minipage}
 
 \vspace{1.5em}

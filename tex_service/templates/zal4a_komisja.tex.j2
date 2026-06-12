@@ -1,4 +1,4 @@
-﻿\documentclass[11pt,a4paper]{article}
+\documentclass[11pt,a4paper]{article}
 \usepackage{fontspec}
 \usepackage{polyglossia}
 \setmainlanguage{polish}
@@ -11,23 +11,23 @@
 \begin{document}
 
 \begin{flushright}
-ZaĹ‚Ä…cznik nr 4a
+Załącznik nr 4a
 \end{flushright}
 
 \vspace{-1em}
 \begin{center}
 \textbf{\large POTWIERDZENIE UZYSKANIA} \\[0.5em]
-\textbf{\large EFEKTĂ“W UCZENIA SIÄ W RAMACH PRAKTYKI ZAWODOWEJ NA PODSTAWIE %
-<<% if zapis.path == 'OWN_BUSINESS' %>>DZIAĹALNOĹšCI GOSPODARCZEJ<<% else %>>ZATRUDNIENIA/STAĹ»U<<% endif %>>}
+\textbf{\large EFEKTÓW UCZENIA SIĘ W RAMACH PRAKTYKI ZAWODOWEJ NA PODSTAWIE %
+<<% if zapis.path == 'OWN_BUSINESS' %>>DZIAŁALNOŚCI GOSPODARCZEJ<<% else %>>ZATRUDNIENIA/STAŻU<<% endif %>>}
 \end{center}
 
 \vspace{1em}
 
-\noindent Kierunek studiĂłw: Informatyka \\
+\noindent Kierunek studiów: Informatyka \\
 <<% if student.plec == 'K' %>>Studentka<<% else %>>Student<<% endif %>>: \textbf{<< student.imie|s >> << student.nazwisko|s >>} \\
 Nr albumu: \textbf{<< student.nr_albumu|s >>} \\
-Kierunek studiĂłw: Informatyka \hfill SpecjalnoĹ›Ä‡: \textbf{<< specialization|s >>} \\
-Miejsce pracy/dziaĹ‚alnoĹ›ci: \textbf{<< company.nazwa|s >>}
+Kierunek studiów: Informatyka \hfill Specjalność: \textbf{<< specialization|s >>} \\
+Miejsce pracy/działalności: \textbf{<< company.nazwa|s >>}
 
 \vspace{1em}
 <<% set wyniki = oceny_komisji | selectattr('wynik') | map(attribute='wynik') | list -%>>
@@ -40,26 +40,26 @@ Miejsce pracy/dziaĹ‚alnoĹ›ci: \textbf{<< company.nazwa|s >>}
 <<% else -%>>
 <<% set wynik_ogolny = forma.pos ~ ' / ' ~ forma.neg -%>>
 <<% endif -%>>
-\noindent W ramach <<% if zapis.path == 'OWN_BUSINESS' %>>dziaĹ‚alnoĹ›ci gospodarczej<<% else %>>pracy zawodowej/staĹĽu<<% endif %>> << wynik_ogolny|s >> zakĹ‚adane dla praktyki zawodowej efekty uczenia siÄ™:
+\noindent W ramach <<% if zapis.path == 'OWN_BUSINESS' %>>działalności gospodarczej<<% else %>>pracy zawodowej/stażu<<% endif %>> << wynik_ogolny|s >> zakładane dla praktyki zawodowej efekty uczenia się:
 
 \vspace{1em}
 
 \renewcommand{\arraystretch}{1.5}
 \begin{longtable}{|c|p{10cm}|c|}
 \hline
-\textbf{Lp.} & \textbf{Efekty uczenia siÄ™} & \textbf{Potwierdzenie uzyskania learning_outcomeĂłw} \\ \hline
+\textbf{Lp.} & \textbf{Efekty uczenia się} & \textbf{Potwierdzenie uzyskania efektów} \\ \hline
 \endfirsthead
 \hline
-\textbf{Lp.} & \textbf{Efekty uczenia siÄ™} & \textbf{Potwierdzenie uzyskania learning_outcomeĂłw} \\ \hline
+\textbf{Lp.} & \textbf{Efekty uczenia się} & \textbf{Potwierdzenie uzyskania efektów} \\ \hline
 \endhead
 
 <<% for row in oceny_komisji -%>>
-<< row.efekt_kod >> & << row.efekt_opis|s >> & \makecell{<<% if row.result == 'ACHIEVED' %>>\textbf{<< forma.pos|s >>}<<% elif row.result == 'PARTIALLY_ACHIEVED' %>>\textbf{<< forma.par|s >>}<<% if row.notes %>> \\[4pt] \footnotesize\textit{<< row.notes|s >>}\normalsize<<% endif %>><<% elif row.result == 'NOT_ACHIEVED' %>>\textbf{<< forma.neg|s >>}<<% else %>>---<<% endif %>>} \\ \hline
+<< row.efekt_kod >> & << row.efekt_opis|s >> & \makecell{<<% if row.wynik == 'ACHIEVED' %>>\textbf{<< forma.pos|s >>}<<% elif row.wynik == 'PARTIALLY_ACHIEVED' %>>\textbf{<< forma.par|s >>}<<% if row.uwagi %>> \\[4pt] \footnotesize\textit{<< row.uwagi|s >>}\normalsize<<% endif %>><<% elif row.wynik == 'NOT_ACHIEVED' %>>\textbf{<< forma.neg|s >>}<<% else %>>---<<% endif %>>} \\ \hline
 <<% endfor -%>>
 \end{longtable}
 
 \vspace{1em}
-\noindent \textbf{Potwierdzenie merytorycznej assessments dokumentacji zĹ‚oĹĽonej przez studenta ze wskazaniem jakie elementy learning_outcomeĂłw uczenia siÄ™ zaliczonych czÄ™Ĺ›ciowo powinny zostaÄ‡ uzupeĹ‚nione:}
+\noindent \textbf{Potwierdzenie merytorycznej assessments dokumentacji złożonej przez studenta ze wskazaniem jakie elementy efektów uczenia się zaliczonych częściowo powinny zostać uzupełnione:}
 
 <<% if komentarz_komisji -%>>
 \vspace{0.5em}
@@ -72,7 +72,7 @@ Miejsce pracy/dziaĹ‚alnoĹ›ci: \textbf{<< company.nazwa|s >>}
 \begin{minipage}[t]{0.5\textwidth}
 \centering
 \dotfill \\
-\small data, podpis PrzewodniczÄ…cego Komisji do spraw praktyk
+\small data, podpis Przewodniczącego Komisji do spraw praktyk
 \end{minipage}
 
 \end{document}

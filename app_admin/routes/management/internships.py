@@ -147,7 +147,7 @@ def przelacz_aktywnosc_praktyki(id):
     p.status = InternshipStatus.INACTIVE if p.status == InternshipStatus.ACTIVE else InternshipStatus.ACTIVE
     db.session.commit()
     stan = t('aktywowana') if p.status == InternshipStatus.ACTIVE else t('dezaktywowana')
-    flash(t('Praktyka {rok} ({semestr}) została {stan}.', rok=p.academic_year, semestr=p.semester, stan=stan), 'success')
+    flash(t('Praktyka {rok} ({semestr}) została {stan}.', rok=p.academic_year, semestr=p.semester_label, stan=stan), 'success')
     return redirect(url_for(_ROUTE_LISTA_PRAKTYK))
 
 
@@ -306,7 +306,7 @@ def moje_zgloszenia():
 def usun_praktyke(id):
     from datetime import datetime, timezone
     p    = _repo_praktyk.znajdz_po_id(id) or abort(404)
-    opis = f'{p.academic_year} ({p.semester})'
+    opis = f'{p.academic_year} ({p.semester_label})'
     if p.enrollments:
         p.deleted_at = datetime.now(timezone.utc)
         db.session.commit()
@@ -322,7 +322,7 @@ def usun_praktyke(id):
 @roles_required(UserRole.ADMIN)
 def przywroc_praktyke(id):
     p = _repo_praktyk.znajdz_po_id(id) or abort(404)
-    opis = f'{p.academic_year} ({p.semester})'
+    opis = f'{p.academic_year} ({p.semester_label})'
     p.deleted_at = None
     db.session.commit()
     flash(t('Praktyka {opis} została przywrócona.', opis=opis), 'success')

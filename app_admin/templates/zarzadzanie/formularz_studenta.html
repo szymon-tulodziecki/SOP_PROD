@@ -51,7 +51,6 @@
                  placeholder="{{ t('np. 12345') }}" maxlength="20"
                  {% if form.album_number.errors %}aria-invalid="true" aria-describedby="album-blad"{% endif %}>
           {% if form.album_number.errors %}<span id="album-blad" class="pole-formularza__blad" role="alert">{{ form.album_number.errors[0] }}</span>{% endif %}
-          {% if not uzytkownik %}<span class="u-csp-236">{{ t('Będzie użyty jako hasło tymczasowe') }}</span>{% endif %}
         </div>
         <div class="pole-formularza">
           <label for="gender" class="pole-formularza__etykieta">{{ t('Płeć') }}</label>
@@ -97,7 +96,7 @@
 
       {% if not uzytkownik %}
       <div class="u-csp-237">
-        {{ t('Student zaloguje się e-mailem i hasłem tymczasowym (nr albumu), a następnie zostanie poproszony o ustawienie własnego hasła.') }}
+        {{ t('Student loguje się kontem Microsoft uczelni przypisanym do tego adresu e-mail.') }}
       </div>
       {% endif %}
 

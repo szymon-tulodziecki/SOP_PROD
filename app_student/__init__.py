@@ -2,6 +2,7 @@
 import os
 
 from flask import Flask
+from werkzeug.middleware.proxy_fix import ProxyFix
 from jinja2 import select_autoescape
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -60,6 +61,8 @@ def create_app():
     from pathlib import Path as _Path
     from flask import Blueprint as _Blueprint, Response
     app = Flask(__name__)
+    # Za nginxem z prefiksem (/praktyki-student/) — bez ProxyFix url_for buduje złe linki
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
     # Core static assets (CSS design system + templates)
     core_bp = _Blueprint(
