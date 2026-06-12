@@ -1006,4 +1006,11 @@ UK = {
     'nieznany': 'невідома',
     'Błąd połączenia z serwerem.': "Помилка з'єднання з сервером.",
     'Wybierz plik CSV': 'Виберіть файл CSV',
+    # ── dziennik: komentarz opiekuna ──
+    'Komentarz opiekuna': 'Коментар керівника',
+    'Komentarz opiekuna:': 'Коментар керівника:',
+    'Dodaj komentarz…': 'Додати коментар…',
+    'Komentarz do wpisu został zapisany.': 'Коментар до запису збережено.',
+    'Komentarz do wpisu został usunięty.': 'Коментар до запису видалено.',
+    'Ocena UOPZ (U)': 'Оцінка UOPZ (U)',
 }

@@ -86,9 +86,11 @@
               <th class="u-csp-091" scope="col">{{ t('Godziny') }}</th>
               <th scope="col">{{ t('Opis czynności') }}</th>
               <th class="u-csp-092" scope="col">{{ t('Efekt') }}</th>
+              <th class="komentarz-wpisu__naglowek" scope="col">{{ t('Komentarz opiekuna') }}</th>
             </tr>
           </thead>
           <tbody>
+            {% set moze_komentowac = current_user.role.value in ['ADMIN', 'UOPZ'] %}
             {% for w in entries %}
             <tr>
               <td><strong>{{ w.entry_date.strftime('%d.%m.%Y') }}</strong></td>
@@ -108,10 +110,23 @@
                   {% endfor %}
                 {% else %}—{% endif %}
               </td>
+              <td class="komentarz-wpisu">
+                {% if moze_komentowac %}
+                <form method="POST" action="{{ url_for('journal.komentarz_wpisu', id=zapis.id, wpis_id=w.id) }}" class="komentarz-wpisu__form">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <textarea name="komentarz" rows="2" maxlength="1000"
+                            class="pole-formularza__input komentarz-wpisu__pole"
+                            placeholder="{{ t('Dodaj komentarz…') }}">{{ w.supervisor_comment or '' }}</textarea>
+                  <button type="submit" class="przycisk przycisk--maly przycisk--drugorzedny">{{ t('Zapisz') }}</button>
+                </form>
+                {% else %}
+                  <span class="u-fs-sm u-lh-15">{{ w.supervisor_comment or '—' }}</span>
+                {% endif %}
+              </td>
             </tr>
             {% else %}
             <tr>
-              <td colspan="4" class="tabela--pusta">{{ t('Student nie dodał jeszcze żadnych wpisów.') }}</td>
+              <td colspan="5" class="tabela--pusta">{{ t('Student nie dodał jeszcze żadnych wpisów.') }}</td>
             </tr>
             {% endfor %}
           </tbody>

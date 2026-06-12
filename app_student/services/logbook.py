@@ -8,6 +8,7 @@ class LogbookEntryDTO:
     hours_count: int
     description: str
     learning_outcomes: list
+    supervisor_comment: str | None
 
     @classmethod
     def from_model(cls, entry):
@@ -17,4 +18,5 @@ class LogbookEntryDTO:
             hours_count=entry.duration_hours,
             description=entry.description,
             learning_outcomes=list(entry.learning_outcomes),
+            supervisor_comment=entry.supervisor_comment,
         )

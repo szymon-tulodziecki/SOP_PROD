@@ -3,9 +3,11 @@ import io
 from datetime import date
 
 import httpx
-from flask import Blueprint, abort, current_app, render_template, request, send_file
+from flask import Blueprint, abort, current_app, flash, redirect, render_template, request, send_file, url_for
 from flask_login import current_user
 
+from core.extensions import db
+from core.i18n import t
 from core.models import UserRole
 from core.repositories import EnrollmentRepository, JournalRepository
 from core.auth import roles_required
@@ -90,6 +92,29 @@ def enrollment_journal(id):
         data_od=date_from,
         data_do=date_to,
     )
+
+
+@journal_bp.route('/zapis/<uuid:id>/wpis/<uuid:wpis_id>/komentarz', methods=['POST'], endpoint='komentarz_wpisu')
+@roles_required(UserRole.ADMIN, UserRole.UOPZ)
+def entry_comment(id, wpis_id):
+    """Zapisuje (lub czyści) komentarz opiekuna praktyki przy wpisie dziennika."""
+    enrollment = _repo_enrollments.znajdz_po_id(id) or abort(404)
+    if not _uopz_can_access(enrollment):
+        abort(403)
+
+    entry = _repo_entries.znajdz_po_id(wpis_id)
+    if entry is None or entry.enrollment_id != enrollment.id:
+        abort(404)
+
+    comment = request.form.get('komentarz', '').strip()
+    entry.supervisor_comment = comment or None
+    db.session.commit()
+
+    if comment:
+        flash(t('Komentarz do wpisu został zapisany.'), 'success')
+    else:
+        flash(t('Komentarz do wpisu został usunięty.'), 'success')
+    return redirect(url_for('journal.dziennik_zapisu', id=enrollment.id))
 
 
 @journal_bp.route('/zapis/<uuid:id>/pdf', methods=['GET'])

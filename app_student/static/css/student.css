@@ -184,3 +184,22 @@
     flex-wrap: wrap;
   }
 }
+
+.komentarz-opiekuna {
+  margin-top: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  border-left: 3px solid var(--kolor-glowny);
+  background: var(--kolor-tlo);
+  border-radius: 0 6px 6px 0;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.komentarz-opiekuna__etykieta {
+  display: block;
+  font-weight: 600;
+  color: var(--kolor-tekst-drugorzedny);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}

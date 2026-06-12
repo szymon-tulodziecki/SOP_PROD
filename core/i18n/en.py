@@ -1005,4 +1005,11 @@ EN = {
     'nieznany': 'unknown',
     'Błąd połączenia z serwerem.': 'Error connecting to the server.',
     'Wybierz plik CSV': 'Select a CSV file',
+    # ── dziennik: komentarz opiekuna ──
+    'Komentarz opiekuna': 'Supervisor\'s comment',
+    'Komentarz opiekuna:': 'Supervisor\'s comment:',
+    'Dodaj komentarz…': 'Add a comment…',
+    'Komentarz do wpisu został zapisany.': 'The comment on the entry has been saved.',
+    'Komentarz do wpisu został usunięty.': 'The comment on the entry has been removed.',
+    'Ocena UOPZ (U)': 'UOPZ grade (U)',
 }

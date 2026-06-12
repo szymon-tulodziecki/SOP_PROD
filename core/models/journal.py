@@ -58,6 +58,7 @@ class JournalEntry(db.Model):
     entry_date     = db.Column(db.Date,    nullable=False)
     duration_hours = db.Column(db.Integer, nullable=False)
     description    = db.Column(db.Text,    nullable=False)
+    supervisor_comment = db.Column(db.Text, nullable=True)
 
     learning_outcomes = db.relationship('LearningOutcome', secondary=entry_outcomes, lazy='subquery')
 

@@ -218,6 +218,7 @@ CREATE TABLE journal_entries (
     entry_date     DATE    NOT NULL,
     duration_hours INTEGER NOT NULL CHECK (duration_hours > 0 AND duration_hours <= 8),
     description    TEXT    NOT NULL,
+    supervisor_comment TEXT,
     UNIQUE (enrollment_id, entry_date)
 );
 

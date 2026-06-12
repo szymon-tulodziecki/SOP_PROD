@@ -135,6 +135,12 @@
               {% else %}
                 {{ entry.description }}
               {% endif %}
+              {% if entry.supervisor_comment %}
+              <div class="komentarz-opiekuna">
+                <span class="komentarz-opiekuna__etykieta">{{ t('Komentarz opiekuna:') }}</span>
+                {{ entry.supervisor_comment }}
+              </div>
+              {% endif %}
             </td>
             <td class="u-csp-193">
               {% if entry.learning_outcomes %}
