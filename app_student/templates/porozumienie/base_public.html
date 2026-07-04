@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>{% block tytul %}{{ t('Porozumienie w sprawie praktyk') }}{% endblock %} — ANS Elbląg</title>
+  <link rel="stylesheet" href="{{ url_for('student_css_bundle', v=config.CSS_BUNDLE_V) }}">
+</head>
+<body class="porozumienie-public">
+  <a href="#main-content" class="skip-link">{{ t('Przejdź do treści głównej') }}</a>
+  <main id="main-content" class="porozumienie-public__kontener">
+    <header class="porozumienie-public__naglowek">
+      <img src="{{ url_for('static', filename='img/logo.png') }}"
+           alt="ANS Elbląg" class="porozumienie-public__logo" width="200" height="35">
+      <p class="porozumienie-public__system">{{ t('System Praktyk Zawodowych') }}</p>
+    </header>
+    {% block tresc %}{% endblock %}
+    <footer class="porozumienie-public__stopka">
+      <p>{{ t('Akademia Nauk Stosowanych w Elblągu · ul. Wojska Polskiego 1, 82-300 Elbląg') }}</p>
+    </footer>
+  </main>
+</body>
+</html>

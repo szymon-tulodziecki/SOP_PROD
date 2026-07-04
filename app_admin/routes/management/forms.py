@@ -91,6 +91,7 @@ class StaffForm(FlaskForm):
             ('UOPZ', lazy_t(UOPZ_LABEL)),
             ('KOMISJA', lazy_t('Komisja ds. praktyk')),
             ('DYREKTOR', lazy_t('Dyrektor Instytutu')),
+            ('DZIEKANAT', lazy_t('Dziekanat')),
             ('ADMIN', lazy_t('Administrator')),
         ],
         validators=[DataRequired(message=lazy_t('Zaznacz co najmniej jedną rolę.'))],

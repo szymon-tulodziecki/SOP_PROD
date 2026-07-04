@@ -322,6 +322,24 @@ def generate_pdf_from_template(self, template_name: str, context: dict,
     }
 
 
+@celery.task(bind=True, name='send_email', max_retries=5, default_retry_delay=30)
+def send_email(self, to, subject: str, html_body: str) -> dict:
+    """Wysyła e-mail przez Microsoft Graph (core.services.mailer).
+
+    Retry z narastającym odstępem — chwilowe problemy z Graph API nie gubią
+    powiadomień. Brak konfiguracji (MAIL_SENDER pusty) nie jest błędem:
+    mailer loguje i pomija wysyłkę.
+    """
+    from core.services.mailer import MailerError, send_mail_sync
+    try:
+        send_mail_sync(to, subject, html_body)
+    except MailerError as exc:
+        logger.warning("send_email error (retry %d/%d): %s",
+                       self.request.retries, self.max_retries, exc)
+        raise self.retry(exc=exc, countdown=30 * (self.request.retries + 1))
+    return {'status': 'sent', 'to': to, 'subject': subject}
+
+
 @celery.task(name='auto_complete_internships')
 def auto_complete_internships_task() -> dict:
     """Automatycznie zamyka praktyki z przekroczonym terminem i wymaganą liczbą godzin."""

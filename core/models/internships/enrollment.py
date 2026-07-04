@@ -92,6 +92,10 @@ class InternshipEnrollment(db.Model):
         return self.workplace_details.authorized_person_position if self.workplace_details else None
 
     @property
+    def authorized_person_email(self):
+        return self.workplace_details.authorized_person_email if self.workplace_details else None
+
+    @property
     def workplace_mentor_name(self):
         return self.workplace_details.workplace_mentor_name if self.workplace_details else None
 

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
   <meta name="description" content="Panel administracyjny — System Praktyk Zawodowych IIS ANS Elbląg">
   <title>{% block tytul %}Panel{% endblock %} — IIS ANS Elbląg</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css', v='20260612-1') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css', v='20260704-1') }}">
   {% block head_extra %}{% endblock %}
 </head>
 <body class="panel-body">
@@ -58,11 +58,13 @@
         {% endif %}
       </li>
       {% endif %}
+      {% if current_user.is_authenticated and current_user.role and current_user.role.value != 'DZIEKANAT' %}
       <li class="sidebar__menu-pozycja">
         <a href="{{ url_for('zarzadzanie.lista_praktyk') }}" class="sidebar__link {% if 'lista_praktyk' in (request.endpoint or '') %}sidebar__link--aktywny{% endif %}" {% if 'lista_praktyk' in (request.endpoint or '') %}aria-current="page"{% endif %}>
           <span class="sidebar__ikona" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="15" y2="16"/></svg></span> {{ t('Wszystkie praktyki') }}
         </a>
       </li>
+      {% endif %}
       {% if current_user.is_authenticated and current_user.role and current_user.role.value in ['ADMIN', 'UOPZ'] %}
       <li class="sidebar__menu-pozycja">
         <a href="{{ url_for('evaluation.lista_ocen') }}" class="sidebar__link {% if 'evaluation' in (request.endpoint or '') %}sidebar__link--aktywny{% endif %}" {% if 'evaluation' in (request.endpoint or '') %}aria-current="page"{% endif %}>
@@ -82,6 +84,14 @@
           <span class="sidebar__ikona" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></span> {{ t('Dokumenty studentów') }}
         </a>
       </li>
+      {% if current_user.is_authenticated and current_user.role and current_user.role.value in ['ADMIN', 'DZIEKANAT'] %}
+      <li class="sidebar__menu-sekcja" aria-hidden="true">{{ t('Dziekanat') }}</li>
+      <li class="sidebar__menu-pozycja">
+        <a href="{{ url_for('dziekanat.porozumienia_lista') }}" class="sidebar__link {% if request.endpoint and request.endpoint.startswith('dziekanat.') %}sidebar__link--aktywny{% endif %}" {% if request.endpoint and request.endpoint.startswith('dziekanat.') %}aria-current="page"{% endif %}>
+          <span class="sidebar__ikona" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/><path d="M15 5l4 4"/></svg></span> {{ t('Porozumienia') }}
+        </a>
+      </li>
+      {% endif %}
       {% if current_user.is_authenticated and current_user.role and current_user.role.value in ['ADMIN', 'KOMISJA'] %}
       <li class="sidebar__menu-sekcja" aria-hidden="true">{{ t('Weryfikacja') }}</li>
       <li class="sidebar__menu-pozycja">

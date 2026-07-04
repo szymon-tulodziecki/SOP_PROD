@@ -94,6 +94,8 @@ def _przekaz_do_dyrektora(enrollment_id, committee_opinion, comment, evaluations
         _zapisz_oceny_komisji(enrollment_id, evaluations)
         fsm.send_to_director(decision=committee_opinion, actor_id=current_user.id, comment=comment)
         db.session.commit()
+    from core.services import notifications as noty
+    noty.notify_sent_to_director(fsm.zapis)
     return True
 
 

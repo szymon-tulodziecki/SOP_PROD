@@ -1,25 +1,33 @@
 ﻿(function () {
   const T = window.jsT || ((s) => s);
 
+  // Ścieżka A ma 3 kroki (porozumienie i harmonogram obsługuje dziekanat),
+  // ścieżka B nadal 4 — czwarty slot paska jest chowany dla STANDARD.
   const stepLabels = {
-    STANDARD: [T('2. Miejsce praktyki'), T('3. Harmonogram'), T('4. Wysłanie')],
+    STANDARD: [T('2. Miejsce praktyki'), T('3. Wysłanie'), ''],
     EMPLOYMENT: [T('2. Wniosek'), T('3. Komisja'), T('4. Dyrektor')],
   };
 
   const previews = {
-    STANDARD: T('Ścieżka A: Odbędziesz praktykę w zakładzie pracy na podstawie porozumienia z uczelnią. Wymagane: Porozumienie (zał. 1), Program (zał. 2), Indywidualny Program (zał. 2a). Po zakończeniu: Dziennik praktyki (zał. 6), Sprawozdanie (zał. 7), Potwierdzenie efektów uczenia się (zał. 4).'),
+    STANDARD: T('Ścieżka A: Odbędziesz praktykę w zakładzie pracy na podstawie porozumienia z uczelnią — porozumienie (zał. 1) przygotowuje i wysyła dziekanat. Wymagane: Oświadczenie zakładu pracy (zał. 9), Program (zał. 2). Po zakończeniu: Dziennik praktyki (zał. 6), Sprawozdanie (zał. 7), Potwierdzenie efektów uczenia się (zał. 4).'),
     EMPLOYMENT: T('Ścieżka B: Złożysz wniosek (zał. 4b) o uznanie trzynastu efektów uczenia się na podstawie doświadczenia zawodowego. Komisja ds. praktyk wyda opinię (zał. 4a), a Dyrektor Instytutu podejmie ostateczną decyzję. Wybierz poniżej rodzaj zatrudnienia - od tego zależy, jakie dokumenty musisz dołączyć.'),
   };
 
   function updateStepBar(value) {
-    const labels = stepLabels[value] || [T('2. Dane'), T('3. Harmonogram'), T('4. Wysłanie')];
+    const labels = stepLabels[value] || [T('2. Dane'), T('3. Wysłanie'), ''];
     const stepBar = document.getElementById('pasek-krokow');
     if (!stepBar) return;
 
     const steps = stepBar.querySelectorAll('.kreator-krok');
+    const separators = stepBar.querySelectorAll('.kreator-krok--separator');
     if (steps[1]) steps[1].textContent = labels[0];
     if (steps[2]) steps[2].textContent = labels[1];
-    if (steps[3]) steps[3].textContent = labels[2];
+    if (steps[3]) {
+      const hasFourth = Boolean(labels[2]);
+      steps[3].textContent = labels[2];
+      steps[3].hidden = !hasFourth;
+      if (separators[2]) separators[2].hidden = !hasFourth;
+    }
   }
 
   function updateButton() {

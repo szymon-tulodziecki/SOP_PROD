@@ -1,0 +1,18 @@
+{% extends "porozumienie/base_public.html" %}
+
+{% block tresc %}
+<div class="karta">
+  <div class="karta__tresc porozumienie-public__wynik">
+    {% if wariant == 'dziekujemy' %}
+      <h1 class="karta__tytul">{{ t('Dziękujemy!') }}</h1>
+      <p>{{ t('Dane porozumienia zostały przekazane do dziekanatu Akademii Nauk Stosowanych w Elblągu. Uczelnia przygotuje dokument do podpisu i skontaktuje się z Państwem.') }}</p>
+    {% elif wariant == 'wypelnione' %}
+      <h1 class="karta__tytul">{{ t('Porozumienie zostało już uzupełnione') }}</h1>
+      <p>{{ t('Dane z tego linku zostały już przekazane do uczelni. W razie potrzeby zmiany danych prosimy o kontakt z dziekanatem.') }}</p>
+    {% else %}
+      <h1 class="karta__tytul">{{ t('Link jest nieaktywny') }}</h1>
+      <p>{{ t('Link do porozumienia wygasł lub został anulowany. Prosimy o kontakt z dziekanatem Akademii Nauk Stosowanych w Elblągu.') }}</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -86,16 +86,8 @@ def _oceniona(ctx: dict) -> bool:
     return ctx['oceniona']
 
 
-def _ma_harmonogram(ctx: dict) -> bool:
-    return ctx['harmonogram_count'] > 0
-
-
 def _firma_custom(ctx: dict) -> bool:
     return ctx['firma_custom']
-
-
-def _firma_bez_umowy(ctx: dict) -> bool:
-    return ctx['firma_bez_umowy']
 
 
 def _dyrektor_lub_zakonczona(ctx: dict) -> bool:
@@ -104,10 +96,6 @@ def _dyrektor_lub_zakonczona(ctx: dict) -> bool:
 
 def _po_egzaminie(ctx: dict) -> bool:
     return ctx.get('po_egzaminie', False)
-
-
-def _powod_harmonogram(_ctx: dict) -> str:
-    return t('Wymaga wypełnionego harmonogramu')
 
 
 def _powod_w_trakcie(_ctx: dict) -> str:
@@ -135,18 +123,13 @@ def _powod_dyrektor(_ctx: dict) -> str:
 def _docs_standard() -> list:
     return [
         _sep('Dokumenty startowe'),
+        # Zał. 1 (porozumienie) przygotowuje i wysyła dziekanat; Zał. 2a
+        # (harmonogram) usunięty ze ścieżki studenta razem z krokiem kreatora.
         DocumentEntry('Zał. 9 — Oświadczenie instytucji', 'ZAL_9',
                       t('Do wypełnienia przez zakład pracy'),
                       available_when=_firma_custom),
-        DocumentEntry('Zał. 1 — Porozumienie uczelnia ↔ zakład', 'ZAL_1',
-                      t('Dla firm bez stałej umowy z ANS'),
-                      available_when=_firma_bez_umowy),
         DocumentEntry('Zał. 2 — Program praktyki', 'ZAL_2',
                       t('Z danymi studenta i firmy')),
-        DocumentEntry('Zał. 2a — Indywidualny Program Praktyk', 'ZAL_2A',
-                      t('Harmonogram efektów uczenia się — student + UOPZ + ZOPZ'),
-                      available_when=_ma_harmonogram,
-                      unavailable_reason=_powod_harmonogram),
         _sep('Załącznik nr 3 — Karta Praktyki Zawodowej'),
         DocumentEntry('Zał. 3a — Skierowanie na praktykę', 'ZAL_3A',
                       t('Przepustka do firmy — drukujesz i przynosisz pierwszego dnia')),
@@ -211,7 +194,7 @@ _DOCUMENT_POLICY: dict[str, Callable[[], list]] = {
 
 def build_flags(zapis) -> dict:
     """Wylicza flagi stanu zapisu używane przez politykę dostępności."""
-    from core.models import EnrollmentStatus, InternshipSchedule
+    from core.models import EnrollmentStatus
 
     w_trakcie  = zapis.status == EnrollmentStatus.IN_PROGRESS
     zakonczona = zapis.status == EnrollmentStatus.COMPLETED
@@ -222,10 +205,6 @@ def build_flags(zapis) -> dict:
         'oceniona':            zakonczona and zapis.final_grades is not None and zapis.final_grades.supervisor_grade is not None,
         'dyrektor_zatwierdził': w_trakcie or zakonczona,
         'po_egzaminie':        zapis.final_grade is not None,
-        'harmonogram_count':   db.session.execute(
-                                 db.select(db.func.count()).select_from(InternshipSchedule).filter_by(enrollment_id=zapis.id)
-                               ).scalar(),
-        'firma_bez_umowy':     not zapis.company or not zapis.company.has_standing_agreement,
         'firma_custom':        not zapis.company_id,
     }
 

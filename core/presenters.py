@@ -124,6 +124,20 @@ def dean_decision_badge(decision: str | None) -> dict | None:
     return {'cls': 'status--odrzucona', 'label': t('Odrzucone')}
 
 
+# ── Porozumienia z zakładami pracy ────────────────────────────────────────────
+
+_AGREEMENT_STATUS_BADGES = {
+    'SENT':      ('status--planned',   'Wysłane — czeka na zakład'),
+    'FILLED':    ('status--completed', 'Uzupełnione przez zakład'),
+    'CANCELLED': ('status--szkic',     'Anulowane'),
+}
+
+
+def agreement_status_badge(status_value: str) -> dict:
+    cls, label = _AGREEMENT_STATUS_BADGES.get(status_value, ('status--szkic', status_value))
+    return {'cls': cls, 'label': t(label)}
+
+
 # ── Logi systemowe ────────────────────────────────────────────────────────────
 
 def log_event_badge(event_type_value: str, actor_role_value: str | None) -> dict:
@@ -155,19 +169,21 @@ def log_decision_badge(decision: str | None) -> dict | None:
 # ── Role użytkowników ─────────────────────────────────────────────────────────
 
 ROLE_BADGE_CSS = {
-    'ADMIN':    'admin',
-    'UOPZ':     'supervisor',
-    'KOMISJA':  'komisja',
-    'DYREKTOR': 'dyrektor',
-    'STUDENT':  'student',
+    'ADMIN':     'admin',
+    'UOPZ':      'supervisor',
+    'KOMISJA':   'komisja',
+    'DYREKTOR':  'dyrektor',
+    'DZIEKANAT': 'dziekanat',
+    'STUDENT':   'student',
 }
-_ROLE_ORDER = ['ADMIN', 'DYREKTOR', 'KOMISJA', 'UOPZ', 'STUDENT']
+_ROLE_ORDER = ['ADMIN', 'DYREKTOR', 'KOMISJA', 'DZIEKANAT', 'UOPZ', 'STUDENT']
 
 SIDEBAR_ROLE_LABELS = {
-    'ADMIN':    'Administrator',
-    'UOPZ':     'Opiekun uczelniany (UOPZ)',
-    'KOMISJA':  'Przewodniczący Komisji',
-    'DYREKTOR': 'Dyrektor Instytutu',
+    'ADMIN':     'Administrator',
+    'UOPZ':      'Opiekun uczelniany (UOPZ)',
+    'KOMISJA':   'Przewodniczący Komisji',
+    'DYREKTOR':  'Dyrektor Instytutu',
+    'DZIEKANAT': 'Dziekanat',
 }
 
 

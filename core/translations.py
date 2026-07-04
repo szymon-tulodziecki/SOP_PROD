@@ -20,6 +20,7 @@ ROLE_TRANSLATIONS = {
     'UOPZ':      'Opiekun uczelniany',
     'KOMISJA':   'Komisja',
     'DYREKTOR':  'Dyrektor',
+    'DZIEKANAT': 'Dziekanat',
     'ADMIN':     'Administrator',
 }
 

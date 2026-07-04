@@ -94,7 +94,7 @@ def create_app():
     from core.i18n import register_i18n
     register_i18n(app)
 
-    app.config['CSS_BUNDLE_V'] = '20260612-1'
+    app.config['CSS_BUNDLE_V'] = '20260704-1'
     _css_bundle_cache = {}
 
     def _build_css_bundle():
@@ -165,6 +165,7 @@ def create_app():
         from app_student.routes.logbook     import logbook_bp
         from app_student.routes.reports     import reports_bp
         from app_student.routes.documents   import documents_bp
+        from app_student.routes.agreements_public import agreements_public_bp
 
         auth_bp    = create_auth_blueprint(
             allowed_roles=[UserRole.STUDENT],
@@ -179,6 +180,8 @@ def create_app():
         app.register_blueprint(reports_bp,     url_prefix='/report')
         app.register_blueprint(documents_bp,  url_prefix='/dokumenty')
         app.register_blueprint(uploads_bp,    url_prefix='/uploads')
+        # Publiczny formularz porozumienia — dostęp tokenem z e-maila, bez logowania
+        app.register_blueprint(agreements_public_bp, url_prefix='/porozumienie')
 
     # Kontekst globalny: informacje o aktywnym zapisie studenta
     app.context_processor(_build_enrollment_context)

@@ -14,6 +14,7 @@
 .form-field--error .form-field__input { border-color: var(--kolor-blad); }
 .form-field--error .form-field__input:focus { box-shadow: 0 0 0 3px rgba(192,57,43,0.15); }
 .form-field__error { font-size: 0.825rem; color: var(--kolor-blad); font-weight: 500; }
+.form-field__hint { font-size: 0.8rem; color: var(--kolor-tekst-drugor); }
 
 .path-tile {
   border: 2px solid #e2e8f0;
@@ -202,4 +203,81 @@
   font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.03em;
+}
+
+/* ── Publiczny formularz porozumienia (link dla zakładu pracy) ── */
+
+.porozumienie-public {
+  background: var(--kolor-tlo);
+  margin: 0;
+  font-family: var(--font-glowny), serif;
+  color: var(--kolor-tekst);
+}
+
+.porozumienie-public__kontener {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 2rem 1rem 3rem;
+}
+
+.porozumienie-public__naglowek {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.porozumienie-public__logo {
+  height: 35px;
+  width: auto;
+}
+
+.porozumienie-public__system {
+  margin: 0.5rem 0 0;
+  font-size: 0.9rem;
+  color: var(--kolor-tekst-drugor);
+}
+
+.porozumienie-public__podtytul {
+  margin: 1.5rem 0 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.porozumienie-public__dane {
+  display: grid;
+  grid-template-columns: 10rem 1fr;
+  gap: 0.375rem 1rem;
+  margin: 0;
+}
+
+.porozumienie-public__dane dt {
+  font-weight: 500;
+  color: var(--kolor-tekst-drugor);
+}
+
+.porozumienie-public__dane dd {
+  margin: 0;
+}
+
+.porozumienie-public__informacja {
+  font-size: 0.875rem;
+  color: var(--kolor-tekst-drugor);
+}
+
+.porozumienie-public__wynik {
+  text-align: center;
+  padding: 2.5rem 2rem;
+}
+
+.porozumienie-public__stopka {
+  margin-top: 2rem;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--kolor-tekst-drugor);
+}
+
+.porozumienie-public .pole-formularza {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  margin-bottom: 1rem;
 }

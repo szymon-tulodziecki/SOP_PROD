@@ -1,0 +1,154 @@
+{% extends "layouts/base_panel.html" %}
+
+{% block tytul %}{{ t('Porozumienia') }}{% endblock %}
+{% block naglowek %}{{ t('Porozumienia z zakładami pracy') }}{% endblock %}
+
+{% block naglowek_akcje %}
+<a href="{{ url_for('dashboard.index') }}" class="przycisk przycisk--drugorzedny">← {{ t('Powrót') }}</a>
+{% endblock %}
+
+{% block tresc %}
+
+<h2 class="porozumienia__sekcja-tytul">{{ t('Studenci bez porozumienia — pogrupowani po zakładach pracy') }}</h2>
+
+{% if grupy %}
+  {% for g in grupy %}
+  <div class="karta u-mb-15">
+    <div class="karta__naglowek">
+      <h2 class="karta__tytul">{{ g.nazwa }}</h2>
+      <span class="porozumienia__firma-meta">
+        {% if g.adres %}{{ g.adres }}{% if g.miasto %}, {{ g.miasto }}{% endif %}{% endif %}
+        {% if g.nip %} · NIP/KRS: {{ g.nip }}{% endif %}
+      </span>
+    </div>
+    <div class="karta__tresc">
+      <form method="POST" action="{{ url_for('dziekanat.wyslij_porozumienie') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="tabela-wrapper">
+          <table class="tabela">
+            <thead>
+              <tr>
+                <th class="porozumienia__kolumna-wybor">{{ t('Wybór') }}</th>
+                <th>{{ t('Student') }}</th>
+                <th>{{ t('Termin praktyki') }}</th>
+                <th>{{ t('Status') }}</th>
+                <th>{{ t('Osoba upoważniona (od studenta)') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for z in g.zapisy %}
+              <tr>
+                <td>
+                  <input type="checkbox" name="enrollment_ids" value="{{ z.id }}" checked
+                         id="zapis-{{ z.id }}" aria-label="{{ t('Uwzględnij studenta w porozumieniu') }}">
+                </td>
+                <td>
+                  <label for="zapis-{{ z.id }}">
+                    {{ z.student.first_name }} {{ z.student.last_name }}
+                    {% if z.student.album_number %}<span class="porozumienia__album">({{ z.student.album_number }})</span>{% endif %}
+                  </label>
+                </td>
+                <td>
+                  {{ z.start_date.strftime('%d.%m.%Y') if z.start_date else '—' }} –
+                  {{ z.end_date.strftime('%d.%m.%Y') if z.end_date else '—' }}
+                </td>
+                <td><span class="status status--{{ z.status_css_class }}">{{ z.status_label }}</span></td>
+                <td>
+                  {% if z.authorized_person %}
+                    {{ z.authorized_person }}{% if z.authorized_person_email %} · {{ z.authorized_person_email }}{% endif %}
+                  {% else %}
+                    <span class="porozumienia__brak">{{ t('Nie podano') }}</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="porozumienia__odbiorca">
+          <div class="porozumienia__odbiorca-pole">
+            <label class="pole-formularza__etykieta" for="odbiorca-imie-{{ loop.index }}">{{ t('Osoba upoważniona — imię i nazwisko') }}</label>
+            <input class="pole-formularza__input" id="odbiorca-imie-{{ loop.index }}" type="text"
+                   name="recipient_name" value="{{ g.odbiorca_imie }}" maxlength="255" required>
+          </div>
+          <div class="porozumienia__odbiorca-pole">
+            <label class="pole-formularza__etykieta" for="odbiorca-stanowisko-{{ loop.index }}">{{ t('Stanowisko') }}</label>
+            <input class="pole-formularza__input" id="odbiorca-stanowisko-{{ loop.index }}" type="text"
+                   name="recipient_position" value="{{ g.odbiorca_stanowisko }}" maxlength="255">
+          </div>
+          <div class="porozumienia__odbiorca-pole">
+            <label class="pole-formularza__etykieta" for="odbiorca-email-{{ loop.index }}">{{ t('E-mail') }}</label>
+            <input class="pole-formularza__input" id="odbiorca-email-{{ loop.index }}" type="email"
+                   name="recipient_email" value="{{ g.odbiorca_email }}" maxlength="255" required>
+          </div>
+          <button type="submit" class="przycisk przycisk--glowny">{{ t('Wyślij porozumienie') }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+{% else %}
+  <div class="karta u-mb-15">
+    <div class="karta__tresc">
+      <p>{{ t('Brak studentów oczekujących na porozumienie.') }}</p>
+    </div>
+  </div>
+{% endif %}
+
+<h2 class="porozumienia__sekcja-tytul">{{ t('Wysłane porozumienia') }}</h2>
+
+<div class="karta">
+  <div class="karta__tresc">
+    {% if porozumienia %}
+    <div class="tabela-wrapper">
+      <table class="tabela">
+        <thead>
+          <tr>
+            <th>{{ t('Zakład pracy') }}</th>
+            <th>{{ t('Studenci') }}</th>
+            <th>{{ t('Odbiorca') }}</th>
+            <th>{{ t('Status') }}</th>
+            <th>{{ t('Daty') }}</th>
+            <th>{{ t('Akcje') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for w in porozumienia %}
+          <tr>
+            <td>{{ w.p.company_name }}</td>
+            <td>{{ w.p.students_label }}</td>
+            <td>
+              {{ w.p.recipient_name }}<br>
+              <span class="porozumienia__email">{{ w.p.recipient_email }}</span>
+              {% if w.p.status.value == 'FILLED' and w.p.signer_name and w.p.signer_name != w.p.recipient_name %}
+              <br><span class="porozumienia__email">{{ t('Podpisuje:') }} {{ w.p.signer_name }}</span>
+              {% endif %}
+            </td>
+            <td><span class="status {{ w.badge.cls }}">{{ w.badge.label }}</span></td>
+            <td>
+              {{ t('Wysłano:') }} {{ w.p.created_at.strftime('%d.%m.%Y') if w.p.created_at else '—' }}
+              {% if w.p.filled_at %}<br>{{ t('Uzupełniono:') }} {{ w.p.filled_at.strftime('%d.%m.%Y') }}{% endif %}
+            </td>
+            <td>
+              <a href="{{ url_for('dziekanat.porozumienie_pdf', id=w.p.id) }}"
+                 class="przycisk przycisk--maly przycisk--drugorzedny">{{ t('PDF') }}</a>
+              {% if w.p.status.value == 'SENT' %}
+              <form method="POST" action="{{ url_for('dziekanat.anuluj_porozumienie', id=w.p.id) }}" class="porozumienia__akcja-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="przycisk przycisk--maly przycisk--ostrzezenie">{{ t('Anuluj') }}</button>
+              </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p>{{ t('Nie wysłano jeszcze żadnego porozumienia.') }}</p>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

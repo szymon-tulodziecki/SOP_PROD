@@ -296,6 +296,14 @@ def build_context(enrollment, document_type: str) -> dict:
         },
         'zopz': _ctx_zopz(dm),
         'supervisor': _ctx_uopz(supervisor),
+        # Zał. 1 obsługuje porozumienia grupowe — pojedynczy zapis to lista 1-elementowa
+        'studenci': [{
+            'imie':     _g(s, 'first_name', '') if s else '',
+            'nazwisko': _g(s, 'last_name', '')  if s else '',
+            'od':       _fmt(zapis.start_date),
+            'do':       _fmt(zapis.end_date),
+            'wymiar':   _g(p, 'required_hours', 160) if p else 160,
+        }],
         'firma_upowazniony':            dm.authorized_person          if dm else '',
         'authorized_person_position': dm.authorized_person_position if dm else '',
         'justification':   zapis.path_justification.justification if zapis.path_justification else '',

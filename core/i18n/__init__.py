@@ -77,9 +77,9 @@ class lazy_t:
 # (tag <script type="application/json" id="js-i18n">), czytane przez js/i18n.js.
 JS_STRINGS = (
     # kreator: krok 1 (pasek kroków + opisy ścieżek)
-    '2. Miejsce praktyki', '3. Harmonogram', '4. Wysłanie',
+    '2. Miejsce praktyki', '3. Wysłanie', '4. Wysłanie',
     '2. Wniosek', '3. Komisja', '4. Dyrektor', '2. Dane',
-    'Ścieżka A: Odbędziesz praktykę w zakładzie pracy na podstawie porozumienia z uczelnią. Wymagane: Porozumienie (zał. 1), Program (zał. 2), Indywidualny Program (zał. 2a). Po zakończeniu: Dziennik praktyki (zał. 6), Sprawozdanie (zał. 7), Potwierdzenie efektów uczenia się (zał. 4).',
+    'Ścieżka A: Odbędziesz praktykę w zakładzie pracy na podstawie porozumienia z uczelnią — porozumienie (zał. 1) przygotowuje i wysyła dziekanat. Wymagane: Oświadczenie zakładu pracy (zał. 9), Program (zał. 2). Po zakończeniu: Dziennik praktyki (zał. 6), Sprawozdanie (zał. 7), Potwierdzenie efektów uczenia się (zał. 4).',
     'Ścieżka B: Złożysz wniosek (zał. 4b) o uznanie trzynastu efektów uczenia się na podstawie doświadczenia zawodowego. Komisja ds. praktyk wyda opinię (zał. 4a), a Dyrektor Instytutu podejmie ostateczną decyzję. Wybierz poniżej rodzaj zatrudnienia - od tego zależy, jakie dokumenty musisz dołączyć.',
     # kreator: krok 2B/C (upload + licznik)
     'min. 500 znaków', 'Usuń plik', 'Nie udało się pobrać listy załączników.',

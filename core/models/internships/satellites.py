@@ -27,6 +27,7 @@ class WorkplaceDetails(db.Model):
     company_tax_id              = db.Column(db.String(50),  nullable=True)
     authorized_person           = db.Column('company_authorized_person',   db.String(255), nullable=True)
     authorized_person_position  = db.Column('company_authorized_position', db.String(255), nullable=True)
+    authorized_person_email     = db.Column('company_authorized_email',    db.String(255), nullable=True)
 
     workplace_mentor_name     = db.Column('workplace_supervisor_name',     db.String(255), nullable=True)
     workplace_mentor_position = db.Column('workplace_supervisor_position', db.String(255), nullable=True)

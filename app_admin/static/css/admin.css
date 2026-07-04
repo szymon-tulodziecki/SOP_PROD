@@ -164,3 +164,58 @@
   line-height: 1.4;
   resize: vertical;
 }
+
+/* ── Panel dziekanatu: porozumienia ────────────────────────── */
+
+.porozumienia__sekcja-tytul {
+  margin: 0 0 1rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--kolor-tekst);
+}
+
+.porozumienia__sekcja-tytul + .karta,
+.karta + .porozumienia__sekcja-tytul {
+  margin-top: 1.5rem;
+}
+
+.porozumienia__firma-meta {
+  font-size: 0.85rem;
+  color: var(--kolor-tekst-drugor);
+}
+
+.porozumienia__kolumna-wybor {
+  width: 4rem;
+}
+
+.porozumienia__album,
+.porozumienia__email,
+.porozumienia__brak {
+  font-size: 0.85rem;
+  color: var(--kolor-tekst-drugor);
+}
+
+.porozumienia__odbiorca {
+  display: grid;
+  grid-template-columns: 2fr 1.5fr 2fr auto;
+  gap: 1rem;
+  align-items: end;
+  margin-top: 1rem;
+}
+
+.porozumienia__odbiorca-pole {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.porozumienia__akcja-form {
+  display: inline-block;
+  margin-left: 0.375rem;
+}
+
+@media (max-width: 900px) {
+  .porozumienia__odbiorca {
+    grid-template-columns: 1fr;
+  }
+}

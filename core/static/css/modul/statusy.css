@@ -13,6 +13,7 @@
 .rola-odznaka--zopz { background: #d1fae5; color: var(--kolor-sukces); }
 .rola-odznaka--komisja { background: #ede9fe; color: #5b21b6; }
 .rola-odznaka--dyrektor { background: #ffe4e6; color: #9f1239; }
+.rola-odznaka--dziekanat { background: #cffafe; color: #155e75; }
 .rola-odznaka--student { background: #e2e8f0; color: var(--kolor-tekst-drugor); }
 
 .rola-odznaki { display: inline-flex; flex-wrap: wrap; gap: 0.25rem; }

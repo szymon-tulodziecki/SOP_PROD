@@ -22,6 +22,7 @@ class UserRole(enum.Enum):
     UOPZ      = 'UOPZ'
     KOMISJA   = 'KOMISJA'    # Przewodniczący komisji ds. praktyk
     DYREKTOR  = 'DYREKTOR'   # Dyrektor Instytutu — ostateczna akceptacja
+    DZIEKANAT = 'DZIEKANAT'  # Dziekanat — porozumienia z zakładami pracy
     ADMIN     = 'ADMIN'
 
 
@@ -112,7 +113,7 @@ class User(UserMixin, db.Model):
         """Human-friendly label, połączone ' + ' dla użytkowników z wieloma rolami."""
         from core.translations import translate_role
         values = {r.value for r in self.roles} or ({self.role.value} if self.role else set())
-        order = ['ADMIN', 'DYREKTOR', 'KOMISJA', 'UOPZ', 'STUDENT']
+        order = ['ADMIN', 'DYREKTOR', 'KOMISJA', 'DZIEKANAT', 'UOPZ', 'STUDENT']
         ordered = sorted(values, key=lambda v: order.index(v) if v in order else 99)
         return ' + '.join(translate_role(v) for v in ordered if v)
 
@@ -163,3 +164,7 @@ class KomisjaUser(User):
 
 class DyrektorUser(User):
     __mapper_args__ = {'polymorphic_identity': UserRole.DYREKTOR}
+
+
+class DziekanatUser(User):
+    __mapper_args__ = {'polymorphic_identity': UserRole.DZIEKANAT}

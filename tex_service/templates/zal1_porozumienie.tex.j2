@@ -16,13 +16,13 @@ Załącznik nr 1
 
 \vspace{-1em}
 \begin{center}
-\textbf{Porozumienie Nr \dots\dots\dots} \\[0.5em]
+\textbf{Porozumienie Nr <<% if porozumienie_numer is defined and porozumienie_numer %>><< porozumienie_numer|s >><<% else %>>\dots\dots\dots<<% endif %>>} \\[0.5em]
 \textbf{w sprawie praktyk studenckich}
 \end{center}
 \vspace{0.5em}
 
 \noindent
-zawarte w dniu \dots\dots\dots\dots\dots\ pomiędzy Akademią Nauk Stosowanych w Elblągu, ul. Wojska Polskiego 1, 82-300 Elbląg zwaną dalej „Uczelnią" reprezentowaną przez \dots\dots\dots\dots\dots\dots\dots\dots\dots\dots\dots\dots z jednej strony, a \textbf{<< company.nazwa|s >>}, zwanym dalej „Zakładem pracy", reprezentowanym przez \textbf{<< firma_upowazniony|s >>} \textendash\ z drugiej strony.
+zawarte w dniu <<% if porozumienie_data is defined and porozumienie_data %>>\textbf{<< porozumienie_data|s >>}<<% else %>>\dots\dots\dots\dots\dots<<% endif %>>\ pomiędzy Akademią Nauk Stosowanych w Elblągu, ul. Wojska Polskiego 1, 82-300 Elbląg zwaną dalej „Uczelnią" reprezentowaną przez \dots\dots\dots\dots\dots\dots\dots\dots\dots\dots\dots\dots z jednej strony, a \textbf{<< company.nazwa|s >>}, zwanym dalej „Zakładem pracy", reprezentowanym przez \textbf{<< firma_upowazniony|s >>} \textendash\ z drugiej strony.
 
 \vspace{0.5em}
 
@@ -35,9 +35,11 @@ zawarte w dniu \dots\dots\dots\dots\dots\ pomiędzy Akademią Nauk Stosowanych w
     \begin{tabular}{|c|p{4cm}|p{5cm}|p{3cm}|}
     \hline
     Lp. & Imię i nazwisko & Termin odbywania praktyki zawodowej & Wymiar praktyki zawodowej \\ \hline
-    1. & \textbf{<< student.imie|s >> << student.nazwisko|s >>} &
-    \textbf{<< terminy.od|s >>} -- \textbf{<< terminy.do|s >>} &
-    \textbf{<< internship.wymiar_godzin|num >>} h \\ \hline
+<<% for st in studenci %>>
+    << loop.index >>. & \textbf{<< st.imie|s >> << st.nazwisko|s >>} &
+    \textbf{<< st.od|s >>} -- \textbf{<< st.do|s >>} &
+    \textbf{<< st.wymiar|num >>} h \\ \hline
+<<% endfor %>>
     \end{tabular}
     \end{center}
     \vspace{0.5em}

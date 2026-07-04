@@ -43,6 +43,7 @@
         <option value="">{{ t('Wszystkie role') }}</option>
         <option value="STUDENT" {% if request.args.get('rola') == 'STUDENT' %}selected{% endif %}>{{ t('Studenci') }}</option>
         <option value="UOPZ"    {% if request.args.get('rola') == 'UOPZ'    %}selected{% endif %}>{{ t('Opiekunowie uczelniani') }}</option>
+        <option value="DZIEKANAT" {% if request.args.get('rola') == 'DZIEKANAT' %}selected{% endif %}>{{ t('Dziekanat') }}</option>
         <option value="ADMIN"   {% if request.args.get('rola') == 'ADMIN'   %}selected{% endif %}>{{ t('Administratorzy') }}</option>
       </select>
       <button type="submit" class="przycisk przycisk--drugorzedny">{{ t('Szukaj') }}</button>

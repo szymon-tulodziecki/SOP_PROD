@@ -1,0 +1,86 @@
+{% extends "porozumienie/base_public.html" %}
+
+{% block tresc %}
+<div class="karta u-mb-15">
+  <div class="karta__naglowek">
+    <h1 class="karta__tytul">{{ t('Porozumienie w sprawie praktyk studenckich') }}</h1>
+  </div>
+  <div class="karta__tresc">
+    <p>
+      {{ t('Akademia Nauk Stosowanych w Elblągu zaprasza do zawarcia porozumienia w sprawie praktyk zawodowych. Prosimy o weryfikację poniższych danych i uzupełnienie formularza.') }}
+    </p>
+
+    <h2 class="porozumienie-public__podtytul">{{ t('Zakład pracy') }}</h2>
+    <dl class="porozumienie-public__dane">
+      <dt>{{ t('Nazwa') }}</dt>
+      <dd>{{ porozumienie.company_name }}</dd>
+      {% if porozumienie.company_address or porozumienie.company_city %}
+      <dt>{{ t('Adres') }}</dt>
+      <dd>{{ porozumienie.company_address or '' }}{% if porozumienie.company_city %}, {{ porozumienie.company_city }}{% endif %}</dd>
+      {% endif %}
+      {% if porozumienie.company_tax_id %}
+      <dt>NIP/KRS</dt>
+      <dd>{{ porozumienie.company_tax_id }}</dd>
+      {% endif %}
+    </dl>
+
+    <h2 class="porozumienie-public__podtytul">{{ t('Studenci objęci porozumieniem') }}</h2>
+    <div class="tabela-wrapper">
+      <table class="tabela">
+        <thead>
+          <tr>
+            <th>{{ t('Lp.') }}</th>
+            <th>{{ t('Imię i nazwisko') }}</th>
+            <th>{{ t('Termin praktyki') }}</th>
+            <th>{{ t('Wymiar') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in studenci %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ s.imie_nazwisko }}</td>
+            <td>{{ s.od }} – {{ s.do }}</td>
+            <td>{{ s.wymiar }} h</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="karta">
+  <div class="karta__naglowek">
+    <h2 class="karta__tytul">{{ t('Dane osoby reprezentującej zakład pracy') }}</h2>
+  </div>
+  <div class="karta__tresc">
+    <form method="POST">
+      {{ form.csrf_token }}
+
+      <div class="pole-formularza {% if form.signer_name.errors %}pole-formularza--blad{% endif %}">
+        {{ form.signer_name.label(class="pole-formularza__etykieta") }}
+        {{ form.signer_name(class="pole-formularza__input") }}
+        {% for e in form.signer_name.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
+      </div>
+
+      <div class="pole-formularza">
+        {{ form.signer_position.label(class="pole-formularza__etykieta") }}
+        {{ form.signer_position(class="pole-formularza__input") }}
+      </div>
+
+      <div class="pole-formularza {% if form.company_notes.errors %}pole-formularza--blad{% endif %}">
+        {{ form.company_notes.label(class="pole-formularza__etykieta") }}
+        {{ form.company_notes(class="pole-formularza__input", rows=4) }}
+        {% for e in form.company_notes.errors %}<span class="pole-formularza__blad">{{ e }}</span>{% endfor %}
+      </div>
+
+      <p class="porozumienie-public__informacja">
+        {{ t('Po zatwierdzeniu formularza uczelnia przygotuje porozumienie do podpisu. Link jest jednorazowy — po wysłaniu danych przestanie działać.') }}
+      </p>
+
+      <button type="submit" class="przycisk przycisk--glowny">{{ t('Zatwierdź dane porozumienia') }}</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -78,9 +78,11 @@ def create_app():
         from app_admin.routes.evaluation   import evaluation_bp
         from app_admin.routes.journal    import journal_bp
         from app_admin.routes.logs        import logi_bp
+        from app_admin.routes.dziekanat  import dziekanat_bp
 
         auth_bp    = create_auth_blueprint(
-            allowed_roles=[UserRole.ADMIN, UserRole.UOPZ, UserRole.KOMISJA, UserRole.DYREKTOR],
+            allowed_roles=[UserRole.ADMIN, UserRole.UOPZ, UserRole.KOMISJA, UserRole.DYREKTOR,
+                           UserRole.DZIEKANAT],
             login_template='auth/logowanie.html',
         )
         uploads_bp = create_files_blueprint()
@@ -92,6 +94,7 @@ def create_app():
         app.register_blueprint(journal_bp,    url_prefix='/dzienniki')
         app.register_blueprint(uploads_bp,    url_prefix='/uploads')
         app.register_blueprint(logi_bp,       url_prefix='/logi')
+        app.register_blueprint(dziekanat_bp,  url_prefix='/porozumienia')
 
     @app.context_processor
     def inject_nav_counts():

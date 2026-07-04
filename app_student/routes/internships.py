@@ -10,7 +10,7 @@ from core.extensions import db
 from core.i18n import t, lazy_t
 import httpx
 from core.models import (Internship, InternshipEnrollment, InternshipStatus, EnrollmentStatus,
-                         InternshipPath, InternshipSchedule,
+                         InternshipPath,
                          WorkplaceDetails, PathJustification)
 from core.models.internships import EventType
 from core.services.workflow import EnrollmentStateMachine, IllegalTransitionError
@@ -65,6 +65,7 @@ class CompanyDataForm(FlaskForm):
     tax_id                = StringField('NIP / KRS', validators=[Optional(), Length(max=50)])
     authorized_person      = StringField(lazy_t('Osoba upoważniona do podpisania porozumienia'), validators=[Optional(), Length(max=255)])
     authorized_person_position = StringField(lazy_t('Stanowisko osoby upoważnionej'), validators=[Optional(), Length(max=255)])
+    authorized_person_email = StringField(lazy_t('E-mail osoby upoważnionej'), validators=[Optional(), Email(message=lazy_t('Nieprawidłowy email.')), Length(max=255)])
 
     workplace_mentor_name = StringField(lazy_t('Opiekun zakładowy (ZOPZ) — imię i nazwisko'), validators=[Optional(), Length(max=255)])
     workplace_mentor_position    = StringField(lazy_t('Stanowisko ZOPZ'), validators=[Optional(), Length(max=255)])
@@ -103,6 +104,7 @@ class CompanyDataForm(FlaskForm):
         model_instance.company_tax_id = self.tax_id.data
         model_instance.authorized_person = self.authorized_person.data
         model_instance.authorized_person_position = self.authorized_person_position.data
+        model_instance.authorized_person_email = self.authorized_person_email.data
         model_instance.workplace_mentor_name = self.workplace_mentor_name.data
         model_instance.workplace_mentor_position = self.workplace_mentor_position.data
         model_instance.workplace_mentor_phone = self.workplace_mentor_phone.data
@@ -200,6 +202,7 @@ def _save_company_from_form(form, zapis, dm) -> str | None:
         zapis.company_id = form.company_id.data
         dm.company_name = dm.company_address = dm.company_city = None
         dm.company_tax_id = dm.authorized_person = dm.authorized_person_position = None
+        dm.authorized_person_email = None
     else:
         if not form.company_name.data or not form.company_address.data or not form.company_city.data:
             return 'Podaj nazwę, adres i miasto firmy.'
@@ -228,6 +231,7 @@ def _populate_firma_form_from_zapis(form, zapis, dm) -> None:
     form.tax_id.data                = dm.company_tax_id                if dm else None
     form.authorized_person.data      = dm.authorized_person             if dm else None
     form.authorized_person_position.data = dm.authorized_person_position    if dm else None
+    form.authorized_person_email.data = dm.authorized_person_email      if dm else None
     form.workplace_mentor_name.data = dm.workplace_mentor_name     if dm else None
     form.workplace_mentor_position.data    = dm.workplace_mentor_position  if dm else None
     form.workplace_mentor_phone.data       = dm.workplace_mentor_phone     if dm else None
@@ -285,9 +289,11 @@ def kreator_firma(enrollment_id):
         if byl_status == EnrollmentStatus.AWAITING_APPROVAL:
             EnrollmentStateMachine(zapis).submit_to_committee()
             db.session.commit()
+            from core.services import notifications as noty
+            noty.notify_submitted_to_committee(zapis)
             flash(t('Dane zaktualizowane i zgłoszenie odesłane do komisji.'), 'success')
             return redirect(url_for(_ROUTE_SZCZEGOLY, id=zapis.id))
-        return redirect(url_for('internships.zapisz_krok2', id=zapis.id))
+        return redirect(url_for('internships.potwierdz_wyslanie', id=zapis.id))
 
     if request.method == 'GET':
         _populate_firma_form_from_zapis(form, zapis, zapis.workplace_details)
@@ -410,58 +416,16 @@ def zapisz_krok1(id):
 @internships_bp.route('/zgloszenie/<uuid:id>/krok2', methods=['GET', 'POST'])
 @login_required
 def zapisz_krok2(id):
+    """Dawny krok harmonogramu — usunięty ze ścieżki A.
+
+    Porozumienie z zakładem pracy przygotowuje dziekanat, a harmonogram
+    efektów przestał być częścią zgłoszenia studenta. Trasa zostaje jako
+    przekierowanie dla starych linków.
+    """
     zapis = _repo_zapisow.znajdz_po_id(id)
     if not zapis or zapis.student_id != current_user.id:
         abort(404)
-        
-    efekty = _repo_efektow.wszystkie()
-
-    if request.method == 'POST':
-        # Czyszczenie starego jeśli student wraca z jakiegoś powodu
-        _repo_zapisow.usun_harmonogram(zapis.id)
-        
-        nowe_wiersze = []
-        for e in efekty:
-            dz = request.form.get(f'dzial_{e.id}', '')
-            pr = request.form.get(f'prace_{e.id}', '')
-            dni_str = request.form.get(f'dni_{e.id}', '0')
-            try:
-                dni = int(dni_str)
-            except (TypeError, ValueError):
-                dni = 0
-
-            if dz.strip() and pr.strip():
-                nowe_wiersze.append(InternshipSchedule(
-                    id=uuid.uuid4(),
-                    enrollment_id=zapis.id,
-                    learning_outcome_id=e.id,
-                    department_name=dz,
-                    example_tasks=pr,
-                    days_count=dni
-                ))
-                
-        _repo_zapisow.zapisz_harmonogram(nowe_wiersze)
-        db.session.commit()
-
-        return redirect(url_for('internships.potwierdz_wyslanie', id=zapis.id))
-    else:
-        # GET request - pobranie istniejących danych harmonogramu
-        istniejace_harmonogramy = {}
-        harmonogramy = _repo_zapisow.harmonogram_dla_zapisu(zapis.id)
-        for h in harmonogramy:
-            istniejace_harmonogramy[str(h.learning_outcome_id)] = {
-                'dzial': h.department_name,
-                'prace': h.example_tasks,
-                'dni': h.days_count
-            }
-
-    csrf_form = FlaskForm()
-
-    return render_template('kreator/krok3_harmonogram.html',
-                         zapis=zapis,
-                         efekty=efekty,
-                         csrf_form=csrf_form,
-                         istniejace_harmonogramy=istniejace_harmonogramy)
+    return redirect(url_for('internships.potwierdz_wyslanie', id=zapis.id))
 
 
 @internships_bp.route('/zgloszenie/<uuid:id>/potwierdz-wyslanie', methods=['GET'])
@@ -487,12 +451,17 @@ def wyslij_do_zatwierdzenia(id):
         flash(t('Zgłoszenie zostało już wysłane.'), 'info')
         return redirect(url_for(_ROUTE_SZCZEGOLY, id=id))
     from core.services.workflow import EnrollmentStateMachine
+    from core.services import notifications as noty
     fsm = EnrollmentStateMachine(zapis)
     if zapis.path_type and zapis.path_type.value in ('EMPLOYMENT', 'OWN_BUSINESS'):
         fsm.submit_to_committee()
     else:
         fsm.submit_for_approval()
     db.session.commit()
+    if zapis.status == EnrollmentStatus.COMMISSION_REVIEW:
+        noty.notify_submitted_to_committee(zapis)
+    else:
+        noty.notify_submitted_to_supervisor(zapis)
     flash(t('Zgłoszenie zostało przesłane.'), 'success')
     return redirect(url_for(_ROUTE_LISTA))
 
@@ -555,5 +524,10 @@ def resubmit_zgloszenia(id):
     except IllegalTransitionError as e:
         flash(t(str(e)), 'danger')
         return redirect(url_for(_ROUTE_SZCZEGOLY, id=id))
+    from core.services import notifications as noty
+    if fsm.zapis.status == EnrollmentStatus.AWAITING_APPROVAL:
+        noty.notify_submitted_to_supervisor(fsm.zapis)
+    else:
+        noty.notify_submitted_to_committee(fsm.zapis)
     flash(t('Zgłoszenie zostało ponownie wysłane do weryfikacji komisji.'), 'success')
     return redirect(url_for(_ROUTE_SZCZEGOLY, id=id))

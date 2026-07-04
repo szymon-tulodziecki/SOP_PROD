@@ -119,6 +119,23 @@ class InternshipService:
             self._dodaj_zdarzenie(zapis, event_type, comment=comment, executed_by_id=executed_by_id)
 
         db.session.commit()
+        self._notify_status_change(zapis, nowy_status, comment or '')
+
+    @staticmethod
+    def _notify_status_change(zapis: InternshipEnrollment, nowy_status: EnrollmentStatus,
+                              comment: str = '') -> None:
+        """E-mail do właściwego aktora po ręcznej zmianie statusu (po commit)."""
+        from core.services import notifications as noty
+        if nowy_status == EnrollmentStatus.AWAITING_APPROVAL:
+            noty.notify_submitted_to_supervisor(zapis)
+        elif nowy_status == EnrollmentStatus.COMMISSION_REVIEW:
+            noty.notify_submitted_to_committee(zapis)
+        elif nowy_status == EnrollmentStatus.DIRECTOR_APPROVAL:
+            noty.notify_sent_to_director(zapis)
+        elif nowy_status == EnrollmentStatus.IN_PROGRESS:
+            noty.notify_student_approved(zapis)
+        elif nowy_status == EnrollmentStatus.REJECTED:
+            noty.notify_student_rejected(zapis, comment)
 
     def approve_by_supervisor(
         self,
@@ -129,11 +146,13 @@ class InternshipService:
     ) -> None:
         """Zatwierdza zgłoszenie przez UOPZ (z opcjonalnym przypisaniem opiekuna). Commit w serwisie."""
         from core.services.workflow import EnrollmentStateMachine
+        from core.services import notifications as noty
         with EnrollmentStateMachine.lock(enrollment_id) as fsm:
             if supervisor_id is not None:
                 fsm.zapis.supervisor_id = supervisor_id
             fsm.approve_by_supervisor(actor_id=actor_id, comment=comment)
             db.session.commit()
+        noty.notify_student_approved(fsm.zapis)
 
     def request_revision(
         self,
@@ -155,6 +174,8 @@ class InternshipService:
                 event_type = EventType.ADMIN_COMMENT
             fsm.request_revision(actor_id=actor_id, comment=comment, event_type=event_type)
             db.session.commit()
+        from core.services import notifications as noty
+        noty.notify_student_revision(fsm.zapis, comment)
 
     def submit_for_approval_with_supervisor(
         self,
@@ -163,10 +184,12 @@ class InternshipService:
     ) -> None:
         """Przypisuje UOPZ i wysyła zgłoszenie do zatwierdzenia. Commit w serwisie."""
         from core.services.workflow import EnrollmentStateMachine
+        from core.services import notifications as noty
         with EnrollmentStateMachine.lock(enrollment_id) as fsm:
             fsm.zapis.supervisor_id = supervisor_id
             fsm.submit_for_approval()
             db.session.commit()
+        noty.notify_submitted_to_supervisor(fsm.zapis)
 
     def apply_director_decision(
         self,
@@ -178,6 +201,7 @@ class InternshipService:
         """Wykonuje decyzję dyrektora (APPROVED/REJECTED). Commit w serwisie."""
         from core.services.workflow import EnrollmentStateMachine, IllegalTransitionError
         from core.models.internships import EventType
+        from core.services import notifications as noty
         with EnrollmentStateMachine.lock(enrollment_id) as fsm:
             if decision == 'APPROVED':
                 fsm.approve_by_director(actor_id=actor_id, comment=comment)
@@ -186,6 +210,10 @@ class InternshipService:
                            comment=f"Dyrektor nie wyraził zgody: {comment}",
                            event_type=EventType.DIRECTOR_DECISION)
             db.session.commit()
+        if decision == 'APPROVED':
+            noty.notify_student_approved(fsm.zapis)
+        else:
+            noty.notify_student_rejected(fsm.zapis, comment)
 
     def assign_supervisor(self, zapis: InternshipEnrollment, supervisor_id: uuid.UUID) -> None:
         zapis.supervisor_id = supervisor_id
@@ -199,6 +227,7 @@ class InternshipService:
         executed_by_id: Optional[uuid.UUID] = None,
     ) -> None:
         from core.services.workflow import EnrollmentStateMachine
+        from core.services import notifications as noty
         fsm = EnrollmentStateMachine(zapis)
         if decision == 'APPROVED':
             fsm.approve_by_committee(actor_id=executed_by_id, comment=comment or '')
@@ -206,6 +235,10 @@ class InternshipService:
             fsm.reject(actor_id=executed_by_id, comment=comment or '',
                        event_type=EventType.COMMITTEE_DECISION)
         db.session.commit()
+        if decision == 'APPROVED':
+            noty.notify_sent_to_director(zapis)
+        else:
+            noty.notify_student_rejected(zapis, comment or '')
 
     def approve_by_director(
         self,

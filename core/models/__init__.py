@@ -14,6 +14,7 @@ from core.models.users import (
     UniversityMentor,
     KomisjaUser,
     DyrektorUser,
+    DziekanatUser,
 )
 
 from core.models.companies import (
@@ -52,10 +53,16 @@ from core.models.documents import (
     UploadedDocument,
 )
 
+from core.models.agreements import (
+    AgreementStatus,
+    InternshipAgreement,
+    AgreementEnrollment,
+)
+
 __all__ = [
     # uzytkownicy
     'UserRole', 'UserRoleAssoc', 'User', 'Student', 'Administrator', 'UniversityMentor',
-    'KomisjaUser', 'DyrektorUser',
+    'KomisjaUser', 'DyrektorUser', 'DziekanatUser',
     # firmy
     'Company',
     # praktyki
@@ -69,4 +76,6 @@ __all__ = [
     'JournalEntry', 'OutcomeAssessment', 'CommitteeOutcomeEvaluation',
     # dokumenty
     'DocumentAuditLog', 'UploadedDocument',
+    # porozumienia
+    'AgreementStatus', 'InternshipAgreement', 'AgreementEnrollment',
 ]

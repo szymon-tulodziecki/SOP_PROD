@@ -13,6 +13,7 @@ from core.i18n import t
 from core.models.users import (
     Administrator,
     DyrektorUser,
+    DziekanatUser,
     KomisjaUser,
     Student,
     UniversityMentor,
@@ -84,11 +85,13 @@ class UserService:
         return admin
 
     # Priorytet wyboru głównej roli (JTI discriminator) gdy pracownik ma kilka.
-    _STAFF_ROLE_PRIORITY = (UserRole.ADMIN, UserRole.DYREKTOR, UserRole.KOMISJA, UserRole.UOPZ)
+    _STAFF_ROLE_PRIORITY = (UserRole.ADMIN, UserRole.DYREKTOR, UserRole.KOMISJA,
+                            UserRole.DZIEKANAT, UserRole.UOPZ)
     _STAFF_JTI_CLASS = {
         UserRole.ADMIN: Administrator,
         UserRole.DYREKTOR: DyrektorUser,
         UserRole.KOMISJA: KomisjaUser,
+        UserRole.DZIEKANAT: DziekanatUser,
         UserRole.UOPZ: UniversityMentor,
     }
 

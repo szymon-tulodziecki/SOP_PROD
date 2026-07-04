@@ -39,7 +39,7 @@
       </form>
 
       {% if zapis.is_standard %}
-      <a href="{{ url_for('internships.zapisz_krok2', id=zapis.id) }}"
+      <a href="{{ url_for('internships.kreator_firma', enrollment_id=zapis.id) }}"
          class="przycisk przycisk--drugorzedny u-flex--center u-csp-347">
         {{ t('Wróć i popraw') }}
       </a>

@@ -8,7 +8,7 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 -- 1. Enum types
 -- ============================================================
 
-CREATE TYPE user_role        AS ENUM ('STUDENT', 'UOPZ', 'KOMISJA', 'DYREKTOR', 'ADMIN');
+CREATE TYPE user_role        AS ENUM ('STUDENT', 'UOPZ', 'KOMISJA', 'DYREKTOR', 'DZIEKANAT', 'ADMIN');
 CREATE TYPE internship_status AS ENUM ('ACTIVE', 'INACTIVE');
 CREATE TYPE enrollment_status AS ENUM (
     'PENDING',
@@ -162,6 +162,7 @@ CREATE TABLE workplace_details (
     company_tax_id                VARCHAR(50),
     company_authorized_person     VARCHAR(255),
     company_authorized_position   VARCHAR(255),
+    company_authorized_email      VARCHAR(255),
 
     -- Workplace supervisor (ZOPZ) data
     workplace_supervisor_name     VARCHAR(255),
@@ -373,6 +374,51 @@ CREATE TABLE committee_outcome_evaluations (
     notes               TEXT,
     UNIQUE (enrollment_id, learning_outcome_id)
 );
+
+-- ============================================================
+-- 20. Porozumienia z zakładami pracy (dziekanat, Zał. 1)
+-- ============================================================
+
+CREATE TYPE agreement_status AS ENUM ('SENT', 'FILLED', 'CANCELLED');
+
+CREATE TABLE internship_agreements (
+    id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    -- Snapshot danych zakładu pracy
+    company_name       VARCHAR(255) NOT NULL,
+    company_address    VARCHAR(255),
+    company_city       VARCHAR(255),
+    company_tax_id     VARCHAR(50),
+
+    -- Osoba upoważniona (odbiorca linku)
+    recipient_name     VARCHAR(255) NOT NULL,
+    recipient_position VARCHAR(255),
+    recipient_email    VARCHAR(255) NOT NULL,
+
+    -- SHA-256 tokenu z linku; surowy token wyłącznie w e-mailu
+    token_hash         VARCHAR(64) NOT NULL UNIQUE,
+
+    status             agreement_status NOT NULL DEFAULT 'SENT',
+
+    created_by_id      UUID REFERENCES users(id) ON DELETE SET NULL,
+    created_at         TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expires_at         TIMESTAMP,
+    filled_at          TIMESTAMP,
+
+    -- Dane uzupełniane przez zakład pracy
+    signer_name        VARCHAR(255),
+    signer_position    VARCHAR(255),
+    company_notes      TEXT
+);
+
+CREATE TABLE agreement_enrollments (
+    agreement_id  UUID NOT NULL REFERENCES internship_agreements(id)  ON DELETE CASCADE,
+    enrollment_id UUID NOT NULL REFERENCES internship_enrollments(id) ON DELETE CASCADE,
+    PRIMARY KEY (agreement_id, enrollment_id)
+);
+
+CREATE INDEX idx_agreements_status ON internship_agreements (status);
+CREATE INDEX idx_agreement_enrollments_enrollment ON agreement_enrollments (enrollment_id);
 
 -- ============================================================
 -- TRIGGER: update total_hours_logged on journal entry changes

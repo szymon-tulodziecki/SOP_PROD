@@ -21,3 +21,6 @@ httpx==0.27.0
 cryptography==44.0.2
 python-magic==0.4.27
 holidays>=0.50
+
+# E-maile przez Microsoft Graph (task send_email)
+msal==1.31.0
