@@ -1,4 +1,5 @@
 {% extends "layouts/base_panel.html" %}
+{% import "_makra.html" as makra with context %}
 
 {% block tytul %}{{ t('Zarządzanie firmami') }}{% endblock %}
 {% block naglowek %}{{ t('Firmy w systemie') }}{% endblock %}
@@ -20,23 +21,7 @@
   <div class="karta">
     <div class="karta__naglowek">
       <form method="GET" class="pasek-filtrow" role="search" aria-label="{{ t('Filtruj firmy') }}">
-        <div class="filtr-szukaj">
-          <span class="filtr-szukaj__ikona" aria-hidden="true">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="11" cy="11" r="8"></circle>
-              <path d="m21 21-4.3-4.3"></path>
-            </svg>
-          </span>
-          <input
-            type="search"
-            name="szukaj"
-            id="szukaj"
-            class="filtr-szukaj__input"
-            value="{{ request.args.get('szukaj', '') }}"
-            placeholder="{{ t('Szukaj po nazwie, adresie, NIP/KRS...') }}"
-            aria-label="{{ t('Szukaj firmy') }}"
-          >
-        </div>
+        {{ makra.filtr_szukaj(t('Szukaj po nazwie, adresie, NIP/KRS...'), t('Szukaj firmy')) }}
         <label for="status" class="sr-only">{{ t('Filtruj po statusie') }}</label>
         <select name="status" id="status" class="filtr-select" data-autosubmit>
           <option value="wszystkie" {% if request.args.get('status', 'wszystkie') == 'wszystkie' %}selected{% endif %}>{{ t('Wszystkie') }}</option>
@@ -44,7 +29,7 @@
           <option value="nieaktywne" {% if request.args.get('status') == 'nieaktywne' %}selected{% endif %}>{{ t('Tylko nieaktywne') }}</option>
         </select>
         <button type="submit" class="przycisk przycisk--drugorzedny">{{ t('Szukaj') }}</button>
-        {% if request.args.get('szukaj') or request.args.get('status', 'aktywne') != 'aktywne' %}
+        {% if request.args.get('szukaj') or request.args.get('status', 'wszystkie') != 'wszystkie' %}
           <a href="{{ url_for('zarzadzanie.lista_firm') }}" class="przycisk przycisk--drugorzedny">
             {{ t('Wyczyść filtry') }}
           </a>
@@ -96,24 +81,16 @@
                    class="przycisk przycisk--maly przycisk--drugorzedny">
                   {{ t('Edytuj') }}
                 </a>
-                <form class="u-csp-194" method="POST" action="{{ url_for('zarzadzanie.przelacz_aktywnosc_firmy', id=company.id) }}"
-                     >
-                  {{ csrf_form.hidden_tag() }}
-                  <button type="submit"
-                          class="przycisk {{ w.aktywnosc.przycisk_cls }} przycisk--maly"
-                          data-confirm="{{ t('Czy na pewno chcesz {akcja} firmę?', akcja=w.aktywnosc.akcja) }}">
-                    {{ w.aktywnosc.przycisk }}
-                  </button>
-                </form>
-                <form class="u-csp-194" method="POST" action="{{ url_for('zarzadzanie.usun_firme', id=company.id) }}"
-                     >
-                  {{ csrf_form.hidden_tag() }}
-                  <button type="submit"
-                          class="przycisk przycisk--niebezpieczny przycisk--maly"
-                          data-confirm="{{ t('Czy na pewno chcesz trwale usunąć firmę {nazwa}? Tej operacji nie można cofnąć.', nazwa=company.name) }}">
-                    {{ t('Usuń') }}
-                  </button>
-                </form>
+                {{ makra.formularz_akcji(
+                     url_for('zarzadzanie.przelacz_aktywnosc_firmy', id=company.id), csrf_form,
+                     w.aktywnosc.przycisk_cls, w.aktywnosc.przycisk,
+                     t('Czy na pewno chcesz {akcja} firmę?', akcja=w.aktywnosc.akcja),
+                     klasa_formy='u-csp-194') }}
+                {{ makra.formularz_akcji(
+                     url_for('zarzadzanie.usun_firme', id=company.id), csrf_form,
+                     'przycisk--niebezpieczny', t('Usuń'),
+                     t('Czy na pewno chcesz trwale usunąć firmę {nazwa}? Tej operacji nie można cofnąć.', nazwa=company.name),
+                     klasa_formy='u-csp-194') }}
               </td>
             </tr>
             {% endfor %}
@@ -121,33 +98,7 @@
         </table>
       </div>
 
-      <!-- Paginacja -->
-      {% if firmy.pages > 1 %}
-      <div class="u-csp-154">
-        {% if firmy.has_prev %}
-        <a href="{{ url_for('zarzadzanie.lista_firm', page=firmy.prev_num, **request.args) }}"
-           class="przycisk przycisk--drugorzedny przycisk--maly">← {{ t('Poprzednia') }}</a>
-        {% endif %}
-
-        {% for page_num in firmy.iter_pages() %}
-          {% if page_num %}
-            {% if page_num != firmy.page %}
-            <a href="{{ url_for('zarzadzanie.lista_firm', page=page_num, **request.args) }}"
-               class="przycisk przycisk--drugorzedny przycisk--maly">{{ page_num }}</a>
-            {% else %}
-            <span class="przycisk przycisk--glowny przycisk--maly">{{ page_num }}</span>
-            {% endif %}
-          {% else %}
-            <span>…</span>
-          {% endif %}
-        {% endfor %}
-
-        {% if firmy.has_next %}
-        <a href="{{ url_for('zarzadzanie.lista_firm', page=firmy.next_num, **request.args) }}"
-           class="przycisk przycisk--drugorzedny przycisk--maly">{{ t('Następna') }} →</a>
-        {% endif %}
-      </div>
-      {% endif %}
+      {{ makra.paginacja(firmy, 'zarzadzanie.lista_firm', param='page') }}
 
       {% else %}
       <!-- Pusty stan -->

@@ -6,12 +6,10 @@ Studenci ścieżki A pogrupowani po zakładach pracy; dziekanat zaznacza
 studentów z jednego zakładu i wysyła osobie upoważnionej unikalny link
 z formularzem porozumienia. Jedno porozumienie obejmuje 1..N studentów.
 """
-import os
 import re
 import uuid
 
-import httpx
-from flask import (Blueprint, abort, flash, make_response, redirect,
+from flask import (Blueprint, abort, flash, redirect,
                    render_template, request, url_for)
 from flask_login import current_user
 from flask_wtf import FlaskForm
@@ -24,6 +22,7 @@ from core.models import (AgreementStatus, EnrollmentStatus, InternshipAgreement,
 from core.presenters import agreement_status_badge
 from core.services import notifications as noty
 from core.services.agreements import AgreementService
+from core.services.tex_client import TexServiceError, dyspozycja_pdf, generuj_pdf, odpowiedz_pdf
 
 dziekanat_bp = Blueprint('dziekanat', __name__)
 
@@ -109,6 +108,12 @@ def _walidacja_wysylki(zapisy, recipient_name, recipient_email) -> str | None:
     """Zwraca komunikat błędu albo None gdy dane są poprawne."""
     if not zapisy:
         return 'Zaznacz co najmniej jednego studenta.'
+    # Te same warunki co lista — POST nie może objąć zapisów spoza niej
+    # (ścieżka B, odrzucone/szkicowe, bez zakładu pracy).
+    if any(z.path_type != InternshipPath.STANDARD
+           or z.status not in _AKTYWNE_STATUSY
+           or not z.company_display_name for z in zapisy):
+        return 'Część zaznaczonych zgłoszeń nie kwalifikuje się do porozumienia.'
     if not recipient_name or len(recipient_name.split()) < 2:
         return 'Podaj imię i nazwisko osoby upoważnionej.'
     if not recipient_email or not _EMAIL_RE.fullmatch(recipient_email):
@@ -215,18 +220,9 @@ def porozumienie_pdf(id):
         'studenci': studenci,
     }
     try:
-        response = httpx.post(
-            f"{os.environ['TEX_SERVICE_URL']}/generuj",
-            json={'template': 'zal1_porozumienie.tex.j2', 'context': context,
-                  'filename': 'zal1_porozumienie.pdf'},
-            timeout=60,
-        )
-        if response.status_code != 200:
-            abort(500)
-    except httpx.HTTPError:
+        pdf = generuj_pdf('zal1_porozumienie.tex.j2', context,
+                          'zal1_porozumienie.pdf', timeout=60)
+    except TexServiceError:
         abort(500)
 
-    pdf = make_response(response.content)
-    pdf.headers['Content-Type'] = 'application/pdf'
-    pdf.headers['Content-Disposition'] = 'attachment; filename="zal1_porozumienie.pdf"'
-    return pdf
+    return odpowiedz_pdf(pdf, dyspozycja_pdf('zal1_porozumienie.pdf'))

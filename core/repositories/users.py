@@ -12,6 +12,7 @@ from core.models.users import (
     UniversityMentor,
     User,
     UserRole,
+    UserRoleAssoc,
 )
 
 
@@ -95,9 +96,17 @@ class UserRepository:
             ))
         if role_filter:
             try:
-                q = q.filter(User.role == UserRole[role_filter])
+                role = UserRole[role_filter]
             except KeyError:
                 pass
+            else:
+                # Rola główna (users.role) LUB dodatkowa (user_roles) —
+                # pracownicy mogą mieć wiele ról naraz.
+                q = (
+                    q.outerjoin(UserRoleAssoc, UserRoleAssoc.user_id == User.id)
+                    .filter(db.or_(User.role == role, UserRoleAssoc.role == role))
+                    .distinct()
+                )
         return q.order_by(User.last_name, User.first_name).paginate(
             page=page, per_page=per_page, error_out=False
         )

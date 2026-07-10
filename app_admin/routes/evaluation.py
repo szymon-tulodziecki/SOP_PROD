@@ -1,9 +1,5 @@
 """Widoki oceny efektów uczenia się dla zapisów na praktykę."""
-from urllib.parse import quote
-
-import httpx
-import unicodedata
-from flask import Blueprint, abort, current_app, flash, make_response, redirect, render_template, request, url_for
+from flask import Blueprint, abort, current_app, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 from flask_wtf import FlaskForm
 
@@ -16,6 +12,7 @@ from core.repositories import AssessmentRepository, EnrollmentRepository, Outcom
 from core.services import AssessmentService as GradingService
 from core.services.documents import build_context
 from core.services.evaluation import EvaluationService, GradeFormData
+from core.services.tex_client import TexServiceError, dyspozycja_pdf, generuj_pdf, odpowiedz_pdf
 from core.services.workflow import EnrollmentStateMachine
 
 outcome_repository = OutcomeRepository()
@@ -224,30 +221,14 @@ def generuj_protokol(id):
 
     context = build_context(enrollment, 'ZAL_8')
     student = enrollment.student
-    tex_url = current_app.config['TEX_SERVICE_URL']
     try:
-        response = httpx.post(
-            f'{tex_url}/generuj',
-            json={'template': 'zal8_protokol.tex.j2', 'context': context, 'filename': 'zal8_protokol.pdf'},
-            timeout=60,
-        )
-        if response.status_code == 200:
-            full_name = f"zal8_protokol_{student.last_name}.pdf"
-            ascii_fallback = (
-                unicodedata.normalize('NFKD', full_name)
-                .encode('ascii', 'ignore').decode('ascii')
-                .strip() or 'zal8_protokol.pdf'
-            )
-            utf8_encoded = quote(full_name, safe='')
-            pdf_response = make_response(response.content)
-            pdf_response.headers['Content-Type'] = 'application/pdf'
-            pdf_response.headers['Content-Disposition'] = (
-                f"attachment; filename=\"{ascii_fallback}\"; filename*=UTF-8''{utf8_encoded}"
-            )
-            return pdf_response
-        current_app.logger.warning("tex-service returned %s for protokol %s", response.status_code, id)
-        flash(t('Błąd generowania protokołu. Spróbuj ponownie później.'), 'danger')
-    except httpx.HTTPError as exc:
-        current_app.logger.error("tex-service unreachable for protokol %s: %s", id, exc)
-        flash(t('Błąd połączenia z serwisem PDF. Spróbuj ponownie później.'), 'danger')
+        pdf = generuj_pdf('zal8_protokol.tex.j2', context, 'zal8_protokol.pdf', timeout=60)
+        return odpowiedz_pdf(pdf, dyspozycja_pdf('zal8_protokol', student.last_name))
+    except TexServiceError as exc:
+        if exc.status_code:
+            current_app.logger.warning("tex-service returned %s for protokol %s", exc.status_code, id)
+            flash(t('Błąd generowania protokołu. Spróbuj ponownie później.'), 'danger')
+        else:
+            current_app.logger.error("tex-service unreachable for protokol %s: %s", id, exc)
+            flash(t('Błąd połączenia z serwisem PDF. Spróbuj ponownie później.'), 'danger')
     return redirect(url_for(GRADE_FORM_ENDPOINT, id=id))

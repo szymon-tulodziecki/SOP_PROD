@@ -1,4 +1,5 @@
 {% extends "layouts/base_panel.html" %}
+{% import "_makra.html" as makra with context %}
 
 {% set endpoint_listy = endpoint_listy|default('zarzadzanie.lista_zgloszen') %}
 {% set tytul_listy = t(tytul_listy|default('Zgłoszenia studentów')) %}
@@ -19,18 +20,10 @@
     <div class="karta__tresc">
       <div class="u-flex--gap-1 u-csp-054">
         <span class="u-fw-600">{{ t('Filtruj:') }}</span>
-        <a href="{{ url_for(endpoint_listy) }}"
-           class="przycisk przycisk--{% if not request.args.get('status') %}glowny{% else %}drugorzedny{% endif %} przycisk--maly">
-          {{ t('Wszystkie') }}
-        </a>
-        <a href="{{ url_for(endpoint_listy, status='AWAITING_APPROVAL') }}"
-           class="przycisk przycisk--{% if request.args.get('status') == 'AWAITING_APPROVAL' %}glowny{% else %}drugorzedny{% endif %} przycisk--maly">
-          {{ t('Oczekujące') }}
-        </a>
-        <a href="{{ url_for(endpoint_listy, status='REVISION_REQUIRED') }}"
-           class="przycisk przycisk--{% if request.args.get('status') == 'REVISION_REQUIRED' %}glowny{% else %}drugorzedny{% endif %} przycisk--maly">
-          {{ t('Czeka na poprawki') }}
-        </a>
+        {{ makra.filtry_statusu(endpoint_listy, [
+             ('AWAITING_APPROVAL', t('Oczekujące')),
+             ('REVISION_REQUIRED', t('Czeka na poprawki')),
+           ], t('Wszystkie')) }}
       </div>
     </div>
   </div>
@@ -110,33 +103,7 @@
         </table>
       </div>
 
-      <!-- Paginacja -->
-      {% if zgloszenia.pages > 1 %}
-      <div class="u-flex--center u-mt-2 u-csp-135">
-        {% if zgloszenia.has_prev %}
-        <a href="{{ url_for(endpoint_listy, page=zgloszenia.prev_num, **request.args) }}"
-           class="przycisk przycisk--drugorzedny przycisk--maly">← {{ t('Poprzednia') }}</a>
-        {% endif %}
-
-        {% for page_num in zgloszenia.iter_pages() %}
-          {% if page_num %}
-            {% if page_num != zgloszenia.page %}
-            <a href="{{ url_for(endpoint_listy, page=page_num, **request.args) }}"
-               class="przycisk przycisk--drugorzedny przycisk--maly">{{ page_num }}</a>
-            {% else %}
-            <span class="przycisk przycisk--glowny przycisk--maly">{{ page_num }}</span>
-            {% endif %}
-          {% else %}
-            <span>…</span>
-          {% endif %}
-        {% endfor %}
-
-        {% if zgloszenia.has_next %}
-        <a href="{{ url_for(endpoint_listy, page=zgloszenia.next_num, **request.args) }}"
-           class="przycisk przycisk--drugorzedny przycisk--maly">{{ t('Następna') }} →</a>
-        {% endif %}
-      </div>
-      {% endif %}
+      {{ makra.paginacja(zgloszenia, endpoint_listy, param='page') }}
 
     </div>
   </div>

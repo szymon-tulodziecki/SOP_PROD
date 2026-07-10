@@ -1,4 +1,5 @@
 {% extends "layouts/base_panel.html" %}
+{% import "_makra.html" as makra with context %}
 {% block tytul %}{{ t('Użytkownicy') }}{% endblock %}
 {% block naglowek %}{{ t('Zarządzanie użytkownikami') }}{% endblock %}
 
@@ -21,28 +22,14 @@
 <div class="karta">
   <div class="karta__naglowek">
     <form method="GET" class="pasek-filtrow" role="search" aria-label="{{ t('Filtruj użytkowników') }}">
-      <div class="filtr-szukaj">
-        <span class="filtr-szukaj__ikona" aria-hidden="true">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="11" cy="11" r="8"></circle>
-            <path d="m21 21-4.3-4.3"></path>
-          </svg>
-        </span>
-        <input
-          type="search"
-          name="szukaj"
-          id="szukaj"
-          class="filtr-szukaj__input"
-          value="{{ request.args.get('szukaj', '') }}"
-          placeholder="{{ t('Szukaj po imieniu, nazwisku, e-mailu...') }}"
-          aria-label="{{ t('Szukaj użytkowników') }}"
-        >
-      </div>
+      {{ makra.filtr_szukaj(t('Szukaj po imieniu, nazwisku, e-mailu...'), t('Szukaj użytkowników')) }}
       <label for="rola" class="sr-only">{{ t('Filtruj po roli') }}</label>
       <select name="rola" id="rola" class="filtr-select" data-autosubmit>
         <option value="">{{ t('Wszystkie role') }}</option>
         <option value="STUDENT" {% if request.args.get('rola') == 'STUDENT' %}selected{% endif %}>{{ t('Studenci') }}</option>
         <option value="UOPZ"    {% if request.args.get('rola') == 'UOPZ'    %}selected{% endif %}>{{ t('Opiekunowie uczelniani') }}</option>
+        <option value="KOMISJA" {% if request.args.get('rola') == 'KOMISJA' %}selected{% endif %}>{{ t('Komisja ds. praktyk') }}</option>
+        <option value="DYREKTOR" {% if request.args.get('rola') == 'DYREKTOR' %}selected{% endif %}>{{ t('Dyrektor Instytutu') }}</option>
         <option value="DZIEKANAT" {% if request.args.get('rola') == 'DZIEKANAT' %}selected{% endif %}>{{ t('Dziekanat') }}</option>
         <option value="ADMIN"   {% if request.args.get('rola') == 'ADMIN'   %}selected{% endif %}>{{ t('Administratorzy') }}</option>
       </select>
@@ -113,29 +100,16 @@
               {% endif %}
 
               {% if u.id != current_user.id %}
-                <form class="u-csp-256" method="POST"
-                      action="{{ url_for('zarzadzanie.przelacz_aktywnosc', id=u.id) }}"
-                     >
-                  {{ csrf_form.hidden_tag() }}
-                  <button type="submit"
-                          class="przycisk {{ w.aktywnosc.przycisk_cls }} przycisk--maly"
-                          aria-label="{{ w.aktywnosc.przycisk }} — {{ u.first_name }} {{ u.last_name }}"
-                          data-confirm="{{ t('Czy na pewno chcesz zmienić status tego konta?') }}">
-                    {{ w.aktywnosc.przycisk }}
-                  </button>
-                </form>
-
-                <form class="u-csp-256" method="POST"
-                      action="{{ url_for('zarzadzanie.usun_uzytkownika', id=u.id) }}"
-                     >
-                  {{ csrf_form.hidden_tag() }}
-                  <button type="submit"
-                          class="przycisk przycisk--niebezpieczny przycisk--maly"
-                          aria-label="{{ t('Usuń konto') }} {{ u.first_name }} {{ u.last_name }}"
-                          data-confirm="{{ t('Czy na pewno chcesz trwale usunąć konto {imie} {nazwisko}? Tej operacji nie można cofnąć.', imie=u.first_name, nazwisko=u.last_name) }}">
-                    {{ t('Usuń') }}
-                  </button>
-                </form>
+                {{ makra.formularz_akcji(
+                     url_for('zarzadzanie.przelacz_aktywnosc', id=u.id), csrf_form,
+                     w.aktywnosc.przycisk_cls, w.aktywnosc.przycisk,
+                     t('Czy na pewno chcesz zmienić status tego konta?'),
+                     aria_label=w.aktywnosc.przycisk ~ ' — ' ~ u.first_name ~ ' ' ~ u.last_name) }}
+                {{ makra.formularz_akcji(
+                     url_for('zarzadzanie.usun_uzytkownika', id=u.id), csrf_form,
+                     'przycisk--niebezpieczny', t('Usuń'),
+                     t('Czy na pewno chcesz trwale usunąć konto {imie} {nazwisko}? Tej operacji nie można cofnąć.', imie=u.first_name, nazwisko=u.last_name),
+                     aria_label=t('Usuń konto') ~ ' ' ~ u.first_name ~ ' ' ~ u.last_name) }}
               {% endif %}
 
             </div>
@@ -156,34 +130,7 @@
     </table>
   </div>
 
-  {% if uzytkownicy.pages > 1 %}
-  <nav class="paginacja" aria-label="{{ t('Paginacja listy użytkowników') }}">
-    <span class="paginacja__info">
-      {{ t('Wyświetlanie {od}–{do} z {razem}', od=uzytkownicy.per_page * (uzytkownicy.page - 1) + 1, do=[uzytkownicy.per_page * uzytkownicy.page, uzytkownicy.total] | min, razem=uzytkownicy.total) }}
-    </span>
-    <div class="paginacja__przyciski" role="list">
-      {% if uzytkownicy.has_prev %}
-        <a href="{{ url_for('zarzadzanie.lista_uzytkownikow', strona=uzytkownicy.prev_num, **request.args) }}"
-           class="paginacja__przycisk" aria-label="{{ t('Poprzednia strona') }}">←</a>
-      {% endif %}
-      {% for nr in uzytkownicy.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
-        {% if nr %}
-          <a href="{{ url_for('zarzadzanie.lista_uzytkownikow', strona=nr, **request.args) }}"
-             class="paginacja__przycisk {% if nr == uzytkownicy.page %}paginacja__przycisk--aktywny{% endif %}"
-             {% if nr == uzytkownicy.page %}aria-current="page"{% endif %}>
-            {{ nr }}
-          </a>
-        {% else %}
-          <span class="paginacja__przycisk" aria-hidden="true">…</span>
-        {% endif %}
-      {% endfor %}
-      {% if uzytkownicy.has_next %}
-        <a href="{{ url_for('zarzadzanie.lista_uzytkownikow', strona=uzytkownicy.next_num, **request.args) }}"
-           class="paginacja__przycisk" aria-label="{{ t('Następna strona') }}">→</a>
-      {% endif %}
-    </div>
-  </nav>
-  {% endif %}
+  {{ makra.paginacja(uzytkownicy, 'zarzadzanie.lista_uzytkownikow', aria_label=t('Paginacja listy użytkowników')) }}
 
 </div>
 {% endblock %}

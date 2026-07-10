@@ -44,20 +44,8 @@
         </p>
       </div>
 
-      {% with wiadomosci = get_flashed_messages(with_categories=True) %}
-        {% if wiadomosci %}
-          <div role="alert" aria-live="assertive" class="komunikaty">
-            {% for kategoria, wiadomosc in wiadomosci %}
-              <div class="komunikat komunikat--{{ kategoria }}">
-                <span class="komunikat__ikona" aria-hidden="true">
-                  {{ ikona_komunikatu(kategoria) }}
-                </span>
-                <span>{{ wiadomosc }}</span>
-              </div>
-            {% endfor %}
-          </div>
-        {% endif %}
-      {% endwith %}
+      {% import "_makra.html" as makra with context %}
+      {{ makra.komunikaty_inline() }}
 
       <div class="logowanie-microsoft">
         <a

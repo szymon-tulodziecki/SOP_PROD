@@ -1,4 +1,5 @@
 {% extends "layouts/base_panel.html" %}
+{% import "_makra.html" as makra with context %}
 
 {% block tytul %}{{ t('Decyzje Dyrektora Instytutu') }}{% endblock %}
 {% block naglowek %}{{ t('Wnioski oczekujące na decyzję Dyrektora Instytutu') }}{% endblock %}
@@ -76,27 +77,7 @@
     </div>
   </div>
 
-  {% if wnioski.pages > 1 %}
-  <div class="paginacja">
-    {% if wnioski.has_prev %}
-      <a href="{{ url_for('zarzadzanie.dyrektor_lista', page=wnioski.prev_num) }}" class="paginacja__link">← {{ t('Poprzednia') }}</a>
-    {% endif %}
-    {% for page_num in wnioski.iter_pages() %}
-      {% if page_num %}
-        {% if page_num != wnioski.page %}
-          <a href="{{ url_for('zarzadzanie.dyrektor_lista', page=page_num) }}" class="paginacja__link">{{ page_num }}</a>
-        {% else %}
-          <span class="paginacja__link paginacja__link--aktywny">{{ page_num }}</span>
-        {% endif %}
-      {% else %}
-        <span class="paginacja__kropki">…</span>
-      {% endif %}
-    {% endfor %}
-    {% if wnioski.has_next %}
-      <a href="{{ url_for('zarzadzanie.dyrektor_lista', page=wnioski.next_num) }}" class="paginacja__link">{{ t('Następna') }} →</a>
-    {% endif %}
-  </div>
-  {% endif %}
+  {{ makra.paginacja(wnioski, 'zarzadzanie.dyrektor_lista', param='page') }}
 
   {% else %}
   <div class="karta">

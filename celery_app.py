@@ -130,17 +130,6 @@ def _shutdown_worker(**_kwargs):
     logger.info("Worker process shut down cleanly")
 
 
-def _get_app() -> Flask:
-    """Zwraca aplikację workera; fallback dla wywołań spoza kontekstu Celery (np. testy)."""
-    global _worker_app
-    if _worker_app is None:
-        _worker_app = _create_worker_app()
-        _worker_app.app_context().push()
-        from core.extensions import db
-        db.engine.dispose(close=False)
-    return _worker_app
-
-
 # ── Wyjątki domenowe (nie ponawiamy) ─────────────────────────────────────────
 class EnrollmentNotFound(Exception):
     """Brak rekordu w bazie — błąd stały, retry bez sensu."""
@@ -153,9 +142,9 @@ class EnrollmentNotFound(Exception):
 def generate_pdf_dziennik(self, enrollment_id: str) -> dict:
     import uuid
     from pathlib import Path
-    import httpx
 
     from core.services.documents import build_context
+    from core.services.tex_client import TexServiceError, generuj_pdf
     from core.repositories import EnrollmentRepository
 
     enrollment = EnrollmentRepository().znajdz_po_id(uuid.UUID(enrollment_id))
@@ -164,15 +153,9 @@ def generate_pdf_dziennik(self, enrollment_id: str) -> dict:
 
     context = build_context(enrollment, 'ZAL_6')
 
-    tex_url = _get_app().config['TEX_SERVICE_URL']
     try:
-        resp = httpx.post(
-            f"{tex_url}/generuj",
-            json={'template': 'zal6_dziennik.tex.j2', 'context': context},
-            timeout=60.0,
-        )
-        resp.raise_for_status()
-    except httpx.HTTPError as exc:
+        pdf_bytes = generuj_pdf('zal6_dziennik.tex.j2', context, timeout=60.0)
+    except TexServiceError as exc:
         logger.warning("Tex-service error (retry %d/%d): %s",
                        self.request.retries, self.max_retries, exc)
         raise self.retry(exc=exc, countdown=10 * (self.request.retries + 1))
@@ -181,7 +164,7 @@ def generate_pdf_dziennik(self, enrollment_id: str) -> dict:
     output_dir.mkdir(parents=True, exist_ok=True)
     filename    = f"dziennik_{enrollment_id}.pdf"
     output_path = output_dir / filename
-    output_path.write_bytes(resp.content)
+    output_path.write_bytes(pdf_bytes)
 
     return {
         'status':   'success',
@@ -292,18 +275,12 @@ def generate_pdf_from_template(self, template_name: str, context: dict,
     import uuid
     from datetime import date
     from pathlib import Path
-    import httpx
 
-    tex_url = _get_app().config['TEX_SERVICE_URL']
+    from core.services.tex_client import TexServiceError, generuj_pdf
+
     try:
-        resp = httpx.post(
-            f"{tex_url}/generuj",
-            json={'template': template_name, 'context': context},
-            timeout=90.0,
-        )
-        resp.raise_for_status()
-        pdf_bytes = resp.content
-    except httpx.HTTPError as exc:
+        pdf_bytes = generuj_pdf(template_name, context, timeout=90.0)
+    except TexServiceError as exc:
         logger.warning("Tex-service error (retry %d/%d): %s",
                        self.request.retries, self.max_retries, exc)
         raise self.retry(exc=exc, countdown=10 * (self.request.retries + 1))

@@ -1,4 +1,5 @@
 {% extends "layouts/base_panel.html" %}
+{% import "_makra.html" as makra with context %}
 
 {% block tytul %}{{ t('Zakłady pracy') }}{% endblock %}
 {% block naglowek %}{{ t('Zakłady pracy') }}{% endblock %}
@@ -17,10 +18,7 @@
 <div class="karta">
   <div class="karta__naglowek">
     <form class="pasek-filtrow" method="GET" action="{{ url_for('zarzadzanie.lista_zakladow') }}">
-      <div class="filtr-szukaj">
-        <span class="filtr-szukaj__ikona" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
-        <input type="text" name="szukaj" value="{{ request.args.get('szukaj', '') }}" class="filtr-szukaj__input" placeholder="{{ t('Nazwa zakładu lub miasto...') }}" aria-label="{{ t('Wyszukaj zakład') }}">
-      </div>
+      {{ makra.filtr_szukaj(t('Nazwa zakładu lub miasto...'), t('Wyszukaj zakład')) }}
       <button type="submit" class="przycisk przycisk--drugorzedny">{{ t('Szukaj') }}</button>
     </form>
   </div>
@@ -60,22 +58,7 @@
       </table>
     </div>
 
-    {% if zaklady.pages > 1 %}
-    <nav class="paginacja" aria-label="{{ t('Nawigacja po stronach') }}">
-      <span class="paginacja__info">{{ t('Strona {nr} z {liczba}', nr=zaklady.page, liczba=zaklady.pages) }}</span>
-      <div class="paginacja__przyciski">
-        {% for strona in zaklady.iter_pages() %}
-          {% if strona %}
-            <a href="{{ url_for('zarzadzanie.lista_zakladow', strona=strona, szukaj=request.args.get('szukaj', '')) }}" class="paginacja__przycisk {{ 'paginacja__przycisk--aktywny' if strona == zaklady.page else '' }}">
-              {{ strona }}
-            </a>
-          {% else %}
-            <span class="paginacja__separator">...</span>
-          {% endif %}
-        {% endfor %}
-      </div>
-    </nav>
-    {% endif %}
+    {{ makra.paginacja(zaklady, 'zarzadzanie.lista_zakladow', aria_label=t('Nawigacja po stronach')) }}
   </div>
 </div>
 {% endblock %}

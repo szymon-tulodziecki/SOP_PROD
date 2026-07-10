@@ -5,10 +5,8 @@ app_student/routes/documents.py
 import io
 import logging
 
-import httpx
 from flask import (Blueprint, abort, send_file, jsonify, request,
-                   current_app, flash, redirect, url_for, make_response,
-                   render_template)
+                   flash, redirect, url_for, render_template)
 from flask_login import login_required, current_user
 
 from core.extensions import limiter
@@ -22,6 +20,7 @@ from core.services.documents import (
     build_context,
     validate_completeness,
 )
+from core.services.tex_client import TexServiceError, dyspozycja_pdf, generuj_pdf, odpowiedz_pdf
 from core.repositories import EnrollmentRepository
 
 _enrollment_repository = EnrollmentRepository()
@@ -30,10 +29,6 @@ logger = logging.getLogger(__name__)
 documents_bp = Blueprint('documents', __name__)
 
 _MIME_PDF = 'application/pdf'
-
-
-def _get_tex_url() -> str:
-    return current_app.config['TEX_SERVICE_URL']
 
 
 # ── Lista dokumentów studenta ─────────────────────────────────────────────────
@@ -70,20 +65,14 @@ def pobierz_staly(doc_key):
         abort(404)
     template_name, filename = STATIC_TEMPLATES[doc_key]
     try:
-        response = httpx.post(
-            f"{_get_tex_url()}/generuj",
-            json={'template': template_name, 'context': {}, 'filename': filename},
-            timeout=30,
-        )
-        if response.status_code == 200:
-            pdf_response = make_response(response.content)
-            pdf_response.headers['Content-Type'] = _MIME_PDF
-            pdf_response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
-            return pdf_response
-        flash(t('Błąd generowania dokumentu.'), 'error')
-    except httpx.HTTPError as exc:
-        logger.error("tex-service unreachable for static doc %s: %s", doc_key, exc)
-        flash(t('Błąd połączenia z serwisem PDF. Spróbuj ponownie później.'), 'error')
+        pdf = generuj_pdf(template_name, {}, filename, timeout=30)
+        return odpowiedz_pdf(pdf, dyspozycja_pdf(filename))
+    except TexServiceError as exc:
+        logger.error("tex-service error for static doc %s: %s", doc_key, exc)
+        if exc.status_code:
+            flash(t('Błąd generowania dokumentu.'), 'error')
+        else:
+            flash(t('Błąd połączenia z serwisem PDF. Spróbuj ponownie później.'), 'error')
     return redirect(url_for('documents.my_documents'))
 
 
@@ -103,35 +92,17 @@ def download_dynamic(enrollment_id, doc_type):
     context = build_context(enrollment, doc_type)
 
     try:
-        response = httpx.post(
-            f"{_get_tex_url()}/generuj",
-            json={'template': template_name, 'context': context, 'filename': filename},
-            timeout=60,
-        )
-        if response.status_code == 200:
-            import unicodedata
-            from urllib.parse import quote
-            pdf_name = template_name.replace('.tex.j2', '')
-            full_filename = f"{pdf_name}_{enrollment.student.last_name or 'student'}.pdf"
-            ascii_fallback = (
-                unicodedata.normalize('NFKD', full_filename)
-                .encode('ascii', 'ignore')
-                .decode('ascii')
-                .strip()
-                or 'dokument.pdf'
-            )
-            utf8_filename = quote(full_filename, safe='')
-            pdf_response = make_response(response.content)
-            pdf_response.headers['Content-Type'] = _MIME_PDF
-            pdf_response.headers['Content-Disposition'] = (
-                f"attachment; filename=\"{ascii_fallback}\"; filename*=UTF-8''{utf8_filename}"
-            )
-            return pdf_response
-        logger.warning("tex-service returned %s for doc %s", response.status_code, doc_type)
-        flash(t('Błąd generowania dokumentu. Spróbuj ponownie później.'), 'error')
-    except httpx.HTTPError as exc:
-        logger.error("tex-service unreachable for doc %s: %s", doc_type, exc)
-        flash(t('Błąd połączenia z serwisem PDF. Spróbuj ponownie później.'), 'error')
+        pdf = generuj_pdf(template_name, context, filename, timeout=60)
+        pdf_name = template_name.replace('.tex.j2', '')
+        disposition = dyspozycja_pdf(pdf_name, enrollment.student.last_name or 'student')
+        return odpowiedz_pdf(pdf, disposition)
+    except TexServiceError as exc:
+        if exc.status_code:
+            logger.warning("tex-service returned %s for doc %s", exc.status_code, doc_type)
+            flash(t('Błąd generowania dokumentu. Spróbuj ponownie później.'), 'error')
+        else:
+            logger.error("tex-service unreachable for doc %s: %s", doc_type, exc)
+            flash(t('Błąd połączenia z serwisem PDF. Spróbuj ponownie później.'), 'error')
     return redirect(url_for('documents.my_documents'))
 
 
@@ -165,22 +136,16 @@ def generuj(doc_type: str):
     template_name, filename = DOC_CONFIG[doc_type]
     try:
         context = build_context(enrollment, doc_type)
-        resp = httpx.post(
-            f"{_get_tex_url()}/generuj",
-            json={'template': template_name, 'context': context, 'filename': filename},
-            timeout=30.0,
-        )
-        if resp.status_code != 200:
-            err = resp.json() if 'application/json' in resp.headers.get('content-type', '') else {}
-            return jsonify({'error': t(err.get('error', 'Błąd serwisu PDF'))}), 500
-
+        pdf = generuj_pdf(template_name, context, filename, timeout=30.0)
         return send_file(
-            io.BytesIO(resp.content),
+            io.BytesIO(pdf),
             mimetype=_MIME_PDF,
             as_attachment=True,
             download_name=filename,
         )
-    except httpx.HTTPError as exc:
+    except TexServiceError as exc:
+        if exc.status_code:
+            return jsonify({'error': t(exc.error_detail or 'Błąd serwisu PDF')}), 500
         logger.error("tex-service unreachable for %s: %s", doc_type, exc)
         return jsonify({'error': t('Serwis PDF jest niedostępny.')}), 502
     except Exception:

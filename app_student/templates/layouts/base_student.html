@@ -101,21 +101,8 @@
       {% block tresc %}{% endblock %}
     </main>
   </div>
-  {% with wiadomosci = get_flashed_messages(with_categories=True) %}
-    {% if wiadomosci %}
-      <div class="komunikaty komunikaty--fixed" role="status" aria-live="polite">
-        {% for kategoria, wiadomosc in wiadomosci %}
-          <div class="komunikat komunikat--{{ kategoria }} komunikat--minimal" role="alert">
-            <span class="komunikat__ikona" aria-hidden="true">
-              {{ ikona_komunikatu(kategoria) }}
-            </span>
-            <span class="komunikat__tekst">{{ wiadomosc }}</span>
-            <button type="button" class="komunikat__zamknij" aria-label="{{ t('Zamknij powiadomienie') }}" data-dismiss-flash>×</button>
-          </div>
-        {% endfor %}
-      </div>
-    {% endif %}
-  {% endwith %}
+  {% import "_makra.html" as makra with context %}
+  {{ makra.komunikaty_fixed() }}
   <script type="application/json" id="js-i18n">{{ js_i18n | tojson }}</script>
   <script src="{{ url_for('static', filename='js/i18n.js', v='20260611-1') }}"></script>
   <script src="{{ url_for('static', filename='js/panel_ui.js', v='20260611-1') }}"></script>

@@ -1068,4 +1068,5 @@ UK = {
     'Link do porozumienia wygasł lub został anulowany. Prosimy o kontakt z dziekanatem Akademii Nauk Stosowanych w Elblągu.': 'Посилання на угоду закінчилося або було скасоване. Зверніться до деканату Академії прикладних наук в Ельблонгу.',
     'Akademia Nauk Stosowanych w Elblągu · ul. Wojska Polskiego 1, 82-300 Elbląg': 'Академія прикладних наук в Ельблонгу · вул. Wojska Polskiego 1, 82-300 Ельблонг',
     'Ścieżka A: Odbędziesz praktykę w zakładzie pracy na podstawie porozumienia z uczelnią — porozumienie (zał. 1) przygotowuje i wysyła dziekanat. Wymagane: Oświadczenie zakładu pracy (zał. 9), Program (zał. 2). Po zakończeniu: Dziennik praktyki (zał. 6), Sprawozdanie (zał. 7), Potwierdzenie efektów uczenia się (zał. 4).': 'Шлях A: Ти проходитимеш практику на підприємстві на підставі угоди з навчальним закладом — угоду (дод. 1) готує та надсилає деканат. Потрібні: Заява підприємства (дод. 9), Програма (дод. 2). Після завершення: Щоденник практики (дод. 6), Звіт (дод. 7), Підтвердження результатів навчання (дод. 4).',
+    'Część zaznaczonych zgłoszeń nie kwalifikuje się do porozumienia.': 'Частина вибраних заявок не підлягає укладенню угоди.',
 }

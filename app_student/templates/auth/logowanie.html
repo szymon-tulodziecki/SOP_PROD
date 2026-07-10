@@ -43,20 +43,8 @@
         <p class="formularz__opis">{{ t('Użyj studenckiego konta Microsoft.') }}</p>
       </div>
 
-      {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-        <div class="komunikaty" aria-live="polite">
-          {% for kategoria, wiadomosc in messages %}
-          <div class="komunikat komunikat--{{ kategoria }}" role="alert">
-            <span class="komunikat__ikona" aria-hidden="true">
-              {{ ikona_komunikatu(kategoria) }}
-            </span>
-            {{ wiadomosc }}
-          </div>
-          {% endfor %}
-        </div>
-        {% endif %}
-      {% endwith %}
+      {% import "_makra.html" as makra with context %}
+      {{ makra.komunikaty_inline() }}
 
       <div class="logowanie-microsoft">
         <a

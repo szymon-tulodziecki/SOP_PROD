@@ -2,7 +2,6 @@
 import io
 from datetime import date
 
-import httpx
 from flask import Blueprint, abort, current_app, flash, redirect, render_template, request, send_file, url_for
 from flask_login import current_user
 
@@ -12,6 +11,7 @@ from core.models import UserRole
 from core.repositories import EnrollmentRepository, JournalRepository
 from core.auth import roles_required
 from core.services.journal import JournalService
+from core.services.tex_client import TexServiceError, generuj_pdf
 
 journal_bp = Blueprint('journal', __name__)
 
@@ -127,21 +127,15 @@ def pdf_dziennik(id):
         from core.services.documents import build_context
 
         context = build_context(enrollment, 'ZAL_6')
-        tex_url = current_app.config['TEX_SERVICE_URL']
-        resp = httpx.post(
-            f"{tex_url}/generuj",
-            json={'template': 'zal6_dziennik.tex.j2', 'context': context},
-            timeout=90.0,
-        )
-        resp.raise_for_status()
+        pdf = generuj_pdf('zal6_dziennik.tex.j2', context, timeout=90.0)
         filename = f"dziennik_{enrollment.student.last_name}_{enrollment.student.first_name}.pdf"
         return send_file(
-            io.BytesIO(resp.content),
+            io.BytesIO(pdf),
             mimetype='application/pdf',
             as_attachment=True,
             download_name=filename,
         )
-    except httpx.HTTPError:
+    except TexServiceError:
         abort(503)
     except Exception:
         current_app.logger.exception("PDF dziennik generation failed for %s", id)

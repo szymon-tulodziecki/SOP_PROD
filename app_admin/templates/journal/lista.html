@@ -1,4 +1,5 @@
 {% extends "layouts/base_panel.html" %}
+{% import "_makra.html" as makra with context %}
 
 {% block tytul %}{{ t('Dzienniki praktyk') }}{% endblock %}
 {% block naglowek %}{{ t('Monitor dzienników') }}{% endblock %}
@@ -11,10 +12,7 @@
 <div class="karta">
   <div class="karta__naglowek">
     <form class="pasek-filtrow" method="GET" action="{{ url_for('journal.lista_dziennikow') }}">
-      <div class="filtr-szukaj">
-        <span class="filtr-szukaj__ikona" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
-        <input type="text" name="szukaj" value="{{ request.args.get('szukaj', '') }}" class="filtr-szukaj__input" placeholder="{{ t('Szukaj po nazwisku studenta...') }}" aria-label="{{ t('Wyszukaj dziennik') }}">
-      </div>
+      {{ makra.filtr_szukaj(t('Szukaj po nazwisku studenta...'), t('Wyszukaj dziennik')) }}
       <button type="submit" class="przycisk przycisk--drugorzedny">{{ t('Szukaj') }}</button>
     </form>
   </div>
@@ -80,23 +78,7 @@
       </table>
     </div>
 
-    {% if paginated_enrollments.pages > 1 %}
-    <nav class="paginacja" aria-label="{{ t('Nawigacja po stronach') }}">
-      <span class="paginacja__info">{{ t('Strona {nr} z {liczba}', nr=paginated_enrollments.page, liczba=paginated_enrollments.pages) }}</span>
-      <div class="paginacja__przyciski">
-        {% for strona in paginated_enrollments.iter_pages() %}
-          {% if strona %}
-            <a href="{{ url_for('journal.lista_dziennikow', strona=strona, szukaj=request.args.get('szukaj', '')) }}"
-               class="paginacja__przycisk {{ 'paginacja__przycisk--aktywny' if strona == paginated_enrollments.page else '' }}">
-              {{ strona }}
-            </a>
-          {% else %}
-            <span class="paginacja__separator">...</span>
-          {% endif %}
-        {% endfor %}
-      </div>
-    </nav>
-    {% endif %}
+    {{ makra.paginacja(paginated_enrollments, 'journal.lista_dziennikow', aria_label=t('Nawigacja po stronach')) }}
   </div>
 </div>
 {% endblock %}

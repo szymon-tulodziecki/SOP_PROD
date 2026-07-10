@@ -1,4 +1,5 @@
 {% extends "layouts/base_panel.html" %}
+{% import "_makra.html" as makra with context %}
 
 {% block tytul %}{{ t('Moje zgłoszenia') }} - UOPZ{% endblock %}
 {% block naglowek %}{{ t('Zgłoszenia moich studentów') }}{% endblock %}
@@ -30,18 +31,10 @@
     <div class="karta__tresc">
       <div class="u-csp-140">
         <span class="u-csp-141">{{ t('Filtruj według statusu:') }}</span>
-        <a href="{{ url_for('zarzadzanie.moje_zgloszenia') }}"
-           class="przycisk przycisk--{% if not request.args.get('status') %}glowny{% else %}drugorzedny{% endif %} przycisk--maly">
-          {{ t('Wszystkie') }} ({{ liczniki.wszystkie }})
-        </a>
-        <a href="{{ url_for('zarzadzanie.moje_zgloszenia', status='AWAITING_APPROVAL') }}"
-           class="przycisk przycisk--{% if request.args.get('status') == 'AWAITING_APPROVAL' %}glowny{% else %}drugorzedny{% endif %} przycisk--maly">
-          {{ t('Do zatwierdzenia') }} ({{ liczniki.oczekujace }})
-        </a>
-        <a href="{{ url_for('zarzadzanie.moje_zgloszenia', status='IN_PROGRESS') }}"
-           class="przycisk przycisk--{% if request.args.get('status') == 'IN_PROGRESS' %}glowny{% else %}drugorzedny{% endif %} przycisk--maly">
-          {{ t('Zatwierdzone') }} ({{ liczniki.zatwierdzone }})
-        </a>
+        {{ makra.filtry_statusu('zarzadzanie.moje_zgloszenia', [
+             ('AWAITING_APPROVAL', t('Do zatwierdzenia') ~ ' (' ~ liczniki.oczekujace ~ ')'),
+             ('IN_PROGRESS', t('Zatwierdzone') ~ ' (' ~ liczniki.zatwierdzone ~ ')'),
+           ], t('Wszystkie') ~ ' (' ~ liczniki.wszystkie ~ ')') }}
       </div>
     </div>
   </div>
@@ -174,33 +167,7 @@
         </table>
       </div>
 
-      <!-- Paginacja -->
-      {% if zgloszenia.pages > 1 %}
-      <div class="u-csp-154">
-        {% if zgloszenia.has_prev %}
-        <a href="{{ url_for('zarzadzanie.moje_zgloszenia', page=zgloszenia.prev_num, **request.args) }}"
-           class="przycisk przycisk--drugorzedny przycisk--maly">← {{ t('Poprzednia') }}</a>
-        {% endif %}
-
-        {% for page_num in zgloszenia.iter_pages() %}
-          {% if page_num %}
-            {% if page_num != zgloszenia.page %}
-            <a href="{{ url_for('zarzadzanie.moje_zgloszenia', page=page_num, **request.args) }}"
-               class="przycisk przycisk--drugorzedny przycisk--maly">{{ page_num }}</a>
-            {% else %}
-            <span class="przycisk przycisk--glowny przycisk--maly">{{ page_num }}</span>
-            {% endif %}
-          {% else %}
-            <span>…</span>
-          {% endif %}
-        {% endfor %}
-
-        {% if zgloszenia.has_next %}
-        <a href="{{ url_for('zarzadzanie.moje_zgloszenia', page=zgloszenia.next_num, **request.args) }}"
-           class="przycisk przycisk--drugorzedny przycisk--maly">{{ t('Następna') }} →</a>
-        {% endif %}
-      </div>
-      {% endif %}
+      {{ makra.paginacja(zgloszenia, 'zarzadzanie.moje_zgloszenia', param='page') }}
 
       {% else %}
       <!-- Pusty stan -->

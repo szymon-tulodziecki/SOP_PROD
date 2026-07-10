@@ -1,4 +1,5 @@
 {% extends "layouts/base_panel.html" %}
+{% import "_makra.html" as makra with context %}
 {% block tytul %}{{ t('Logi systemowe') }}{% endblock %}
 {% block naglowek %}{{ t('Logi systemowe') }}{% endblock %}
 
@@ -92,21 +93,6 @@
     </table>
   </div>
 
-  {% if events.pages > 1 %}
-  <nav class="paginacja" aria-label="{{ t('Paginacja') }}">
-    <span class="paginacja__info">{{ t('Strona {nr} z {liczba}', nr=events.page, liczba=events.pages) }}</span>
-    <div class="paginacja__przyciski">
-      {% for nr in events.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
-        {% if nr %}
-          <a href="{{ url_for('logi.lista_logow', strona=nr, event_type=active_type, szukaj=search_query) }}"
-             class="paginacja__przycisk {% if nr == events.page %}paginacja__przycisk--aktywny{% endif %}"
-             {% if nr == events.page %}aria-current="page"{% endif %}>{{ nr }}</a>
-        {% else %}
-          <span class="paginacja__przycisk" aria-hidden="true">…</span>
-        {% endif %}
-      {% endfor %}
-    </div>
-  </nav>
-  {% endif %}
+  {{ makra.paginacja(events, 'logi.lista_logow') }}
 </div>
 {% endblock %}

@@ -1,0 +1,120 @@
+{# _makra.html — wspólne komponenty UI obu appów (admin + student).
+
+   Import ZAWSZE z kontekstem — makra korzystają z request, t() i url_for:
+     {% import "_makra.html" as makra with context %}
+#}
+
+{# ── Paginacja ────────────────────────────────────────────────────────────────
+   Jedno źródło prawdy dla nawigacji po stronach. Zachowuje pozostałe parametry
+   filtrów z URL-a; parametr strony jest nadpisywany (nigdy zdublowany —
+   duplikat w url_for(**request.args) wywalał TypeError na stronie ≥ 2). #}
+{% macro paginacja(strony, endpoint, param='strona', aria_label=None) %}
+{% if strony.pages > 1 %}
+{% set argy = request.args.to_dict() %}
+{% set _ = argy.pop(param, none) %}
+<nav class="paginacja" aria-label="{{ aria_label or t('Paginacja') }}">
+  <span class="paginacja__info">{{ t('Strona {nr} z {liczba}', nr=strony.page, liczba=strony.pages) }}</span>
+  <div class="paginacja__przyciski">
+    {% if strony.has_prev %}
+      <a href="{{ url_for(endpoint, **dict(argy, **{param: strony.prev_num})) }}"
+         class="paginacja__przycisk" aria-label="{{ t('Poprzednia strona') }}">←</a>
+    {% endif %}
+    {% for nr in strony.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+      {% if nr %}
+        <a href="{{ url_for(endpoint, **dict(argy, **{param: nr})) }}"
+           class="paginacja__przycisk {% if nr == strony.page %}paginacja__przycisk--aktywny{% endif %}"
+           {% if nr == strony.page %}aria-current="page"{% endif %}>{{ nr }}</a>
+      {% else %}
+        <span class="paginacja__separator" aria-hidden="true">…</span>
+      {% endif %}
+    {% endfor %}
+    {% if strony.has_next %}
+      <a href="{{ url_for(endpoint, **dict(argy, **{param: strony.next_num})) }}"
+         class="paginacja__przycisk" aria-label="{{ t('Następna strona') }}">→</a>
+    {% endif %}
+  </div>
+</nav>
+{% endif %}
+{% endmacro %}
+
+{# ── Pole wyszukiwania z ikoną lupy ─────────────────────────────────────────── #}
+{% macro filtr_szukaj(placeholder, aria_label, name='szukaj', value=none) %}
+<div class="filtr-szukaj">
+  <span class="filtr-szukaj__ikona" aria-hidden="true">
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="11" cy="11" r="8"></circle>
+      <path d="m21 21-4.3-4.3"></path>
+    </svg>
+  </span>
+  <input type="search" name="{{ name }}" id="{{ name }}" class="filtr-szukaj__input"
+         value="{{ value if value is not none else request.args.get(name, '') }}"
+         placeholder="{{ placeholder }}" aria-label="{{ aria_label }}">
+</div>
+{% endmacro %}
+
+{# ── Przyciski filtrów statusu ────────────────────────────────────────────────
+   opcje: lista par (wartość, etykieta); etykieta_wszystkie — tekst przycisku
+   czyszczącego filtr (może zawierać licznik). #}
+{% macro filtry_statusu(endpoint, opcje, etykieta_wszystkie) %}
+<a href="{{ url_for(endpoint) }}"
+   class="przycisk przycisk--{{ 'glowny' if not request.args.get('status') else 'drugorzedny' }} przycisk--maly">
+  {{ etykieta_wszystkie }}
+</a>
+{% for wartosc, etykieta in opcje %}
+<a href="{{ url_for(endpoint, status=wartosc) }}"
+   class="przycisk przycisk--{{ 'glowny' if request.args.get('status') == wartosc else 'drugorzedny' }} przycisk--maly">
+  {{ etykieta }}
+</a>
+{% endfor %}
+{% endmacro %}
+
+{# ── Formularz pojedynczej akcji POST (CSRF + potwierdzenie) ─────────────────── #}
+{% macro formularz_akcji(url, csrf_form, klasa_przycisku, tekst, potwierdzenie, aria_label=none, klasa_formy='u-csp-256') %}
+<form class="{{ klasa_formy }}" method="POST" action="{{ url }}">
+  {{ csrf_form.hidden_tag() }}
+  <button type="submit"
+          class="przycisk {{ klasa_przycisku }} przycisk--maly"
+          {% if aria_label %}aria-label="{{ aria_label }}"{% endif %}
+          data-confirm="{{ potwierdzenie }}">
+    {{ tekst }}
+  </button>
+</form>
+{% endmacro %}
+
+{# ── Komunikaty flash ─────────────────────────────────────────────────────────
+   komunikaty_fixed — pływające powiadomienia layoutów paneli;
+   komunikaty_inline — wariant osadzony w karcie logowania. #}
+{% macro komunikaty_fixed() %}
+{% with wiadomosci = get_flashed_messages(with_categories=True) %}
+  {% if wiadomosci %}
+    <div class="komunikaty komunikaty--fixed" role="status" aria-live="polite">
+      {% for kategoria, wiadomosc in wiadomosci %}
+        <div class="komunikat komunikat--{{ kategoria }} komunikat--minimal" role="alert">
+          <span class="komunikat__ikona" aria-hidden="true">
+            {{ ikona_komunikatu(kategoria) }}
+          </span>
+          <span class="komunikat__tekst">{{ wiadomosc }}</span>
+          <button type="button" class="komunikat__zamknij" aria-label="{{ t('Zamknij powiadomienie') }}" data-dismiss-flash>×</button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+{% endmacro %}
+
+{% macro komunikaty_inline() %}
+{% with wiadomosci = get_flashed_messages(with_categories=True) %}
+  {% if wiadomosci %}
+    <div class="komunikaty" role="alert" aria-live="assertive">
+      {% for kategoria, wiadomosc in wiadomosci %}
+        <div class="komunikat komunikat--{{ kategoria }}">
+          <span class="komunikat__ikona" aria-hidden="true">
+            {{ ikona_komunikatu(kategoria) }}
+          </span>
+          <span>{{ wiadomosc }}</span>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+{% endmacro %}
