@@ -9,6 +9,7 @@ Submodules:
                 ProcessEvent, InternshipSchedule, InternshipReport,
                 IndividualProgram, DocumentNumber
 """
+
 from core.models.internships.enums import (
     EnrollmentStatus,
     EventType,
@@ -30,9 +31,19 @@ from core.models.internships.satellites import (
 )
 
 __all__ = [
-    'InternshipStatus', 'EnrollmentStatus', 'InternshipPath', 'EventType',
-    'Internship', 'InternshipEnrollment',
-    'WorkplaceDetails', 'PathJustification', 'Examination', 'FinalGrades',
-    'ProcessEvent', 'InternshipSchedule', 'InternshipReport',
-    'IndividualProgram', 'DocumentNumber',
+    "InternshipStatus",
+    "EnrollmentStatus",
+    "InternshipPath",
+    "EventType",
+    "Internship",
+    "InternshipEnrollment",
+    "WorkplaceDetails",
+    "PathJustification",
+    "Examination",
+    "FinalGrades",
+    "ProcessEvent",
+    "InternshipSchedule",
+    "InternshipReport",
+    "IndividualProgram",
+    "DocumentNumber",
 ]

@@ -18,21 +18,21 @@ from app_student.services import LogbookEntryDTO
 
 _repo_zapisow = EnrollmentRepository()
 _repo_efektow = OutcomeRepository()
-_repo_wpisow  = JournalRepository()
+_repo_wpisow = JournalRepository()
 
-logbook_bp = Blueprint('logbook', __name__)
+logbook_bp = Blueprint("logbook", __name__)
 
-_ROUTE_INDEX  = 'logbook.index'
-_TPL_NOWY_WPIS = 'dziennik/nowy_wpis.html'
+_ROUTE_INDEX = "logbook.index"
+_TPL_NOWY_WPIS = "dziennik/nowy_wpis.html"
 
 
 class JournalEntryForm(FlaskForm):
-    entry_date    = StringField(lazy_t('Data'), validators=[DataRequired()])
-    hours_count = StringField(lazy_t('Liczba godzin (1–8)'), validators=[DataRequired()])
-    description          = TextAreaField(lazy_t('Opis wykonanych prac'), validators=[DataRequired()])
-    outcome_ids    = SelectMultipleField(
-        lazy_t('Efekty uczenia się'),
-        validators=[DataRequired(message=lazy_t('Wybierz co najmniej jeden efekt uczenia się.'))],
+    entry_date = StringField(lazy_t("Data"), validators=[DataRequired()])
+    hours_count = StringField(lazy_t("Liczba godzin (1–8)"), validators=[DataRequired()])
+    description = TextAreaField(lazy_t("Opis wykonanych prac"), validators=[DataRequired()])
+    outcome_ids = SelectMultipleField(
+        lazy_t("Efekty uczenia się"),
+        validators=[DataRequired(message=lazy_t("Wybierz co najmniej jeden efekt uczenia się."))],
         widget=ListWidget(prefix_label=False),
         option_widget=CheckboxInput(),
     )
@@ -41,51 +41,64 @@ class JournalEntryForm(FlaskForm):
         try:
             val = int(pole.data)
         except (ValueError, TypeError):
-            raise ValidationError(t('Podaj liczbę całkowitą.'))
+            raise ValidationError(t("Podaj liczbę całkowitą."))
         if val < 1 or val > 8:
-            raise ValidationError(t('Maksymalnie 8 godzin dziennie (regulamin ANS).'))
+            raise ValidationError(t("Maksymalnie 8 godzin dziennie (regulamin ANS)."))
 
     def validate_entry_date(self, pole):
         try:
             date.fromisoformat(pole.data)
         except ValueError:
-            raise ValidationError(t('Nieprawidłowy format daty.'))
+            raise ValidationError(t("Nieprawidłowy format daty."))
 
     def populate_to_model(self, model_instance):
         model_instance.entry_date = date.fromisoformat(self.entry_date.data)
         model_instance.duration_hours = int(self.hours_count.data)
         model_instance.description = self.description.data.strip()
-        model_instance.learning_outcomes = _repo_efektow.po_ids([int(i) for i in self.outcome_ids.data])
+        model_instance.learning_outcomes = _repo_efektow.po_ids(
+            [int(i) for i in self.outcome_ids.data]
+        )
         return model_instance
 
 
 def _aktywny_zapis():
-    return _repo_zapisow.aktywny_dla_studenta(current_user.id, [
-        EnrollmentStatus.IN_PROGRESS, EnrollmentStatus.COMMISSION_REVIEW,
-        EnrollmentStatus.DIRECTOR_APPROVAL, EnrollmentStatus.COMPLETED,
-    ])
+    return _repo_zapisow.aktywny_dla_studenta(
+        current_user.id,
+        [
+            EnrollmentStatus.IN_PROGRESS,
+            EnrollmentStatus.COMMISSION_REVIEW,
+            EnrollmentStatus.DIRECTOR_APPROVAL,
+            EnrollmentStatus.COMPLETED,
+        ],
+    )
 
 
-@logbook_bp.route('/', methods=['GET'])
+@logbook_bp.route("/", methods=["GET"])
 @login_required
 def index():
     zapis = _aktywny_zapis()
-    
+
     # Jeśli student nie ma aktywnego zapisu, szukamy jakiegokolwiek innego (np. zakończonego)
     if not zapis:
         jakikolwiek = _repo_zapisow.pierwszy_dla_studenta(current_user.id)
         # Zwracamy puste wpisy, żeby szablon się nie wysypał
-        return render_template('dziennik/index.html', zapis=None, wpisy=[], jakikolwiek=jakikolwiek, csrf_form=FlaskForm())
+        return render_template(
+            "dziennik/index.html",
+            zapis=None,
+            wpisy=[],
+            jakikolwiek=jakikolwiek,
+            csrf_form=FlaskForm(),
+        )
 
     def _parse_date(key):
-        val = request.args.get(key, '').strip()
+        val = request.args.get(key, "").strip()
         try:
             return date.fromisoformat(val) if val else None
         except ValueError:
             return None
 
-    data_od = _parse_date('od')
-    data_do = _parse_date('do')
+    data_od = _parse_date("od")
+    data_do = _parse_date("do")
 
     wpisy = [
         LogbookEntryDTO.from_model(entry)
@@ -94,36 +107,41 @@ def index():
     liczba_wpisow_ogolem, godziny_ogolem = _repo_wpisow.statystyki_dla_zapisu(zapis.id)
     csrf_form = FlaskForm()
     entries_progress_percent = min(int(liczba_wpisow_ogolem / 120 * 100), 100)
-    return render_template('dziennik/index.html', zapis=zapis, wpisy=wpisy,
-                           jakikolwiek=zapis, csrf_form=csrf_form,
-                           data_od=data_od, data_do=data_do,
-                           liczba_wpisow_ogolem=liczba_wpisow_ogolem,
-                           godziny_ogolem=godziny_ogolem,
-                           entries_progress_percent=entries_progress_percent)
+    return render_template(
+        "dziennik/index.html",
+        zapis=zapis,
+        wpisy=wpisy,
+        jakikolwiek=zapis,
+        csrf_form=csrf_form,
+        data_od=data_od,
+        data_do=data_do,
+        liczba_wpisow_ogolem=liczba_wpisow_ogolem,
+        godziny_ogolem=godziny_ogolem,
+        entries_progress_percent=entries_progress_percent,
+    )
 
 
-@logbook_bp.route('/nowy', methods=['GET', 'POST'])
+@logbook_bp.route("/nowy", methods=["GET", "POST"])
 @login_required
 def nowy_wpis():
     zapis = _aktywny_zapis()
     if not zapis:
-        flash(t('Nie masz aktywnej praktyki. Skontaktuj się z opiekunem.'), 'danger')
+        flash(t("Nie masz aktywnej praktyki. Skontaktuj się z opiekunem."), "danger")
         return redirect(url_for(_ROUTE_INDEX))
 
     efekty = _repo_efektow.wszystkie()
-    efekty_opisy = {str(e.id): f'{e.code}: {e.description}' for e in efekty}
+    efekty_opisy = {str(e.id): f"{e.code}: {e.description}" for e in efekty}
     form = JournalEntryForm()
-    form.outcome_ids.choices = [
-        (str(e.id), e.description)
-        for e in efekty
-    ]
+    form.outcome_ids.choices = [(str(e.id), e.description) for e in efekty]
 
     if form.validate_on_submit():
         data = date.fromisoformat(form.entry_date.data)
         duplikat = _repo_wpisow.znajdz_duplikat(zapis.id, data)
         if duplikat:
-            flash(t('Wpis na ten dzień już istnieje. Możesz go edytować.'), 'danger')
-            return render_template(_TPL_NOWY_WPIS, form=form, zapis=zapis, efekty_opisy=efekty_opisy)
+            flash(t("Wpis na ten dzień już istnieje. Możesz go edytować."), "danger")
+            return render_template(
+                _TPL_NOWY_WPIS, form=form, zapis=zapis, efekty_opisy=efekty_opisy
+            )
 
         godziny = int(form.hours_count.data)
         wymagane = zapis.internship.required_hours
@@ -131,13 +149,28 @@ def nowy_wpis():
         if zalogowane + godziny > wymagane:
             pozostalo = wymagane - zalogowane
             if pozostalo <= 0:
-                flash(t('Osiągnięto wymagany limit {wymagane} h. Nie można dodać więcej wpisów.', wymagane=wymagane), 'danger')
+                flash(
+                    t(
+                        "Osiągnięto wymagany limit {wymagane} h. Nie można dodać więcej wpisów.",
+                        wymagane=wymagane,
+                    ),
+                    "danger",
+                )
             else:
-                flash(t('Możesz dodać maksymalnie {pozostalo} h (limit: {wymagane} h). Zmniejsz liczbę godzin.', pozostalo=pozostalo, wymagane=wymagane), 'danger')
-            return render_template(_TPL_NOWY_WPIS, form=form, zapis=zapis, efekty_opisy=efekty_opisy)
+                flash(
+                    t(
+                        "Możesz dodać maksymalnie {pozostalo} h (limit: {wymagane} h). Zmniejsz liczbę godzin.",
+                        pozostalo=pozostalo,
+                        wymagane=wymagane,
+                    ),
+                    "danger",
+                )
+            return render_template(
+                _TPL_NOWY_WPIS, form=form, zapis=zapis, efekty_opisy=efekty_opisy
+            )
         wpis = JournalEntry(
-            id               = uuid.uuid4(),
-            enrollment_id    = zapis.id,
+            id=uuid.uuid4(),
+            enrollment_id=zapis.id,
         )
         form.populate_to_model(wpis)
         _repo_wpisow.zapisz(wpis)
@@ -146,18 +179,27 @@ def nowy_wpis():
         except IntegrityError:
             # Race: another tab/request inserted the same date between our check and insert.
             db.session.rollback()
-            flash(t('Wpis na ten dzień już istnieje. Możesz go edytować.'), 'danger')
-            return render_template(_TPL_NOWY_WPIS, form=form, zapis=zapis, efekty_opisy=efekty_opisy)
-        flash(t('Wpis z dnia {data} został dodany ({godziny} h).', data=data.strftime("%d.%m.%Y"), godziny=godziny), 'success')
+            flash(t("Wpis na ten dzień już istnieje. Możesz go edytować."), "danger")
+            return render_template(
+                _TPL_NOWY_WPIS, form=form, zapis=zapis, efekty_opisy=efekty_opisy
+            )
+        flash(
+            t(
+                "Wpis z dnia {data} został dodany ({godziny} h).",
+                data=data.strftime("%d.%m.%Y"),
+                godziny=godziny,
+            ),
+            "success",
+        )
         return redirect(url_for(_ROUTE_INDEX))
 
-    if request.method == 'GET':
+    if request.method == "GET":
         form.entry_date.data = date.today().isoformat()
 
     return render_template(_TPL_NOWY_WPIS, form=form, zapis=zapis, efekty_opisy=efekty_opisy)
 
 
-@logbook_bp.route('/edytuj/<uuid:wpis_id>', methods=['GET', 'POST'])
+@logbook_bp.route("/edytuj/<uuid:wpis_id>", methods=["GET", "POST"])
 @login_required
 def edytuj_wpis(wpis_id):
     wpis = _repo_wpisow.znajdz_po_id(wpis_id)
@@ -169,29 +211,28 @@ def edytuj_wpis(wpis_id):
         abort(403)
 
     efekty = _repo_efektow.wszystkie()
-    efekty_opisy = {str(e.id): f'{e.code}: {e.description}' for e in efekty}
+    efekty_opisy = {str(e.id): f"{e.code}: {e.description}" for e in efekty}
     form = JournalEntryForm()
-    form.outcome_ids.choices = [
-        (str(e.id), e.description)
-        for e in efekty
-    ]
+    form.outcome_ids.choices = [(str(e.id), e.description) for e in efekty]
 
     if form.validate_on_submit():
         form.populate_to_model(wpis)
         db.session.commit()
-        flash(t('Wpis został zaktualizowany.'), 'success')
+        flash(t("Wpis został zaktualizowany."), "success")
         return redirect(url_for(_ROUTE_INDEX))
 
-    if request.method == 'GET':
-        form.entry_date.data    = wpis.entry_date.isoformat()
+    if request.method == "GET":
+        form.entry_date.data = wpis.entry_date.isoformat()
         form.hours_count.data = str(wpis.duration_hours)
-        form.description.data          = wpis.description
-        form.outcome_ids.data    = [str(e.id) for e in wpis.learning_outcomes]
+        form.description.data = wpis.description
+        form.outcome_ids.data = [str(e.id) for e in wpis.learning_outcomes]
 
-    return render_template(_TPL_NOWY_WPIS, form=form, zapis=zapis, edycja=True, wpis=wpis, efekty_opisy=efekty_opisy)
+    return render_template(
+        _TPL_NOWY_WPIS, form=form, zapis=zapis, edycja=True, wpis=wpis, efekty_opisy=efekty_opisy
+    )
 
 
-@logbook_bp.route('/usun/<uuid:wpis_id>', methods=['POST'])
+@logbook_bp.route("/usun/<uuid:wpis_id>", methods=["POST"])
 @login_required
 def usun_wpis(wpis_id):
     wpis = _repo_wpisow.znajdz_po_id(wpis_id)
@@ -202,5 +243,5 @@ def usun_wpis(wpis_id):
         abort(403)
     _repo_wpisow.usun(wpis)
     db.session.commit()
-    flash(t('Wpis został usunięty.'), 'success')
+    flash(t("Wpis został usunięty."), "success")
     return redirect(url_for(_ROUTE_INDEX))

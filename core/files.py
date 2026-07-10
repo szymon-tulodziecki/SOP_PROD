@@ -9,6 +9,7 @@ Rejestracja w aplikacji:
 Centralny punkt wszystkich zabezpieczeń: walidacja MIME, rozszerzeń,
 rozmiaru, secure_filename oraz ochrona przed Path Traversal.
 """
+
 import os
 import uuid
 import httpx
@@ -21,83 +22,98 @@ import logging
 
 from core.models import InternshipEnrollment, UserRole, UploadedDocument
 from core.extensions import db, limiter
-
-logger = logging.getLogger(__name__)
 from core.encryption import decrypt_stream, encrypt_stream
 from core.repositories import EnrollmentRepository, StudentDocumentRepository
 from core.secrets import get_secret
 
+logger = logging.getLogger(__name__)
+
 _repo_enrollments = EnrollmentRepository()
-_repo_docs        = StudentDocumentRepository()
+_repo_docs = StudentDocumentRepository()
 
 
 # ─── Fileserver ────────────────────────────────────────────────────────────────
 
-FILESERVER_URL = os.environ['FILESERVER_URL']
-FILESERVER_KEY = get_secret('fileserver_api_key')
+FILESERVER_URL = os.environ["FILESERVER_URL"]
+FILESERVER_KEY = get_secret("fileserver_api_key")
 
 
 def _fs_headers():
-    return {'X-API-Key': FILESERVER_KEY}
+    return {"X-API-Key": FILESERVER_KEY}
 
 
 def _fs_put(filename: str, data) -> None:
     """Wysyła plik na fileserver. data może być bytes lub iteratorem bajtów."""
-    r = httpx.put(f'{FILESERVER_URL}/files/{filename}', content=data, headers=_fs_headers(), timeout=30)
+    r = httpx.put(
+        f"{FILESERVER_URL}/files/{filename}", content=data, headers=_fs_headers(), timeout=30
+    )
     r.raise_for_status()
 
 
 def _fs_get(filename: str) -> bytes:
-    r = httpx.get(f'{FILESERVER_URL}/files/{filename}', headers=_fs_headers(), timeout=30)
+    r = httpx.get(f"{FILESERVER_URL}/files/{filename}", headers=_fs_headers(), timeout=30)
     r.raise_for_status()
     return r.content
 
 
 def _fs_get_stream(filename: str):
     """Zwraca otwarty kontekst httpx do strumieniowego pobrania zaszyfrowanego pliku."""
-    return httpx.stream('GET', f'{FILESERVER_URL}/files/{filename}',
-                        headers=_fs_headers(), timeout=30)
+    return httpx.stream(
+        "GET", f"{FILESERVER_URL}/files/{filename}", headers=_fs_headers(), timeout=30
+    )
 
 
 def _fs_delete(filename: str) -> None:
-    r = httpx.delete(f'{FILESERVER_URL}/files/{filename}', headers=_fs_headers(), timeout=10)
+    r = httpx.delete(f"{FILESERVER_URL}/files/{filename}", headers=_fs_headers(), timeout=10)
     if r.status_code != 404:
         r.raise_for_status()
 
-MAX_FILE_SIZE   = 10 * 1024 * 1024  # 10 MB
+
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
 
 # Dozwolone rozszerzenia — wyłącznie te
-ALLOWED_EXTENSIONS = frozenset({
-    '.pdf', '.doc', '.docx',
-    '.jpg', '.jpeg', '.png',
-    '.zip', '.rar',
-})
+ALLOWED_EXTENSIONS = frozenset(
+    {
+        ".pdf",
+        ".doc",
+        ".docx",
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".zip",
+        ".rar",
+    }
+)
 
 # Dozwolone typy MIME deklarowane przez klienta (pierwsza warstwa)
-ALLOWED_MIME_TYPES = frozenset({
-    'application/pdf',
-    'application/msword',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'image/jpeg',
-    'image/png',
-    'application/zip',
-    'application/x-rar-compressed',
-    'application/vnd.rar',
-})
+ALLOWED_MIME_TYPES = frozenset(
+    {
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "image/jpeg",
+        "image/png",
+        "application/zip",
+        "application/x-rar-compressed",
+        "application/vnd.rar",
+    }
+)
 
 # Magic bytes → akceptowane typy rzeczywiste (druga warstwa, niefałszowalna)
 # python-magic zwraca te wartości dla danych binarnych odczytanych z pliku.
-_MAGIC_ALLOWED: frozenset[str] = frozenset({
-    'application/pdf',
-    'application/msword',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'application/zip',           # .docx/.xlsx są ZIP-em wewnętrznie — OK
-    'image/jpeg',
-    'image/png',
-    'application/x-rar-compressed',
-    'application/vnd.rar',
-    'application/x-rar',
-})
+_MAGIC_ALLOWED: frozenset[str] = frozenset(
+    {
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/zip",  # .docx/.xlsx są ZIP-em wewnętrznie — OK
+        "image/jpeg",
+        "image/png",
+        "application/x-rar-compressed",
+        "application/vnd.rar",
+        "application/x-rar",
+    }
+)
 
 
 def _is_file_allowed(filename: str, content_type: str) -> bool:
@@ -132,9 +148,7 @@ def _verify_magic_bytes(raw_bytes: bytes) -> bool:
     try:
         detected = magic.from_buffer(raw_bytes[:4096], mime=True)
     except Exception as exc:
-        raise MagicBytesError(
-            f"Błąd analizy magic bytes: {exc}"
-        ) from exc
+        raise MagicBytesError(f"Błąd analizy magic bytes: {exc}") from exc
 
     return detected in _MAGIC_ALLOWED
 
@@ -155,20 +169,20 @@ def _process_upload_file(file, document_type: str, enrollment_id, user_id) -> Up
     file.seek(0)
 
     if file_size > MAX_FILE_SIZE:
-        raise ValueError(f'Plik zbyt duży (max {MAX_FILE_SIZE // (1024 * 1024)} MB)')
+        raise ValueError(f"Plik zbyt duży (max {MAX_FILE_SIZE // (1024 * 1024)} MB)")
     if not _is_file_allowed(file.filename, file.content_type):
-        raise ValueError('Niedozwolony event_type pliku')
+        raise ValueError("Niedozwolony event_type pliku")
 
     original_filename = secure_filename(file.filename)
     if not original_filename:
-        raise ValueError('Nieprawidłowa nazwa pliku')
+        raise ValueError("Nieprawidłowa nazwa pliku")
 
-    file_ext        = Path(original_filename).suffix.lower()
+    file_ext = Path(original_filename).suffix.lower()
     stored_filename = f"{uuid.uuid4().hex}{file_ext}"
 
     header = file.read(4096)
-    if not _verify_magic_bytes(header):   # raises MagicBytesError on unavailability
-        raise ValueError('Niedozwolony format pliku (weryfikacja binarna)')
+    if not _verify_magic_bytes(header):  # raises MagicBytesError on unavailability
+        raise ValueError("Niedozwolony format pliku (weryfikacja binarna)")
 
     def _chunks():
         yield header
@@ -178,48 +192,55 @@ def _process_upload_file(file, document_type: str, enrollment_id, user_id) -> Up
     _fs_put(stored_filename, encrypt_stream(_chunks()))
 
     return UploadedDocument(
-        enrollment_id     = enrollment_id,
-        document_type     = document_type,
-        original_filename = original_filename,
-        stored_filename   = stored_filename,
-        file_path         = stored_filename,
-        file_size         = file_size,
-        mime_type         = file.content_type,
-        uploaded_by_id    = user_id,
+        enrollment_id=enrollment_id,
+        document_type=document_type,
+        original_filename=original_filename,
+        stored_filename=stored_filename,
+        file_path=stored_filename,
+        file_size=file_size,
+        mime_type=file.content_type,
+        uploaded_by_id=user_id,
     )
 
 
 # ─── Handlery blueprintu (poza fabryką — redukuje cognitive complexity) ────────────
 
+
 def _handle_upload(enrollment_id, access_checker):
     enrollment = _repo_enrollments.znajdz_po_id(enrollment_id)
     if not enrollment or not access_checker(enrollment):
         abort(403)
-    if 'file' not in request.files:
-        return jsonify({'error': 'Brak pliku'}), 400
-    file          = request.files['file']
-    document_type = request.form.get('document_type', '').strip()
+    if "file" not in request.files:
+        return jsonify({"error": "Brak pliku"}), 400
+    file = request.files["file"]
+    document_type = request.form.get("document_type", "").strip()
     if not file.filename or not document_type:
-        return jsonify({'error': 'Brak pliku lub typu dokumentu'}), 400
+        return jsonify({"error": "Brak pliku lub typu dokumentu"}), 400
     try:
         doc = _process_upload_file(file, document_type, enrollment_id, current_user.id)
     except MagicBytesError as exc:
         logger.error("Magic bytes check failed: %s", exc)
-        return jsonify({'error': 'Weryfikacja formatu pliku chwilowo niedostępna.'}), 503
+        return jsonify({"error": "Weryfikacja formatu pliku chwilowo niedostępna."}), 503
     except ValueError as exc:
-        return jsonify({'error': str(exc)}), 400
+        return jsonify({"error": str(exc)}), 400
     except Exception:
         logger.exception("Upload failed for enrollment %s", enrollment_id)
-        return jsonify({'error': 'Błąd podczas zapisywania pliku.'}), 500
+        return jsonify({"error": "Błąd podczas zapisywania pliku."}), 500
     try:
         _repo_docs.zapisz(doc)
         db.session.commit()
     except Exception:
         db.session.rollback()
         logger.exception("Upload DB save failed for enrollment %s", enrollment_id)
-        return jsonify({'error': 'Błąd podczas zapisywania pliku.'}), 500
-    return jsonify({'success': True, 'document_id': str(doc.id),
-                    'filename': doc.original_filename, 'size': doc.file_size})
+        return jsonify({"error": "Błąd podczas zapisywania pliku."}), 500
+    return jsonify(
+        {
+            "success": True,
+            "document_id": str(doc.id),
+            "filename": doc.original_filename,
+            "size": doc.file_size,
+        }
+    )
 
 
 def _handle_download(document_id, access_checker):
@@ -234,28 +255,32 @@ def _handle_download(document_id, access_checker):
         abort(404 if e.response.status_code == 404 else 500)
     except Exception:
         abort(500)
-    plain = b''.join(decrypt_stream(iter([encrypted])))
-    return Response(plain, mimetype=doc.mime_type, headers={
-        'Content-Disposition': f'attachment; filename="{doc.original_filename}"',
-        'X-Content-Type-Options': 'nosniff',
-    })
+    plain = b"".join(decrypt_stream(iter([encrypted])))
+    return Response(
+        plain,
+        mimetype=doc.mime_type,
+        headers={
+            "Content-Disposition": f'attachment; filename="{doc.original_filename}"',
+            "X-Content-Type-Options": "nosniff",
+        },
+    )
 
 
 def _handle_delete(document_id, access_checker):
     doc = _repo_docs.znajdz_po_id(document_id)
     if not doc:
-        return jsonify({'error': 'Nie znaleziono dokumentu'}), 404
+        return jsonify({"error": "Nie znaleziono dokumentu"}), 404
     if not doc.enrollment or not access_checker(doc.enrollment):
         abort(403)
     try:
         _fs_delete(doc.file_path)
         doc.is_deleted = True
         db.session.commit()
-        return jsonify({'success': True})
+        return jsonify({"success": True})
     except Exception:
         db.session.rollback()
         logger.exception("Delete failed for document %s", document_id)
-        return jsonify({'error': 'Błąd podczas usuwania pliku.'}), 500
+        return jsonify({"error": "Błąd podczas usuwania pliku."}), 500
 
 
 def _handle_list(enrollment_id, access_checker):
@@ -263,44 +288,53 @@ def _handle_list(enrollment_id, access_checker):
     if not enrollment or not access_checker(enrollment):
         abort(403)
     docs = _repo_docs.dokumenty_zapisu_posortowane(enrollment_id)
-    return jsonify([{
-        'id':                str(d.id),
-        'document_type':     d.document_type,
-        'original_filename': d.original_filename,
-        'file_size':         d.file_size,
-        'mime_type':         d.mime_type,
-        'uploaded_at':       d.uploaded_at.isoformat(),
-        'uploaded_by':       (f"{d.uploaded_by.first_name} {d.uploaded_by.last_name}"
-                              if d.uploaded_by else None),
-        'download_url':      url_for('uploads.download_document', document_id=d.id),
-        'delete_url':        url_for('uploads.delete_document',   document_id=d.id),
-    } for d in docs])
+    return jsonify(
+        [
+            {
+                "id": str(d.id),
+                "document_type": d.document_type,
+                "original_filename": d.original_filename,
+                "file_size": d.file_size,
+                "mime_type": d.mime_type,
+                "uploaded_at": d.uploaded_at.isoformat(),
+                "uploaded_by": (
+                    f"{d.uploaded_by.first_name} {d.uploaded_by.last_name}"
+                    if d.uploaded_by
+                    else None
+                ),
+                "download_url": url_for("uploads.download_document", document_id=d.id),
+                "delete_url": url_for("uploads.delete_document", document_id=d.id),
+            }
+            for d in docs
+        ]
+    )
 
 
 # ─── Fabryka blueprintu ──────────────────────────────────────────────────────────
 
+
 def create_files_blueprint(access_checker=None) -> Blueprint:
     """Tworzy blueprint 'uploads' ze scentralizowaną logiką bezpieczeństwa."""
-    uploads_bp = Blueprint('uploads', __name__)
+    uploads_bp = Blueprint("uploads", __name__)
     checker = access_checker or _can_access_enrollment
 
-    @uploads_bp.route('/enrollment/<uuid:enrollment_id>/upload', methods=['POST'])
+    @uploads_bp.route("/enrollment/<uuid:enrollment_id>/upload", methods=["POST"])
     @login_required
     @limiter.limit("30 per hour")
     def upload_document(enrollment_id):
         return _handle_upload(enrollment_id, checker)
 
-    @uploads_bp.route('/document/<uuid:document_id>/download', methods=['GET'])
+    @uploads_bp.route("/document/<uuid:document_id>/download", methods=["GET"])
     @login_required
     def download_document(document_id):
         return _handle_download(document_id, checker)
 
-    @uploads_bp.route('/document/<uuid:document_id>/delete', methods=['POST'])
+    @uploads_bp.route("/document/<uuid:document_id>/delete", methods=["POST"])
     @login_required
     def delete_document(document_id):
         return _handle_delete(document_id, checker)
 
-    @uploads_bp.route('/enrollment/<uuid:enrollment_id>/documents', methods=['GET'])
+    @uploads_bp.route("/enrollment/<uuid:enrollment_id>/documents", methods=["GET"])
     @login_required
     def list_documents(enrollment_id):
         return _handle_list(enrollment_id, checker)

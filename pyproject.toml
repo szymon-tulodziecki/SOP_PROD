@@ -1,0 +1,50 @@
+# Konfiguracja narzędzi jakości kodu (black, mypy).
+# flake8 nie czyta pyproject — jego konfiguracja jest w .flake8.
+# Uruchamianie (wszystkie trzy): patrz sekcja "Standardy kodu" w AGENTS.md.
+
+[tool.black]
+line-length = 100
+target-version = ["py312"]
+# Nie formatujemy automatycznie katalogów spoza kodu aplikacji.
+extend-exclude = '''
+/(
+    \.git
+  | secrets
+  | pdf_output
+  | logs
+  | database
+)/
+'''
+
+[tool.mypy]
+python_version = "3.12"
+files = ["core", "app_admin", "app_student", "fileserver", "tex_service", "celery_app.py"]
+# Start łagodny: projekt nie ma pełnych anotacji — mypy sprawdza tylko
+# funkcje z sygnaturami typów i spójność importów. Zaostrzać stopniowo.
+ignore_missing_imports = true
+# core/ nie jest instalowanym pakietem — mapuj moduły względem korzenia repo
+explicit_package_bases = true
+mypy_path = "."
+no_implicit_optional = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+exclude = ["secrets/", "pdf_output/", "logs/"]
+
+# Modele używają starego stylu db.relationship/db.Column (bez anotacji Mapped[]),
+# przez co mypy widzi RelationshipProperty zamiast typów instancji — poniższe
+# kody to na tym kodzie niemal wyłącznie fałszywe alarmy ORM. Przy migracji
+# modeli na Mapped[] włączać je z powrotem pojedynczo.
+disable_error_code = [
+    "var-annotated",
+    "union-attr",
+    "attr-defined",
+    "arg-type",
+    "return-value",
+    "dict-item",
+]
+
+# db.Model jako klasa bazowa to atrybut instancji — mypy nie umie go rozwiązać
+# (ograniczenie Flask-SQLAlchemy), stąd wyciszenie tylko w modelach.
+[[tool.mypy.overrides]]
+module = "core.models.*"
+disable_error_code = ["name-defined"]

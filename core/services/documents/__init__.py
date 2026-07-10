@@ -7,6 +7,7 @@ Submodules:
   - validation: validate_completeness
   - sse:        sse_pdf_status
 """
+
 from core.services.documents.policy import (
     DOC_CONFIG,
     STATIC_TEMPLATES,
@@ -19,12 +20,12 @@ from core.services.documents.validation import validate_completeness
 from core.services.documents.sse import sse_pdf_status
 
 __all__ = [
-    'DOC_CONFIG',
-    'STATIC_TEMPLATES',
-    'DocumentEntry',
-    'build_flags',
-    'resolve_documents',
-    'build_context',
-    'validate_completeness',
-    'sse_pdf_status',
+    "DOC_CONFIG",
+    "STATIC_TEMPLATES",
+    "DocumentEntry",
+    "build_flags",
+    "resolve_documents",
+    "build_context",
+    "validate_completeness",
+    "sse_pdf_status",
 ]

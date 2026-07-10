@@ -1,18 +1,19 @@
 """Server-Sent Events generator for Celery PDF generation status."""
+
 from __future__ import annotations
 
 from core.i18n import t
 
 
 def _pdf_status_payload(task, download_url: str) -> tuple[dict, bool]:
-    if task.state == 'SUCCESS':
+    if task.state == "SUCCESS":
         res = task.result
-        if isinstance(res, dict) and res.get('status') == 'error':
-            return {'status': 'FAILURE', 'error': t(res.get('message', 'Nieznany błąd'))}, True
-        return {'status': 'SUCCESS', 'download_url': download_url}, True
-    if task.state == 'FAILURE':
-        return {'status': 'FAILURE', 'error': str(task.info)}, True
-    return {'status': task.state}, False
+        if isinstance(res, dict) and res.get("status") == "error":
+            return {"status": "FAILURE", "error": t(res.get("message", "Nieznany błąd"))}, True
+        return {"status": "SUCCESS", "download_url": download_url}, True
+    if task.state == "FAILURE":
+        return {"status": "FAILURE", "error": str(task.info)}, True
+    return {"status": task.state}, False
 
 
 def sse_pdf_status(task_id: str, download_url: str, celery_app, max_seconds: int = 30):
@@ -24,7 +25,7 @@ def sse_pdf_status(task_id: str, download_url: str, celery_app, max_seconds: int
     try:
         from gevent import sleep as _sleep
     except ImportError:
-        from time import sleep as _sleep  # type: ignore[assignment]
+        from time import sleep as _sleep
 
     logger = logging.getLogger(__name__)
     deadline = time.monotonic() + max_seconds

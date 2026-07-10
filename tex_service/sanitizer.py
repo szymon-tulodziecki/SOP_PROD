@@ -8,26 +8,24 @@ po przejściu przez sanitize() zostanie to zamienione na bezpieczny
 ciąg znaków LaTeX (np. \textbackslash{}directlua\{...\}).
 """
 
-import re
 from datetime import date, datetime
 
 from pylatexenc.latexencode import unicode_to_latex
-
 
 # Znaki specjalne LaTeX wymagające escapowania.
 # unicode_to_latex z pylatexenc obsługuje je wszystkie, ale jawna lista
 # służy jako dokumentacja i drugi poziom ochrony.
 _LATEX_SPECIAL_CHARS = {
-    '\\': r'\textbackslash{}',
-    '{':  r'\{',
-    '}':  r'\}',
-    '$':  r'\$',
-    '&':  r'\&',
-    '#':  r'\#',
-    '^':  r'\^{}',
-    '_':  r'\_',
-    '~':  r'\textasciitilde{}',
-    '%':  r'\%',
+    "\\": r"\textbackslash{}",
+    "{": r"\{",
+    "}": r"\}",
+    "$": r"\$",
+    "&": r"\&",
+    "#": r"\#",
+    "^": r"\^{}",
+    "_": r"\_",
+    "~": r"\textasciitilde{}",
+    "%": r"\%",
 }
 
 
@@ -38,17 +36,17 @@ def sanitize_text(value, max_length: int = 5000) -> str:
     Używać dla pól sprawozdania, uzasadnienia itp.
     """
     if value is None:
-        return ''
+        return ""
     text = str(value).strip()
     if max_length:
         text = text[:max_length]
-    paragraphs = text.split('\n\n')
+    paragraphs = text.split("\n\n")
     encoded = []
     for p in paragraphs:
-        lines = p.split('\n')
+        lines = p.split("\n")
         encoded_lines = [unicode_to_latex(line) for line in lines]
-        encoded.append(r'\\'.join(encoded_lines))
-    return '\n\n'.join(encoded)
+        encoded.append(r"\\".join(encoded_lines))
+    return "\n\n".join(encoded)
 
 
 def sanitize(value, max_length: int = 500) -> str:
@@ -64,7 +62,7 @@ def sanitize(value, max_length: int = 500) -> str:
     jako dosłowny tekst, nie wykonany jako komenda.
     """
     if value is None:
-        return ''
+        return ""
     text = str(value).strip()
     if max_length:
         text = text[:max_length]
@@ -72,10 +70,10 @@ def sanitize(value, max_length: int = 500) -> str:
     return unicode_to_latex(text)
 
 
-def sanitize_date(value, fmt: str = '%d.%m.%Y') -> str:
+def sanitize_date(value, fmt: str = "%d.%m.%Y") -> str:
     """Formatuje datę do bezpiecznego ciągu — tylko cyfry i kropki."""
     if value is None:
-        return '—'
+        return "—"
     if isinstance(value, (date, datetime)):
         return value.strftime(fmt)
     try:
@@ -87,8 +85,8 @@ def sanitize_date(value, fmt: str = '%d.%m.%Y') -> str:
 def sanitize_int(value) -> str:
     """Zwraca wyłącznie cyfry całkowite — zero ryzyka injection."""
     if value is None:
-        return '0'
+        return "0"
     try:
         return str(int(value))
     except (ValueError, TypeError):
-        return '0'
+        return "0"

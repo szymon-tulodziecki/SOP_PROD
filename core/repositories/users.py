@@ -1,4 +1,5 @@
 ﻿"""User repository."""
+
 from __future__ import annotations
 
 from typing import Optional
@@ -72,28 +73,33 @@ class UserRepository:
                 db.select(UniversityMentor)
                 .filter_by(is_active=True)
                 .order_by(UniversityMentor.last_name, UniversityMentor.first_name)
-            ).scalars().all()
+            )
+            .scalars()
+            .all()
         )
 
     def count_active_students(self) -> int:
-        return db.session.query(User).filter_by(
-            role=UserRole.STUDENT, is_active=True
-        ).count()
+        return db.session.query(User).filter_by(role=UserRole.STUDENT, is_active=True).count()
 
-    def search_page(self, search: str = '', role_filter: str = '',
-                    page: int = 1, per_page: int = 25):
+    def search_page(
+        self, search: str = "", role_filter: str = "", page: int = 1, per_page: int = 25
+    ):
         """Paginated user list with optional search and role filter."""
         q = db.session.query(User)
         if search:
-            student_ids = db.session.query(Student.id).filter(
-                Student.album_number.ilike(f'%{search}%')
-            ).subquery()
-            q = q.filter(db.or_(
-                User.first_name.ilike(f'%{search}%'),
-                User.last_name.ilike(f'%{search}%'),
-                User.email.ilike(f'%{search}%'),
-                User.id.in_(student_ids),
-            ))
+            student_ids = (
+                db.session.query(Student.id)
+                .filter(Student.album_number.ilike(f"%{search}%"))
+                .subquery()
+            )
+            q = q.filter(
+                db.or_(
+                    User.first_name.ilike(f"%{search}%"),
+                    User.last_name.ilike(f"%{search}%"),
+                    User.email.ilike(f"%{search}%"),
+                    User.id.in_(student_ids),
+                )
+            )
         if role_filter:
             try:
                 role = UserRole[role_filter]
@@ -111,27 +117,34 @@ class UserRepository:
             page=page, per_page=per_page, error_out=False
         )
 
-    def students_page(self, search: str = '', supervisor_id=None,
-                      page: int = 1, per_page: int = 25, paths=None):
+    def students_page(
+        self, search: str = "", supervisor_id=None, page: int = 1, per_page: int = 25, paths=None
+    ):
         """Paginated student list with optional UOPZ and path filters."""
         q = db.session.query(Student)
         if supervisor_id is not None:
             q = q.filter(Student.supervisor_id == supervisor_id)
         if paths:
-            q = q.filter(Student.id.in_(
-                db.session.query(InternshipEnrollment.student_id)
-                .filter(InternshipEnrollment.path_type.in_(paths))
-                .distinct()
-            ))
+            q = q.filter(
+                Student.id.in_(
+                    db.session.query(InternshipEnrollment.student_id)
+                    .filter(InternshipEnrollment.path_type.in_(paths))
+                    .distinct()
+                )
+            )
         if search:
-            album_subquery = db.session.query(Student.id).filter(
-                Student.album_number.ilike(f'%{search}%')
-            ).subquery()
-            q = q.filter(db.or_(
-                Student.first_name.ilike(f'%{search}%'),
-                Student.last_name.ilike(f'%{search}%'),
-                Student.id.in_(album_subquery),
-            ))
+            album_subquery = (
+                db.session.query(Student.id)
+                .filter(Student.album_number.ilike(f"%{search}%"))
+                .subquery()
+            )
+            q = q.filter(
+                db.or_(
+                    Student.first_name.ilike(f"%{search}%"),
+                    Student.last_name.ilike(f"%{search}%"),
+                    Student.id.in_(album_subquery),
+                )
+            )
         return q.order_by(Student.last_name, Student.first_name).paginate(
             page=page, per_page=per_page, error_out=False
         )
@@ -144,10 +157,12 @@ class UserRepository:
         return (
             db.session.query(User.email, Student.album_number)
             .outerjoin(Student, User.id == Student.id)
-            .filter(db.or_(
-                User.email.in_(emails),
-                Student.album_number.in_(albums),
-            ))
+            .filter(
+                db.or_(
+                    User.email.in_(emails),
+                    Student.album_number.in_(albums),
+                )
+            )
             .all()
         )
 

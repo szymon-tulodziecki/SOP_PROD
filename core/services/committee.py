@@ -2,6 +2,7 @@
 
 Logika biznesowa weryfikacji komisji.
 """
+
 from __future__ import annotations
 
 
@@ -23,14 +24,14 @@ class CommitteeService:
         evaluations: list[tuple] = []
 
         for outcome in outcomes:
-            result_val = form_data.get(f'outcome_{outcome.id}')
+            result_val = form_data.get(f"outcome_{outcome.id}")
             if not result_val:
-                errors.append(f'Efekt {outcome.code}: brak oceny')
+                errors.append(f"Efekt {outcome.code}: brak oceny")
                 continue
-            notes_val = form_data.get(f'notes_{outcome.id}', '').strip()
-            if result_val == 'PARTIALLY_ACHIEVED' and not notes_val:
+            notes_val = form_data.get(f"notes_{outcome.id}", "").strip()
+            if result_val == "PARTIALLY_ACHIEVED" and not notes_val:
                 errors.append(
-                    f'Efekt {outcome.code}: wymagane uzasadnienie dla wyniku „Uzyskał/a częściowo”'
+                    f"Efekt {outcome.code}: wymagane uzasadnienie dla wyniku „Uzyskał/a częściowo”"
                 )
             evaluations.append((outcome.id, result_val, notes_val))
 

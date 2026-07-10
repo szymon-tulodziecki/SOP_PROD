@@ -2,6 +2,7 @@
 
 Serwis zarządzania praktykami i zapisami.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -43,11 +44,13 @@ class InternshipService:
         repo_zapisow: Optional[EnrollmentRepository] = None,
     ) -> None:
         self._praktyki = repo_praktyk or InternshipRepository()
-        self._zapisy   = repo_zapisow  or EnrollmentRepository()
+        self._zapisy = repo_zapisow or EnrollmentRepository()
 
     # ── Internship editions ───────────────────────────────────────────────────
 
-    def create_edition(self, rok_uczelniany: str, semestr: str, wymiar_godzin: int = 160) -> Internship:
+    def create_edition(
+        self, rok_uczelniany: str, semestr: str, wymiar_godzin: int = 160
+    ) -> Internship:
         internship = Internship(
             academic_year=rok_uczelniany,
             semester=semestr,
@@ -75,7 +78,7 @@ class InternshipService:
         path: InternshipPath = InternshipPath.STANDARD,
     ) -> InternshipEnrollment:
         if self._zapisy.student_ma_aktywny_zapis(student_id, internship_id):
-            raise ValueError(t('Student ma już aktywne zgłoszenie do tej edycji praktyk.'))
+            raise ValueError(t("Student ma już aktywne zgłoszenie do tej edycji praktyk."))
         zapis = InternshipEnrollment(
             student_id=student_id,
             internship_id=internship_id,
@@ -94,19 +97,22 @@ class InternshipService:
         executed_by_id: Optional[uuid.UUID] = None,
     ) -> None:
         """Changes enrollment status via FSM public methods."""
-        from core.services.workflow import EnrollmentStateMachine, IllegalTransitionError
+        from core.services.workflow import EnrollmentStateMachine
+
         fsm = EnrollmentStateMachine(zapis)
         _dispatch = {
             EnrollmentStatus.AWAITING_APPROVAL: fsm.submit_for_approval,
             EnrollmentStatus.COMMISSION_REVIEW: fsm.submit_to_committee,
-            EnrollmentStatus.IN_PROGRESS:       fsm.approve_by_supervisor,
-            EnrollmentStatus.DIRECTOR_APPROVAL: lambda: fsm.send_to_director('APPROVED'),
-            EnrollmentStatus.COMPLETED:         fsm.complete,
-            EnrollmentStatus.REJECTED:          fsm.reject,
+            EnrollmentStatus.IN_PROGRESS: fsm.approve_by_supervisor,
+            EnrollmentStatus.DIRECTOR_APPROVAL: lambda: fsm.send_to_director("APPROVED"),
+            EnrollmentStatus.COMPLETED: fsm.complete,
+            EnrollmentStatus.REJECTED: fsm.reject,
         }
         method = _dispatch.get(nowy_status)
         if method is None:
-            raise ValueError(t('Nieobsługiwany status docelowy: {status}', status=repr(nowy_status)))
+            raise ValueError(
+                t("Nieobsługiwany status docelowy: {status}", status=repr(nowy_status))
+            )
         method()
 
         if comment is not None:
@@ -119,13 +125,15 @@ class InternshipService:
             self._dodaj_zdarzenie(zapis, event_type, comment=comment, executed_by_id=executed_by_id)
 
         db.session.commit()
-        self._notify_status_change(zapis, nowy_status, comment or '')
+        self._notify_status_change(zapis, nowy_status, comment or "")
 
     @staticmethod
-    def _notify_status_change(zapis: InternshipEnrollment, nowy_status: EnrollmentStatus,
-                              comment: str = '') -> None:
+    def _notify_status_change(
+        zapis: InternshipEnrollment, nowy_status: EnrollmentStatus, comment: str = ""
+    ) -> None:
         """E-mail do właściwego aktora po ręcznej zmianie statusu (po commit)."""
         from core.services import notifications as noty
+
         if nowy_status == EnrollmentStatus.AWAITING_APPROVAL:
             noty.notify_submitted_to_supervisor(zapis)
         elif nowy_status == EnrollmentStatus.COMMISSION_REVIEW:
@@ -141,12 +149,13 @@ class InternshipService:
         self,
         enrollment_id: uuid.UUID,
         actor_id: uuid.UUID,
-        comment: str = '',
+        comment: str = "",
         supervisor_id: Optional[uuid.UUID] = None,
     ) -> None:
         """Zatwierdza zgłoszenie przez UOPZ (z opcjonalnym przypisaniem opiekuna). Commit w serwisie."""
         from core.services.workflow import EnrollmentStateMachine
         from core.services import notifications as noty
+
         with EnrollmentStateMachine.lock(enrollment_id) as fsm:
             if supervisor_id is not None:
                 fsm.zapis.supervisor_id = supervisor_id
@@ -158,15 +167,19 @@ class InternshipService:
         self,
         enrollment_id: uuid.UUID,
         actor_id: uuid.UUID,
-        comment: str = '',
+        comment: str = "",
     ) -> None:
         """Wysyła prośbę o poprawki do studenta. Commit w serwisie."""
         from core.services.workflow import EnrollmentStateMachine
         from core.models import EnrollmentStatus, EventType, User, UserRole
+
         with EnrollmentStateMachine.lock(enrollment_id) as fsm:
             actor = db.session.get(User, actor_id) if actor_id else None
             actor_role = actor.role if actor else None
-            if actor_role == UserRole.KOMISJA or fsm.zapis.status == EnrollmentStatus.COMMISSION_REVIEW:
+            if (
+                actor_role == UserRole.KOMISJA
+                or fsm.zapis.status == EnrollmentStatus.COMMISSION_REVIEW
+            ):
                 event_type = EventType.COMMITTEE_DECISION
             elif actor_role == UserRole.UOPZ:
                 event_type = EventType.SUPERVISOR_COMMENT
@@ -175,6 +188,7 @@ class InternshipService:
             fsm.request_revision(actor_id=actor_id, comment=comment, event_type=event_type)
             db.session.commit()
         from core.services import notifications as noty
+
         noty.notify_student_revision(fsm.zapis, comment)
 
     def submit_for_approval_with_supervisor(
@@ -185,6 +199,7 @@ class InternshipService:
         """Przypisuje UOPZ i wysyła zgłoszenie do zatwierdzenia. Commit w serwisie."""
         from core.services.workflow import EnrollmentStateMachine
         from core.services import notifications as noty
+
         with EnrollmentStateMachine.lock(enrollment_id) as fsm:
             fsm.zapis.supervisor_id = supervisor_id
             fsm.submit_for_approval()
@@ -196,21 +211,24 @@ class InternshipService:
         enrollment_id: uuid.UUID,
         decision: str,
         actor_id: uuid.UUID,
-        comment: str = '',
+        comment: str = "",
     ) -> None:
         """Wykonuje decyzję dyrektora (APPROVED/REJECTED). Commit w serwisie."""
-        from core.services.workflow import EnrollmentStateMachine, IllegalTransitionError
+        from core.services.workflow import EnrollmentStateMachine
         from core.models.internships import EventType
         from core.services import notifications as noty
+
         with EnrollmentStateMachine.lock(enrollment_id) as fsm:
-            if decision == 'APPROVED':
+            if decision == "APPROVED":
                 fsm.approve_by_director(actor_id=actor_id, comment=comment)
             else:
-                fsm.reject(actor_id=actor_id,
-                           comment=f"Dyrektor nie wyraził zgody: {comment}",
-                           event_type=EventType.DIRECTOR_DECISION)
+                fsm.reject(
+                    actor_id=actor_id,
+                    comment=f"Dyrektor nie wyraził zgody: {comment}",
+                    event_type=EventType.DIRECTOR_DECISION,
+                )
             db.session.commit()
-        if decision == 'APPROVED':
+        if decision == "APPROVED":
             noty.notify_student_approved(fsm.zapis)
         else:
             noty.notify_student_rejected(fsm.zapis, comment)
@@ -228,17 +246,21 @@ class InternshipService:
     ) -> None:
         from core.services.workflow import EnrollmentStateMachine
         from core.services import notifications as noty
+
         fsm = EnrollmentStateMachine(zapis)
-        if decision == 'APPROVED':
-            fsm.approve_by_committee(actor_id=executed_by_id, comment=comment or '')
+        if decision == "APPROVED":
+            fsm.approve_by_committee(actor_id=executed_by_id, comment=comment or "")
         else:
-            fsm.reject(actor_id=executed_by_id, comment=comment or '',
-                       event_type=EventType.COMMITTEE_DECISION)
+            fsm.reject(
+                actor_id=executed_by_id,
+                comment=comment or "",
+                event_type=EventType.COMMITTEE_DECISION,
+            )
         db.session.commit()
-        if decision == 'APPROVED':
+        if decision == "APPROVED":
             noty.notify_sent_to_director(zapis)
         else:
-            noty.notify_student_rejected(zapis, comment or '')
+            noty.notify_student_rejected(zapis, comment or "")
 
     def approve_by_director(
         self,
@@ -248,12 +270,16 @@ class InternshipService:
         executed_by_id: Optional[uuid.UUID] = None,
     ) -> None:
         from core.services.workflow import EnrollmentStateMachine
+
         fsm = EnrollmentStateMachine(zapis)
-        if decision == 'APPROVED':
-            fsm.approve_by_director(actor_id=executed_by_id, comment=comment or '')
+        if decision == "APPROVED":
+            fsm.approve_by_director(actor_id=executed_by_id, comment=comment or "")
         else:
-            fsm.reject(actor_id=executed_by_id, comment=comment or '',
-                       event_type=EventType.DIRECTOR_DECISION)
+            fsm.reject(
+                actor_id=executed_by_id,
+                comment=comment or "",
+                event_type=EventType.DIRECTOR_DECISION,
+            )
         db.session.commit()
 
     def notify_student(
@@ -263,7 +289,8 @@ class InternshipService:
         executed_by_id: Optional[uuid.UUID] = None,
     ) -> None:
         self._dodaj_zdarzenie(
-            zapis, EventType.STUDENT_NOTIFICATION,
+            zapis,
+            EventType.STUDENT_NOTIFICATION,
             comment=comment,
             executed_by_id=executed_by_id,
         )
@@ -271,6 +298,7 @@ class InternshipService:
 
     def complete(self, zapis: InternshipEnrollment) -> None:
         from core.services.workflow import EnrollmentStateMachine
+
         EnrollmentStateMachine(zapis).complete()
         db.session.commit()
 
@@ -315,70 +343,77 @@ class InternshipService:
             (True, '') jeśli można zakończyć,
             (False, komunikat) jeśli warunek nie jest spełniony.
         """
-        wymagane      = zapis.internship.required_hours if zapis.internship else 0
-        zalogowane    = zapis.total_hours_logged or 0
+        wymagane = zapis.internship.required_hours if zapis.internship else 0
+        zalogowane = zapis.total_hours_logged or 0
         liczba_wpisow = len(zapis.journal_entries)
 
         if liczba_wpisow == 0:
-            return False, t('Nie można zakończyć praktyki bez wpisów w dzienniku.')
+            return False, t("Nie można zakończyć praktyki bez wpisów w dzienniku.")
         if zalogowane < wymagane:
             return (
                 False,
-                t('Nie można zakończyć praktyki — zalogowano {zalogowane} z wymaganych {wymagane} godzin.',
-                  zalogowane=zalogowane, wymagane=wymagane),
+                t(
+                    "Nie można zakończyć praktyki — zalogowano {zalogowane} z wymaganych {wymagane} godzin.",
+                    zalogowane=zalogowane,
+                    wymagane=wymagane,
+                ),
             )
-        return True, ''
+        return True, ""
 
     @staticmethod
     def student_status(zapis) -> dict:
         """Analizuje zapis i zwraca gotowy dict do widoku listy praktyk studenta."""
         komentarz_admina = zapis.admin_comments
-        supervisor_comment   = zapis.supervisor_comments
+        supervisor_comment = zapis.supervisor_comments
         path = zapis.path_type.value if zapis.path_type else None
 
-        zwrocone_a = (
-            zapis.status == EnrollmentStatus.PENDING
-            and bool(komentarz_admina or supervisor_comment)
+        zwrocone_a = zapis.status == EnrollmentStatus.PENDING and bool(
+            komentarz_admina or supervisor_comment
         )
         zwrocone_bc = (
             zapis.status == EnrollmentStatus.AWAITING_APPROVAL
             and bool(supervisor_comment)
-            and path in ('EMPLOYMENT', 'OWN_BUSINESS')
+            and path in ("EMPLOYMENT", "OWN_BUSINESS")
         )
-        zwrocone_komisja = (zapis.status == EnrollmentStatus.REVISION_REQUIRED)
-        in_review = zapis.status in (EnrollmentStatus.COMMISSION_REVIEW, EnrollmentStatus.DIRECTOR_APPROVAL)
+        zwrocone_komisja = zapis.status == EnrollmentStatus.REVISION_REQUIRED
+        in_review = zapis.status in (
+            EnrollmentStatus.COMMISSION_REVIEW,
+            EnrollmentStatus.DIRECTOR_APPROVAL,
+        )
         zwrocone = (zwrocone_a or zwrocone_bc or zwrocone_komisja) and not in_review
 
         komentarz_komisji = (
-            _last_event_comment(zapis.id, EventType.COMMITTEE_DECISION, 'PARTIALLY_APPROVED')
-            if zwrocone_komisja else None
+            _last_event_comment(zapis.id, EventType.COMMITTEE_DECISION, "PARTIALLY_APPROVED")
+            if zwrocone_komisja
+            else None
         )
         komentarz_odrzucenia = (
-            _last_event_comment(zapis.id, EventType.COMMITTEE_DECISION, 'REJECTED')
-            if zapis.status == EnrollmentStatus.REJECTED else None
+            _last_event_comment(zapis.id, EventType.COMMITTEE_DECISION, "REJECTED")
+            if zapis.status == EnrollmentStatus.REJECTED
+            else None
         )
 
         jest_odrzucone = zapis.status == EnrollmentStatus.REJECTED
-        border_alert   = zwrocone or jest_odrzucone
+        border_alert = zwrocone or jest_odrzucone
 
         # Ścieżki B/C w statusie IN_PROGRESS student widzi jako "W rozpatrzeniu"
         status_label = zapis.status_label
-        if zapis.status == EnrollmentStatus.IN_PROGRESS and path != 'STANDARD':
-            status_label = t('W rozpatrzeniu')
+        if zapis.status == EnrollmentStatus.IN_PROGRESS and path != "STANDARD":
+            status_label = t("W rozpatrzeniu")
 
         return {
-            'id':                   str(zapis.id),
-            'status':               zapis.status.value,
-            'status_css_class':     zapis.status_css_class,
-            'status_label':         status_label,
-            'path':              path,
-            'is_standard':          path == 'STANDARD',
-            'zwrocone':             zwrocone,
-            'jest_odrzucone':       jest_odrzucone,
-            'border_alert':         border_alert,
-            'komentarz_zwrotny':    komentarz_komisji or komentarz_admina or supervisor_comment or '',
-            'komentarz_odrzucenia': komentarz_odrzucenia or '',
-            'wymaga_uwagi': zwrocone or jest_odrzucone,
+            "id": str(zapis.id),
+            "status": zapis.status.value,
+            "status_css_class": zapis.status_css_class,
+            "status_label": status_label,
+            "path": path,
+            "is_standard": path == "STANDARD",
+            "zwrocone": zwrocone,
+            "jest_odrzucone": jest_odrzucone,
+            "border_alert": border_alert,
+            "komentarz_zwrotny": komentarz_komisji or komentarz_admina or supervisor_comment or "",
+            "komentarz_odrzucenia": komentarz_odrzucenia or "",
+            "wymaga_uwagi": zwrocone or jest_odrzucone,
         }
 
     # ── Repository access ─────────────────────────────────────────────────────

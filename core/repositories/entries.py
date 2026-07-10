@@ -1,4 +1,5 @@
 ﻿"""core/repozytoria/wpisy.py — Repozytorium wpisów dziennika praktyk."""
+
 from __future__ import annotations
 
 from typing import Optional
@@ -11,8 +12,9 @@ from core.models.journal import JournalEntry
 class JournalRepository:
     """Jedyne miejsce zapytań ORM dotyczących tabeli wpisów dziennika."""
 
-    def get_by_enrollment(self, enrollment_id, descending: bool = True,
-                          start_date=None, end_date=None) -> list[JournalEntry]:
+    def get_by_enrollment(
+        self, enrollment_id, descending: bool = True, start_date=None, end_date=None
+    ) -> list[JournalEntry]:
         """Wszystkie wpisy dla danego zapisu, posortowane po dacie.
 
         data_od / data_do — opcjonalne filtry zakresu dat (obiekty date lub None).
@@ -35,8 +37,8 @@ class JournalRepository:
         rows = (
             db.session.query(
                 JournalEntry.enrollment_id,
-                func.max(JournalEntry.entry_date).label('ostatni'),
-                func.count(JournalEntry.id).label('liczba'),
+                func.max(JournalEntry.entry_date).label("ostatni"),
+                func.count(JournalEntry.id).label("liczba"),
             )
             .filter(JournalEntry.enrollment_id.in_(ids))
             .group_by(JournalEntry.enrollment_id)
@@ -48,8 +50,8 @@ class JournalRepository:
         """Zwraca (liczba_wpisow, suma_godzin) dla całego dziennika zapisu."""
         row = (
             db.session.query(
-                func.count(JournalEntry.id).label('liczba'),
-                func.coalesce(func.sum(JournalEntry.duration_hours), 0).label('godziny'),
+                func.count(JournalEntry.id).label("liczba"),
+                func.coalesce(func.sum(JournalEntry.duration_hours), 0).label("godziny"),
             )
             .filter_by(enrollment_id=enrollment_id)
             .one()

@@ -8,8 +8,12 @@ from core.auth import roles_required
 from core.extensions import db, limiter
 from core.i18n import t, lazy_t
 from core.models import AssessmentResult, EnrollmentStatus, UserRole
-from core.presenters import (committee_decision_badge, committee_status_badge,
-                             dean_decision_badge, path_label)
+from core.presenters import (
+    committee_decision_badge,
+    committee_status_badge,
+    dean_decision_badge,
+    path_label,
+)
 from core.repositories import (
     AssessmentRepository,
     EnrollmentRepository,
@@ -22,12 +26,12 @@ from core.services.workflow import IllegalTransitionError, EnrollmentStateMachin
 from . import zarzadzanie_bp
 
 _repo_zapisow = EnrollmentRepository()
-_repo_docs    = StudentDocumentRepository()
+_repo_docs = StudentDocumentRepository()
 _repo_efektow = OutcomeRepository()
-_repo_ocen    = AssessmentRepository()
+_repo_ocen = AssessmentRepository()
 
-_ROUTE_KOMISJA_LISTA = 'zarzadzanie.komisja_lista'
-_TPL_WERYFIKUJ       = 'zarzadzanie/komisja/weryfikuj.html'
+_ROUTE_KOMISJA_LISTA = "zarzadzanie.komisja_lista"
+_TPL_WERYFIKUJ = "zarzadzanie/komisja/weryfikuj.html"
 _ACTIVE_COMMITTEE_STATUSES = (
     EnrollmentStatus.COMMISSION_REVIEW,
     EnrollmentStatus.AWAITING_APPROVAL,
@@ -37,24 +41,26 @@ _REVIEWABLE_COMMITTEE_STATUSES = (
     EnrollmentStatus.REVISION_REQUIRED,
 )
 _COMMITTEE_DECISION_LABELS = {
-    'APPROVED':           'Opinia pozytywna',
-    'PARTIALLY_APPROVED': 'Opinia częściowo pozytywna',
-    'REJECTED':           'Opinia negatywna',
+    "APPROVED": "Opinia pozytywna",
+    "PARTIALLY_APPROVED": "Opinia częściowo pozytywna",
+    "REJECTED": "Opinia negatywna",
 }
 _COMMITTEE_DECISIONS = tuple(_COMMITTEE_DECISION_LABELS)
 
 
 class CommitteeForm(FlaskForm):
-    comment = TextAreaField(lazy_t('Komentarz ogólny komisji'), validators=[Optional()])
+    comment = TextAreaField(lazy_t("Komentarz ogólny komisji"), validators=[Optional()])
 
 
-@zarzadzanie_bp.route('/komisja', methods=['GET'])
+@zarzadzanie_bp.route("/komisja", methods=["GET"])
 @roles_required(UserRole.ADMIN, UserRole.KOMISJA)
 def komisja_lista():
-    page = request.args.get('page', 1, type=int)
+    page = request.args.get("page", 1, type=int)
     applications = _repo_zapisow.wnioski_komisja_strona(strona=page)
     csrf_form = FlaskForm()
-    return render_template('zarzadzanie/komisja/lista.html', wnioski=applications, csrf_form=csrf_form)
+    return render_template(
+        "zarzadzanie/komisja/lista.html", wnioski=applications, csrf_form=csrf_form
+    )
 
 
 def _render_weryfikuj_komisji(form, enrollment, outcomes, enrollment_id):
@@ -89,24 +95,25 @@ def _zapisz_oceny_komisji(enrollment_id, evaluations):
 def _przekaz_do_dyrektora(enrollment_id, committee_opinion, comment, evaluations):
     with EnrollmentStateMachine.lock(enrollment_id) as fsm:
         if fsm.zapis.status not in _ACTIVE_COMMITTEE_STATUSES:
-            flash(t('Wniosek zmienił status podczas przetwarzania - spróbuj ponownie.'), 'warning')
+            flash(t("Wniosek zmienił status podczas przetwarzania - spróbuj ponownie."), "warning")
             return False
         _zapisz_oceny_komisji(enrollment_id, evaluations)
         fsm.send_to_director(decision=committee_opinion, actor_id=current_user.id, comment=comment)
         db.session.commit()
     from core.services import notifications as noty
+
     noty.notify_sent_to_director(fsm.zapis)
     return True
 
 
-@zarzadzanie_bp.route('/komisja/<uuid:id>/weryfikuj', methods=['GET', 'POST'])
+@zarzadzanie_bp.route("/komisja/<uuid:id>/weryfikuj", methods=["GET", "POST"])
 @roles_required(UserRole.ADMIN, UserRole.KOMISJA)
-@limiter.limit("60 per hour", methods=['POST'])
+@limiter.limit("60 per hour", methods=["POST"])
 def komisja_weryfikuj(id):
     enrollment = _repo_zapisow.znajdz_po_id(id) or abort(404)
 
     if enrollment.status not in _REVIEWABLE_COMMITTEE_STATUSES:
-        flash(t('Wniosek nie wymaga weryfikacji komisji.'), 'warning')
+        flash(t("Wniosek nie wymaga weryfikacji komisji."), "warning")
         return redirect(url_for(_ROUTE_KOMISJA_LISTA))
 
     form = CommitteeForm()
@@ -116,24 +123,27 @@ def komisja_weryfikuj(id):
         return _render_weryfikuj_komisji(form, enrollment, outcomes, id)
 
     if enrollment.status not in _ACTIVE_COMMITTEE_STATUSES:
-        flash(t('Wniosek nie jest w stanie umożliwiającym decyzję komisji.'), 'warning')
+        flash(t("Wniosek nie jest w stanie umożliwiającym decyzję komisji."), "warning")
         return redirect(url_for(_ROUTE_KOMISJA_LISTA))
 
-    committee_opinion = request.form.get('opinia')
+    committee_opinion = request.form.get("opinia")
     if committee_opinion not in _COMMITTEE_DECISIONS:
-        flash(t('Wybierz opinię komisji (jeden z trzech przycisków).'), 'warning')
+        flash(t("Wybierz opinię komisji (jeden z trzech przycisków)."), "warning")
         return _render_weryfikuj_komisji(form, enrollment, outcomes, id)
 
     errors, evaluations = CommitteeService.validate_outcome_grades(outcomes, request.form)
     if errors:
         for err in errors:
-            flash(t(err), 'danger')
+            flash(t(err), "danger")
         return _render_weryfikuj_komisji(form, enrollment, outcomes, id)
 
     try:
-        if _przekaz_do_dyrektora(id, committee_opinion, form.comment.data or '', evaluations):
+        if _przekaz_do_dyrektora(id, committee_opinion, form.comment.data or "", evaluations):
             label = _COMMITTEE_DECISION_LABELS[committee_opinion]
-            flash(t('{etykieta} - wniosek przekazany do Dyrektora Instytutu.', etykieta=t(label)), 'success')
+            flash(
+                t("{etykieta} - wniosek przekazany do Dyrektora Instytutu.", etykieta=t(label)),
+                "success",
+            )
     except IllegalTransitionError as e:
-        flash(t(str(e)), 'danger')
+        flash(t(str(e)), "danger")
     return redirect(url_for(_ROUTE_KOMISJA_LISTA))

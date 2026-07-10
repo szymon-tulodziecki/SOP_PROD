@@ -32,6 +32,7 @@ Diagram przejść:
   COMPLETED  (terminal — brak wyjść)
   REJECTED   (terminal — brak wyjść)
 """
+
 from __future__ import annotations
 
 from core.models.internships import EnrollmentStatus as S
@@ -40,15 +41,20 @@ from core.models.internships import EnrollmentStatus as S
 # Wyjątek dziedziny
 # ---------------------------------------------------------------------------
 
+
 class IllegalTransitionError(ValueError):
     """Próba nielegalnego przejścia między stanami."""
-    def __init__(self, current: S, attempted: S, reason: str = ''):
+
+    def __init__(self, current: S, attempted: S, reason: str = ""):
         from core.i18n import t
-        msg = t('Niedozwolone przejście: {obecny} → {cel}', obecny=current.value, cel=attempted.value)
+
+        msg = t(
+            "Niedozwolone przejście: {obecny} → {cel}", obecny=current.value, cel=attempted.value
+        )
         if reason:
             msg += f" ({t(reason)})"
         super().__init__(msg)
-        self.current  = current
+        self.current = current
         self.attempted = attempted
 
 
@@ -74,10 +80,10 @@ _ALLOWED: dict[S, set[S]] = {
         S.REJECTED,
     },
     S.REVISION_REQUIRED: {
-        S.AWAITING_APPROVAL,   # student ponownie składa (ścieżka A)
-        S.COMMISSION_REVIEW,   # student ponownie składa (ścieżki B/C)
+        S.AWAITING_APPROVAL,  # student ponownie składa (ścieżka A)
+        S.COMMISSION_REVIEW,  # student ponownie składa (ścieżki B/C)
         S.DIRECTOR_APPROVAL,
-        S.REVISION_REQUIRED,   # kolejna runda poprawek
+        S.REVISION_REQUIRED,  # kolejna runda poprawek
         S.REJECTED,
     },
     S.DIRECTOR_APPROVAL: {
@@ -88,13 +94,14 @@ _ALLOWED: dict[S, set[S]] = {
         S.COMPLETED,
     },
     S.COMPLETED: set(),
-    S.REJECTED:  set(),
+    S.REJECTED: set(),
 }
 
 
 # ---------------------------------------------------------------------------
 # FSM
 # ---------------------------------------------------------------------------
+
 
 class EnrollmentStateMachine:
     """Kontroler przejść stanu dla instancji InternshipEnrollment.
@@ -118,7 +125,7 @@ class EnrollmentStateMachine:
     # ── Blokada pesymistyczna (SELECT ... FOR UPDATE) ──────────────────────
 
     @classmethod
-    def lock(cls, enrollment_id) -> 'EnrollmentStateMachine':
+    def lock(cls, enrollment_id) -> "EnrollmentStateMachine":
         """Ładuje InternshipEnrollment z blokadą FOR UPDATE i zwraca FSM.
 
         Blokada wierszowa w PostgreSQL gwarantuje, że żaden inny proces
@@ -147,16 +154,18 @@ class EnrollmentStateMachine:
         )
         if zapis is None:
             from flask import abort
+
             abort(404)
         return cls(zapis)
 
     # Context manager — dla czytelności kodu w kontrolerach
-    def __enter__(self) -> 'EnrollmentStateMachine':
+    def __enter__(self) -> "EnrollmentStateMachine":
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         if exc_type is not None:
             from core.extensions import db
+
             db.session.rollback()
 
     @property
@@ -165,26 +174,30 @@ class EnrollmentStateMachine:
 
     # ── Wewnętrzna zmiana stanu ────────────────────────────────────────────
 
-    def _przejdz(self, cel: S, reason: str = '') -> None:
+    def _przejdz(self, cel: S, reason: str = "") -> None:
         obecny = self._zapis.status
         if cel not in _ALLOWED.get(obecny, set()):
             raise IllegalTransitionError(obecny, cel, reason)
         self._zapis.status = cel
 
-    def _dodaj_zdarzenie(self, event_type, actor_id=None, comment: str = '',
-                         decision: str = '') -> None:
+    def _dodaj_zdarzenie(
+        self, event_type, actor_id=None, comment: str = "", decision: str = ""
+    ) -> None:
         """Tworzy ProcessEvent i dodaje do sesji (bez commit)."""
         from datetime import datetime, timezone as _tz
-        from core.models.internships import ProcessEvent, EventType
+        from core.models.internships import ProcessEvent
         from core.extensions import db
-        db.session.add(ProcessEvent(
-            enrollment_id=self._zapis.id,
-            event_type=event_type,
-            comment=comment or None,
-            decision=decision or None,
-            executed_by_id=actor_id,
-            executed_at=datetime.now(_tz.utc),
-        ))
+
+        db.session.add(
+            ProcessEvent(
+                enrollment_id=self._zapis.id,
+                event_type=event_type,
+                comment=comment or None,
+                decision=decision or None,
+                executed_by_id=actor_id,
+                executed_at=datetime.now(_tz.utc),
+            )
+        )
 
     # ── Publiczne przejścia ───────────────────────────────────────────────
 
@@ -200,12 +213,18 @@ class EnrollmentStateMachine:
         from core.models.users import UniversityMentor
         from core.models.internships import InternshipEnrollment
         from sqlalchemy import func
-        aktywne = (S.AWAITING_APPROVAL, S.IN_PROGRESS, S.COMMISSION_REVIEW,
-                   S.REVISION_REQUIRED, S.DIRECTOR_APPROVAL)
+
+        aktywne = (
+            S.AWAITING_APPROVAL,
+            S.IN_PROGRESS,
+            S.COMMISSION_REVIEW,
+            S.REVISION_REQUIRED,
+            S.DIRECTOR_APPROVAL,
+        )
         subq = (
             db.session.query(
                 InternshipEnrollment.supervisor_id,
-                func.count().label('cnt'),
+                func.count().label("cnt"),
             )
             .filter(InternshipEnrollment.status.in_(aktywne))
             .group_by(InternshipEnrollment.supervisor_id)
@@ -214,7 +233,7 @@ class EnrollmentStateMachine:
         mentor = (
             db.session.query(UniversityMentor)
             .outerjoin(subq, UniversityMentor.id == subq.c.supervisor_id)
-            .filter(UniversityMentor.is_active == True)
+            .filter(UniversityMentor.is_active.is_(True))
             .order_by(func.coalesce(subq.c.cnt, 0), UniversityMentor.last_name)
             .first()
         )
@@ -234,63 +253,68 @@ class EnrollmentStateMachine:
         wraca do recenzenta, który zadał poprawki, a nie zawsze do komisji.
         """
         from core.models.internships import InternshipPath
+
         if self.zapis.path_type == InternshipPath.STANDARD:
             self._przejdz(S.AWAITING_APPROVAL)
         else:
             self._przejdz(S.COMMISSION_REVIEW)
 
-    def approve_by_supervisor(self, actor_id=None, comment: str = '') -> None:
+    def approve_by_supervisor(self, actor_id=None, comment: str = "") -> None:
         """AWAITING_APPROVAL → IN_PROGRESS. Opcjonalnie zapisuje comment UOPZ."""
         from core.models.internships import EventType
-        self._przejdz(S.IN_PROGRESS, 'decision UOPZ')
-        if comment:
-            self._dodaj_zdarzenie(EventType.SUPERVISOR_COMMENT, actor_id=actor_id,
-                                  comment=comment)
 
-    def send_to_director(self, decision: str, actor_id=None, comment: str = '') -> None:
+        self._przejdz(S.IN_PROGRESS, "decision UOPZ")
+        if comment:
+            self._dodaj_zdarzenie(EventType.SUPERVISOR_COMMENT, actor_id=actor_id, comment=comment)
+
+    def send_to_director(self, decision: str, actor_id=None, comment: str = "") -> None:
         """COMMISSION_REVIEW / AWAITING_APPROVAL / REVISION_REQUIRED → DIRECTOR_APPROVAL.
 
         decision: 'APPROVED' | 'PARTIALLY_APPROVED' | 'REJECTED'
         """
         from core.models.internships import EventType
-        self._przejdz(S.DIRECTOR_APPROVAL, 'opinia komisji')
-        self._dodaj_zdarzenie(EventType.COMMITTEE_DECISION, actor_id=actor_id,
-                              comment=comment, decision=decision)
 
-    def approve_by_committee(self, actor_id=None, comment: str = '') -> None:
+        self._przejdz(S.DIRECTOR_APPROVAL, "opinia komisji")
+        self._dodaj_zdarzenie(
+            EventType.COMMITTEE_DECISION, actor_id=actor_id, comment=comment, decision=decision
+        )
+
+    def approve_by_committee(self, actor_id=None, comment: str = "") -> None:
         """COMMISSION_REVIEW / REVISION_REQUIRED -> DIRECTOR_APPROVAL."""
-        self.send_to_director(decision='APPROVED', actor_id=actor_id, comment=comment)
+        self.send_to_director(decision="APPROVED", actor_id=actor_id, comment=comment)
 
-    def request_revision(self, actor_id=None, comment: str = '', event_type=None) -> None:
+    def request_revision(self, actor_id=None, comment: str = "", event_type=None) -> None:
         """Wysyła zapis do poprawek i zapisuje właściwy event_type process_events."""
         from core.models.internships import EventType
+
         event_type = event_type or EventType.COMMITTEE_DECISION
         opis_by_type = {
-            EventType.ADMIN_COMMENT: 'admin: wymaga uzupełnień',
-            EventType.SUPERVISOR_COMMENT: 'supervisor: wymaga uzupełnień',
-            EventType.COMMITTEE_DECISION: 'komisja: wymaga uzupełnień',
+            EventType.ADMIN_COMMENT: "admin: wymaga uzupełnień",
+            EventType.SUPERVISOR_COMMENT: "supervisor: wymaga uzupełnień",
+            EventType.COMMITTEE_DECISION: "komisja: wymaga uzupełnień",
         }
-        opis = opis_by_type.get(event_type, 'wymaga uzupełnień')
+        opis = opis_by_type.get(event_type, "wymaga uzupełnień")
         self._przejdz(S.REVISION_REQUIRED, opis)
-        self._dodaj_zdarzenie(event_type, actor_id=actor_id,
-                              comment=comment, decision='PARTIALLY_APPROVED')
+        self._dodaj_zdarzenie(
+            event_type, actor_id=actor_id, comment=comment, decision="PARTIALLY_APPROVED"
+        )
 
-    def approve_by_director(self, actor_id=None, comment: str = '') -> None:
+    def approve_by_director(self, actor_id=None, comment: str = "") -> None:
         """DIRECTOR_APPROVAL → IN_PROGRESS."""
         from core.models.internships import EventType
-        self._przejdz(S.IN_PROGRESS, 'decision dyrektora')
-        self._dodaj_zdarzenie(EventType.DIRECTOR_DECISION, actor_id=actor_id,
-                              comment=comment, decision='APPROVED')
 
+        self._przejdz(S.IN_PROGRESS, "decision dyrektora")
+        self._dodaj_zdarzenie(
+            EventType.DIRECTOR_DECISION, actor_id=actor_id, comment=comment, decision="APPROVED"
+        )
 
-    def reject(self, actor_id=None, comment: str = '',
-               event_type=None) -> None:
+    def reject(self, actor_id=None, comment: str = "", event_type=None) -> None:
         """Dowolny aktywny stan → REJECTED."""
         from core.models.internships import EventType
+
         self._przejdz(S.REJECTED)
         et = event_type or EventType.SUPERVISOR_COMMENT
-        self._dodaj_zdarzenie(et, actor_id=actor_id,
-                              comment=comment, decision='REJECTED')
+        self._dodaj_zdarzenie(et, actor_id=actor_id, comment=comment, decision="REJECTED")
 
     def complete(self) -> None:
         """IN_PROGRESS → COMPLETED."""

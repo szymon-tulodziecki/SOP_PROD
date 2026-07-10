@@ -5,7 +5,7 @@ from pathlib import Path
 
 from flask import Flask, request, send_file, jsonify
 
-from compiler import compile_pdf, render_tex, TexCompilationError
+from compiler import compile_pdf, TexCompilationError
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -24,11 +24,13 @@ def _allowed_templates() -> set[str]:
 def health():
     lualatex_ok = bool(shutil.which("lualatex"))
     templates = list(_allowed_templates())
-    return jsonify({
-        "status": "ok" if lualatex_ok else "degraded",
-        "lualatex": lualatex_ok,
-        "templates": templates,
-    })
+    return jsonify(
+        {
+            "status": "ok" if lualatex_ok else "degraded",
+            "lualatex": lualatex_ok,
+            "templates": templates,
+        }
+    )
 
 
 @app.route("/generuj", methods=["POST"])
@@ -56,10 +58,15 @@ def generuj():
     # Walidacja szablonu
     allowed = _allowed_templates()
     if template_name not in allowed:
-        return jsonify({
-            "error": f"Nieznany szablon: {template_name!r}",
-            "available": sorted(allowed),
-        }), 400
+        return (
+            jsonify(
+                {
+                    "error": f"Nieznany szablon: {template_name!r}",
+                    "available": sorted(allowed),
+                }
+            ),
+            400,
+        )
 
     if not isinstance(context, dict):
         return jsonify({"error": "context musi być obiektem JSON"}), 400

@@ -5,7 +5,7 @@ from datetime import date, timedelta
 
 class JournalService:
     @staticmethod
-    def count_working_days(date_from: date, date_to: date, country: str = 'PL') -> int:
+    def count_working_days(date_from: date, date_to: date, country: str = "PL") -> int:
         holidays_calendar = _load_holidays(country, years=range(date_from.year, date_to.year + 1))
         days = 0
         current = date_from
@@ -16,7 +16,7 @@ class JournalService:
         return days
 
     @staticmethod
-    def detect_gaps(entries, threshold_days: int = 3, country: str = 'PL') -> list[dict]:
+    def detect_gaps(entries, threshold_days: int = 3, country: str = "PL") -> list[dict]:
         if not entries:
             return []
 
@@ -25,11 +25,13 @@ class JournalService:
         for previous, current in zip(dates, dates[1:]):
             working_days = JournalService.count_working_days(previous, current, country=country)
             if working_days > threshold_days:
-                gaps.append({
-                    'date_from': previous,
-                    'date_to': current,
-                    'working_days': working_days,
-                })
+                gaps.append(
+                    {
+                        "date_from": previous,
+                        "date_to": current,
+                        "working_days": working_days,
+                    }
+                )
         return gaps
 
 

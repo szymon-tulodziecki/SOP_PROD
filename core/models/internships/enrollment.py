@@ -1,4 +1,5 @@
 """InternshipEnrollment — student enrollment record with computed properties."""
+
 import uuid
 
 from sqlalchemy.dialects.postgresql import UUID
@@ -19,43 +20,86 @@ from core.models.internships.enums import (
 
 class InternshipEnrollment(db.Model):
     """Core student enrollment record."""
-    __tablename__ = 'internship_enrollments'
 
-    id            = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    internship_id = db.Column(UUID(as_uuid=True), db.ForeignKey('internships.id', ondelete='CASCADE'), nullable=False)
-    student_id    = db.Column(UUID(as_uuid=True), db.ForeignKey(FK_USERS, ondelete='CASCADE'), nullable=False)
-    supervisor_id = db.Column(UUID(as_uuid=True), db.ForeignKey(FK_USERS, ondelete=ON_SET_NULL), nullable=True)
-    company_id    = db.Column(UUID(as_uuid=True), db.ForeignKey('companies.id', ondelete=ON_SET_NULL), nullable=True)
+    __tablename__ = "internship_enrollments"
+
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    internship_id = db.Column(
+        UUID(as_uuid=True), db.ForeignKey("internships.id", ondelete="CASCADE"), nullable=False
+    )
+    student_id = db.Column(
+        UUID(as_uuid=True), db.ForeignKey(FK_USERS, ondelete="CASCADE"), nullable=False
+    )
+    supervisor_id = db.Column(
+        UUID(as_uuid=True), db.ForeignKey(FK_USERS, ondelete=ON_SET_NULL), nullable=True
+    )
+    company_id = db.Column(
+        UUID(as_uuid=True), db.ForeignKey("companies.id", ondelete=ON_SET_NULL), nullable=True
+    )
 
     status = db.Column(
-        db.Enum(EnrollmentStatus, name='enrollment_status', values_callable=lambda e: [x.value for x in e]),
-        nullable=False, default=EnrollmentStatus.PENDING,
+        db.Enum(
+            EnrollmentStatus,
+            name="enrollment_status",
+            values_callable=lambda e: [x.value for x in e],
+        ),
+        nullable=False,
+        default=EnrollmentStatus.PENDING,
     )
     path_type = db.Column(
-        db.Enum(InternshipPath, name='internship_path', values_callable=lambda e: [x.value for x in e]),
-        nullable=False, default=InternshipPath.STANDARD,
+        db.Enum(
+            InternshipPath, name="internship_path", values_callable=lambda e: [x.value for x in e]
+        ),
+        nullable=False,
+        default=InternshipPath.STANDARD,
     )
 
-    start_date         = db.Column(db.Date,        nullable=True)
-    end_date           = db.Column(db.Date,        nullable=True)
-    specialization     = db.Column(db.String(255), nullable=True)
-    accident_insurance = db.Column(db.Boolean,     default=False)
-    total_hours_logged = db.Column(db.Integer,     default=0)
-    enrolled_at        = db.Column(db.DateTime,    server_default=db.func.now())
+    start_date = db.Column(db.Date, nullable=True)
+    end_date = db.Column(db.Date, nullable=True)
+    specialization = db.Column(db.String(255), nullable=True)
+    accident_insurance = db.Column(db.Boolean, default=False)
+    total_hours_logged = db.Column(db.Integer, default=0)
+    enrolled_at = db.Column(db.DateTime, server_default=db.func.now())
 
     # ── Relacje ──────────────────────────────────────────
-    student            = db.relationship('User',              foreign_keys=[student_id],   lazy='select')
-    supervisor         = db.relationship('User',              foreign_keys=[supervisor_id], lazy='select')
-    company            = db.relationship('Company',           foreign_keys=[company_id],   lazy='select')
-    workplace_details  = db.relationship('WorkplaceDetails',  back_populates='enrollment', uselist=False, cascade=CASCADE_DELETE)
-    path_justification = db.relationship('PathJustification', back_populates='enrollment', uselist=False, cascade=CASCADE_DELETE)
-    examination        = db.relationship('Examination',       back_populates='enrollment', uselist=False, cascade=CASCADE_DELETE)
-    final_grades       = db.relationship('FinalGrades',       back_populates='enrollment', uselist=False, cascade=CASCADE_DELETE)
-    process_events     = db.relationship('ProcessEvent',      back_populates='enrollment', lazy='select', cascade=CASCADE_DELETE, order_by='ProcessEvent.executed_at')
-    journal_entries    = db.relationship('JournalEntry',      backref='enrollment',        lazy='select', cascade=CASCADE_DELETE)
-    outcome_assessments = db.relationship('OutcomeAssessment', backref='enrollment',       lazy='select', cascade=CASCADE_DELETE)
-    schedule           = db.relationship('InternshipSchedule', backref='enrollment',       lazy='select', cascade=CASCADE_DELETE)
-    report             = db.relationship('InternshipReport',  backref='enrollment',        uselist=False, lazy='select', cascade=CASCADE_DELETE)
+    student = db.relationship("User", foreign_keys=[student_id], lazy="select")
+    supervisor = db.relationship("User", foreign_keys=[supervisor_id], lazy="select")
+    company = db.relationship("Company", foreign_keys=[company_id], lazy="select")
+    workplace_details = db.relationship(
+        "WorkplaceDetails", back_populates="enrollment", uselist=False, cascade=CASCADE_DELETE
+    )
+    path_justification = db.relationship(
+        "PathJustification", back_populates="enrollment", uselist=False, cascade=CASCADE_DELETE
+    )
+    examination = db.relationship(
+        "Examination", back_populates="enrollment", uselist=False, cascade=CASCADE_DELETE
+    )
+    final_grades = db.relationship(
+        "FinalGrades", back_populates="enrollment", uselist=False, cascade=CASCADE_DELETE
+    )
+    process_events = db.relationship(
+        "ProcessEvent",
+        back_populates="enrollment",
+        lazy="select",
+        cascade=CASCADE_DELETE,
+        order_by="ProcessEvent.executed_at",
+    )
+    journal_entries = db.relationship(
+        "JournalEntry", backref="enrollment", lazy="select", cascade=CASCADE_DELETE
+    )
+    outcome_assessments = db.relationship(
+        "OutcomeAssessment", backref="enrollment", lazy="select", cascade=CASCADE_DELETE
+    )
+    schedule = db.relationship(
+        "InternshipSchedule", backref="enrollment", lazy="select", cascade=CASCADE_DELETE
+    )
+    report = db.relationship(
+        "InternshipReport",
+        backref="enrollment",
+        uselist=False,
+        lazy="select",
+        cascade=CASCADE_DELETE,
+    )
 
     # ── Skróty do danych encji powiązanych ────────────────────
 
@@ -219,11 +263,13 @@ class InternshipEnrollment(db.Model):
         if self.examination is None:
             return None
         grades = [
-            float(v) for v in (
+            float(v)
+            for v in (
                 self.examination.grade_1,
                 self.examination.grade_2,
                 self.examination.grade_3,
-            ) if v is not None
+            )
+            if v is not None
         ]
         return round(sum(grades) / len(grades), 2) if grades else None
 
@@ -233,7 +279,11 @@ class InternshipEnrollment(db.Model):
         if self.final_grades is None:
             return None
         e = self.exam_grade
-        s = float(self.final_grades.report_grade) if self.final_grades.report_grade is not None else None
+        s = (
+            float(self.final_grades.report_grade)
+            if self.final_grades.report_grade is not None
+            else None
+        )
 
         def _round_half(v):
             return round(round(v * 2) / 2, 1)
@@ -242,8 +292,16 @@ class InternshipEnrollment(db.Model):
             if None in (e, s):
                 return None
             return _round_half(0.9 * e + 0.1 * s)
-        u = float(self.final_grades.supervisor_grade) if self.final_grades.supervisor_grade is not None else None
-        z = float(self.final_grades.workplace_grade)  if self.final_grades.workplace_grade  is not None else None
+        u = (
+            float(self.final_grades.supervisor_grade)
+            if self.final_grades.supervisor_grade is not None
+            else None
+        )
+        z = (
+            float(self.final_grades.workplace_grade)
+            if self.final_grades.workplace_grade is not None
+            else None
+        )
         if None in (e, s, u, z):
             return None
         return _round_half(0.4 * e + 0.1 * s + 0.2 * u + 0.3 * z)
@@ -305,9 +363,11 @@ class InternshipEnrollment(db.Model):
     @property
     def status_css_class(self) -> str:
         from core.translations import status_css_class as _css
-        return _css(self.status.value if self.status else '')
+
+        return _css(self.status.value if self.status else "")
 
     @property
     def status_label(self) -> str:
         from core.translations import translate_status
-        return translate_status(self.status.value if self.status else '')
+
+        return translate_status(self.status.value if self.status else "")

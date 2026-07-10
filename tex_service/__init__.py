@@ -19,7 +19,7 @@ _pkg_dir = os.path.dirname(__file__)
 if _pkg_dir not in sys.path:
     sys.path.insert(0, _pkg_dir)
 
-from compiler import (          # noqa: E402
+from compiler import (  # noqa: E402
     TexCompilationError,
     render_tex,
     compile_pdf,

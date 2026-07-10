@@ -1,5 +1,14 @@
 from flask import Blueprint
 
-zarzadzanie_bp = Blueprint('zarzadzanie', __name__)
+zarzadzanie_bp = Blueprint("zarzadzanie", __name__)
 
-from . import companies, committee, director, forms, internships, student_documents, users
+# Import po utworzeniu blueprintu — moduły tras importują go z powrotem.
+from . import (  # noqa: E402
+    companies,
+    committee,
+    director,
+    forms,
+    internships,
+    student_documents,
+    users,
+)

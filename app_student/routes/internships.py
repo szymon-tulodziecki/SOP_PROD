@@ -1,6 +1,5 @@
 ﻿import uuid
-import datetime
-from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, make_response
+from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
 from flask_wtf import FlaskForm
 from wtforms import StringField, SelectField, DateField, BooleanField, TextAreaField
 from wtforms.validators import DataRequired, Optional, Length, Email, ValidationError
@@ -8,93 +7,138 @@ import re
 from flask_login import login_required, current_user
 from core.extensions import db
 from core.i18n import t, lazy_t
-import httpx
-from core.models import (Internship, InternshipEnrollment, InternshipStatus, EnrollmentStatus,
-                         InternshipPath,
-                         WorkplaceDetails, PathJustification)
+from core.models import (
+    InternshipEnrollment,
+    EnrollmentStatus,
+    InternshipPath,
+    WorkplaceDetails,
+    PathJustification,
+)
 from core.models.internships import EventType
 from core.services.workflow import EnrollmentStateMachine, IllegalTransitionError
 from core.services.internships import InternshipService
-from core.repositories import (InternshipRepository, EnrollmentRepository,
-                               OutcomeRepository, CompanyRepository,
-                               StudentDocumentRepository)
+from core.repositories import (
+    InternshipRepository,
+    EnrollmentRepository,
+    OutcomeRepository,
+    CompanyRepository,
+    StudentDocumentRepository,
+)
 
 _repo_praktyk = InternshipRepository()
 _repo_zapisow = EnrollmentRepository()
 _repo_efektow = OutcomeRepository()
-company_repository    = CompanyRepository()
-_repo_docs    = StudentDocumentRepository()
+company_repository = CompanyRepository()
+_repo_docs = StudentDocumentRepository()
 
-internships_bp = Blueprint('internships', __name__)
+internships_bp = Blueprint("internships", __name__)
 
-_ROUTE_LISTA        = 'internships.lista'
-_ROUTE_SZCZEGOLY    = 'internships.szczegoly_zgloszenia'
-_TPL_KR2A           = 'kreator/krok2a_firma.html'
+_ROUTE_LISTA = "internships.lista"
+_ROUTE_SZCZEGOLY = "internships.szczegoly_zgloszenia"
+_TPL_KR2A = "kreator/krok2a_firma.html"
 
 
 # ═══════════════════════════════════════════════════════════
 # NOWE FORMULARZE KREATORA
 # ═══════════════════════════════════════════════════════════
 
+
 class FormularzSciezka(FlaskForm):
     """Krok 1: Tylko wybór ścieżki."""
-    track_type = SelectField(lazy_t('Ścieżka praktyki'), choices=[
-        ('STANDARD',   lazy_t('A — Standardowa praktyka zawodowa')),
-        ('EMPLOYMENT', lazy_t('B — Uznanie efektów uczenia się z pracy zawodowej')),
-    ], validators=[DataRequired(message=lazy_t('Wybierz ścieżkę.'))])
+
+    track_type = SelectField(
+        lazy_t("Ścieżka praktyki"),
+        choices=[
+            ("STANDARD", lazy_t("A — Standardowa praktyka zawodowa")),
+            ("EMPLOYMENT", lazy_t("B — Uznanie efektów uczenia się z pracy zawodowej")),
+        ],
+        validators=[DataRequired(message=lazy_t("Wybierz ścieżkę."))],
+    )
 
 
 class CompanyDataForm(FlaskForm):
     """Krok 2A: Dane zakładu pracy + ZOPZ + terminy (tylko ścieżka A)."""
+
     # Terminy i dane podstawowe
-    termin_od        = DateField(lazy_t('Data rozpoczęcia'), validators=[DataRequired(message=lazy_t('Podaj datę.'))])
-    termin_do        = DateField(lazy_t('Data zakończenia'), validators=[DataRequired(message=lazy_t('Podaj datę.'))])
-    ubezpieczenie_nw = BooleanField(lazy_t('Posiadam ubezpieczenie NW na czas trwania praktyki'))
+    termin_od = DateField(
+        lazy_t("Data rozpoczęcia"), validators=[DataRequired(message=lazy_t("Podaj datę."))]
+    )
+    termin_do = DateField(
+        lazy_t("Data zakończenia"), validators=[DataRequired(message=lazy_t("Podaj datę."))]
+    )
+    ubezpieczenie_nw = BooleanField(lazy_t("Posiadam ubezpieczenie NW na czas trwania praktyki"))
 
     # Tryb znalezienia miejsca
-    firma_typ  = SelectField(lazy_t('Jak znalazłeś/-aś miejsce praktyki?'), choices=[
-        ('database', lazy_t('Uczelnia kieruje do zakładu (firma ma umowę z ANS)')),
-        ('custom',   lazy_t('Sam/a znalazłem/-am miejsce (wymaga Zał. 9 i Zał. 1)')),
-    ], validators=[DataRequired()])
-    company_id   = SelectField(lazy_t('Wybierz firmę z listy'), choices=[], validators=[Optional()])
+    firma_typ = SelectField(
+        lazy_t("Jak znalazłeś/-aś miejsce praktyki?"),
+        choices=[
+            ("database", lazy_t("Uczelnia kieruje do zakładu (firma ma umowę z ANS)")),
+            ("custom", lazy_t("Sam/a znalazłem/-am miejsce (wymaga Zał. 9 i Zał. 1)")),
+        ],
+        validators=[DataRequired()],
+    )
+    company_id = SelectField(lazy_t("Wybierz firmę z listy"), choices=[], validators=[Optional()])
 
-    company_name                  = StringField(lazy_t('Nazwa zakładu pracy'), validators=[Optional(), Length(max=255)])
-    company_address                  = StringField(lazy_t('Adres (ulica, nr)'), validators=[Optional(), Length(max=255)])
-    company_zip           = StringField(lazy_t('Kod pocztowy'), validators=[Optional(), Length(max=10)])
-    company_city                 = StringField(lazy_t('Miasto'), validators=[Optional(), Length(max=100)])
-    tax_id                = StringField('NIP / KRS', validators=[Optional(), Length(max=50)])
-    authorized_person      = StringField(lazy_t('Osoba upoważniona do podpisania porozumienia'), validators=[Optional(), Length(max=255)])
-    authorized_person_position = StringField(lazy_t('Stanowisko osoby upoważnionej'), validators=[Optional(), Length(max=255)])
-    authorized_person_email = StringField(lazy_t('E-mail osoby upoważnionej'), validators=[Optional(), Email(message=lazy_t('Nieprawidłowy email.')), Length(max=255)])
+    company_name = StringField(
+        lazy_t("Nazwa zakładu pracy"), validators=[Optional(), Length(max=255)]
+    )
+    company_address = StringField(
+        lazy_t("Adres (ulica, nr)"), validators=[Optional(), Length(max=255)]
+    )
+    company_zip = StringField(lazy_t("Kod pocztowy"), validators=[Optional(), Length(max=10)])
+    company_city = StringField(lazy_t("Miasto"), validators=[Optional(), Length(max=100)])
+    tax_id = StringField("NIP / KRS", validators=[Optional(), Length(max=50)])
+    authorized_person = StringField(
+        lazy_t("Osoba upoważniona do podpisania porozumienia"),
+        validators=[Optional(), Length(max=255)],
+    )
+    authorized_person_position = StringField(
+        lazy_t("Stanowisko osoby upoważnionej"), validators=[Optional(), Length(max=255)]
+    )
+    authorized_person_email = StringField(
+        lazy_t("E-mail osoby upoważnionej"),
+        validators=[Optional(), Email(message=lazy_t("Nieprawidłowy email.")), Length(max=255)],
+    )
 
-    workplace_mentor_name = StringField(lazy_t('Opiekun zakładowy (ZOPZ) — imię i nazwisko'), validators=[Optional(), Length(max=255)])
-    workplace_mentor_position    = StringField(lazy_t('Stanowisko ZOPZ'), validators=[Optional(), Length(max=255)])
-    workplace_mentor_phone       = StringField(lazy_t('Telefon ZOPZ'), validators=[Optional(), Length(max=50)])
-    workplace_mentor_email         = StringField('E-mail ZOPZ', validators=[Optional(), Email(message=lazy_t('Nieprawidłowy email.'))])
+    workplace_mentor_name = StringField(
+        lazy_t("Opiekun zakładowy (ZOPZ) — imię i nazwisko"),
+        validators=[Optional(), Length(max=255)],
+    )
+    workplace_mentor_position = StringField(
+        lazy_t("Stanowisko ZOPZ"), validators=[Optional(), Length(max=255)]
+    )
+    workplace_mentor_phone = StringField(
+        lazy_t("Telefon ZOPZ"), validators=[Optional(), Length(max=50)]
+    )
+    workplace_mentor_email = StringField(
+        "E-mail ZOPZ", validators=[Optional(), Email(message=lazy_t("Nieprawidłowy email."))]
+    )
 
     def validate_company_zip(self, field):
         if not field.data:
             return
-        if not re.fullmatch(r'\d{2}-\d{3}', field.data.strip()):
-            raise ValidationError(t('Podaj kod pocztowy w formacie XX-XXX (np. 82-300).'))
+        if not re.fullmatch(r"\d{2}-\d{3}", field.data.strip()):
+            raise ValidationError(t("Podaj kod pocztowy w formacie XX-XXX (np. 82-300)."))
 
     def validate_workplace_mentor_name(self, field):
         if not field.data:
             return
         parts = field.data.strip().split()
         if len(parts) < 2:
-            raise ValidationError(t('Podaj imię i nazwisko (co najmniej dwa wyrazy).'))
+            raise ValidationError(t("Podaj imię i nazwisko (co najmniej dwa wyrazy)."))
         if any(char.isdigit() for char in field.data):
-            raise ValidationError(t('Imię i nazwisko nie może zawierać cyfr.'))
+            raise ValidationError(t("Imię i nazwisko nie może zawierać cyfr."))
 
     def validate_authorized_person(self, field):
         if not field.data:
             return
         parts = field.data.strip().split()
         if len(parts) < 2:
-            raise ValidationError(t('Podaj imię i nazwisko osoby upoważnionej (co najmniej dwa wyrazy).'))
+            raise ValidationError(
+                t("Podaj imię i nazwisko osoby upoważnionej (co najmniej dwa wyrazy).")
+            )
         if any(char.isdigit() for char in field.data):
-            raise ValidationError(t('Imię i nazwisko nie może zawierać cyfr.'))
+            raise ValidationError(t("Imię i nazwisko nie może zawierać cyfr."))
 
     def populate_to_model(self, model_instance):
         model_instance.company_name = self.company_name.data
@@ -114,20 +158,40 @@ class CompanyDataForm(FlaskForm):
 
 class FormularzWniosek(FlaskForm):
     """Krok 2B/C: Wniosek dla ścieżek B i C."""
-    employment_subtype  = SelectField(lazy_t('Rodzaj zatrudnienia'), choices=[
-        ('WORK',        lazy_t('B.2 — Praca zawodowa (umowa o pracę / umowa zlecenie)')),
-        ('INTERNSHIP',  lazy_t('B.1 — Staż')),
-    ], validators=[Optional()])
-    pracodawca_nazwa    = StringField(lazy_t('Nazwa pracodawcy / firmy'), validators=[DataRequired(message=lazy_t('Podaj nazwę.')), Length(max=255)])
-    pracodawca_adres    = StringField(lazy_t('Adres'), validators=[Optional(), Length(max=255)])
-    pracodawca_miasto   = StringField(lazy_t('Miasto'), validators=[Optional(), Length(max=100)])
-    stanowisko          = StringField(lazy_t('Stanowisko / zakres działalności'), validators=[DataRequired(message=lazy_t('Podaj stanowisko.')), Length(max=255)])
-    justification        = TextAreaField(lazy_t('Uzasadnienie wniosku'), validators=[DataRequired(message=lazy_t('Napisz uzasadnienie.')), Length(min=500, max=2000, message=lazy_t('Uzasadnienie musi mieć od 500 do 2000 znaków.'))])
+
+    employment_subtype = SelectField(
+        lazy_t("Rodzaj zatrudnienia"),
+        choices=[
+            ("WORK", lazy_t("B.2 — Praca zawodowa (umowa o pracę / umowa zlecenie)")),
+            ("INTERNSHIP", lazy_t("B.1 — Staż")),
+        ],
+        validators=[Optional()],
+    )
+    pracodawca_nazwa = StringField(
+        lazy_t("Nazwa pracodawcy / firmy"),
+        validators=[DataRequired(message=lazy_t("Podaj nazwę.")), Length(max=255)],
+    )
+    pracodawca_adres = StringField(lazy_t("Adres"), validators=[Optional(), Length(max=255)])
+    pracodawca_miasto = StringField(lazy_t("Miasto"), validators=[Optional(), Length(max=100)])
+    stanowisko = StringField(
+        lazy_t("Stanowisko / zakres działalności"),
+        validators=[DataRequired(message=lazy_t("Podaj stanowisko.")), Length(max=255)],
+    )
+    justification = TextAreaField(
+        lazy_t("Uzasadnienie wniosku"),
+        validators=[
+            DataRequired(message=lazy_t("Napisz uzasadnienie.")),
+            Length(
+                min=500, max=2000, message=lazy_t("Uzasadnienie musi mieć od 500 do 2000 znaków.")
+            ),
+        ],
+    )
 
 
 # ═══════════════════════════════════════════════════════════
 # NOWE ROUTE KREATORA
 # ═══════════════════════════════════════════════════════════
+
 
 def _get_or_create_zapis(internship_id, istniejacy, odrzucony):
     if istniejacy:
@@ -137,17 +201,19 @@ def _get_or_create_zapis(internship_id, istniejacy, odrzucony):
         _repo_zapisow.usun_zdarzenia_zapisu(odrzucony.id)
         return odrzucony
     zapis = InternshipEnrollment(
-        id=uuid.uuid4(), internship_id=internship_id,
-        student_id=current_user.id, status=EnrollmentStatus.PENDING,
-        supervisor_id=getattr(current_user, 'supervisor_id', None),
+        id=uuid.uuid4(),
+        internship_id=internship_id,
+        student_id=current_user.id,
+        status=EnrollmentStatus.PENDING,
+        supervisor_id=getattr(current_user, "supervisor_id", None),
     )
     _repo_zapisow.zapisz(zapis)
     return zapis
 
 
 def _set_employment_subtype(zapis):
-    employment_subtype = request.form.get('employment_subtype', '')
-    if employment_subtype not in ('WORK', 'INTERNSHIP'):
+    employment_subtype = request.form.get("employment_subtype", "")
+    if employment_subtype not in ("WORK", "INTERNSHIP"):
         return
     uz = zapis.path_justification or PathJustification(enrollment_id=zapis.id)
     if uz not in db.session:
@@ -155,13 +221,13 @@ def _set_employment_subtype(zapis):
     uz.employment_subtype = employment_subtype
 
 
-@internships_bp.route('/<uuid:id>/kreator/path', methods=['GET', 'POST'])
+@internships_bp.route("/<uuid:id>/kreator/path", methods=["GET", "POST"])
 @login_required
 def kreator_sciezka(id):
     """Krok 1: Wybór ścieżki."""
     internship = _repo_praktyk.znajdz_po_id(id)
     if not internship:
-        flash(t('Praktyka niedostępna.'), 'danger')
+        flash(t("Praktyka niedostępna."), "danger")
         return redirect(url_for(_ROUTE_LISTA))
 
     istniejacy = _repo_zapisow.pending_dla_studenta_i_praktyki(current_user.id, id)
@@ -177,40 +243,46 @@ def kreator_sciezka(id):
         zapis = _get_or_create_zapis(id, istniejacy, odrzucony)
         zapis.path_type = InternshipPath(form.track_type.data)
 
-        if form.track_type.data != 'STANDARD':
+        if form.track_type.data != "STANDARD":
             _set_employment_subtype(zapis)
 
         db.session.commit()
 
-        if form.track_type.data == 'STANDARD':
-            return redirect(url_for('internships.kreator_firma', enrollment_id=zapis.id))
-        return redirect(url_for('internships.kreator_wniosek', enrollment_id=zapis.id))
+        if form.track_type.data == "STANDARD":
+            return redirect(url_for("internships.kreator_firma", enrollment_id=zapis.id))
+        return redirect(url_for("internships.kreator_wniosek", enrollment_id=zapis.id))
 
-    if istniejacy and request.method == 'GET':
-        form.track_type.data = istniejacy.path_type.value if istniejacy.path_type else 'STANDARD'
+    if istniejacy and request.method == "GET":
+        form.track_type.data = istniejacy.path_type.value if istniejacy.path_type else "STANDARD"
 
-    return render_template('kreator/krok1_sciezka.html', form=form, internship=internship, istniejacy=istniejacy)
+    return render_template(
+        "kreator/krok1_sciezka.html", form=form, internship=internship, istniejacy=istniejacy
+    )
 
 
 def _save_company_from_form(form, zapis, dm) -> str | None:
     """Saves company data from form to zapis and dm. Returns error string or None."""
     if not form.ubezpieczenie_nw.data:
-        return 'Ubezpieczenie NW jest wymagane.'
-    if form.firma_typ.data == 'database':
+        return "Ubezpieczenie NW jest wymagane."
+    if form.firma_typ.data == "database":
         if not form.company_id.data:
-            return 'Wybierz firmę z listy.'
+            return "Wybierz firmę z listy."
         zapis.company_id = form.company_id.data
         dm.company_name = dm.company_address = dm.company_city = None
         dm.company_tax_id = dm.authorized_person = dm.authorized_person_position = None
         dm.authorized_person_email = None
     else:
-        if not form.company_name.data or not form.company_address.data or not form.company_city.data:
-            return 'Podaj nazwę, adres i miasto firmy.'
+        if (
+            not form.company_name.data
+            or not form.company_address.data
+            or not form.company_city.data
+        ):
+            return "Podaj nazwę, adres i miasto firmy."
         zapis.company_id = None
         form.populate_to_model(dm)
     if not form.workplace_mentor_name.data or not form.workplace_mentor_email.data:
-        return 'Podaj imię/nazwisko i email opiekuna zakładowego (ZOPZ).'
-    if form.firma_typ.data == 'database':
+        return "Podaj imię/nazwisko i email opiekuna zakładowego (ZOPZ)."
+    if form.firma_typ.data == "database":
         dm.workplace_mentor_name = form.workplace_mentor_name.data
         dm.workplace_mentor_position = form.workplace_mentor_position.data
         dm.workplace_mentor_phone = form.workplace_mentor_phone.data
@@ -219,55 +291,61 @@ def _save_company_from_form(form, zapis, dm) -> str | None:
 
 
 def _populate_firma_form_from_zapis(form, zapis, dm) -> None:
-    form.termin_od.data        = zapis.start_date
-    form.termin_do.data        = zapis.end_date
+    form.termin_od.data = zapis.start_date
+    form.termin_do.data = zapis.end_date
     form.ubezpieczenie_nw.data = zapis.accident_insurance
-    form.firma_typ.data = 'database' if zapis.company_id else 'custom'
-    form.company_id.data  = str(zapis.company_id) if zapis.company_id else ''
-    form.company_name.data                  = dm.company_name                  if dm else None
-    form.company_address.data                  = dm.company_address               if dm else None
-    form.company_zip.data           = dm.company_zip                   if dm else None
-    form.company_city.data                 = dm.company_city                  if dm else None
-    form.tax_id.data                = dm.company_tax_id                if dm else None
-    form.authorized_person.data      = dm.authorized_person             if dm else None
-    form.authorized_person_position.data = dm.authorized_person_position    if dm else None
-    form.authorized_person_email.data = dm.authorized_person_email      if dm else None
-    form.workplace_mentor_name.data = dm.workplace_mentor_name     if dm else None
-    form.workplace_mentor_position.data    = dm.workplace_mentor_position  if dm else None
-    form.workplace_mentor_phone.data       = dm.workplace_mentor_phone     if dm else None
-    form.workplace_mentor_email.data         = dm.workplace_mentor_email     if dm else None
+    form.firma_typ.data = "database" if zapis.company_id else "custom"
+    form.company_id.data = str(zapis.company_id) if zapis.company_id else ""
+    form.company_name.data = dm.company_name if dm else None
+    form.company_address.data = dm.company_address if dm else None
+    form.company_zip.data = dm.company_zip if dm else None
+    form.company_city.data = dm.company_city if dm else None
+    form.tax_id.data = dm.company_tax_id if dm else None
+    form.authorized_person.data = dm.authorized_person if dm else None
+    form.authorized_person_position.data = dm.authorized_person_position if dm else None
+    form.authorized_person_email.data = dm.authorized_person_email if dm else None
+    form.workplace_mentor_name.data = dm.workplace_mentor_name if dm else None
+    form.workplace_mentor_position.data = dm.workplace_mentor_position if dm else None
+    form.workplace_mentor_phone.data = dm.workplace_mentor_phone if dm else None
+    form.workplace_mentor_email.data = dm.workplace_mentor_email if dm else None
 
 
 def _serialize_companies(companies):
     return {
         str(company.id): {
-            'name': company.name,
-            'address': company.address or '',
-            'city': company.city or '',
-            'tax_id': company.tax_id or '',
+            "name": company.name,
+            "address": company.address or "",
+            "city": company.city or "",
+            "tax_id": company.tax_id or "",
         }
         for company in companies
     }
 
 
-@internships_bp.route('/zgloszenie/<uuid:enrollment_id>/kreator/company', methods=['GET', 'POST'])
+@internships_bp.route("/zgloszenie/<uuid:enrollment_id>/kreator/company", methods=["GET", "POST"])
 @login_required
 def kreator_firma(enrollment_id):
     """Krok 2A: Dane zakładu + ZOPZ (ścieżka A)."""
     zapis = _repo_zapisow.znajdz_po_id(enrollment_id)
-    if not zapis or zapis.student_id != current_user.id or zapis.path_type != InternshipPath.STANDARD:
+    if (
+        not zapis
+        or zapis.student_id != current_user.id
+        or zapis.path_type != InternshipPath.STANDARD
+    ):
         abort(404)
 
     form = CompanyDataForm()
     firmy_list = company_repository.active()
     companies_data = _serialize_companies(firmy_list)
-    form.company_id.choices = [('', t('--- Wybierz firmę ---'))] + [(str(f.id), f.name) for f in firmy_list]
+    form.company_id.choices = [("", t("--- Wybierz firmę ---"))] + [
+        (str(f.id), f.name) for f in firmy_list
+    ]
 
     if form.validate_on_submit():
-        zapis.start_date         = form.termin_od.data
-        zapis.end_date           = form.termin_do.data
+        zapis.start_date = form.termin_od.data
+        zapis.end_date = form.termin_do.data
         zapis.accident_insurance = True
-        zapis.specialization     = getattr(current_user, 'specialization', '') or ''
+        zapis.specialization = getattr(current_user, "specialization", "") or ""
 
         dm = zapis.workplace_details or WorkplaceDetails(enrollment_id=zapis.id)
         if dm not in db.session:
@@ -275,7 +353,7 @@ def kreator_firma(enrollment_id):
 
         err = _save_company_from_form(form, zapis, dm)
         if err:
-            flash(t(err), 'danger')
+            flash(t(err), "danger")
             return render_template(
                 _TPL_KR2A,
                 form=form,
@@ -290,12 +368,13 @@ def kreator_firma(enrollment_id):
             EnrollmentStateMachine(zapis).submit_to_committee()
             db.session.commit()
             from core.services import notifications as noty
-            noty.notify_submitted_to_committee(zapis)
-            flash(t('Dane zaktualizowane i zgłoszenie odesłane do komisji.'), 'success')
-            return redirect(url_for(_ROUTE_SZCZEGOLY, id=zapis.id))
-        return redirect(url_for('internships.potwierdz_wyslanie', id=zapis.id))
 
-    if request.method == 'GET':
+            noty.notify_submitted_to_committee(zapis)
+            flash(t("Dane zaktualizowane i zgłoszenie odesłane do komisji."), "success")
+            return redirect(url_for(_ROUTE_SZCZEGOLY, id=zapis.id))
+        return redirect(url_for("internships.potwierdz_wyslanie", id=zapis.id))
+
+    if request.method == "GET":
         _populate_firma_form_from_zapis(form, zapis, zapis.workplace_details)
 
     return render_template(
@@ -310,31 +389,31 @@ def kreator_firma(enrollment_id):
 def _populate_wniosek_form(form, zapis) -> None:
     dm = zapis.workplace_details
     uz = zapis.path_justification
-    form.pracodawca_nazwa.data   = dm.company_name              if dm else None
-    form.pracodawca_adres.data   = dm.company_address           if dm else None
-    form.pracodawca_miasto.data  = dm.company_city              if dm else None
-    form.stanowisko.data         = dm.workplace_mentor_position if dm else None
-    form.justification.data       = uz.justification             if uz else None
-    form.employment_subtype.data = uz.employment_subtype        if uz else 'WORK'
+    form.pracodawca_nazwa.data = dm.company_name if dm else None
+    form.pracodawca_adres.data = dm.company_address if dm else None
+    form.pracodawca_miasto.data = dm.company_city if dm else None
+    form.stanowisko.data = dm.workplace_mentor_position if dm else None
+    form.justification.data = uz.justification if uz else None
+    form.employment_subtype.data = uz.employment_subtype if uz else "WORK"
 
 
 def _save_wniosek_post(form, zapis) -> None:
     dm = zapis.workplace_details or WorkplaceDetails(enrollment_id=zapis.id)
     if dm not in db.session:
         db.session.add(dm)
-    dm.company_name              = form.pracodawca_nazwa.data
-    dm.company_address           = form.pracodawca_adres.data
-    dm.company_city              = form.pracodawca_miasto.data
+    dm.company_name = form.pracodawca_nazwa.data
+    dm.company_address = form.pracodawca_adres.data
+    dm.company_city = form.pracodawca_miasto.data
     dm.workplace_mentor_position = form.stanowisko.data
 
     uz = zapis.path_justification or PathJustification(enrollment_id=zapis.id)
     if uz not in db.session:
         db.session.add(uz)
-    uz.justification      = form.justification.data
+    uz.justification = form.justification.data
     uz.employment_subtype = form.employment_subtype.data
 
 
-@internships_bp.route('/zgloszenie/<uuid:enrollment_id>/kreator/wniosek', methods=['GET', 'POST'])
+@internships_bp.route("/zgloszenie/<uuid:enrollment_id>/kreator/wniosek", methods=["GET", "POST"])
 @login_required
 def kreator_wniosek(enrollment_id):
     """Krok 2B/C: Wniosek dla ścieżek B i C."""
@@ -342,78 +421,80 @@ def kreator_wniosek(enrollment_id):
     if not zapis or zapis.student_id != current_user.id:
         abort(404)
     if zapis.path_type == InternshipPath.STANDARD:
-        return redirect(url_for('internships.kreator_firma', enrollment_id=enrollment_id))
+        return redirect(url_for("internships.kreator_firma", enrollment_id=enrollment_id))
 
     form = FormularzWniosek()
 
     if form.validate_on_submit():
         _save_wniosek_post(form, zapis)
         db.session.commit()
-        return redirect(url_for('internships.potwierdz_wyslanie', id=zapis.id))
+        return redirect(url_for("internships.potwierdz_wyslanie", id=zapis.id))
 
-    if request.method == 'GET':
+    if request.method == "GET":
         _populate_wniosek_form(form, zapis)
 
-    return render_template('kreator/krok2bc_wniosek.html', form=form, zapis=zapis)
-
-
+    return render_template("kreator/krok2bc_wniosek.html", form=form, zapis=zapis)
 
 
 def _kreator_url(info: dict, internship_id) -> str:
     """Adres kroku kreatora, do którego wraca student przy edycji/kontynuacji."""
-    if info['is_standard']:
-        return url_for('internships.kreator_firma', enrollment_id=info['id'])
-    if info['path'] in ('EMPLOYMENT', 'OWN_BUSINESS'):
-        return url_for('internships.kreator_wniosek', enrollment_id=info['id'])
-    return url_for('internships.kreator_sciezka', id=internship_id)
+    if info["is_standard"]:
+        return url_for("internships.kreator_firma", enrollment_id=info["id"])
+    if info["path"] in ("EMPLOYMENT", "OWN_BUSINESS"):
+        return url_for("internships.kreator_wniosek", enrollment_id=info["id"])
+    return url_for("internships.kreator_sciezka", id=internship_id)
 
 
-@internships_bp.route('/', methods=['GET'])
+@internships_bp.route("/", methods=["GET"])
 @login_required
 def lista():
-    available  = _repo_praktyk.active()
+    available = _repo_praktyk.active()
     status_map = {}
     for z in _repo_zapisow.dla_studenta(current_user.id):
         info = InternshipService.student_status(z)
-        info['kreator_url'] = _kreator_url(info, z.internship_id)
+        info["kreator_url"] = _kreator_url(info, z.internship_id)
         status_map[str(z.internship_id)] = info
 
     csrf_form = FlaskForm()
-    return render_template('praktyki/lista.html', dostepne=available, zapisy_data=status_map, csrf_form=csrf_form)
+    return render_template(
+        "praktyki/lista.html", dostepne=available, zapisy_data=status_map, csrf_form=csrf_form
+    )
 
 
-@internships_bp.route('/zgloszenie/<uuid:id>/complete', methods=['POST'])
+@internships_bp.route("/zgloszenie/<uuid:id>/complete", methods=["POST"])
 @login_required
 def zakoncz_praktyke(id):
     zapis = _repo_zapisow.znajdz_po_id(id)
     if not zapis or zapis.student_id != current_user.id:
         abort(404)
     if zapis.status != EnrollmentStatus.IN_PROGRESS:
-        flash(t('Praktykę można zakończyć tylko gdy jest w trakcie realizacji.'), 'warning')
+        flash(t("Praktykę można zakończyć tylko gdy jest w trakcie realizacji."), "warning")
         return redirect(url_for(_ROUTE_LISTA))
 
-    path_val = zapis.path_type.value if hasattr(zapis.path_type, 'value') else str(zapis.path_type)
-    if path_val == 'STANDARD':
+    path_val = zapis.path_type.value if hasattr(zapis.path_type, "value") else str(zapis.path_type)
+    if path_val == "STANDARD":
         ok, msg = InternshipService.validate_completion_allowed(zapis)
         if not ok:
-            flash(t(msg), 'danger')
+            flash(t(msg), "danger")
             return redirect(url_for(_ROUTE_LISTA))
 
     EnrollmentStateMachine(zapis).complete()
     db.session.commit()
-    flash(t('Praktyka została zakończona. Dokumenty końcowe są dostępne w zakładce Moje Dokumenty.'), 'success')
+    flash(
+        t("Praktyka została zakończona. Dokumenty końcowe są dostępne w zakładce Moje Dokumenty."),
+        "success",
+    )
     return redirect(url_for(_ROUTE_LISTA))
 
 
-@internships_bp.route('/<uuid:id>/zapisz/krok1', methods=['GET'])
+@internships_bp.route("/<uuid:id>/zapisz/krok1", methods=["GET"])
 @login_required
 def zapisz_krok1(id):
     """Stara trasa — przekierowanie do nowego kreatora."""
-    return redirect(url_for('internships.kreator_sciezka', id=id))
+    return redirect(url_for("internships.kreator_sciezka", id=id))
 
 
-
-@internships_bp.route('/zgloszenie/<uuid:id>/krok2', methods=['GET', 'POST'])
+@internships_bp.route("/zgloszenie/<uuid:id>/krok2", methods=["GET", "POST"])
 @login_required
 def zapisz_krok2(id):
     """Dawny krok harmonogramu — usunięty ze ścieżki A.
@@ -425,10 +506,10 @@ def zapisz_krok2(id):
     zapis = _repo_zapisow.znajdz_po_id(id)
     if not zapis or zapis.student_id != current_user.id:
         abort(404)
-    return redirect(url_for('internships.potwierdz_wyslanie', id=zapis.id))
+    return redirect(url_for("internships.potwierdz_wyslanie", id=zapis.id))
 
 
-@internships_bp.route('/zgloszenie/<uuid:id>/potwierdz-wyslanie', methods=['GET'])
+@internships_bp.route("/zgloszenie/<uuid:id>/potwierdz-wyslanie", methods=["GET"])
 @login_required
 def potwierdz_wyslanie(id):
     zapis = _repo_zapisow.znajdz_po_id(id)
@@ -437,23 +518,25 @@ def potwierdz_wyslanie(id):
     if zapis.status not in (EnrollmentStatus.PENDING, EnrollmentStatus.REVISION_REQUIRED):
         return redirect(url_for(_ROUTE_SZCZEGOLY, id=id))
     from flask_wtf import FlaskForm
+
     csrf_form = FlaskForm()
-    return render_template('kreator/potwierdz_wyslanie.html', zapis=zapis, csrf_form=csrf_form)
+    return render_template("kreator/potwierdz_wyslanie.html", zapis=zapis, csrf_form=csrf_form)
 
 
-@internships_bp.route('/zgloszenie/<uuid:id>/wyslij', methods=['POST'])
+@internships_bp.route("/zgloszenie/<uuid:id>/wyslij", methods=["POST"])
 @login_required
 def wyslij_do_zatwierdzenia(id):
     zapis = _repo_zapisow.znajdz_po_id(id)
     if not zapis or zapis.student_id != current_user.id:
         abort(404)
     if zapis.status not in (EnrollmentStatus.PENDING, EnrollmentStatus.REVISION_REQUIRED):
-        flash(t('Zgłoszenie zostało już wysłane.'), 'info')
+        flash(t("Zgłoszenie zostało już wysłane."), "info")
         return redirect(url_for(_ROUTE_SZCZEGOLY, id=id))
     from core.services.workflow import EnrollmentStateMachine
     from core.services import notifications as noty
+
     fsm = EnrollmentStateMachine(zapis)
-    if zapis.path_type and zapis.path_type.value in ('EMPLOYMENT', 'OWN_BUSINESS'):
+    if zapis.path_type and zapis.path_type.value in ("EMPLOYMENT", "OWN_BUSINESS"):
         fsm.submit_to_committee()
     else:
         fsm.submit_for_approval()
@@ -462,11 +545,11 @@ def wyslij_do_zatwierdzenia(id):
         noty.notify_submitted_to_committee(zapis)
     else:
         noty.notify_submitted_to_supervisor(zapis)
-    flash(t('Zgłoszenie zostało przesłane.'), 'success')
+    flash(t("Zgłoszenie zostało przesłane."), "success")
     return redirect(url_for(_ROUTE_LISTA))
 
 
-@internships_bp.route('/zgloszenie/<uuid:id>/szczegoly', methods=['GET'])
+@internships_bp.route("/zgloszenie/<uuid:id>/szczegoly", methods=["GET"])
 @login_required
 def szczegoly_zgloszenia(id):
     """Szczegóły zgłoszenia studenta wraz z komentarzami UOPZ"""
@@ -477,10 +560,10 @@ def szczegoly_zgloszenia(id):
     rows = _repo_docs.dla_zapisu_studenta(id, current_user.id)
     uploaded_docs = [
         {
-            'id': str(d.id),
-            'original_filename': d.original_filename,
-            'document_type': d.document_type,
-            'uploaded_at': d.uploaded_at,
+            "id": str(d.id),
+            "original_filename": d.original_filename,
+            "document_type": d.document_type,
+            "uploaded_at": d.uploaded_at,
         }
         for d in rows
     ]
@@ -490,21 +573,27 @@ def szczegoly_zgloszenia(id):
     harmonogram_dict = {str(h.learning_outcome_id): h for h in schedule}
 
     from flask_wtf import FlaskForm
+
     komentarz_komisji = None
     if zapis.status == EnrollmentStatus.REVISION_REQUIRED:
         ev = _repo_zapisow.ostatnie_zdarzenie(
-            id, event_type=EventType.COMMITTEE_DECISION, decision='PARTIALLY_APPROVED'
+            id, event_type=EventType.COMMITTEE_DECISION, decision="PARTIALLY_APPROVED"
         )
         komentarz_komisji = ev.comment if ev else None
 
     csrf_form = FlaskForm()
-    return render_template('praktyki/szczegoly_zgloszenia.html', zapis=zapis,
-                           uploaded_docs=uploaded_docs, csrf_form=csrf_form,
-                           komentarz_komisji=komentarz_komisji,
-                           harmonogram_dict=harmonogram_dict, efekty=efekty)
+    return render_template(
+        "praktyki/szczegoly_zgloszenia.html",
+        zapis=zapis,
+        uploaded_docs=uploaded_docs,
+        csrf_form=csrf_form,
+        komentarz_komisji=komentarz_komisji,
+        harmonogram_dict=harmonogram_dict,
+        efekty=efekty,
+    )
 
 
-@internships_bp.route('/zgloszenie/<uuid:id>/resubmit', methods=['POST'])
+@internships_bp.route("/zgloszenie/<uuid:id>/resubmit", methods=["POST"])
 @login_required
 def resubmit_zgloszenia(id):
     """Student ponownie wysyła zgłoszenie po poprawkach."""
@@ -512,7 +601,7 @@ def resubmit_zgloszenia(id):
     if not zapis or zapis.student_id != current_user.id:
         abort(404)
     if zapis.status not in (EnrollmentStatus.AWAITING_APPROVAL, EnrollmentStatus.REVISION_REQUIRED):
-        flash(t('Zgłoszenie nie może być ponownie wysłane w tym statusie.'), 'warning')
+        flash(t("Zgłoszenie nie może być ponownie wysłane w tym statusie."), "warning")
         return redirect(url_for(_ROUTE_SZCZEGOLY, id=id))
     try:
         with EnrollmentStateMachine.lock(id) as fsm:
@@ -522,12 +611,13 @@ def resubmit_zgloszenia(id):
                 fsm.submit_to_committee()
             db.session.commit()
     except IllegalTransitionError as e:
-        flash(t(str(e)), 'danger')
+        flash(t(str(e)), "danger")
         return redirect(url_for(_ROUTE_SZCZEGOLY, id=id))
     from core.services import notifications as noty
+
     if fsm.zapis.status == EnrollmentStatus.AWAITING_APPROVAL:
         noty.notify_submitted_to_supervisor(fsm.zapis)
     else:
         noty.notify_submitted_to_committee(fsm.zapis)
-    flash(t('Zgłoszenie zostało ponownie wysłane do weryfikacji komisji.'), 'success')
+    flash(t("Zgłoszenie zostało ponownie wysłane do weryfikacji komisji."), "success")
     return redirect(url_for(_ROUTE_SZCZEGOLY, id=id))

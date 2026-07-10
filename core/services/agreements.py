@@ -8,6 +8,7 @@ Bezpieczeństwo tokenu:
   - wyszukiwanie po hashu (indeks unique), porównanie stałoczasowe zbędne,
     bo hash nie jest sekretem porównywanym ze źródłem zewnętrznym.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -27,7 +28,7 @@ TOKEN_VALID_DAYS = 30
 
 
 def _hash_token(raw_token: str) -> str:
-    return hashlib.sha256(raw_token.encode('utf-8')).hexdigest()
+    return hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
 
 
 class AgreementService:
@@ -40,8 +41,7 @@ class AgreementService:
             return set()
         rows = (
             db.session.query(AgreementEnrollment.enrollment_id)
-            .join(InternshipAgreement,
-                  InternshipAgreement.id == AgreementEnrollment.agreement_id)
+            .join(InternshipAgreement, InternshipAgreement.id == AgreementEnrollment.agreement_id)
             .filter(AgreementEnrollment.enrollment_id.in_(enrollment_ids))
             .filter(InternshipAgreement.status != AgreementStatus.CANCELLED)
             .all()
@@ -53,7 +53,7 @@ class AgreementService:
         enrollments: list[InternshipEnrollment],
         recipient_name: str,
         recipient_email: str,
-        recipient_position: str = '',
+        recipient_position: str = "",
         created_by_id=None,
     ) -> tuple[InternshipAgreement, str]:
         """Tworzy porozumienie dla grupy zapisów. Zwraca (porozumienie, surowy token).
@@ -62,12 +62,12 @@ class AgreementService:
         samego zakładu pracy (walidacja po stronie widoku dziekanatu).
         """
         if not enrollments:
-            raise ValueError('Porozumienie musi obejmować co najmniej jednego studenta.')
+            raise ValueError("Porozumienie musi obejmować co najmniej jednego studenta.")
 
         wzorzec = enrollments[0]
         raw_token = secrets.token_urlsafe(32)
         agreement = InternshipAgreement(
-            company_name=wzorzec.company_display_name or '',
+            company_name=wzorzec.company_display_name or "",
             company_address=wzorzec.company_display_address,
             company_city=wzorzec.company_city,
             company_tax_id=wzorzec.company_display_tax_id,
@@ -104,8 +104,12 @@ class AgreementService:
         return agreement
 
     @staticmethod
-    def fill_agreement(agreement: InternshipAgreement, signer_name: str,
-                       signer_position: str = '', company_notes: str = '') -> None:
+    def fill_agreement(
+        agreement: InternshipAgreement,
+        signer_name: str,
+        signer_position: str = "",
+        company_notes: str = "",
+    ) -> None:
         """Zapisuje dane z publicznego formularza i zamyka link. Commit u wywołującego."""
         agreement.signer_name = signer_name
         agreement.signer_position = signer_position or None

@@ -15,6 +15,7 @@ Parametry puli (pool_size=2, max_overflow=3, pool_timeout=10) dobrane pod
 typowe obciążenie Celery: 2 równoległe zapytania na worker + krótki overflow
 dla spiętrzonych tasków.
 """
+
 import os
 import logging
 
@@ -23,42 +24,45 @@ from flask import Flask
 
 logger = logging.getLogger(__name__)
 
-BROKER_URL      = os.environ['CELERY_BROKER_URL']
-RESULT_URL      = os.environ['CELERY_RESULT_BACKEND']
-PDF_OUTPUT_DIR  = os.environ.get('PDF_OUTPUT_DIR', '/app/pdf_output')
-TEX_SERVICE_URL = os.environ['TEX_SERVICE_URL']
+BROKER_URL = os.environ["CELERY_BROKER_URL"]
+RESULT_URL = os.environ["CELERY_RESULT_BACKEND"]
+PDF_OUTPUT_DIR = os.environ.get("PDF_OUTPUT_DIR", "/app/pdf_output")
+TEX_SERVICE_URL = os.environ["TEX_SERVICE_URL"]
 
-from core.secrets import get_database_url as _get_database_url, get_secret as _get_secret
+from core.secrets import (  # noqa: E402
+    get_database_url as _get_database_url,
+    get_secret as _get_secret,
+)
 
 # ── 1. Celery — konfiguracja ──────────────────────────────────────────────────
 celery = Celery(
-    'ans_praktyki',
+    "ans_praktyki",
     broker=BROKER_URL,
     backend=RESULT_URL,
-    include=['celery_app'],
+    include=["celery_app"],
 )
 
 celery.conf.update(
-    task_serializer='json',
-    result_serializer='json',
-    accept_content=['json'],
-    timezone='Europe/Warsaw',
+    task_serializer="json",
+    result_serializer="json",
+    accept_content=["json"],
+    timezone="Europe/Warsaw",
     enable_utc=True,
     task_track_started=True,
     broker_connection_retry_on_startup=True,
     result_expires=3600,
     beat_schedule={
-        'cleanup-old-pdfs': {
-            'task': 'cleanup_old_pdfs',
-            'schedule': 3600.0,   # co godzinę
+        "cleanup-old-pdfs": {
+            "task": "cleanup_old_pdfs",
+            "schedule": 3600.0,  # co godzinę
         },
-        'cleanup-deleted-internships': {
-            'task': 'cleanup_deleted_internships',
-            'schedule': 86400.0,  # raz na dobę
+        "cleanup-deleted-internships": {
+            "task": "cleanup_deleted_internships",
+            "schedule": 86400.0,  # raz na dobę
         },
-        'auto-complete-internships': {
-            'task': 'auto_complete_internships',
-            'schedule': 3600.0,   # co godzinę
+        "auto-complete-internships": {
+            "task": "auto_complete_internships",
+            "schedule": 3600.0,  # co godzinę
         },
     },
 )
@@ -75,20 +79,21 @@ def _create_worker_app() -> Flask:
     app = Flask(__name__)
     # CSRF not needed: this app context is used only by Celery workers, never
     # serves HTTP requests from users, so there are no forms to protect.
-    app.config['WTF_CSRF_ENABLED'] = False
-    app.config['SQLALCHEMY_DATABASE_URI'] = _get_database_url()
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config["WTF_CSRF_ENABLED"] = False
+    app.config["SQLALCHEMY_DATABASE_URI"] = _get_database_url()
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     # QueuePool: pula utrzymywana per-proces, odbudowywana po fork() via dispose.
-    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
-        'pool_size':     2,      # stałe połączenia na worker
-        'max_overflow':  3,      # dodatkowe przy spiętrzeniu tasków
-        'pool_timeout':  10,     # sekund oczekiwania na wolne połączenie
-        'pool_pre_ping': True,   # wykrywa martwe połączenia przed użyciem
+    app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+        "pool_size": 2,  # stałe połączenia na worker
+        "max_overflow": 3,  # dodatkowe przy spiętrzeniu tasków
+        "pool_timeout": 10,  # sekund oczekiwania na wolne połączenie
+        "pool_pre_ping": True,  # wykrywa martwe połączenia przed użyciem
     }
-    app.secret_key = _get_secret('secret_key')
-    app.config['TEX_SERVICE_URL'] = TEX_SERVICE_URL
+    app.secret_key = _get_secret("secret_key")
+    app.config["TEX_SERVICE_URL"] = TEX_SERVICE_URL
 
     from core.extensions import db
+
     db.init_app(app)
 
     return app
@@ -113,6 +118,7 @@ def _init_worker(**_kwargs):
     ctx.push()
 
     from core.extensions import db
+
     db.engine.dispose(close=False)
 
     logger.info("Worker process initialized (QueuePool, dispose after fork)")
@@ -122,6 +128,7 @@ def _init_worker(**_kwargs):
 def _shutdown_worker(**_kwargs):
     """Sprząta połączenia przy zamykaniu procesu workera."""
     from core.extensions import db
+
     try:
         db.session.remove()
         db.engine.dispose()
@@ -137,8 +144,8 @@ class EnrollmentNotFound(Exception):
 
 # ── 3. Taski ──────────────────────────────────────────────────────────────────
 
-@celery.task(bind=True, name='generate_pdf_dziennik',
-             max_retries=3, default_retry_delay=10)
+
+@celery.task(bind=True, name="generate_pdf_dziennik", max_retries=3, default_retry_delay=10)
 def generate_pdf_dziennik(self, enrollment_id: str) -> dict:
     import uuid
     from pathlib import Path
@@ -149,31 +156,32 @@ def generate_pdf_dziennik(self, enrollment_id: str) -> dict:
 
     enrollment = EnrollmentRepository().znajdz_po_id(uuid.UUID(enrollment_id))
     if not enrollment:
-        raise EnrollmentNotFound(f'Enrollment {enrollment_id} not found')
+        raise EnrollmentNotFound(f"Enrollment {enrollment_id} not found")
 
-    context = build_context(enrollment, 'ZAL_6')
+    context = build_context(enrollment, "ZAL_6")
 
     try:
-        pdf_bytes = generuj_pdf('zal6_dziennik.tex.j2', context, timeout=60.0)
+        pdf_bytes = generuj_pdf("zal6_dziennik.tex.j2", context, timeout=60.0)
     except TexServiceError as exc:
-        logger.warning("Tex-service error (retry %d/%d): %s",
-                       self.request.retries, self.max_retries, exc)
+        logger.warning(
+            "Tex-service error (retry %d/%d): %s", self.request.retries, self.max_retries, exc
+        )
         raise self.retry(exc=exc, countdown=10 * (self.request.retries + 1))
 
     output_dir = Path(PDF_OUTPUT_DIR)
     output_dir.mkdir(parents=True, exist_ok=True)
-    filename    = f"dziennik_{enrollment_id}.pdf"
+    filename = f"dziennik_{enrollment_id}.pdf"
     output_path = output_dir / filename
     output_path.write_bytes(pdf_bytes)
 
     return {
-        'status':   'success',
-        'path':     str(output_path),
-        'filename': f"dziennik_{enrollment.student.last_name}_{enrollment.student.first_name}.pdf",
+        "status": "success",
+        "path": str(output_path),
+        "filename": f"dziennik_{enrollment.student.last_name}_{enrollment.student.first_name}.pdf",
     }
 
 
-@celery.task(name='cleanup_old_pdfs')
+@celery.task(name="cleanup_old_pdfs")
 def cleanup_old_pdfs(max_age_hours: int = 24) -> dict:
     """Usuwa pliki PDF starsze niż max_age_hours z katalogu PDF_OUTPUT_DIR.
 
@@ -186,12 +194,12 @@ def cleanup_old_pdfs(max_age_hours: int = 24) -> dict:
 
     output_dir = Path(PDF_OUTPUT_DIR)
     if not output_dir.exists():
-        return {'deleted': 0, 'errors': 0}
+        return {"deleted": 0, "errors": 0}
 
     cutoff = time.time() - max_age_hours * 3600
     deleted = errors = 0
 
-    for f in output_dir.rglob('*.pdf'):
+    for f in output_dir.rglob("*.pdf"):
         try:
             if f.stat().st_mtime < cutoff:
                 f.unlink()
@@ -201,18 +209,20 @@ def cleanup_old_pdfs(max_age_hours: int = 24) -> dict:
             errors += 1
 
     # Usuń puste podkatalogi (od najgłębszych w górę)
-    for d in sorted(output_dir.rglob('*'), key=lambda p: len(p.parts), reverse=True):
+    for d in sorted(output_dir.rglob("*"), key=lambda p: len(p.parts), reverse=True):
         if d.is_dir() and d != output_dir:
             try:
                 d.rmdir()  # rmdir usuwa tylko puste katalogi — bezpieczne
             except OSError:
                 pass  # katalog nie jest pusty — ignoruj
 
-    logger.info("Czyszczenie PDF: usunięto %d, błędy %d (próg: %dh)", deleted, errors, max_age_hours)
-    return {'deleted': deleted, 'errors': errors}
+    logger.info(
+        "Czyszczenie PDF: usunięto %d, błędy %d (próg: %dh)", deleted, errors, max_age_hours
+    )
+    return {"deleted": deleted, "errors": errors}
 
 
-@celery.task(name='cleanup_deleted_internships')
+@celery.task(name="cleanup_deleted_internships")
 def cleanup_deleted_internships() -> dict:
     """Trwale usuwa praktyki oznaczone do usunięcia ponad 7 dni temu."""
     from datetime import datetime, timedelta, timezone
@@ -225,22 +235,28 @@ def cleanup_deleted_internships() -> dict:
     cutoff = datetime.now(timezone.utc) - timedelta(days=7)
     deleted = 0
 
-    stare = (db.session.query(Internship)
-             .options(selectinload(Internship.enrollments))
-             .filter(Internship.deleted_at.isnot(None))
-             .filter(Internship.deleted_at <= cutoff)
-             .all())
+    stare = (
+        db.session.query(Internship)
+        .options(selectinload(Internship.enrollments))
+        .filter(Internship.deleted_at.isnot(None))
+        .filter(Internship.deleted_at <= cutoff)
+        .all()
+    )
 
     if not stare:
-        return {'deleted': 0}
+        return {"deleted": 0}
 
     all_enrollment_ids = [e.id for p in stare for e in p.enrollments]
     if all_enrollment_ids:
-        all_docs = db.session.execute(
-            db.select(UploadedDocument).where(
-                UploadedDocument.enrollment_id.in_(all_enrollment_ids)
+        all_docs = (
+            db.session.execute(
+                db.select(UploadedDocument).where(
+                    UploadedDocument.enrollment_id.in_(all_enrollment_ids)
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         for doc in all_docs:
             try:
                 _fs_delete(doc.file_path)
@@ -254,13 +270,13 @@ def cleanup_deleted_internships() -> dict:
     db.session.commit()
 
     logger.info("Czyszczenie praktyk: trwale usunięto %d", deleted)
-    return {'deleted': deleted}
+    return {"deleted": deleted}
 
 
-@celery.task(bind=True, name='generate_pdf_from_template',
-             max_retries=3, default_retry_delay=10)
-def generate_pdf_from_template(self, template_name: str, context: dict,
-                               filename_prefix: str) -> dict:
+@celery.task(bind=True, name="generate_pdf_from_template", max_retries=3, default_retry_delay=10)
+def generate_pdf_from_template(
+    self, template_name: str, context: dict, filename_prefix: str
+) -> dict:
     """Kompiluje PDF z nazwanego szablonu Jinja2 i słownika danych.
 
     Jedyna dozwolona ścieżka asynchronicznej kompilacji — nie przyjmuje
@@ -281,25 +297,26 @@ def generate_pdf_from_template(self, template_name: str, context: dict,
     try:
         pdf_bytes = generuj_pdf(template_name, context, timeout=90.0)
     except TexServiceError as exc:
-        logger.warning("Tex-service error (retry %d/%d): %s",
-                       self.request.retries, self.max_retries, exc)
+        logger.warning(
+            "Tex-service error (retry %d/%d): %s", self.request.retries, self.max_retries, exc
+        )
         raise self.retry(exc=exc, countdown=10 * (self.request.retries + 1))
 
     today = date.today()
     output_dir = Path(PDF_OUTPUT_DIR) / str(today.year) / f"{today.month:02d}" / f"{today.day:02d}"
     output_dir.mkdir(parents=True, exist_ok=True)
-    filename    = f"{filename_prefix}_{uuid.uuid4().hex[:8]}.pdf"
+    filename = f"{filename_prefix}_{uuid.uuid4().hex[:8]}.pdf"
     output_path = output_dir / filename
     output_path.write_bytes(pdf_bytes)
 
     return {
-        'status':   'success',
-        'path':     str(output_path),
-        'filename': filename,
+        "status": "success",
+        "path": str(output_path),
+        "filename": filename,
     }
 
 
-@celery.task(bind=True, name='send_email', max_retries=5, default_retry_delay=30)
+@celery.task(bind=True, name="send_email", max_retries=5, default_retry_delay=30)
 def send_email(self, to, subject: str, html_body: str) -> dict:
     """Wysyła e-mail przez Microsoft Graph (core.services.mailer).
 
@@ -308,22 +325,26 @@ def send_email(self, to, subject: str, html_body: str) -> dict:
     mailer loguje i pomija wysyłkę.
     """
     from core.services.mailer import MailerError, send_mail_sync
+
     try:
         send_mail_sync(to, subject, html_body)
     except MailerError as exc:
-        logger.warning("send_email error (retry %d/%d): %s",
-                       self.request.retries, self.max_retries, exc)
+        logger.warning(
+            "send_email error (retry %d/%d): %s", self.request.retries, self.max_retries, exc
+        )
         raise self.retry(exc=exc, countdown=30 * (self.request.retries + 1))
-    return {'status': 'sent', 'to': to, 'subject': subject}
+    return {"status": "sent", "to": to, "subject": subject}
 
 
-@celery.task(name='auto_complete_internships')
+@celery.task(name="auto_complete_internships")
 def auto_complete_internships_task() -> dict:
     """Automatycznie zamyka praktyki z przekroczonym terminem i wymaganą liczbą godzin."""
     from core.services.evaluation import AssessmentService
+
     result = AssessmentService.auto_complete_internships()
     logger.info(
         "auto_complete_internships: zakończono %d, pominięto %d",
-        result['completed'], result['skipped'],
+        result["completed"],
+        result["skipped"],
     )
     return result

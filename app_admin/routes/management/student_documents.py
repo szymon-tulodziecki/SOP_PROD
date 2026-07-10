@@ -20,14 +20,14 @@ enrollment_repository = EnrollmentRepository()
 
 
 def _track_name(enrollment) -> str:
-    return enrollment.path_type.value if enrollment.path_type else 'STANDARD'
+    return enrollment.path_type.value if enrollment.path_type else "STANDARD"
 
 
-@zarzadzanie_bp.route('/dokumenty', methods=['GET'])
+@zarzadzanie_bp.route("/dokumenty", methods=["GET"])
 @login_required
 def dokumenty_studentow():
-    page = request.args.get('strona', 1, type=int)
-    search_query = request.args.get('szukaj', '').strip()
+    page = request.args.get("strona", 1, type=int)
+    search_query = request.args.get("szukaj", "").strip()
     supervisor_id = current_user.id if current_user.role == UserRole.UOPZ else None
 
     students_page = user_repository.students_page(
@@ -55,23 +55,27 @@ def dokumenty_studentow():
         supervisor = None
         if student.supervisor_id:
             if student.supervisor_id not in supervisor_cache:
-                supervisor_cache[student.supervisor_id] = user_repository.find_by_id(student.supervisor_id)
+                supervisor_cache[student.supervisor_id] = user_repository.find_by_id(
+                    student.supervisor_id
+                )
             supervisor = supervisor_cache[student.supervisor_id]
-        student_infos.append({
-            'student': student,
-            'supervisor': supervisor,
-            'aktywne': active_counts.get(student.id, 0),
-        })
+        student_infos.append(
+            {
+                "student": student,
+                "supervisor": supervisor,
+                "aktywne": active_counts.get(student.id, 0),
+            }
+        )
 
     return render_template(
-        'zarzadzanie/dokumenty_studentow.html',
+        "zarzadzanie/dokumenty_studentow.html",
         studenci=students_page,
         studenci_info=student_infos,
         szukaj=search_query,
     )
 
 
-@zarzadzanie_bp.route('/dokumenty/student/<uuid:student_id>', methods=['GET'])
+@zarzadzanie_bp.route("/dokumenty/student/<uuid:student_id>", methods=["GET"])
 @login_required
 def dokumenty_studenta(student_id):
     student = user_repository.find_by_id(student_id) or abort(404)
@@ -87,25 +91,33 @@ def dokumenty_studenta(student_id):
 
     if current_user.role == UserRole.UOPZ:
         is_student_supervisor = student.supervisor_id == current_user.id
-        is_enrollment_supervisor = any(enrollment.supervisor_id == current_user.id for enrollment in enrollments)
+        is_enrollment_supervisor = any(
+            enrollment.supervisor_id == current_user.id for enrollment in enrollments
+        )
         if not (is_student_supervisor or is_enrollment_supervisor):
             abort(403)
 
-    supervisor = user_repository.find_by_id(student.supervisor_id) if student.supervisor_id else None
+    supervisor = (
+        user_repository.find_by_id(student.supervisor_id) if student.supervisor_id else None
+    )
     document_items = []
     for enrollment in enrollments:
-        firma_nazwa = enrollment.company.name if enrollment.company else enrollment.company_display_name
-        document_items.append({
-            'zapis': enrollment,
-            'docs': resolve_documents(enrollment),
-            'path': _track_name(enrollment),
-            'sciezka_label': path_label(_track_name(enrollment)),
-            'status_odznaka': document_status_badge(enrollment.status.value),
-            'firma_nazwa': firma_nazwa,
-        })
+        firma_nazwa = (
+            enrollment.company.name if enrollment.company else enrollment.company_display_name
+        )
+        document_items.append(
+            {
+                "zapis": enrollment,
+                "docs": resolve_documents(enrollment),
+                "path": _track_name(enrollment),
+                "sciezka_label": path_label(_track_name(enrollment)),
+                "status_odznaka": document_status_badge(enrollment.status.value),
+                "firma_nazwa": firma_nazwa,
+            }
+        )
 
     return render_template(
-        'zarzadzanie/dokumenty_studenta.html',
+        "zarzadzanie/dokumenty_studenta.html",
         student=student,
         supervisor=supervisor,
         dokumenty_list=document_items,
@@ -113,7 +125,7 @@ def dokumenty_studenta(student_id):
     )
 
 
-@zarzadzanie_bp.route('/dokumenty/pobierz/<uuid:enrollment_id>/<event_type>', methods=['GET'])
+@zarzadzanie_bp.route("/dokumenty/pobierz/<uuid:enrollment_id>/<event_type>", methods=["GET"])
 @login_required
 def dokumenty_pobierz(enrollment_id, event_type):
     if event_type not in DOC_CONFIG:
@@ -133,11 +145,11 @@ def dokumenty_pobierz(enrollment_id, event_type):
         logger.error("tex-service unreachable for %s/%s: %s", event_type, enrollment_id, exc)
         abort(503)
 
-    pdf_name = template_name.replace('.tex.j2', '')
-    return odpowiedz_pdf(pdf, dyspozycja_pdf(pdf_name, enrollment.student.last_name or 'student'))
+    pdf_name = template_name.replace(".tex.j2", "")
+    return odpowiedz_pdf(pdf, dyspozycja_pdf(pdf_name, enrollment.student.last_name or "student"))
 
 
-@zarzadzanie_bp.route('/dokumenty/staly/<klucz>', methods=['GET'])
+@zarzadzanie_bp.route("/dokumenty/staly/<klucz>", methods=["GET"])
 @login_required
 def dokumenty_pobierz_staly(klucz):
     if klucz not in STATIC_TEMPLATES:

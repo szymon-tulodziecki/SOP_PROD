@@ -5,6 +5,7 @@ Usługa oceniania praktyk.
 Zawiera całą logikę domenową procesu oceniania — kontrolery tras
 delegują tutaj i nie zawierają własnej logiki biznesowej.
 """
+
 from __future__ import annotations
 import logging
 from dataclasses import dataclass
@@ -27,36 +28,39 @@ log = logging.getLogger(__name__)
 
 # ── DTO ───────────────────────────────────────────────────────────────────────
 
+
 @dataclass
 class GradeFormData:
     """Transfer Object — dane z formularza ocen, niezależny od HTTP."""
-    report_grade:                  Optional[float]
-    supervisor_grade:              Optional[float]
-    workplace_grade:               Optional[float]
-    supervisor_grade_description:  Optional[str]
-    workplace_grade_description:   Optional[str]
-    exam_question_1:               Optional[str]
-    exam_grade_1:                  Optional[float]
-    exam_question_2:               Optional[str]
-    exam_grade_2:                  Optional[float]
-    exam_question_3:               Optional[str]
-    exam_grade_3:                  Optional[float]
-    commission_chair:              Optional[str] = None
-    commission_member_2:           Optional[str] = None
-    commission_member_3:           Optional[str] = None
-    finalize: bool = False         # True → zmień status na COMPLETED
+
+    report_grade: Optional[float]
+    supervisor_grade: Optional[float]
+    workplace_grade: Optional[float]
+    supervisor_grade_description: Optional[str]
+    workplace_grade_description: Optional[str]
+    exam_question_1: Optional[str]
+    exam_grade_1: Optional[float]
+    exam_question_2: Optional[str]
+    exam_grade_2: Optional[float]
+    exam_question_3: Optional[str]
+    exam_grade_3: Optional[float]
+    commission_chair: Optional[str] = None
+    commission_member_2: Optional[str] = None
+    commission_member_3: Optional[str] = None
+    finalize: bool = False  # True → zmień status na COMPLETED
 
 
 @dataclass
 class GradeResult:
     """Wynik operacji zapisu ocen."""
+
     success: bool
-    missing_fields: list[str]      # niepuste gdy success=False i finalize=True
+    missing_fields: list[str]  # niepuste gdy success=False i finalize=True
 
     @property
     def error_message(self) -> str | None:
         if not self.success and self.missing_fields:
-            return t('Nie można zakończyć — brakuje: {pola}.', pola=', '.join(self.missing_fields))
+            return t("Nie można zakończyć — brakuje: {pola}.", pola=", ".join(self.missing_fields))
         return None
 
 
@@ -66,27 +70,34 @@ class EvaluationService:
         if not value or not value.strip():
             return None
         try:
-            grade = float(value.strip().replace(',', '.'))
+            grade = float(value.strip().replace(",", "."))
         except (ValueError, AttributeError):
-            raise ValueError(t('Nieprawidłowa wartość oceny: {wartosc}', wartosc=repr(value)))
+            raise ValueError(t("Nieprawidłowa wartość oceny: {wartosc}", wartosc=repr(value)))
         if grade < 2 or grade > 5:
-            raise ValueError(t('Ocena musi być z zakresu 2.0-5.0.'))
+            raise ValueError(t("Ocena musi być z zakresu 2.0-5.0."))
         if abs(grade * 2 - round(grade * 2)) > 0.001:
-            raise ValueError(t('Ocena musi być podana co 0.5, np. 3.0, 3.5 albo 4.0.'))
+            raise ValueError(t("Ocena musi być podana co 0.5, np. 3.0, 3.5 albo 4.0."))
         return grade
 
     @staticmethod
-    def validate_outcome_grades(outcomes, form_data: dict, is_path_b: bool, finalize: bool) -> str | None:
+    def validate_outcome_grades(
+        outcomes, form_data: dict, is_path_b: bool, finalize: bool
+    ) -> str | None:
         """Waliduje wyniki efektów uczenia się z formularza. Zwraca komunikat błędu lub None."""
         if not is_path_b:
             for outcome in outcomes:
-                if form_data.get(f'outcome_{outcome.id}') == 'PARTIALLY_ACHIEVED':
-                    return t('Efekt {kod}: w ścieżce A wybierz tylko "uzyskał/a" albo "nie uzyskał/a".',
-                             kod=outcome.code)
+                if form_data.get(f"outcome_{outcome.id}") == "PARTIALLY_ACHIEVED":
+                    return t(
+                        'Efekt {kod}: w ścieżce A wybierz tylko "uzyskał/a" albo "nie uzyskał/a".',
+                        kod=outcome.code,
+                    )
         if finalize and not is_path_b:
-            missing = [o.code for o in outcomes if not form_data.get(f'outcome_{o.id}')]
+            missing = [o.code for o in outcomes if not form_data.get(f"outcome_{o.id}")]
             if missing:
-                return t('Nie można zakończyć - uzupełnij efekty uczenia się: {kody}.', kody=', '.join(missing))
+                return t(
+                    "Nie można zakończyć - uzupełnij efekty uczenia się: {kody}.",
+                    kody=", ".join(missing),
+                )
         return None
 
     @staticmethod
@@ -107,13 +118,15 @@ class EvaluationService:
         import uuid
         from core.repositories import AssessmentRepository
 
-        AssessmentRepository().zapisz(OutcomeAssessment(
-            id=uuid.uuid4(),
-            enrollment_id=enrollment_id,
-            learning_outcome_id=outcome.id,
-            result=result,
-            notes=notes or None,
-        ))
+        AssessmentRepository().zapisz(
+            OutcomeAssessment(
+                id=uuid.uuid4(),
+                enrollment_id=enrollment_id,
+                learning_outcome_id=outcome.id,
+                result=result,
+                notes=notes or None,
+            )
+        )
 
     @staticmethod
     def calculate_final_grade(enrollment: InternshipEnrollment) -> float | None:
@@ -139,35 +152,37 @@ class AssessmentService(EvaluationService):
         if ok not in db.session:
             db.session.add(ok)
 
-        ok.report_grade                 = dane.report_grade
-        ok.supervisor_grade             = dane.supervisor_grade
-        ok.workplace_grade              = dane.workplace_grade
+        ok.report_grade = dane.report_grade
+        ok.supervisor_grade = dane.supervisor_grade
+        ok.workplace_grade = dane.workplace_grade
         ok.supervisor_grade_description = dane.supervisor_grade_description
-        ok.workplace_grade_description  = dane.workplace_grade_description
+        ok.workplace_grade_description = dane.workplace_grade_description
 
         sp = zapis.examination or Examination(enrollment_id=zapis.id)
         if sp not in db.session:
             db.session.add(sp)
 
         sp.question_1 = dane.exam_question_1
-        sp.grade_1    = dane.exam_grade_1
+        sp.grade_1 = dane.exam_grade_1
         sp.question_2 = dane.exam_question_2
-        sp.grade_2    = dane.exam_grade_2
+        sp.grade_2 = dane.exam_grade_2
         sp.question_3 = dane.exam_question_3
-        sp.grade_3    = dane.exam_grade_3
+        sp.grade_3 = dane.exam_grade_3
 
-        sp.commission_chair    = (dane.commission_chair    or '').strip() or None
-        sp.commission_member_2 = (dane.commission_member_2 or '').strip() or None
-        sp.commission_member_3 = (dane.commission_member_3 or '').strip() or None
+        sp.commission_chair = (dane.commission_chair or "").strip() or None
+        sp.commission_member_2 = (dane.commission_member_2 or "").strip() or None
+        sp.commission_member_3 = (dane.commission_member_3 or "").strip() or None
 
         if dane.finalize:
             from core.models.internships import InternshipPath
+
             is_path_b = zapis.path_type in (InternshipPath.EMPLOYMENT, InternshipPath.OWN_BUSINESS)
             missing = AssessmentService._validate_completeness(ok, sp, is_path_b=is_path_b)
             if missing:
                 db.session.rollback()
                 return GradeResult(success=False, missing_fields=missing)
             from core.services.workflow import EnrollmentStateMachine, IllegalTransitionError
+
             try:
                 EnrollmentStateMachine(zapis).complete()
             except IllegalTransitionError:
@@ -180,14 +195,15 @@ class AssessmentService(EvaluationService):
         """Zwraca listę brakujących ocen. Pusta lista = komplet."""
         missing = []
         if ok.report_grade is None:
-            missing.append('ocena sprawozdania (S)')
+            missing.append("ocena sprawozdania (S)")
         if not is_path_b:
-            if ok.supervisor_grade is None: missing.append('ocena UOPZ (U)')
-            if ok.workplace_grade  is None: missing.append('ocena ZOPZ (Z)')
+            if ok.supervisor_grade is None:
+                missing.append("ocena UOPZ (U)")
+            if ok.workplace_grade is None:
+                missing.append("ocena ZOPZ (Z)")
         if sp.grade_1 is None and sp.grade_2 is None and sp.grade_3 is None:
-            missing.append('co najmniej jedna ocena ze sprawdzianu')
+            missing.append("co najmniej jedna ocena ze sprawdzianu")
         return missing
-
 
     @staticmethod
     def deadline_info(enrollment) -> dict:
@@ -195,14 +211,14 @@ class AssessmentService(EvaluationService):
         deadline = days_to_deadline = None
         overdue = False
         if enrollment.end_date and enrollment.status == EnrollmentStatus.COMPLETED:
-            deadline         = enrollment.end_date + timedelta(days=7)
+            deadline = enrollment.end_date + timedelta(days=7)
             days_to_deadline = (deadline - date.today()).days
-            overdue          = days_to_deadline < 0
+            overdue = days_to_deadline < 0
         return {
-            'deadline':         deadline,
-            'dni_do_deadline':  days_to_deadline,
-            'przekroczony':     overdue,
-            'deadline_is_today': days_to_deadline == 0 if days_to_deadline is not None else False,
+            "deadline": deadline,
+            "dni_do_deadline": days_to_deadline,
+            "przekroczony": overdue,
+            "deadline_is_today": days_to_deadline == 0 if days_to_deadline is not None else False,
         }
 
     @staticmethod
@@ -215,9 +231,9 @@ class AssessmentService(EvaluationService):
         pilne = []
         for zapis in q.all():
             info = AssessmentService.deadline_info(zapis)
-            if info['dni_do_deadline'] is not None and info['dni_do_deadline'] <= 3:
-                pilne.append({'zapis': zapis, **info})
-        return sorted(pilne, key=lambda x: x['dni_do_deadline'])
+            if info["dni_do_deadline"] is not None and info["dni_do_deadline"] <= 3:
+                pilne.append({"zapis": zapis, **info})
+        return sorted(pilne, key=lambda x: x["dni_do_deadline"])
 
     @staticmethod
     def auto_complete_internships() -> dict:
@@ -232,31 +248,39 @@ class AssessmentService(EvaluationService):
             dict z kluczami 'completed' (zamknięte) i 'skipped' (pominięte
             z powodu niewystarczających godzin).
         """
-        kandydaci = db.session.query(InternshipEnrollment).filter(
-            InternshipEnrollment.status == EnrollmentStatus.IN_PROGRESS,
-            InternshipEnrollment.end_date < date.today(),
-        ).all()
+        kandydaci = (
+            db.session.query(InternshipEnrollment)
+            .filter(
+                InternshipEnrollment.status == EnrollmentStatus.IN_PROGRESS,
+                InternshipEnrollment.end_date < date.today(),
+            )
+            .all()
+        )
 
         completed = skipped = 0
         for p in kandydaci:
             required = p.internship.required_hours if p.internship else 0
             if p.total_hours_logged >= required:
                 from core.services.workflow import EnrollmentStateMachine
+
                 EnrollmentStateMachine(p).complete()
                 completed += 1
             else:
                 skipped += 1
                 import logging
+
                 logging.getLogger(__name__).warning(
                     "auto_complete: pominięto zapis %s — %d/%d h (student: %s %s)",
-                    p.id, p.total_hours_logged, required,
-                    p.student.first_name if p.student else '?',
-                    p.student.last_name  if p.student else '?',
+                    p.id,
+                    p.total_hours_logged,
+                    required,
+                    p.student.first_name if p.student else "?",
+                    p.student.last_name if p.student else "?",
                 )
 
         if completed:
             db.session.commit()
-        return {'completed': completed, 'skipped': skipped}
+        return {"completed": completed, "skipped": skipped}
 
     @staticmethod
     def prepare_grading_list(supervisor_id=None, filtr: str | None = None) -> dict:
@@ -266,6 +290,7 @@ class AssessmentService(EvaluationService):
             {'widoczne': [...], 'zakonczone': [...], 'filtr': filtr}
         """
         from core.repositories import EnrollmentRepository
+
         enrollments = EnrollmentRepository().aktywne_i_zakonczone(supervisor_id=supervisor_id)
 
         def _ma_oceny(enrollment) -> bool:
@@ -274,54 +299,60 @@ class AssessmentService(EvaluationService):
                 return False
             if enrollment.is_path_b:
                 return fg.report_grade is not None and enrollment.exam_grade is not None
-            return (fg.supervisor_grade is not None
-                    and fg.report_grade is not None and fg.workplace_grade is not None)
+            return (
+                fg.supervisor_grade is not None
+                and fg.report_grade is not None
+                and fg.workplace_grade is not None
+            )
 
         enriched = [
             {
-                'zapis':      e,
-                'w_trakcie':  e.status == EnrollmentStatus.IN_PROGRESS,
-                'zakonczona': e.status == EnrollmentStatus.COMPLETED,
-                'is_path_b':  e.is_path_b,
+                "zapis": e,
+                "w_trakcie": e.status == EnrollmentStatus.IN_PROGRESS,
+                "zakonczona": e.status == EnrollmentStatus.COMPLETED,
+                "is_path_b": e.is_path_b,
                 **AssessmentService.deadline_info(e),
             }
             for e in enrollments
         ]
 
-        completed_list = [z for z in enriched
-                          if z['zakonczona'] or (z['w_trakcie'] and z['is_path_b'])]
+        completed_list = [
+            z for z in enriched if z["zakonczona"] or (z["w_trakcie"] and z["is_path_b"])
+        ]
 
         from core.i18n import t
         from core.presenters import employment_path_label
 
         for z in completed_list:
-            z['oceniony'] = _ma_oceny(z['zapis'])
-            if z['przekroczony']:
-                z['akcja'] = {'cls': 'przycisk--niebezpieczny', 'label': t('PILNE')}
-            elif not z['oceniony']:
-                z['akcja'] = {'cls': 'przycisk--glowny', 'label': t('Wystaw ocenę')}
+            z["oceniony"] = _ma_oceny(z["zapis"])
+            if z["przekroczony"]:
+                z["akcja"] = {"cls": "przycisk--niebezpieczny", "label": t("PILNE")}
+            elif not z["oceniony"]:
+                z["akcja"] = {"cls": "przycisk--glowny", "label": t("Wystaw ocenę")}
             else:
-                z['akcja'] = {'cls': 'przycisk--drugorzedny', 'label': t('Edytuj')}
-            if z['is_path_b']:
-                z['sciezka_badge'] = {'cls': 'status--in-progress',
-                                      'label': employment_path_label(z['zapis'].path_type)}
+                z["akcja"] = {"cls": "przycisk--drugorzedny", "label": t("Edytuj")}
+            if z["is_path_b"]:
+                z["sciezka_badge"] = {
+                    "cls": "status--in-progress",
+                    "label": employment_path_label(z["zapis"].path_type),
+                }
             else:
-                z['sciezka_badge'] = {'cls': 'status--completed', 'label': t('Praktyka')}
+                z["sciezka_badge"] = {"cls": "status--completed", "label": t("Praktyka")}
 
-        completed_list.sort(key=lambda z: z['oceniony'])
+        completed_list.sort(key=lambda z: z["oceniony"])
 
-        if filtr == 'nieocenione':
-            visible = [z for z in completed_list if not z['oceniony']]
-        elif filtr == 'ocenione':
-            visible = [z for z in completed_list if z['oceniony']]
+        if filtr == "nieocenione":
+            visible = [z for z in completed_list if not z["oceniony"]]
+        elif filtr == "ocenione":
+            visible = [z for z in completed_list if z["oceniony"]]
         else:
             visible = completed_list
 
-        liczba_ocenione = sum(1 for z in completed_list if z['oceniony'])
+        liczba_ocenione = sum(1 for z in completed_list if z["oceniony"])
         return {
-            'widoczne': visible,
-            'zakonczone': completed_list,
-            'filtr': filtr,
-            'liczba_ocenione': liczba_ocenione,
-            'liczba_nieocenione': len(completed_list) - liczba_ocenione,
+            "widoczne": visible,
+            "zakonczone": completed_list,
+            "filtr": filtr,
+            "liczba_ocenione": liczba_ocenione,
+            "liczba_nieocenione": len(completed_list) - liczba_ocenione,
         }

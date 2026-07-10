@@ -1,6 +1,6 @@
 ﻿import uuid
 
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import Blueprint, render_template, redirect, url_for, flash
 from flask_login import login_required, current_user
 from flask_wtf import FlaskForm
 from wtforms import TextAreaField
@@ -13,21 +13,22 @@ from core.repositories import EnrollmentRepository
 
 _repo_zapisow = EnrollmentRepository()
 
-reports_bp = Blueprint('reports', __name__)
+reports_bp = Blueprint("reports", __name__)
 
 
 class StandardReportForm(FlaskForm):
     """Zał. 7, ścieżka A: standardowa praktyka."""
+
     workplace_characteristics = TextAreaField(
-        lazy_t('I. Charakterystyka miejsca odbywania praktyki'),
+        lazy_t("I. Charakterystyka miejsca odbywania praktyki"),
         validators=[DataRequired()],
     )
     work_description = TextAreaField(
-        lazy_t('II. Opis i analiza wykonywanych prac'),
+        lazy_t("II. Opis i analiza wykonywanych prac"),
         validators=[DataRequired()],
     )
     acquired_knowledge = TextAreaField(
-        lazy_t('III. Wiedza i umiejętności uzyskane w trakcie praktyki'),
+        lazy_t("III. Wiedza i umiejętności uzyskane w trakcie praktyki"),
         validators=[Optional()],
     )
 
@@ -41,16 +42,17 @@ class StandardReportForm(FlaskForm):
 
 class EmploymentReportForm(FlaskForm):
     """Zał. 7a, ścieżki B/C: praca zawodowa lub działalność gospodarcza."""
+
     workplace_characteristics = TextAreaField(
-        lazy_t('I. Charakterystyka miejsca pracy / działalności'),
+        lazy_t("I. Charakterystyka miejsca pracy / działalności"),
         validators=[DataRequired()],
     )
     work_analysis = TextAreaField(
-        lazy_t('II. Opis i analiza wykonywanych prac / działalności'),
+        lazy_t("II. Opis i analiza wykonywanych prac / działalności"),
         validators=[DataRequired()],
     )
     acquired_knowledge = TextAreaField(
-        lazy_t('III. Wiedza i umiejętności uzyskane w trakcie pracy zawodowej lub działalności'),
+        lazy_t("III. Wiedza i umiejętności uzyskane w trakcie pracy zawodowej lub działalności"),
         validators=[Optional()],
     )
 
@@ -62,23 +64,26 @@ class EmploymentReportForm(FlaskForm):
         return model_instance
 
 
-@reports_bp.route('/', methods=['GET', 'POST'])
+@reports_bp.route("/", methods=["GET", "POST"])
 @login_required
 def index():
-    zapis = _repo_zapisow.aktywny_dla_studenta(current_user.id, [
-        EnrollmentStatus.IN_PROGRESS,
-        EnrollmentStatus.COMMISSION_REVIEW,
-        EnrollmentStatus.DIRECTOR_APPROVAL,
-        EnrollmentStatus.COMPLETED,
-        EnrollmentStatus.AWAITING_APPROVAL,
-    ])
+    zapis = _repo_zapisow.aktywny_dla_studenta(
+        current_user.id,
+        [
+            EnrollmentStatus.IN_PROGRESS,
+            EnrollmentStatus.COMMISSION_REVIEW,
+            EnrollmentStatus.DIRECTOR_APPROVAL,
+            EnrollmentStatus.COMPLETED,
+            EnrollmentStatus.AWAITING_APPROVAL,
+        ],
+    )
 
     if not zapis:
         ma_zapis = _repo_zapisow.pierwszy_dla_studenta(current_user.id)
-        return render_template('sprawozdania/index.html', zapis=None, ma_zapis=ma_zapis)
+        return render_template("sprawozdania/index.html", zapis=None, ma_zapis=ma_zapis)
 
-    path_type = zapis.path_type.value if zapis.path_type else 'STANDARD'
-    is_standard = path_type == 'STANDARD'
+    path_type = zapis.path_type.value if zapis.path_type else "STANDARD"
+    is_standard = path_type == "STANDARD"
     FormClass = StandardReportForm if is_standard else EmploymentReportForm
     form = FormClass()
 
@@ -87,27 +92,27 @@ def index():
             new_report = InternshipReport(
                 id=uuid.uuid4(),
                 enrollment_id=zapis.id,
-                workplace_description='',
-                analysis='',
+                workplace_description="",
+                analysis="",
             )
             db.session.add(new_report)
             db.session.flush()
             zapis = _repo_zapisow.znajdz_po_id(zapis.id)
         form.populate_to_model(zapis.report)
         db.session.commit()
-        flash(t('Sprawozdanie zostało zapisane.'), 'success')
-        return redirect(url_for('reports.index'))
+        flash(t("Sprawozdanie zostało zapisane."), "success")
+        return redirect(url_for("reports.index"))
 
     report = zapis.report
-    form.workplace_characteristics.data = report.workplace_description if report else ''
+    form.workplace_characteristics.data = report.workplace_description if report else ""
     if is_standard:
-        form.work_description.data = report.analysis if report else ''
+        form.work_description.data = report.analysis if report else ""
     else:
-        form.work_analysis.data = report.analysis if report else ''
-    form.acquired_knowledge.data = report.skills if report else ''
+        form.work_analysis.data = report.analysis if report else ""
+    form.acquired_knowledge.data = report.skills if report else ""
 
     return render_template(
-        'sprawozdania/index.html',
+        "sprawozdania/index.html",
         zapis=zapis,
         form=form,
         ma_zapis=zapis,

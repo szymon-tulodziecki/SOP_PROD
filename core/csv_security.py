@@ -1,10 +1,11 @@
 """Utilities for safe CSV exports."""
+
 from __future__ import annotations
 
 from collections.abc import Mapping
 from typing import Any
 
-_FORMULA_PREFIXES = ('=', '+', '-', '@', '\t', '\r')
+_FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
 
 
 def sanitize_csv_cell(value: Any) -> Any:

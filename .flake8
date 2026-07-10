@@ -1,0 +1,16 @@
+# flake8 — styl i realne błędy (pyflakes). Uruchamianie: flake8 .
+[flake8]
+max-line-length = 100
+# E203/W503 kolidują z black; E501 — o łamaniu linii decyduje black
+# (długie polskie stringi i18n zostają w jednej linii).
+extend-ignore = E203, W503, E501
+exclude =
+    .git,
+    __pycache__,
+    secrets,
+    pdf_output,
+    logs,
+    database
+per-file-ignores =
+    # __init__ re-eksportują symbole
+    */__init__.py: F401

@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 TEMPLATES_DIR = Path(__file__).parent / "templates"
 
-COMPILE_TIMEOUT = int(os.environ.get('LATEX_TIMEOUT', '60'))
+COMPILE_TIMEOUT = int(os.environ.get("LATEX_TIMEOUT", "60"))
 COMPILE_PASSES = 2
 
 
@@ -75,7 +75,8 @@ def _run_lualatex(lualatex: str, tex_file: Path, workdir: Path) -> str:
         "-no-shell-escape",
         "-interaction=nonstopmode",
         "-halt-on-error",
-        "-output-directory", str(workdir),
+        "-output-directory",
+        str(workdir),
         str(tex_file),
     ]
 
@@ -88,9 +89,7 @@ def _run_lualatex(lualatex: str, tex_file: Path, workdir: Path) -> str:
             stdin=subprocess.DEVNULL,
         )
     except subprocess.TimeoutExpired:
-        raise TexCompilationError(
-            f"lualatex przekroczył limit czasu ({COMPILE_TIMEOUT}s)."
-        )
+        raise TexCompilationError(f"lualatex przekroczył limit czasu ({COMPILE_TIMEOUT}s).")
 
     log_file = workdir / tex_file.with_suffix(".log").name
     log_text = log_file.read_text(encoding="utf-8", errors="replace") if log_file.exists() else ""

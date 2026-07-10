@@ -1,4 +1,5 @@
 ﻿"""User account management service."""
+
 from __future__ import annotations
 
 import csv
@@ -54,7 +55,7 @@ class UserService:
         **student_data,
     ) -> Student:
         if self._repo.email_exists(email):
-            raise ValueError(t('Konto z adresem {email} już istnieje.', email=email))
+            raise ValueError(t("Konto z adresem {email} już istnieje.", email=email))
         student = Student(
             email=email,
             password_hash=generate_password_hash(password),
@@ -70,9 +71,11 @@ class UserService:
             db.session.commit()
         return student
 
-    def create_administrator(self, email: str, password: str, first_name: str, last_name: str) -> Administrator:
+    def create_administrator(
+        self, email: str, password: str, first_name: str, last_name: str
+    ) -> Administrator:
         if self._repo.email_exists(email):
-            raise ValueError(t('Konto z adresem {email} już istnieje.', email=email))
+            raise ValueError(t("Konto z adresem {email} już istnieje.", email=email))
         admin = Administrator(
             email=email,
             password_hash=generate_password_hash(password),
@@ -85,8 +88,13 @@ class UserService:
         return admin
 
     # Priorytet wyboru głównej roli (JTI discriminator) gdy pracownik ma kilka.
-    _STAFF_ROLE_PRIORITY = (UserRole.ADMIN, UserRole.DYREKTOR, UserRole.KOMISJA,
-                            UserRole.DZIEKANAT, UserRole.UOPZ)
+    _STAFF_ROLE_PRIORITY = (
+        UserRole.ADMIN,
+        UserRole.DYREKTOR,
+        UserRole.KOMISJA,
+        UserRole.DZIEKANAT,
+        UserRole.UOPZ,
+    )
     _STAFF_JTI_CLASS = {
         UserRole.ADMIN: Administrator,
         UserRole.DYREKTOR: DyrektorUser,
@@ -105,19 +113,19 @@ class UserService:
         """Tworzy konto pracownika z 1+ rolami. ADMIN i STUDENT są wyłączne;
         UOPZ/KOMISJA/DYREKTOR mogą się łączyć dowolnie."""
         if not roles:
-            raise ValueError(t('Musisz wybrać co najmniej jedną rolę.'))
+            raise ValueError(t("Musisz wybrać co najmniej jedną rolę."))
         if UserRole.STUDENT in roles:
-            raise ValueError(t('Rola STUDENT nie jest dostępna w formularzu pracownika.'))
+            raise ValueError(t("Rola STUDENT nie jest dostępna w formularzu pracownika."))
         if UserRole.ADMIN in roles and len(roles) > 1:
-            raise ValueError(t('Rola ADMIN nie może być łączona z innymi rolami.'))
+            raise ValueError(t("Rola ADMIN nie może być łączona z innymi rolami."))
         if self._repo.email_exists(email):
-            raise ValueError(t('Konto z adresem {email} już istnieje.', email=email))
+            raise ValueError(t("Konto z adresem {email} już istnieje.", email=email))
 
         primary = next(r for r in self._STAFF_ROLE_PRIORITY if r in roles)
         cls = self._STAFF_JTI_CLASS[primary]
         user = cls(
             email=email,
-            password_hash='',
+            password_hash="",
             first_name=first_name,
             last_name=last_name,
             role=primary,
@@ -130,9 +138,11 @@ class UserService:
         db.session.commit()
         return user
 
-    def create_mentor(self, email: str, password: str, first_name: str, last_name: str) -> UniversityMentor:
+    def create_mentor(
+        self, email: str, password: str, first_name: str, last_name: str
+    ) -> UniversityMentor:
         if self._repo.email_exists(email):
-            raise ValueError(t('Konto z adresem {email} już istnieje.', email=email))
+            raise ValueError(t("Konto z adresem {email} już istnieje.", email=email))
         mentor = UniversityMentor(
             email=email,
             password_hash=generate_password_hash(password),
@@ -146,8 +156,8 @@ class UserService:
 
     def update(self, user: User, **fields) -> User:
         """Updates arbitrary model fields and commits."""
-        if 'password' in fields:
-            user.password_hash = generate_password_hash(fields.pop('password'))
+        if "password" in fields:
+            user.password_hash = generate_password_hash(fields.pop("password"))
         for key, value in fields.items():
             setattr(user, key, value)
         db.session.commit()
@@ -164,7 +174,7 @@ class UserService:
     @staticmethod
     def _sanitize_csv_field(value: str) -> str:
         """Prevents CSV Formula Injection by neutralizing dangerous leading characters."""
-        if value and value[0] in ('=', '+', '-', '@', '\t', '\r'):
+        if value and value[0] in ("=", "+", "-", "@", "\t", "\r"):
             return "'" + value
         return value
 
@@ -172,33 +182,47 @@ class UserService:
     def _parse_csv_row(row_number: int, row: dict) -> tuple[dict | None, str | None]:
         """Parses one CSV row. Returns (parsed_dict, None) or (None, error_msg)."""
         _s = UserService._sanitize_csv_field
-        first_name = _s((row.get('imie') or row.get('Imię') or '').strip())
-        last_name = _s((row.get('nazwisko') or row.get('Nazwisko') or '').strip())
-        email = (row.get('email') or row.get('Email') or '').strip().lower()
-        album_number = (row.get('numer_albumu') or row.get('Nr albumu') or '').strip()
-        _gender_raw = (row.get('plec') or row.get('Płeć') or '').strip().upper()
-        gender = 'F' if _gender_raw == 'K' else (_gender_raw or None)
-        field_of_study = _s((row.get('kierunek') or row.get('Kierunek') or '').strip()) or None
-        specialization = _s((row.get('specjalizacja') or row.get('specialization') or row.get('Specjalność') or '').strip()) or None
-        _study_mode_raw = (row.get('tryb_studiow') or row.get('Tryb') or '').strip().lower()
-        study_mode = {'stacjonarne': 'full-time', 'niestacjonarne': 'part-time'}.get(_study_mode_raw, _study_mode_raw) or None
+        first_name = _s((row.get("imie") or row.get("Imię") or "").strip())
+        last_name = _s((row.get("nazwisko") or row.get("Nazwisko") or "").strip())
+        email = (row.get("email") or row.get("Email") or "").strip().lower()
+        album_number = (row.get("numer_albumu") or row.get("Nr albumu") or "").strip()
+        _gender_raw = (row.get("plec") or row.get("Płeć") or "").strip().upper()
+        gender = "F" if _gender_raw == "K" else (_gender_raw or None)
+        field_of_study = _s((row.get("kierunek") or row.get("Kierunek") or "").strip()) or None
+        specialization = (
+            _s(
+                (
+                    row.get("specjalizacja")
+                    or row.get("specialization")
+                    or row.get("Specjalność")
+                    or ""
+                ).strip()
+            )
+            or None
+        )
+        _study_mode_raw = (row.get("tryb_studiow") or row.get("Tryb") or "").strip().lower()
+        study_mode = {"stacjonarne": "full-time", "niestacjonarne": "part-time"}.get(
+            _study_mode_raw, _study_mode_raw
+        ) or None
 
-        if not all([first_name, last_name, email, album_number, gender, field_of_study, study_mode]):
+        if not all(
+            [first_name, last_name, email, album_number, gender, field_of_study, study_mode]
+        ):
             return None, t(
-                'Wiersz {numer}: brakujące dane '
-                '(wymagane: imie, nazwisko, email, numer_albumu, plec, kierunek, tryb_studiow)',
+                "Wiersz {numer}: brakujące dane "
+                "(wymagane: imie, nazwisko, email, numer_albumu, plec, kierunek, tryb_studiow)",
                 numer=row_number,
             )
         return {
-            'row_number': row_number,
-            'first_name': first_name,
-            'last_name': last_name,
-            'email': email,
-            'album_number': album_number,
-            'gender': gender,
-            'field_of_study': field_of_study,
-            'specialization': specialization,
-            'study_mode': study_mode,
+            "row_number": row_number,
+            "first_name": first_name,
+            "last_name": last_name,
+            "email": email,
+            "album_number": album_number,
+            "gender": gender,
+            "field_of_study": field_of_study,
+            "specialization": specialization,
+            "study_mode": study_mode,
         }, None
 
     def _create_student_from_row(
@@ -209,41 +233,42 @@ class UserService:
         existing_albums: set,
     ) -> str | None:
         """Creates one student from parsed row. Returns error string or None on success."""
-        if parsed_row['email'] in existing_emails or parsed_row['album_number'] in existing_albums:
+        if parsed_row["email"] in existing_emails or parsed_row["album_number"] in existing_albums:
             return t(
-                'Wiersz {numer}: {email} lub nr {album} już istnieje',
-                numer=parsed_row['row_number'], email=parsed_row['email'],
-                album=parsed_row['album_number'],
+                "Wiersz {numer}: {email} lub nr {album} już istnieje",
+                numer=parsed_row["row_number"],
+                email=parsed_row["email"],
+                album=parsed_row["album_number"],
             )
         try:
             self.create_student(
-                email=parsed_row['email'],
-                password='',
-                first_name=parsed_row['first_name'],
-                last_name=parsed_row['last_name'],
-                album_number=parsed_row['album_number'],
-                gender=parsed_row['gender'],
-                field_of_study=parsed_row['field_of_study'],
-                specialization=parsed_row['specialization'],
-                study_mode=parsed_row['study_mode'],
+                email=parsed_row["email"],
+                password="",
+                first_name=parsed_row["first_name"],
+                last_name=parsed_row["last_name"],
+                album_number=parsed_row["album_number"],
+                gender=parsed_row["gender"],
+                field_of_study=parsed_row["field_of_study"],
+                specialization=parsed_row["specialization"],
+                study_mode=parsed_row["study_mode"],
                 supervisor_id=uuid.UUID(supervisor_id) if supervisor_id else None,
                 require_password_change=False,
                 commit=False,
             )
-            existing_emails.add(parsed_row['email'])
-            existing_albums.add(parsed_row['album_number'])
+            existing_emails.add(parsed_row["email"])
+            existing_albums.add(parsed_row["album_number"])
             return None
         except Exception as exc:
-            return t('Wiersz {numer}: {blad}', numer=parsed_row['row_number'], blad=exc)
+            return t("Wiersz {numer}: {blad}", numer=parsed_row["row_number"], blad=exc)
 
     _REQUIRED_CSV_COLUMNS = (
-        ('imie', 'Imię'),
-        ('nazwisko', 'Nazwisko'),
-        ('email', 'Email'),
-        ('numer_albumu', 'Nr albumu'),
-        ('plec', 'Płeć'),
-        ('kierunek', 'Kierunek'),
-        ('tryb_studiow', 'Tryb'),
+        ("imie", "Imię"),
+        ("nazwisko", "Nazwisko"),
+        ("email", "Email"),
+        ("numer_albumu", "Nr albumu"),
+        ("plec", "Płeć"),
+        ("kierunek", "Kierunek"),
+        ("tryb_studiow", "Tryb"),
     )
 
     def import_from_csv(self, content: str, supervisor_id, commit: bool = True) -> dict:
@@ -256,14 +281,17 @@ class UserService:
         # Validate CSV header before processing rows — prevents wasting work on a wrong file.
         header = set(reader.fieldnames or [])
         missing = [
-            aliases[0] for aliases in self._REQUIRED_CSV_COLUMNS
+            aliases[0]
+            for aliases in self._REQUIRED_CSV_COLUMNS
             if not any(name in header for name in aliases)
         ]
         if missing:
             return {
-                'created': 0,
-                'skipped': 0,
-                'errors': [t('Brakujące kolumny w nagłówku CSV: {kolumny}', kolumny=', '.join(missing))],
+                "created": 0,
+                "skipped": 0,
+                "errors": [
+                    t("Brakujące kolumny w nagłówku CSV: {kolumny}", kolumny=", ".join(missing))
+                ],
             }
 
         for row_number, row in enumerate(reader, start=2):
@@ -275,14 +303,16 @@ class UserService:
                 csv_rows.append(parsed)
 
         if csv_rows:
-            all_emails = [row['email'] for row in csv_rows]
-            all_albums = [row['album_number'] for row in csv_rows]
+            all_emails = [row["email"] for row in csv_rows]
+            all_albums = [row["album_number"] for row in csv_rows]
             existing = self._repo.find_existing_by_email_or_album(all_emails, all_albums)
             existing_emails = {user.email for user in existing}
             existing_albums = {user.album_number for user in existing if user.album_number}
 
             for parsed_row in csv_rows:
-                error = self._create_student_from_row(parsed_row, supervisor_id, existing_emails, existing_albums)
+                error = self._create_student_from_row(
+                    parsed_row, supervisor_id, existing_emails, existing_albums
+                )
                 if error:
                     errors.append(error)
                     skipped += 1
@@ -292,7 +322,7 @@ class UserService:
             if commit and created:
                 db.session.commit()
 
-        return {'created': created, 'skipped': skipped, 'errors': errors}
+        return {"created": created, "skipped": skipped, "errors": errors}
 
     @property
     def repository(self) -> UserRepository:
