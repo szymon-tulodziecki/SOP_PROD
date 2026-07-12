@@ -131,21 +131,18 @@ def decrypt_stream(source: Iterator[bytes]) -> Iterator[bytes]:
         del buf[:n]
         return chunk
 
-    # Odczytaj pierwsze 4 bajty — magic lub Fernet
     magic = _read(4)
     if magic is None:
         return
 
     if magic != MAGIC:
-        # v1 Fernet — wczytaj resztę i odszyfruj blokowo
         rest = bytearray(magic)
         for fragment in source:
             rest.extend(fragment)
         yield _decrypt_fernet(bytes(rest))
         return
 
-    # v2: odczytaj chunk_size (nieużywany przy deszyfracji, ale w nagłówku)
-    _read(4)  # chunk_size — zapisany dla przyszłych weryfikacji
+    _read(4)  # chunk_size — zapisany w nagłówku, nieużywany przy deszyfracji
 
     from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 

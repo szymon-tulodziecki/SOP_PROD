@@ -199,10 +199,8 @@ def create_app():
         # Publiczny formularz porozumienia — dostęp tokenem z e-maila, bez logowania
         app.register_blueprint(agreements_public_bp, url_prefix="/porozumienie")
 
-    # Kontekst globalny: informacje o aktywnym zapisie studenta
     app.context_processor(_build_enrollment_context)
 
-    # Dodaj funkcje pomocnicze do szablonów
     @app.template_global()
     def translate_status(status_value):
         from core.translations import translate_status as core_translate_status

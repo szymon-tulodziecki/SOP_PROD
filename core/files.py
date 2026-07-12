@@ -71,7 +71,6 @@ def _fs_delete(filename: str) -> None:
 
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
 
-# Dozwolone rozszerzenia — wyłącznie te
 ALLOWED_EXTENSIONS = frozenset(
     {
         ".pdf",

@@ -38,9 +38,7 @@ _ROUTE_SZCZEGOLY = "internships.szczegoly_zgloszenia"
 _TPL_KR2A = "kreator/krok2a_firma.html"
 
 
-# ═══════════════════════════════════════════════════════════
-# NOWE FORMULARZE KREATORA
-# ═══════════════════════════════════════════════════════════
+# ── Formularze kreatora ──────────────────────────────────────
 
 
 class FormularzSciezka(FlaskForm):
@@ -188,9 +186,7 @@ class FormularzWniosek(FlaskForm):
     )
 
 
-# ═══════════════════════════════════════════════════════════
-# NOWE ROUTE KREATORA
-# ═══════════════════════════════════════════════════════════
+# ── Route kreatora ───────────────────────────────────────────
 
 
 def _get_or_create_zapis(internship_id, istniejacy, odrzucony):

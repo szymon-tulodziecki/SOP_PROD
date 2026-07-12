@@ -54,6 +54,14 @@ def _klucz_firmy(zapis) -> str:
     return f"custom:{nazwa}|{nip}"
 
 
+def _kwalifikuje_sie_do_porozumienia(zapis) -> bool:
+    return (
+        zapis.path_type == InternshipPath.STANDARD
+        and zapis.status in _AKTYWNE_STATUSY
+        and bool(zapis.company_display_name)
+    )
+
+
 def _zapisy_do_porozumien() -> list[InternshipEnrollment]:
     zapisy = (
         db.session.query(InternshipEnrollment)
@@ -61,9 +69,17 @@ def _zapisy_do_porozumien() -> list[InternshipEnrollment]:
         .filter(InternshipEnrollment.status.in_(_AKTYWNE_STATUSY))
         .all()
     )
-    zapisy = [z for z in zapisy if z.company_display_name]
+    zapisy = [z for z in zapisy if _kwalifikuje_sie_do_porozumienia(z)]
     pokryte = AgreementService.enrollment_ids_with_open_agreement([z.id for z in zapisy])
     return [z for z in zapisy if z.id not in pokryte]
+
+
+def _podpowiedz_odbiorcy_z_pierwszego_zapisu(grupa: dict, zapis) -> None:
+    if grupa["odbiorca_imie"] or not zapis.authorized_person:
+        return
+    grupa["odbiorca_imie"] = zapis.authorized_person
+    grupa["odbiorca_stanowisko"] = zapis.authorized_person_position or ""
+    grupa["odbiorca_email"] = zapis.authorized_person_email or ""
 
 
 def _grupy_po_firmach(zapisy) -> list[dict]:
@@ -85,11 +101,7 @@ def _grupy_po_firmach(zapisy) -> list[dict]:
             },
         )
         grupa["zapisy"].append(z)
-        # Podpowiedź odbiorcy: pierwszy student, który podał osobę upoważnioną
-        if not grupa["odbiorca_imie"] and z.authorized_person:
-            grupa["odbiorca_imie"] = z.authorized_person
-            grupa["odbiorca_stanowisko"] = z.authorized_person_position or ""
-            grupa["odbiorca_email"] = z.authorized_person_email or ""
+        _podpowiedz_odbiorcy_z_pierwszego_zapisu(grupa, z)
     return sorted(grupy.values(), key=lambda g: (g["nazwa"] or "").lower())
 
 
@@ -113,14 +125,7 @@ def _walidacja_wysylki(zapisy, recipient_name, recipient_email) -> str | None:
     """Zwraca komunikat błędu albo None gdy dane są poprawne."""
     if not zapisy:
         return "Zaznacz co najmniej jednego studenta."
-    # Te same warunki co lista — POST nie może objąć zapisów spoza niej
-    # (ścieżka B, odrzucone/szkicowe, bez zakładu pracy).
-    if any(
-        z.path_type != InternshipPath.STANDARD
-        or z.status not in _AKTYWNE_STATUSY
-        or not z.company_display_name
-        for z in zapisy
-    ):
+    if not all(_kwalifikuje_sie_do_porozumienia(z) for z in zapisy):
         return "Część zaznaczonych zgłoszeń nie kwalifikuje się do porozumienia."
     if not recipient_name or len(recipient_name.split()) < 2:
         return "Podaj imię i nazwisko osoby upoważnionej."

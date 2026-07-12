@@ -55,7 +55,6 @@ def generuj():
     context = data.get("context", {})
     filename = data.get("filename", "dokument.pdf")
 
-    # Walidacja szablonu
     allowed = _allowed_templates()
     if template_name not in allowed:
         return (

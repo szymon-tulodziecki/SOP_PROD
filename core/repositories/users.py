@@ -106,8 +106,7 @@ class UserRepository:
             except KeyError:
                 pass
             else:
-                # Rola główna (users.role) LUB dodatkowa (user_roles) —
-                # pracownicy mogą mieć wiele ról naraz.
+                # Pracownicy mogą mieć wiele ról naraz (user_roles).
                 q = (
                     q.outerjoin(UserRoleAssoc, UserRoleAssoc.user_id == User.id)
                     .filter(db.or_(User.role == role, UserRoleAssoc.role == role))

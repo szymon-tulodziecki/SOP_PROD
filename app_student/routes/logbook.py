@@ -78,7 +78,6 @@ def _aktywny_zapis():
 def index():
     zapis = _aktywny_zapis()
 
-    # Jeśli student nie ma aktywnego zapisu, szukamy jakiegokolwiek innego (np. zakończonego)
     if not zapis:
         jakikolwiek = _repo_zapisow.pierwszy_dla_studenta(current_user.id)
         # Zwracamy puste wpisy, żeby szablon się nie wysypał

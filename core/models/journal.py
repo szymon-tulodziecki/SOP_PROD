@@ -33,7 +33,6 @@ class LearningOutcome(db.Model):
         return str(self.id).zfill(2)
 
 
-# Tabela łącząca: journal_entry ↔ learning_outcomes
 entry_outcomes = db.Table(
     "entry_outcomes",
     db.Column(

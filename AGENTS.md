@@ -28,6 +28,24 @@ Szczegółowe notatki projektu (deploy, testy maili, dev lokalny) są w `CLAUDE.
 6. **Po zmianie CSS** bump wersji cache: admin — parametr `v=` w
    `app_admin/templates/layouts/base_panel.html`; student — `CSS_BUNDLE_V`
    w `app_student/__init__.py`.
+7. **Name things instead of commenting — hard rule, not a preference.**
+   Do NOT write comments that explain *what* the code does; replace them with
+   a well-named function or variable. Do NOT bundle multiple concerns in one
+   function — extract inline logic and lambdas into small, named helpers
+   (a helper's name must carry the meaning the comment would have). Before you
+   finish an edit, re-read each function you touched: an explanatory comment or
+   a long multi-concern function is a defect to fix, not ship. (Comments are
+   allowed only for *why* — non-obvious rationale, gotchas, links.)
+
+## Standardy kodu — uruchamiaj przed commitem
+
+```
+black .        # formatowanie (konfiguracja w pyproject.toml)
+flake8 .       # nieużywane importy, realne błędy (konfiguracja w .flake8)
+mypy           # typy (łagodny start, konfiguracja w pyproject.toml)
+```
+
+Wszystkie trzy muszą przechodzić czysto. Nowy kod formatuj blackiem od razu.
 
 ## Wspólne komponenty — używaj, nie kopiuj
 
