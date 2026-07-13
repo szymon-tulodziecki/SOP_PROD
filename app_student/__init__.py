@@ -178,6 +178,7 @@ def create_app():
         from core.models import UserRole
         from app_student.routes.dashboard import dashboard_bp
         from app_student.routes.internships import internships_bp
+        from app_student.routes.harmonogram import harmonogram_bp
         from app_student.routes.logbook import logbook_bp
         from app_student.routes.reports import reports_bp
         from app_student.routes.documents import documents_bp
@@ -193,6 +194,7 @@ def create_app():
         app.register_blueprint(dashboard_bp, url_prefix="/panel")
         app.register_blueprint(internships_bp, url_prefix="/praktyki")
         app.register_blueprint(logbook_bp, url_prefix="/dziennik")
+        app.register_blueprint(harmonogram_bp, url_prefix="/harmonogram")
         app.register_blueprint(reports_bp, url_prefix="/report")
         app.register_blueprint(documents_bp, url_prefix="/dokumenty")
         app.register_blueprint(uploads_bp, url_prefix="/uploads")

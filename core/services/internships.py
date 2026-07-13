@@ -349,6 +349,10 @@ class InternshipService:
 
         if liczba_wpisow == 0:
             return False, t("Nie można zakończyć praktyki bez wpisów w dzienniku.")
+        if not zapis.schedule:
+            return False, t(
+                "Nie można zakończyć praktyki bez wypełnionego harmonogramu — uzupełnij zakładkę Harmonogram."
+            )
         if zalogowane < wymagane:
             return (
                 False,

@@ -929,7 +929,6 @@ EN = {
     "Do wypełnienia przez zakład pracy": "To be completed by the workplace",
     "Dla firm bez stałej umowy z ANS": "For companies without a standing agreement with ANS",
     "Z danymi studenta i firmy": "With student and company data",
-    "Harmonogram efektów uczenia się — student + UOPZ + ZOPZ": "Learning outcomes schedule — student + UOPZ + ZOPZ",
     "Przepustka do firmy — drukujesz i przynosisz pierwszego dnia": "Your pass to the company — print it and bring it on the first day",
     "Zakład pracy wypełnia i podpisuje przez 6 miesięcy": "The workplace fills in and signs over 6 months",
     "Generowany z wpisów dziennika": "Generated from journal entries",
@@ -1046,4 +1045,9 @@ EN = {
     "Ścieżka A: Odbędziesz praktykę w zakładzie pracy. Wymagane: Oświadczenie zakładu pracy (zał. 9), Program (zał. 2). Po zakończeniu: Dziennik praktyki (zał. 6), Sprawozdanie (zał. 7), Potwierdzenie efektów uczenia się (zał. 4).": "Track A: You will do your internship at a workplace. Required: Workplace declaration (App. 9), Programme (App. 2). After completion: Internship journal (App. 6), Report (App. 7), Confirmation of learning outcomes (App. 4).",
     "Część zaznaczonych zgłoszeń nie kwalifikuje się do porozumienia.": "Some of the selected enrollments are not eligible for an agreement.",
     "PDF będzie dostępny po uzupełnieniu porozumienia przez zakład pracy.": "The PDF will be available once the workplace completes the agreement.",
+    "Harmonogram został zapisany.": "The schedule has been saved.",
+    "Praktyka została zakończona — harmonogram jest dostępny tylko do odczytu.": "The internship has been completed — the schedule is read-only.",
+    "Uzupełnij harmonogram pod koniec praktyki — na jego podstawie generowany jest Zał. 2a (Indywidualny Program Praktyk).": "Complete the schedule towards the end of the internship — it is used to generate App. 2a (Individual Internship Program).",
+    "Harmonogram efektów uczenia się — wypełniany w zakładce Harmonogram": "Learning outcomes schedule — filled in on the Schedule tab",
+    "Nie można zakończyć praktyki bez wypełnionego harmonogramu — uzupełnij zakładkę Harmonogram.": "The internship cannot be completed without a filled-in schedule — complete the Schedule tab.",
 }

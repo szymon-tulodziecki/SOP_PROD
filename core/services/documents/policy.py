@@ -105,6 +105,14 @@ def _po_egzaminie(ctx: dict) -> bool:
     return ctx.get("po_egzaminie", False)
 
 
+def _ma_harmonogram(ctx: dict) -> bool:
+    return ctx["harmonogram_count"] > 0
+
+
+def _powod_harmonogram(_ctx: dict) -> str:
+    return t("Wymaga wypełnionego harmonogramu")
+
+
 def _powod_w_trakcie(_ctx: dict) -> str:
     return t("Dostępny po zatwierdzeniu praktyki")
 
@@ -131,8 +139,7 @@ def _powod_dyrektor(_ctx: dict) -> str:
 def _docs_standard() -> list:
     return [
         _sep("Dokumenty startowe"),
-        # Zał. 1 (porozumienie) przygotowuje i wysyła dziekanat; Zał. 2a
-        # (harmonogram) usunięty ze ścieżki studenta razem z krokiem kreatora.
+        # Zał. 1 (porozumienie) przygotowuje i wysyła dziekanat.
         DocumentEntry(
             "Zał. 9 — Oświadczenie instytucji",
             "ZAL_9",
@@ -160,6 +167,13 @@ def _docs_standard() -> list:
             unavailable_reason=_powod_w_trakcie,
         ),
         _sep("Dostępne po zakończeniu praktyki"),
+        DocumentEntry(
+            "Zał. 2a — Indywidualny Program Praktyk",
+            "ZAL_2A",
+            t("Harmonogram efektów uczenia się — wypełniany w zakładce Harmonogram"),
+            available_when=_ma_harmonogram,
+            unavailable_reason=_powod_harmonogram,
+        ),
         DocumentEntry(
             "Zał. 4 — Potwierdzenie efektów uczenia się",
             "ZAL_4",
@@ -252,6 +266,7 @@ def build_flags(zapis) -> dict:
         and zapis.final_grades.supervisor_grade is not None,
         "dyrektor_zatwierdził": w_trakcie or zakonczona,
         "po_egzaminie": zapis.final_grade is not None,
+        "harmonogram_count": len(zapis.schedule),
         "firma_custom": not zapis.company_id,
     }
 

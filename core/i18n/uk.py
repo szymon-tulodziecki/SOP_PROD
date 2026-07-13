@@ -930,7 +930,6 @@ UK = {
     "Do wypełnienia przez zakład pracy": "Заповнює заклад праці",
     "Dla firm bez stałej umowy z ANS": "Для фірм без постійної угоди з ANS",
     "Z danymi studenta i firmy": "З даними студента та фірми",
-    "Harmonogram efektów uczenia się — student + UOPZ + ZOPZ": "Графік результатів навчання — студент + UOPZ + ZOPZ",
     "Przepustka do firmy — drukujesz i przynosisz pierwszego dnia": "Перепустка до фірми — роздрукуйте та принесіть першого дня",
     "Zakład pracy wypełnia i podpisuje przez 6 miesięcy": "Заклад праці заповнює та підписує протягом 6 місяців",
     "Generowany z wpisów dziennika": "Генерується із записів щоденника",
@@ -1047,4 +1046,9 @@ UK = {
     "Ścieżka A: Odbędziesz praktykę w zakładzie pracy. Wymagane: Oświadczenie zakładu pracy (zał. 9), Program (zał. 2). Po zakończeniu: Dziennik praktyki (zał. 6), Sprawozdanie (zał. 7), Potwierdzenie efektów uczenia się (zał. 4).": "Шлях A: Ти проходитимеш практику на підприємстві. Потрібні: Заява підприємства (дод. 9), Програма (дод. 2). Після завершення: Щоденник практики (дод. 6), Звіт (дод. 7), Підтвердження результатів навчання (дод. 4).",
     "Część zaznaczonych zgłoszeń nie kwalifikuje się do porozumienia.": "Частина вибраних заявок не підлягає укладенню угоди.",
     "PDF będzie dostępny po uzupełnieniu porozumienia przez zakład pracy.": "PDF буде доступний після заповнення угоди підприємством.",
+    "Harmonogram został zapisany.": "Графік збережено.",
+    "Praktyka została zakończona — harmonogram jest dostępny tylko do odczytu.": "Практику завершено — графік доступний лише для читання.",
+    "Uzupełnij harmonogram pod koniec praktyki — na jego podstawie generowany jest Zał. 2a (Indywidualny Program Praktyk).": "Заповніть графік наприкінці практики — на його основі створюється Дод. 2a (Індивідуальна програма практик).",
+    "Harmonogram efektów uczenia się — wypełniany w zakładce Harmonogram": "Графік результатів навчання — заповнюється у вкладці «Графік»",
+    "Nie można zakończyć praktyki bez wypełnionego harmonogramu — uzupełnij zakładkę Harmonogram.": "Неможливо завершити практику без заповненого графіка — заповніть вкладку «Графік».",
 }
