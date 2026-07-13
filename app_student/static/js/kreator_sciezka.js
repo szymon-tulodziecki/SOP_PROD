@@ -9,7 +9,7 @@
   };
 
   const previews = {
-    STANDARD: T('Ścieżka A: Odbędziesz praktykę w zakładzie pracy na podstawie porozumienia z uczelnią — porozumienie (zał. 1) przygotowuje i wysyła dziekanat. Wymagane: Oświadczenie zakładu pracy (zał. 9), Program (zał. 2). Po zakończeniu: Dziennik praktyki (zał. 6), Sprawozdanie (zał. 7), Potwierdzenie efektów uczenia się (zał. 4).'),
+    STANDARD: T('Ścieżka A: Odbędziesz praktykę w zakładzie pracy. Wymagane: Oświadczenie zakładu pracy (zał. 9), Program (zał. 2). Po zakończeniu: Dziennik praktyki (zał. 6), Sprawozdanie (zał. 7), Potwierdzenie efektów uczenia się (zał. 4).'),
     EMPLOYMENT: T('Ścieżka B: Złożysz wniosek (zał. 4b) o uznanie trzynastu efektów uczenia się na podstawie doświadczenia zawodowego. Komisja ds. praktyk wyda opinię (zał. 4a), a Dyrektor Instytutu podejmie ostateczną decyzję. Wybierz poniżej rodzaj zatrudnienia - od tego zależy, jakie dokumenty musisz dołączyć.'),
   };
 

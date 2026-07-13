@@ -52,9 +52,16 @@ Po rejestracji na zakładce **Przegląd** zobaczysz:
 ### 2.2. Uprawnienia API
 
 1. **Uprawnienia interfejsu API** → domyślnie powinno być `User.Read` (Microsoft Graph, delegated).
-2. To wystarczy — SOP używa tylko `id_token` do odczytania adresu e-mail (`preferred_username`).
-3. Jeżeli dzierżawa wymusza zgodę administratora, kliknij **Udziel zgody administratora dla
-   <tenant>**.
+2. Do samego logowania to wystarczy — SOP używa `id_token` do odczytania adresu e-mail
+   (`preferred_username`).
+3. **Wysyłka powiadomień e-mail** wymaga dodatkowo `Mail.Send` (Microsoft Graph,
+   **Application**) — dodaj przez **Dodaj uprawnienie → Microsoft Graph →
+   Uprawnienia aplikacji → Mail.Send**.
+4. Kliknij **Udziel zgody administratora dla <tenant>** — bez admin consent
+   `Mail.Send` (Application) nie działa (Graph zwraca 403).
+5. Skrzynka wskazana w `MAIL_SENDER` musi mieć licencję Exchange Online —
+   bez niej Graph zwraca `404 MailboxNotEnabledForRESTAPI`. Szczegóły
+   konfiguracji: README, sekcja 3.4.
 
 ### 2.3. Dodatkowe adresy zwrotne (fallback / dev)
 

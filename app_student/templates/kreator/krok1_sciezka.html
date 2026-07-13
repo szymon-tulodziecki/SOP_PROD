@@ -32,10 +32,10 @@
           <div class="path-tile {% if form.track_type.data == 'STANDARD' %}path-tile--selected{% endif %}" data-value="STANDARD" role="button" tabindex="0">
             <div class="u-fw-600 u-csp-308">[A] {{ t('Standardowa praktyka') }}</div>
             <div class="u-meta u-csp-309">
-              {{ t('Odbędę praktykę w firmie lub instytucji na podstawie porozumienia z uczelnią.') }}
+              {{ t('Odbędę praktykę w firmie lub instytucji.') }}
             </div>
             <div class="u-csp-310">
-              {{ t('Porozumienie + dziennik + sprawozdanie') }}
+              {{ t('Dziennik + sprawozdanie') }}
             </div>
           </div>
 
@@ -99,5 +99,8 @@
   </div>
 </div>
 
-<script src="{{ url_for('static', filename='js/kreator_sciezka.js') }}"></script>
+{% endblock %}
+
+{% block scripts_extra %}
+<script src="{{ url_for('static', filename='js/kreator_sciezka.js', v='20260712-2') }}"></script>
 {% endblock %}

@@ -65,7 +65,7 @@
         <!-- Tryb: własna firma -->
         <div id="blok-custom" class="{% if form.firma_typ.data != 'custom' %}u-csp-094{% endif %}">
           <div class="u-csp-324">
-            {{ t('Własna firma wymaga wygenerowania <strong>Zał. 9</strong> (oświadczenie instytucji) i <strong>Zał. 1</strong> (porozumienie). Możesz je wygenerować po wypełnieniu poniższych danych.') | safe }}
+            {{ t('Własna firma wymaga wygenerowania <strong>Zał. 9</strong> (oświadczenie instytucji). Możesz go wygenerować po wypełnieniu poniższych danych.') | safe }}
           </div>
           <div class="form-field">
             {{ form.company_name.label(class="form-field__label") }}

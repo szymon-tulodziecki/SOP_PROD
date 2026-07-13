@@ -222,6 +222,10 @@ services:
     command: celery -A celery_app worker --loglevel=info --concurrency=2
     networks:
       - internal
+      # Wysyłka maili przez Microsoft Graph wymaga wyjścia do internetu
+      # (login.microsoftonline.com, graph.microsoft.com) — sieć internal
+      # ma internal:true i blokuje DNS/egress.
+      - public
     depends_on:
       redis:
         condition: service_started

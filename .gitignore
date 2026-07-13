@@ -116,3 +116,4 @@ docker-compose.sonar.yml
 .claude/
 CLAUDE.md
 database/seed_admins.sql
+AGENTS.md

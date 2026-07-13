@@ -214,6 +214,9 @@ def _fmt_data(value) -> str:
 @roles_required(UserRole.ADMIN, UserRole.DZIEKANAT)
 def porozumienie_pdf(id):
     agreement = db.session.get(InternshipAgreement, id) or abort(404)
+    if agreement.status != AgreementStatus.FILLED:
+        flash(t("PDF będzie dostępny po uzupełnieniu porozumienia przez zakład pracy."), "info")
+        return redirect(url_for(_ROUTE_LISTA))
 
     studenci = []
     for ae in agreement.enrollments:

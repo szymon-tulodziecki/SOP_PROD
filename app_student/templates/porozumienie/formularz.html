@@ -50,13 +50,42 @@
   </div>
 </div>
 
-<div class="karta">
-  <div class="karta__naglowek">
-    <h2 class="karta__tytul">{{ t('Dane osoby reprezentującej zakład pracy') }}</h2>
+<form method="POST">
+  {{ form.csrf_token }}
+
+  <div class="karta u-mb-15">
+    <div class="karta__naglowek">
+      <h2 class="karta__tytul">{{ t('Harmonogram praktyki — efekty uczenia się') }}</h2>
+    </div>
+    <div class="karta__tresc">
+      <p class="u-meta">
+        {{ t('Dla każdego efektu podaj dział zakładu pracy, przykładowe czynności i planowaną liczbę dni. Wiersze bez działu lub czynności zostaną pominięte.') }}
+      </p>
+      {% for e in efekty %}
+      {% set h = harmonogram.get(e.id|string, {}) %}
+      <div class="u-csp-338">
+        <div class="u-meta u-mb-035">{{ e.description }}</div>
+        <div class="u-csp-339">
+          <textarea name="dzial_{{ e.id }}" rows="1"
+                    class="form-field__input u-csp-340 schedule-text-field" placeholder="{{ t('Dział zakładu pracy') }}">{{ h.get('dzial', '') }}</textarea>
+          <textarea name="prace_{{ e.id }}" rows="1"
+                    class="form-field__input u-csp-340 schedule-text-field" placeholder="{{ t('Przykładowe czynności') }}">{{ h.get('prace', '') }}</textarea>
+          <div class="u-flex--gap-05 u-csp-341 schedule-days-wrapper">
+            <input type="number" name="dni_{{ e.id }}" value="{{ h.get('dni', '') }}"
+                   class="form-field__input u-csp-342 schedule-days-field" min="0" max="60" placeholder="0">
+            <span class="u-meta u-nowrap">{{ t('dni') }}</span>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
   </div>
-  <div class="karta__tresc">
-    <form method="POST">
-      {{ form.csrf_token }}
+
+  <div class="karta">
+    <div class="karta__naglowek">
+      <h2 class="karta__tytul">{{ t('Dane osoby reprezentującej zakład pracy') }}</h2>
+    </div>
+    <div class="karta__tresc">
 
       <div class="pole-formularza {% if form.signer_name.errors %}pole-formularza--blad{% endif %}">
         {{ form.signer_name.label(class="pole-formularza__etykieta") }}
@@ -79,8 +108,10 @@
         {{ t('Po zatwierdzeniu formularza uczelnia przygotuje porozumienie do podpisu. Link jest jednorazowy — po wysłaniu danych przestanie działać.') }}
       </p>
 
-      <button type="submit" class="przycisk przycisk--glowny">{{ t('Zatwierdź dane porozumienia') }}</button>
-    </form>
+      <div class="u-ta-center">
+        <button type="submit" class="przycisk przycisk--glowny">{{ t('Zatwierdź dane porozumienia') }}</button>
+      </div>
+    </div>
   </div>
-</div>
+</form>
 {% endblock %}

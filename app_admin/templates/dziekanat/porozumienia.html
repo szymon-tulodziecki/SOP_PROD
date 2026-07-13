@@ -131,8 +131,10 @@
               {% if w.p.filled_at %}<br>{{ t('Uzupełniono:') }} {{ w.p.filled_at.strftime('%d.%m.%Y') }}{% endif %}
             </td>
             <td>
+              {% if w.p.status.value == 'FILLED' %}
               <a href="{{ url_for('dziekanat.porozumienie_pdf', id=w.p.id) }}"
                  class="przycisk przycisk--maly przycisk--drugorzedny">{{ t('PDF') }}</a>
+              {% endif %}
               {% if w.p.status.value == 'SENT' %}
               <form method="POST" action="{{ url_for('dziekanat.anuluj_porozumienie', id=w.p.id) }}" class="porozumienia__akcja-form">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

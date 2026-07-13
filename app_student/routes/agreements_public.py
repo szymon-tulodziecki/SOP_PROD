@@ -7,20 +7,26 @@ Dostęp bez logowania — autoryzacją jest unikalny token z e-maila
 ważności albo po wypełnieniu formularza.
 """
 
-from flask import Blueprint, render_template
+import uuid
+
+from flask import Blueprint, render_template, request
 from flask_wtf import FlaskForm
 from wtforms import StringField, TextAreaField
 from wtforms.validators import DataRequired, Length, Optional, ValidationError
 
 from core.extensions import db, limiter
 from core.i18n import t, lazy_t
-from core.models import AgreementStatus
+from core.models import AgreementStatus, InternshipSchedule
+from core.repositories.internships import EnrollmentRepository
+from core.repositories.outcomes import OutcomeRepository
 from core.services import notifications as noty
 from core.services.agreements import AgreementService
 
 agreements_public_bp = Blueprint("porozumienie", __name__)
 
 _TPL_WYNIK = "porozumienie/wynik.html"
+_repo_zapisow = EnrollmentRepository()
+_repo_efektow = OutcomeRepository()
 
 
 class AgreementFillForm(FlaskForm):
@@ -43,6 +49,50 @@ class AgreementFillForm(FlaskForm):
             raise ValidationError(t("Podaj imię i nazwisko (co najmniej dwa wyrazy)."))
         if any(ch.isdigit() for ch in field.data):
             raise ValidationError(t("Imię i nazwisko nie może zawierać cyfr."))
+
+
+def _harmonogram_z_formularza(efekty) -> dict[str, dict]:
+    return {
+        str(e.id): {
+            "dzial": request.form.get(f"dzial_{e.id}", ""),
+            "prace": request.form.get(f"prace_{e.id}", ""),
+            "dni": request.form.get(f"dni_{e.id}", ""),
+        }
+        for e in efekty
+    }
+
+
+def _wiersze_harmonogramu(efekty, enrollment_ids) -> list[InternshipSchedule]:
+    wiersze = []
+    for e in efekty:
+        dzial = request.form.get(f"dzial_{e.id}", "").strip()
+        prace = request.form.get(f"prace_{e.id}", "").strip()
+        try:
+            dni = int(request.form.get(f"dni_{e.id}", "0") or 0)
+        except (TypeError, ValueError):
+            dni = 0
+        if not (dzial and prace):
+            continue
+        for enrollment_id in enrollment_ids:
+            wiersze.append(
+                InternshipSchedule(
+                    id=uuid.uuid4(),
+                    enrollment_id=enrollment_id,
+                    learning_outcome_id=e.id,
+                    department_name=dzial,
+                    example_tasks=prace,
+                    days_count=dni,
+                )
+            )
+    return wiersze
+
+
+def _zapisz_harmonogram_grupy(agreement, efekty) -> None:
+    """Zakład wypełnia jeden harmonogram — trafia do każdego zapisu z porozumienia."""
+    enrollment_ids = [ae.enrollment_id for ae in agreement.enrollments]
+    for enrollment_id in enrollment_ids:
+        _repo_zapisow.usun_harmonogram(enrollment_id)
+    _repo_zapisow.zapisz_harmonogram(_wiersze_harmonogramu(efekty, enrollment_ids))
 
 
 def _studenci(agreement) -> list[dict]:
@@ -74,8 +124,10 @@ def formularz(token):
     if not agreement.is_open:
         return render_template(_TPL_WYNIK, wariant="nieaktywny"), 410
 
+    efekty = _repo_efektow.wszystkie()
     form = AgreementFillForm()
     if form.validate_on_submit():
+        _zapisz_harmonogram_grupy(agreement, efekty)
         AgreementService.fill_agreement(
             agreement,
             signer_name=form.signer_name.data.strip(),
@@ -95,4 +147,6 @@ def formularz(token):
         porozumienie=agreement,
         studenci=_studenci(agreement),
         form=form,
+        efekty=efekty,
+        harmonogram=_harmonogram_z_formularza(efekty) if request.method == "POST" else {},
     )

@@ -146,11 +146,38 @@ W portalu [portal.azure.com](https://portal.azure.com) dla tenanta `ans-elblag.p
    - `Application (client) ID` → `azure_client_id`
    - `Directory (tenant) ID` → `azure_tenant_id`
 
-4. **API permissions** → upewnij się że jest `Microsoft Graph → User.Read (Delegated)`
+4. **API permissions**:
+   - `Microsoft Graph → User.Read (Delegated)` — logowanie użytkowników,
+   - `Microsoft Graph → Mail.Send (Application)` — wysyłka powiadomień e-mail;
+     wymaga **Grant admin consent** przez administratora tenanta.
 
 > URI callbacku musi być publicznym adresem panelu administracyjnego (`admin` app, port 5000).
 > Panel studenta korzysta z tego samego Redirect URI — jeśli domeny są różne,
 > dodaj obie w portalu Azure.
+
+### 3.4 Wysyłka e-maili (Microsoft Graph, `Mail.Send`)
+
+Powiadomienia (linki do porozumień dla zakładów pracy, zmiany statusów zgłoszeń)
+wysyła task Celery `send_email` przez Graph API — tą samą rejestracją aplikacji
+co logowanie. Wymagania:
+
+- uprawnienie aplikacyjne `Mail.Send` z admin consent (punkt 4 powyżej),
+- skrzynka nadawcza z licencją Exchange Online — bez niej Graph zwraca
+  `404 MailboxNotEnabledForRESTAPI`,
+- zmienne środowiskowe:
+
+| Zmienna | Znaczenie |
+|---------|-----------|
+| `MAIL_SENDER` | Adres skrzynki nadawczej (np. `praktyki@ans-elblag.pl`). **Pusty = wysyłka wyłączona** — worker loguje pominięcie zamiast wysyłać. |
+| `PUBLIC_BASE_URL` | Publiczny adres aplikacji studenckiej (np. `https://praktyki.ans-elblag.pl`) — baza linków w mailach, m.in. jednorazowego linku tokenowego do formularza porozumienia. |
+
+> Uprawnienie aplikacyjne `Mail.Send` domyślnie pozwala wysyłać z **każdej**
+> skrzynki w tenancie. Warto ograniczyć je do skrzynki nadawczej przez
+> `New-ApplicationAccessPolicy` (Exchange Online PowerShell).
+
+Worker Celery musi mieć dostęp do internetu (`login.microsoftonline.com`,
+`graph.microsoft.com`) — w plikach compose/stack jest podpięty do sieci
+`public` oprócz `internal` (sieć `internal` ma `internal: true` i blokuje egress).
 
 ---
 
@@ -450,6 +477,10 @@ docker stats $(docker ps --filter name=sop -q)
 | Logowanie: `invalid_client` | Wygasły Client Secret Azure | Zaktualizuj sekret (sekcja 8) |
 | PDF się nie generuje | `tex-service` niedostępny | `docker service logs sop_tex-service` |
 | Celery taski nie są przetwarzane | Redis niedostępny | `docker service logs sop_redis` |
+| Maile nie wychodzą, log `pomijam wysyłkę` | `MAIL_SENDER` pusty | Ustaw `MAIL_SENDER` (sekcja 3.4) |
+| Graph sendMail `403` | Brak `Mail.Send (Application)` lub admin consent | Nadaj uprawnienie i consent (sekcja 3.3 pkt 4) |
+| Graph sendMail `404 MailboxNotEnabledForRESTAPI` | Skrzynka nadawcza bez licencji Exchange Online | Przypisz licencję skrzynce z `MAIL_SENDER` |
+| Worker: `NameResolutionError login.microsoftonline.com` | Worker tylko w sieci `internal` (brak egress) | Podepnij worker do sieci `public` (sekcja 3.4) |
 | Dokumenty studentów nie otwierają się | Zły `file_encryption_key` | Klucz musi być identyczny jak przy zapisie pliku |
 
 ---

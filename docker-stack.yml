@@ -86,6 +86,7 @@ services:
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0
       ALLOWED_EMAIL_DOMAIN: ans-elblag.pl
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-}
     secrets:
       - secret_key
       - postgres_password
@@ -149,6 +150,7 @@ services:
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0
       ALLOWED_EMAIL_DOMAIN: ans-elblag.pl
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-}
     secrets:
       - secret_key
       - postgres_password
@@ -210,14 +212,23 @@ services:
       TEX_SERVICE_URL: http://tex-service:5002
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0
+      MAIL_SENDER: ${MAIL_SENDER:-}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-}
     secrets:
       - secret_key
       - postgres_password
       - file_encryption_key
       - fileserver_api_key
+      - azure_client_id
+      - azure_client_secret
+      - azure_tenant_id
     command: celery -A celery_app worker --loglevel=info --concurrency=2
     networks:
       - internal
+      # Wysyłka maili przez Microsoft Graph wymaga wyjścia do internetu
+      # (login.microsoftonline.com, graph.microsoft.com) — sieć internal
+      # ma internal:true i blokuje DNS/egress.
+      - public
     volumes:
       - pdf_data:/app/pdf_output
     read_only: true

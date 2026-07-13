@@ -223,6 +223,10 @@
 .porozumienie-public__naglowek {
   text-align: center;
   margin-bottom: 2rem;
+  /* Granatowe logo uczelni wymaga białego tła. */
+  background: var(--kolor-biale);
+  padding: 1.25rem 1rem;
+  border-radius: var(--promien);
 }
 
 .porozumienie-public__logo {

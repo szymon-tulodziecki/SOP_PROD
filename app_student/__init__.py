@@ -107,7 +107,7 @@ def create_app():
 
     register_i18n(app)
 
-    app.config["CSS_BUNDLE_V"] = "20260704-1"
+    app.config["CSS_BUNDLE_V"] = "20260712-2"
     _css_bundle_cache = {}
 
     def _build_css_bundle():
